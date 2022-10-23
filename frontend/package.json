@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint 'pages/**/*.{js,jsx,ts,tsx}'",
     "lint:fix": "eslint --fix 'pages/**/*.{js,jsx,ts,tsx}'",
+    "format": "prettier --write \"pages/**/*.{js,jsx,ts,tsx}\"",
     "preinstall": "typesync || :"
   },
   "dependencies": {
@@ -23,6 +24,8 @@
     "@typescript-eslint/parser": "^5.40.1",
     "eslint": "^8.26.0",
     "eslint-config-next": "12.3.1",
+    "eslint-config-prettier": "^8.5.0",
+    "prettier": "^2.7.1",
     "typescript": "4.8.4"
   },
   "main": "index.js"

@@ -34,6 +34,7 @@ module.exports = {
     rules: {
       // occur error in `import React from 'react'` with react-scripts 4.0.1
       'no-use-before-define': 'off',
+      "semi": ["error", "always"],
       '@typescript-eslint/no-use-before-define': [
         'error',
       ],
