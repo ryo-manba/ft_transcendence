@@ -9,7 +9,8 @@
     "lint": "eslint 'pages/**/*.{js,jsx,ts,tsx}'",
     "lint:fix": "eslint --fix 'pages/**/*.{js,jsx,ts,tsx}'",
     "format": "prettier --write \"pages/**/*.{js,jsx,ts,tsx}\"",
-    "preinstall": "typesync || :"
+    "preinstall": "typesync || :",
+    "prepare": "cd .. && husky install .config/.husky"
   },
   "dependencies": {
     "next": "12.3.1",
@@ -17,7 +18,9 @@
     "react-dom": "18.2.0"
   },
   "devDependencies": {
+    "@types/eslint": "^8.4.7",
     "@types/node": "18.11.3",
+    "@types/prettier": "^2.7.1",
     "@types/react": "18.0.21",
     "@types/react-dom": "18.0.6",
     "@typescript-eslint/eslint-plugin": "^5.40.1",
@@ -25,8 +28,16 @@
     "eslint": "^8.26.0",
     "eslint-config-next": "12.3.1",
     "eslint-config-prettier": "^8.5.0",
+    "husky": "^8.0.1",
+    "lint-staged": "^13.0.3",
     "prettier": "^2.7.1",
     "typescript": "4.8.4"
   },
-  "main": "index.js"
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "yarn lint",
+      "yarn format",
+      "yarn lint:fix"
+    ]
+  }
 }
