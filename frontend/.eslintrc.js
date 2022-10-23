@@ -12,7 +12,6 @@ module.exports = {
       'plugin:import/typescript',
       'plugin:@typescript-eslint/recommended',
       'plugin:@typescript-eslint/recommended-requiring-type-checking',
-      "prettier",
     ],
     parser: '@typescript-eslint/parser',
     parserOptions: {
@@ -28,11 +27,14 @@ module.exports = {
       '@typescript-eslint',
       'import',
       'jsx-a11y',
+      'react',
+      'react-hooks',
     ],
     root: true,
     rules: {
       // occur error in `import React from 'react'` with react-scripts 4.0.1
       'no-use-before-define': 'off',
+      "semi": ["error", "always"],
       '@typescript-eslint/no-use-before-define': [
         'error',
       ],
@@ -77,6 +79,21 @@ module.exports = {
           tsx: 'never',
         },
       ],
+      'react/jsx-filename-extension': [
+        'error',
+        {
+          extensions: ['.jsx', '.tsx'],
+        },
+      ],
+      'react/jsx-props-no-spreading': [
+        'error',
+        {
+          html: 'enforce',
+          custom: 'enforce',
+          explicitSpread: 'ignore',
+        },
+      ],
+      'react/react-in-jsx-scope': 'off',
     },
     overrides: [
       {
