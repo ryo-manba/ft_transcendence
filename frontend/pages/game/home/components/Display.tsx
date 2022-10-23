@@ -1,6 +1,10 @@
 import { Grid } from '@mui/material';
 import { createContext, useMemo, useEffect } from 'react';
-import usePlayStateStore, { stateNothing, stateWaiting, statePlaying } from '../store/PlayState';
+import usePlayStateStore, {
+  stateNothing,
+  stateWaiting,
+  statePlaying,
+} from '../store/PlayState';
 import { ClientSocket } from '../../ClientSocket';
 import { Start } from './Start';
 import { Play } from './Play';

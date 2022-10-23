@@ -7,15 +7,18 @@ export const Play = () => {
   const clientSocket = useContext(Context);
   const { opponent } = useOpponentStore();
 
-  const arrowFunc = useCallback((event: KeyboardEvent) => {
-    if (event.code === 'ArrowUp') {
-      console.log('up button pushed');
-      clientSocket.socket?.emit('playScore', 1);
-    } else if (event.code === 'ArrowDown') {
-      console.log('down button pushed');
-      clientSocket.socket?.emit('playScore', -1);
-    }
-  }, [clientSocket.socket]);
+  const arrowFunc = useCallback(
+    (event: KeyboardEvent) => {
+      if (event.code === 'ArrowUp') {
+        console.log('up button pushed');
+        clientSocket.socket?.emit('playScore', 1);
+      } else if (event.code === 'ArrowDown') {
+        console.log('down button pushed');
+        clientSocket.socket?.emit('playScore', -1);
+      }
+    },
+    [clientSocket.socket],
+  );
 
   useEffect(() => {
     document.addEventListener('keydown', arrowFunc, false);
