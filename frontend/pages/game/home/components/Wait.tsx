@@ -14,7 +14,7 @@ export const Wait = () => {
       updatePlayState(statePlaying);
       updateOpponent(arg);
     });
-  }, []);
+  }, [clientSocket.socket]);
 
   return (
     <Grid item>

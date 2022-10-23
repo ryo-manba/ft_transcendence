@@ -15,7 +15,7 @@ export const Play = () => {
       console.log('down button pushed');
       clientSocket.socket?.emit('playScore', -1);
     }
-  }, []);
+  }, [clientSocket.socket]);
 
   useEffect(() => {
     document.addEventListener('keydown', arrowFunc, false);
@@ -23,7 +23,7 @@ export const Play = () => {
     clientSocket.socket?.on('playScored', (arg: number) => {
       setScore((score) => score + arg);
     });
-  }, []);
+  }, [clientSocket.socket]);
 
   return (
     <div>

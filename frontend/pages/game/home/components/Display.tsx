@@ -1,7 +1,7 @@
 import { Grid } from '@mui/material';
 import { createContext, useMemo, useEffect } from 'react';
 import usePlayStateStore, { stateNothing, stateWaiting, statePlaying } from '../store/PlayState';
-import { ClientSocket } from './ClientSocket';
+import { ClientSocket } from '../../ClientSocket';
 import { Start } from './Start';
 import { Play } from './Play';
 import { Wait } from './Wait';
@@ -9,7 +9,7 @@ import { Watch } from './Watch';
 
 export const Context = createContext({} as ClientSocket);
 
-export const GameDisplay = () => {
+export const Display = () => {
   const clientSocket = useMemo(() => {
     return new ClientSocket('ws://localhost:3001/game');
   }, []);
