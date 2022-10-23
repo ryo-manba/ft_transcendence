@@ -27,6 +27,8 @@ module.exports = {
       '@typescript-eslint',
       'import',
       'jsx-a11y',
+      'react',
+      'react-hooks',
     ],
     root: true,
     rules: {
@@ -76,6 +78,21 @@ module.exports = {
           tsx: 'never',
         },
       ],
+      'react/jsx-filename-extension': [
+        'error',
+        {
+          extensions: ['.jsx', '.tsx'],
+        },
+      ],
+      'react/jsx-props-no-spreading': [
+        'error',
+        {
+          html: 'enforce',
+          custom: 'enforce',
+          explicitSpread: 'ignore',
+        },
+      ],
+      'react/react-in-jsx-scope': 'off',
     },
     overrides: [
       {
