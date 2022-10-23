@@ -20,10 +20,10 @@ export const Watch = () => {
     });
     const id = setInterval(() => {
       clientSocket.socket?.emit('watchList');
-    }, 20000);
+    }, 2000);
 
     return () => clearInterval(id);
-  }, []);
+  }, [clientSocket.socket]);
 
   return (
     <Grid
