@@ -1,0 +1,8 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+echo "[pre-commit] frontend"
+(cd ./frontend && npx lint-staged)
+
+echo "[pre-commit] backend"
+(cd ./backend && npx lint-staged)
