@@ -6,7 +6,6 @@ module.exports = {
       es2021: true,
     },
     extends: [
-      'plugin:react/recommended',
       'plugin:import/errors',
       'plugin:import/warnings',
       'plugin:import/typescript',
@@ -82,7 +81,6 @@ module.exports = {
       {
         'files': ['*.tsx'],
         'rules': {
-          'react/prop-types': 'off',
         },
       },
     ],
@@ -94,4 +92,4 @@ module.exports = {
       },
     },
   };
-  
+
