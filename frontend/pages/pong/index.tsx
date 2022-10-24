@@ -1,5 +1,5 @@
 import type { NextPage } from 'next';
-import Canvas from './canvas';
+import Canvas from './Canvas';
 
 const Home: NextPage = () => {
   return (

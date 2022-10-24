@@ -112,8 +112,8 @@ const Canvas = (props: CanvasProps) => {
     render();
 
     socket.on('updateGameInfo', (gameInfo: GameInfo) => {
-      y1 = gameInfo.players[2].height;
-      y2 = gameInfo.players[3].height;
+      y1 = gameInfo.players[0].height;
+      y2 = gameInfo.players[1].height;
       ballInfo = gameInfo.ballInfo;
     });
 

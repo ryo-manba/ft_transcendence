@@ -41,16 +41,12 @@ let isGameOver = false;
 let isPlayer1turn = true;
 
 setInterval(() => {
-  if (4 <= players.length) {
+  if (2 <= players.length) {
     io.to("game").emit("updateGameInfo", { players, ballInfo });
   }
 }, 33);
 
 io.sockets.on("connect", (socket) => {
-  console.log(
-    `Request from ${socket.id} has been received! Currently ${players.length} players are logged in.`
-  );
-
   let player = {};
   player.height = 220;
 
@@ -58,8 +54,12 @@ io.sockets.on("connect", (socket) => {
   socket.join("game");
   players.push(player);
 
+  console.log(
+    `Request from ${socket.id} has been received! Currently ${players.length} players are logged in.`
+  );
+
   socket.on("barMove", (data) => {
-    if (players.length <= 3) return;
+    if (players.length < 2) return;
     let res = player.height + data;
     if (res < upperBound) {
       player.height = upperBound;
@@ -77,15 +77,15 @@ io.sockets.on("connect", (socket) => {
     if (
       ballVec.xVec < 0 &&
       ballInfo.x < 40 &&
-      players[2].height <= ballInfo.y &&
-      ballInfo.y <= players[2].height + barHeight
+      players[0].height <= ballInfo.y &&
+      ballInfo.y <= players[0].height + barHeight
     ) {
       ballVec.xVec = 1;
     } else if (
       0 < ballVec.xVec &&
       960 < ballInfo.x &&
-      players[3].height <= ballInfo.y &&
-      ballInfo.y <= players[3].height + barHeight
+      players[1].height <= ballInfo.y &&
+      ballInfo.y <= players[1].height + barHeight
     ) {
       ballVec.xVec = -1;
     } else if (ballInfo.x < 40 || 960 < ballInfo.x) {
