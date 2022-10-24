@@ -92,7 +92,6 @@ const Canvas = (props: CanvasProps) => {
 
     const onKeyDown = (e: KeyboardEvent) => {
       const key = e.code;
-      console.log(`key ${key} is pressed!`);
       if (key === 'ArrowDown') {
         move += speed;
       } else if (key === 'ArrowUp') {
@@ -113,7 +112,6 @@ const Canvas = (props: CanvasProps) => {
     render();
 
     socket.on('updateGameInfo', (gameInfo: GameInfo) => {
-      console.log(gameInfo);
       y1 = gameInfo.players[2].height;
       y2 = gameInfo.players[3].height;
       ballInfo = gameInfo.ballInfo;

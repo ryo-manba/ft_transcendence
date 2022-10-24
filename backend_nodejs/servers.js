@@ -1,4 +1,3 @@
-// This file is only for making the socketio server and the express server
 import express from "express";
 import { Server } from "socket.io";
 import helmet from "helmet";
@@ -8,10 +7,10 @@ import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-export const app = express();
+const app = express();
 app.use(express.static(__dirname + "../public"));
 const expressServer = app.listen(8080);
-export const io = new Server(expressServer, {
+const io = new Server(expressServer, {
   cors: {
     origin: "http://localhost:3000",
     methods: ["GET", "POST"],
@@ -91,7 +90,6 @@ io.sockets.on("connect", (socket) => {
       ballVec.xVec = -1;
     } else if (ballInfo.x < 40 || 960 < ballInfo.x) {
       isGameOver = true;
-      console.log(`Gameover! ballX is ${ballInfo.x}`);
     }
     if (!isGameOver) {
       ballInfo.x += ballVec.xVec * ballVec.speed;
