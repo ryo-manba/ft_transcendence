@@ -1,28 +1,28 @@
 import React, { useRef, useEffect, useCallback } from 'react';
 import { io, Socket } from 'socket.io-client';
 
-interface BallInfo {
+type BallInfo = {
   x: number;
   y: number;
   radius: number;
-}
+};
 
-interface Player {
+type Player = {
   height: number;
-}
+};
 
-interface GameInfo {
+type GameInfo = {
   players: Player[];
   ballInfo: BallInfo;
-}
+};
 
-interface ServerToClientEvents {
+type ServerToClientEvents = {
   updateGameInfo: (gameInfo: GameInfo) => void;
-}
+};
 
-interface ClientToServerEvents {
+type ClientToServerEvents = {
   barMove: (move: number) => void;
-}
+};
 
 const socket: Socket<ServerToClientEvents, ClientToServerEvents> = io(
   'http://localhost:8080',
