@@ -14,7 +14,7 @@ type State = {
   updatePlayState: (payload: PlayState) => void;
 };
 
-const usePlayStateStore = create<State>((set) => ({
+export const usePlayStateStore = create<State>((set) => ({
   playState: stateNothing,
   updatePlayState: (payload) =>
     set({
@@ -23,4 +23,3 @@ const usePlayStateStore = create<State>((set) => ({
 }));
 
 export { stateNothing, stateWaiting, statePlaying, type PlayState };
-export default usePlayStateStore;

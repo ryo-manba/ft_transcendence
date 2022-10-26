@@ -5,7 +5,7 @@ type State = {
   updateOpponent: (payload: string) => void;
 };
 
-const useOpponentStore = create<State>((set) => ({
+export const useOpponentStore = create<State>((set) => ({
   opponent: '',
   updateOpponent: (payload) => {
     set({
@@ -13,5 +13,3 @@ const useOpponentStore = create<State>((set) => ({
     });
   },
 }));
-
-export default useOpponentStore;
