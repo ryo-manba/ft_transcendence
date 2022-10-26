@@ -9,7 +9,7 @@ type RoomInfo = {
   playerName2: string;
 };
 
-const Watch = () => {
+export const Watch = () => {
   const clientSocket = useContext(Context);
   const [rooms, setRooms] = useState<RoomInfo[]>([]);
 
@@ -49,5 +49,3 @@ const Watch = () => {
     </Grid>
   );
 };
-
-export default Watch;

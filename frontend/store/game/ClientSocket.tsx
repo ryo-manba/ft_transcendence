@@ -20,4 +20,4 @@ class ClientSocket {
   }
 }
 
-export default ClientSocket;
+export { ClientSocket };

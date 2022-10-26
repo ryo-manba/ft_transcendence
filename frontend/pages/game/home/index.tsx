@@ -1,6 +1,6 @@
 import type { NextPage } from 'next';
-import Layout from '../../../components/game/home/Layout';
-import Display from '../../../components/game/home/Display';
+import { Layout } from '../../../components/game/home/Layout';
+import { Display } from '../../../components/game/home/Display';
 
 const Home: NextPage = () => {
   return (
