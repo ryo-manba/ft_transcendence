@@ -1,10 +1,12 @@
 import VideogameAssetSharpIcon from '@mui/icons-material/VideogameAssetSharp';
 import { Button, Grid, TextField } from '@mui/material';
 import React, { useContext, useRef } from 'react';
-import usePlayStateStore, { stateWaiting } from '../store/PlayState';
+import usePlayStateStore, {
+  stateWaiting,
+} from '../../../store/game/home/PlayState';
 import { Context } from './Display';
 
-export const Start = () => {
+const Start = () => {
   const playerNameRef = useRef<HTMLInputElement>(null);
   const clientSocket = useContext(Context);
   const updatePlayState = usePlayStateStore((store) => store.updatePlayState);
@@ -37,3 +39,5 @@ export const Start = () => {
     </>
   );
 };
+
+export default Start;

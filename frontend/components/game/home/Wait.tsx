@@ -1,10 +1,12 @@
 import { CircularProgress, Grid } from '@mui/material';
 import { useContext, useEffect } from 'react';
-import useOpponentStore from '../store/Opponent';
-import usePlayStateStore, { statePlaying } from '../store/PlayState';
+import useOpponentStore from '../../../store/game/home/Opponent';
+import usePlayStateStore, {
+  statePlaying,
+} from '../../../store/game/home/PlayState';
 import { Context } from './Display';
 
-export const Wait = () => {
+const Wait = () => {
   const clientSocket = useContext(Context);
   const updatePlayState = usePlayStateStore((store) => store.updatePlayState);
   const updateOpponent = useOpponentStore((store) => store.updateOpponent);
@@ -25,3 +27,5 @@ export const Wait = () => {
     </Grid>
   );
 };
+
+export default Wait;

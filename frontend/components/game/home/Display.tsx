@@ -4,16 +4,16 @@ import usePlayStateStore, {
   stateNothing,
   stateWaiting,
   statePlaying,
-} from '../store/PlayState';
-import { ClientSocket } from '../../ClientSocket';
-import { Start } from './Start';
-import { Play } from './Play';
-import { Wait } from './Wait';
-import { Watch } from './Watch';
+} from '../../../store/game/home/PlayState';
+import ClientSocket from '../../../store/game/ClientSocket';
+import Start from './Start';
+import Play from './Play';
+import Wait from './Wait';
+import Watch from './Watch';
 
 export const Context = createContext({} as ClientSocket);
 
-export const Display = () => {
+const Display = () => {
   const clientSocket = useMemo(() => {
     return new ClientSocket('ws://localhost:3001/game');
   }, []);
@@ -42,3 +42,5 @@ export const Display = () => {
     </Grid>
   );
 };
+
+export default Display;

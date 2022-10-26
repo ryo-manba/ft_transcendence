@@ -6,7 +6,7 @@ type Props = {
   children: ReactNode;
 };
 
-export const Layout: FC<Props> = ({ children, title = 'Next.js' }) => {
+const Layout: FC<Props> = ({ children, title = 'Next.js' }) => {
   return (
     <div>
       <Head>
@@ -17,3 +17,5 @@ export const Layout: FC<Props> = ({ children, title = 'Next.js' }) => {
     </div>
   );
 };
+
+export default Layout;

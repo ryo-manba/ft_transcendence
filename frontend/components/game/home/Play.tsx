@@ -1,8 +1,8 @@
 import { useState, useCallback, useEffect, useContext } from 'react';
-import useOpponentStore from '../store/Opponent';
+import useOpponentStore from '../../../store/game/home/Opponent';
 import { Context } from './Display';
 
-export const Play = () => {
+const Play = () => {
   const [score, setScore] = useState(0);
   const clientSocket = useContext(Context);
   const { opponent } = useOpponentStore();
@@ -35,3 +35,5 @@ export const Play = () => {
     </div>
   );
 };
+
+export default Play;
