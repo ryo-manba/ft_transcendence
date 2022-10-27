@@ -9,7 +9,7 @@ const Home: NextPage = () => {
         <Link href="/chat">
           <Button variant="contained">Chat</Button>
         </Link>
-        <Link href="/game">
+        <Link href="/game/home">
           <Button variant="contained">Game</Button>
         </Link>
         <Link href="/friend">
