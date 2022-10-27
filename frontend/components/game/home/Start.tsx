@@ -1,10 +1,7 @@
 import VideogameAssetSharpIcon from '@mui/icons-material/VideogameAssetSharp';
 import { Button, Grid, TextField } from '@mui/material';
 import React, { useContext, useRef } from 'react';
-import {
-  usePlayStateStore,
-  stateWaiting,
-} from '../../../store/game/home/PlayState';
+import { usePlayStateStore, stateWaiting } from 'store/game/home/PlayState';
 import { Context } from './Display';
 
 export const Start = () => {

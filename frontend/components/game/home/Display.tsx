@@ -5,8 +5,8 @@ import {
   stateNothing,
   stateWaiting,
   statePlaying,
-} from '../../../store/game/home/PlayState';
-import { ClientSocket } from '../../../store/game/ClientSocket';
+} from 'store/game/home/PlayState';
+import { ClientSocket } from 'store/game/ClientSocket';
 import { Start } from './Start';
 import { Play } from './Play';
 import { Wait } from './Wait';

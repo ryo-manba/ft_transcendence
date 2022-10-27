@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useContext } from 'react';
-import { useOpponentStore } from '../../../store/game/home/Opponent';
+import { useOpponentStore } from 'store/game/home/Opponent';
 import { Context } from './Display';
 
 export const Play = () => {
