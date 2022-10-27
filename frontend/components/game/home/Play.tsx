@@ -19,7 +19,7 @@ type Ball = {
 
 type GameInfo = {
   height1: number;
-  heigth2: number;
+  height2: number;
   ball: Ball;
 };
 
@@ -114,7 +114,7 @@ export const Play = () => {
 
     socket?.on('updateGameInfo', (gameInfo: GameInfo) => {
       y1 = gameInfo.height1;
-      y2 = gameInfo.heigth2;
+      y2 = gameInfo.height2;
       ball = gameInfo.ball;
     });
 
