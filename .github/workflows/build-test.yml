@@ -1,28 +1,25 @@
 name: build-test
 
-on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+on: [push, pull_request, workflow_dispatch]
 
 jobs:
   build:
     runs-on: macos-latest
 
-  defaults:
-    run:
-      working-directory: ./frontend
+    defaults:
+      run:
+        working-directory: ./frontend
 
-  strategy:
-    matrix:
-      node-version: [16.18.0]
+    strategy:
+      matrix:
+        node-version: [16.18.0]
 
-  steps:
-    - uses: actions/checkout@v3
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v3
-      with:
-        node-version: ${{ matrix.node-version }}
-    - run: yarn install
-    - run: yarn build
+    steps:
+      - uses: actions/checkout@v3
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+      - name: run build
+        run: yarn install
+        run: yarn build
