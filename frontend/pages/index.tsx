@@ -1,13 +1,20 @@
 import type { NextPage } from 'next';
+import Link from 'next/link';
 import { Stack, Button } from '@mui/material';
 
 const Home: NextPage = () => {
   return (
     <div>
       <Stack spacing={2} direction="row">
-        <Button variant="contained">Chat</Button>
-        <Button variant="contained">Game</Button>
-        <Button variant="contained">Friend</Button>
+        <Link href="/chat">
+          <Button variant="contained">Chat</Button>
+        </Link>
+        <Link href="/game">
+          <Button variant="contained">Game</Button>
+        </Link>
+        <Link href="/friend">
+          <Button variant="contained">Friend</Button>
+        </Link>
       </Stack>
     </div>
   );
