@@ -1,6 +1,15 @@
 import { useState, useEffect } from 'react';
 import { io } from 'socket.io-client';
-import { Button } from '@mui/material';
+import { Button, List } from '@mui/material';
+import Grid from '@mui/material/Unstable_Grid2';
+import ListItem from '@mui/material/ListItem';
+// import ListItemIcon from '@mui/material/ListItemIcon';
+import IconButton from '@mui/material/IconButton';
+import ListItemText from '@mui/material/ListItemText';
+// import Avatar from '@mui/material/Avatar';
+import DeleteIcon from '@mui/icons-material/Delete';
+// import FolderIcon from '@mui/icons-material/Folder';
+// import ChatIcon from '@mui/icons-material/Chat';
 
 type ChatRoom = {
   name: string;
@@ -24,8 +33,48 @@ const createChatRoom = () => {
   console.log('[DEBUG] room:create', room);
 };
 
-const showRooms = (rooms: ChatRoom[]) => {
-  return rooms.map((item, i) => <li key={i}>{item.name}</li>);
+// const showRooms = (rooms: ChatRoom[]) => {
+//   return rooms.map((item, i) => <li key={i}>{item.name}</li>);
+// };
+
+const ChatRoomList = (props: ChatRoom[]) => {
+  return (
+    <>
+      <h2>Chat Room</h2>
+      {/* denseが間隔を開けてくれる */}
+      <List dense={true}>
+        {props.map((item, i) => {
+          return (
+            <ListItem
+              key={i}
+              secondaryAction={
+                <IconButton
+                  edge="end"
+                  aria-label="delete"
+                  onClick={() => {
+                    // TODO: deleteの処理
+                    console.log('click delete');
+                  }}
+                >
+                  <DeleteIcon />
+                </IconButton>
+              }
+              divider
+              button
+            >
+              <ListItemText
+                primary={item.name}
+                onClick={() => {
+                  // TODO: チャットルームを表示する処理
+                  console.log('click text');
+                }}
+              />
+            </ListItem>
+          );
+        })}
+      </List>
+    </>
+  );
 };
 
 const Chat = () => {
@@ -62,8 +111,18 @@ const Chat = () => {
       <Button onClick={createChatRoom} variant="contained">
         チャットルームを作成する
       </Button>
-      <h2>Chat Room</h2>
-      <ul>{showRooms(rooms)}</ul>
+      <Grid container spacing={1}>
+        {/* 左側 */}
+        <Grid xs={1}>{ChatRoomList(rooms)}</Grid>
+        {/* 中央 */}
+        <Grid xs={9}>
+          <strong>チャットスペース</strong>
+        </Grid>
+        {/* 右側 */}
+        <Grid xs={2}>
+          <strong>フレンドスペース</strong>
+        </Grid>
+      </Grid>
     </>
   );
 };
