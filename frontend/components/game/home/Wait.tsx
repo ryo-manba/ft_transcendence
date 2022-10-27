@@ -1,20 +1,20 @@
 import { CircularProgress, Grid } from '@mui/material';
-import { useContext, useEffect } from 'react';
+import { useEffect } from 'react';
 import {
   usePlayStateStore,
   statePlaying,
 } from '../../../store/game/home/PlayState';
-import { Context } from './Display';
+import { useSocketStore } from '../../../store/game/ClientSocket';
 
 export const Wait = () => {
-  const clientSocket = useContext(Context);
+  const { socket } = useSocketStore();
   const updatePlayState = usePlayStateStore((store) => store.updatePlayState);
 
   useEffect(() => {
-    clientSocket.socket?.on('playStarted', () => {
+    socket?.on('playStarted', () => {
       updatePlayState(statePlaying);
     });
-  }, [clientSocket.socket]);
+  }, [socket]);
 
   return (
     <Grid item>

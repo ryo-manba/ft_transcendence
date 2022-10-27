@@ -2,7 +2,7 @@
 // import { List, ListItemText, ListItem, Grid } from '@mui/material';
 import { Grid } from '@mui/material';
 // import { useContext, useEffect, useState } from 'react';
-// import { Context } from './Display';
+// import { useSocketStore } from '../../../store/game/ClientSocket';
 
 // type RoomInfo = {
 //   roomName: string;
@@ -11,20 +11,20 @@ import { Grid } from '@mui/material';
 // };
 
 export const Watch = () => {
-  // const clientSocket = useContext(Context);
+  // const { socket } = useSocketStore();
   // const [rooms, setRooms] = useState<RoomInfo[]>([]);
 
   // useEffect(() => {
-  //   clientSocket.socket?.emit('watchList');
-  //   clientSocket.socket?.on('watchListed', (arg: string) => {
+  //   socket?.emit('watchList');
+  //   socket?.on('watchListed', (arg: string) => {
   //     setRooms(JSON.parse(arg) as RoomInfo[]);
   //   });
   //   const id = setInterval(() => {
-  //     clientSocket.socket?.emit('watchList');
+  //     socket.socket?.emit('watchList');
   //   }, 2000);
 
   //   return () => clearInterval(id);
-  // }, [clientSocket.socket]);
+  // }, [socket]);
 
   return (
     <Grid

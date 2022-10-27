@@ -35,9 +35,14 @@ type RoomInfo = {
   isPlayer1Turn: boolean;
 };
 
+// type GameInfo = {
+//   player1: Player;
+//   player2: Player;
+//   ball: Ball;
+// };
 type GameInfo = {
-  player1: Player;
-  player2: Player;
+  height1: number;
+  height2: number;
   ball: Ball;
 };
 
@@ -151,9 +156,10 @@ export class GameGateway {
     let isGameOver = false;
 
     // Identify a corresponding room, player, ball, and ballVec based on socket
-    const room = this.gameRooms.find((r) => {
-      r.player1.socket.id === socket.id || r.player2.socket.id === socket.id;
-    });
+    const room = this.gameRooms.find(
+      (r) =>
+        r.player1.socket.id === socket.id || r.player2.socket.id === socket.id,
+    );
     const player =
       room.player1.socket.id === socket.id ? room.player1 : room.player2;
     const ball = room.ball;
@@ -208,14 +214,20 @@ export class GameGateway {
       ballVec.yVec = this.setBallYVec();
       room.isPlayer1Turn = !room.isPlayer1Turn;
     }
+    const gameInfo: GameInfo = {
+      height1: room.player1.height,
+      height2: room.player2.height,
+      ball: room.ball,
+    };
+    this.server.to(room.roomName).emit('updateGameInfo', gameInfo);
   }
 
   @Interval(33)
   sendGameInfo() {
     for (const room of this.gameRooms) {
       const gameInfo: GameInfo = {
-        player1: room.player1,
-        player2: room.player2,
+        height1: room.player1.height,
+        height2: room.player2.height,
         ball: room.ball,
       };
       this.server.to(room.roomName).emit('updateGameInfo', gameInfo);

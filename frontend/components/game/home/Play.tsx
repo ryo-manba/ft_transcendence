@@ -1,16 +1,15 @@
-import { useCallback, useEffect, useContext, useRef } from 'react';
-import { Context } from './Display';
-import { Socket } from 'socket.io';
+import { useCallback, useEffect, useRef } from 'react';
+import { useSocketStore } from '../../../store/game/ClientSocket';
 
 // Question: Where should we define types that are used both in frontend and
 // backend while they are not used in the databases (therefore not defined or
 // managed by prisma)?
 
-type Player = {
-  name: string;
-  socket: Socket;
-  height: number;
-};
+// type Player = {
+//   name: string;
+//   socket: Socket;
+//   height: number;
+// };
 
 type Ball = {
   x: number;
@@ -19,13 +18,13 @@ type Ball = {
 };
 
 type GameInfo = {
-  player1: Player;
-  player2: Player;
+  height1: number;
+  heigth2: number;
   ball: Ball;
 };
 
 export const Play = () => {
-  const clientSocket = useContext(Context);
+  const { socket } = useSocketStore();
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   // Game parameters
@@ -113,20 +112,20 @@ export const Play = () => {
 
     render();
 
-    clientSocket.socket?.on('updateGameInfo', (gameInfo: GameInfo) => {
-      console.log(gameInfo);
-      y1 = gameInfo.player1.height;
-      y2 = gameInfo.player2.height;
+    socket?.on('updateGameInfo', (gameInfo: GameInfo) => {
+      y1 = gameInfo.height1;
+      y2 = gameInfo.heigth2;
       ball = gameInfo.ball;
     });
 
-    setInterval(() => {
-      clientSocket.socket?.emit('barMove', move);
+    const id = setInterval(() => {
+      socket?.emit('barMove', move);
       move = 0;
     }, 33);
 
     return () => {
       window.cancelAnimationFrame(animationFrameId);
+      clearInterval(id);
     };
   }, [draw]);
 
