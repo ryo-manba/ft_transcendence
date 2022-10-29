@@ -91,10 +91,7 @@ export class GameGateway {
   }
 
   setBallYVec() {
-    let yVec = 0;
-    while (yVec === 0) yVec = Math.random() * (Math.random() < 0.5 ? 1 : -1);
-
-    return yVec;
+    return Math.random() * (Math.random() < 0.5 ? 1 : -1);
   }
 
   @SubscribeMessage('playStart')
