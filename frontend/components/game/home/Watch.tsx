@@ -1,29 +1,29 @@
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import { List, ListItemText, ListItem, Typography } from '@mui/material';
-import { useContext, useEffect, useState } from 'react';
-import { Context } from './Display';
+import { useEffect, useState } from 'react';
+import { useSocketStore } from '../../../store/game/ClientSocket';
 
 type RoomInfo = {
   roomName: string;
-  playerName1: string;
-  playerName2: string;
+  name1: string;
+  name2: string;
 };
 
 export const Watch = () => {
-  const clientSocket = useContext(Context);
+  const { socket } = useSocketStore();
   const [rooms, setRooms] = useState<RoomInfo[]>([]);
 
   useEffect(() => {
-    clientSocket.socket?.emit('watchList');
-    clientSocket.socket?.on('watchListed', (arg: string) => {
+    socket?.emit('watchList');
+    socket?.on('watchListed', (arg: string) => {
       setRooms(JSON.parse(arg) as RoomInfo[]);
     });
     const id = setInterval(() => {
-      clientSocket.socket?.emit('watchList');
+      socket?.emit('watchList');
     }, 2000);
 
     return () => clearInterval(id);
-  }, [clientSocket.socket]);
+  }, [socket]);
 
   return (
     <>
@@ -37,9 +37,7 @@ export const Watch = () => {
             sx={{ border: '1px solid' }}
             secondaryAction={<VisibilityIcon />}
           >
-            <ListItemText
-              primary={`${room.playerName1} vs ${room.playerName2}`}
-            />
+            <ListItemText primary={`${room.name1} vs ${room.name2}`} />
           </ListItem>
         ))}
       </List>

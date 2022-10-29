@@ -1,12 +1,12 @@
 import { Grid, Paper } from '@mui/material';
-import { createContext, useMemo, useEffect } from 'react';
+import { useEffect } from 'react';
 import {
   usePlayStateStore,
   stateNothing,
   stateWaiting,
   statePlaying,
 } from '../../../store/game/home/PlayState';
-import { ClientSocket } from '../../../store/game/ClientSocket';
+import { useSocketStore } from '../../../store/game/ClientSocket';
 import { Start } from './Start';
 import { Play } from './Play';
 import { Wait } from './Wait';
@@ -14,16 +14,16 @@ import { Watch } from './Watch';
 import { History } from './History';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 
-export const Context = createContext({} as ClientSocket);
-
 export const Display = () => {
-  const clientSocket = useMemo(() => {
-    return new ClientSocket('ws://localhost:3001/game');
-  }, []);
+  const { socket, updateSocket } = useSocketStore();
   const { playState } = usePlayStateStore();
 
   useEffect(() => {
-    clientSocket.connect();
+    updateSocket('ws://localhost:3001/game');
+
+    return () => {
+      socket?.disconnect();
+    };
   }, []);
 
   return (
@@ -47,32 +47,30 @@ export const Display = () => {
           />
         </Paper>
       </Grid>
-      <Context.Provider value={clientSocket}>
-        <Grid item xs={5}>
-          <Paper elevation={2}>
-            <Grid
-              container
-              alignItems="center"
-              justifyContent="center"
-              direction="column"
-            >
-              {playState === stateNothing && <Start />}
-              {playState === stateWaiting && <Wait />}
-              {playState === statePlaying && <Play />}
-            </Grid>
-          </Paper>
-        </Grid>
-        <Grid item xs={5}>
-          <Paper elevation={2}>
-            <History />
-          </Paper>
-        </Grid>
-        <Grid item xs={5}>
-          <Paper elevation={2}>
-            <Watch />
-          </Paper>
-        </Grid>
-      </Context.Provider>
+      <Grid item xs={5}>
+        <Paper elevation={2}>
+          <Grid
+            container
+            alignItems="center"
+            justifyContent="center"
+            direction="column"
+          >
+            {playState === stateNothing && <Start />}
+            {playState === stateWaiting && <Wait />}
+            {playState === statePlaying && <Play />}
+          </Grid>
+        </Paper>
+      </Grid>
+      <Grid item xs={5}>
+        <Paper elevation={2}>
+          <History />
+        </Paper>
+      </Grid>
+      <Grid item xs={5}>
+        <Paper elevation={2}>
+          <Watch />
+        </Paper>
+      </Grid>
     </Grid>
   );
 };
