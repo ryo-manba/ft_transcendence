@@ -31,6 +31,18 @@ const showRooms = (rooms: ChatRoom[]) => {
 const Chat = () => {
   const [rooms, setRooms] = useState<ChatRoom[]>([]);
 
+  // アクセス時にチャットルームのデータを受けとる
+  useEffect(() => {
+    socket.on('chat:connected', (data: ChatRoom[]) => {
+      console.log('[DEBUG] chat:connected', data);
+      setRooms(data);
+    });
+
+    return () => {
+      socket.off('chat:connected');
+    };
+  }, []);
+
   // dbに保存ができたら,backendからreceiveする
   useEffect(() => {
     socket.on('room:created', (data: ChatRoom) => {

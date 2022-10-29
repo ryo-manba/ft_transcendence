@@ -3,8 +3,10 @@ import {
   SubscribeMessage,
   WebSocketGateway,
   WebSocketServer,
+  OnGatewayConnection,
+  ConnectedSocket,
 } from '@nestjs/websockets';
-import { Server } from 'socket.io';
+import { Server, Socket } from 'socket.io';
 import { Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { ChatService } from './chat.service';
@@ -16,7 +18,7 @@ import { ChatRoom as ChatRoomModel } from '@prisma/client';
   },
   namespace: '/chat',
 })
-export class ChatGateway {
+export class ChatGateway implements OnGatewayConnection {
   constructor(
     private prisma: PrismaService,
     private readonly chatService: ChatService,
@@ -25,6 +27,13 @@ export class ChatGateway {
   @WebSocketServer() server: Server;
 
   private logger: Logger = new Logger('ChatGateway');
+
+  // 新しいクライアントが接続してきたときの処理
+  async handleConnection(@ConnectedSocket() client: Socket) {
+    this.logger.log(`Client connected: ${client.id}`);
+    const data = await this.chatService.chatRooms({});
+    this.server.emit('chat:connected', data);
+  }
 
   @SubscribeMessage('room:create')
   CreateRoom(@MessageBody() data: ChatRoomModel): void {
