@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef } from 'react';
-import { useSocketStore } from '../../../store/game/ClientSocket';
+import { useSocketStore } from 'store/game/ClientSocket';
 
 // Question: Where should we define types that are used both in frontend and
 // backend while they are not used in the databases (therefore not defined or

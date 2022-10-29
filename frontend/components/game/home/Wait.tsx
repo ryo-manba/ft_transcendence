@@ -1,10 +1,7 @@
 import { CircularProgress, Grid } from '@mui/material';
 import { useEffect } from 'react';
-import {
-  usePlayStateStore,
-  statePlaying,
-} from '../../../store/game/home/PlayState';
-import { useSocketStore } from '../../../store/game/ClientSocket';
+import { usePlayStateStore, statePlaying } from 'store/game/home/PlayState';
+import { useSocketStore } from 'store/game/ClientSocket';
 
 export const Wait = () => {
   const { socket } = useSocketStore();
