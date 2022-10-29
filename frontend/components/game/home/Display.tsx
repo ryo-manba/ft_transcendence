@@ -1,4 +1,4 @@
-import { Grid } from '@mui/material';
+import { Grid, Paper } from '@mui/material';
 import { createContext, useMemo, useEffect } from 'react';
 import {
   usePlayStateStore,
@@ -11,6 +11,8 @@ import { Start } from './Start';
 import { Play } from './Play';
 import { Wait } from './Wait';
 import { Watch } from './Watch';
+import { History } from './History';
+import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 
 export const Context = createContext({} as ClientSocket);
 
@@ -29,16 +31,47 @@ export const Display = () => {
       container
       alignItems="center"
       justifyContent="center"
-      direction="column"
+      direction="row"
+      spacing={2}
     >
-      <Grid item xs={30}>
-        <h1 style={{ textAlign: 'center' }}>WebSocket Sample App</h1>
+      <Grid item xs={10}>
+        <h2 style={{ textAlign: 'center' }}>WebSocket Sample App</h2>
+      </Grid>
+      <Grid item xs={5}>
+        <Paper elevation={2}>
+          <EmojiEventsIcon
+            sx={{
+              width: '100%',
+              height: '100%',
+            }}
+          />
+        </Paper>
       </Grid>
       <Context.Provider value={clientSocket}>
-        {playState === stateNothing && <Start />}
-        {playState === stateWaiting && <Wait />}
-        {playState === statePlaying && <Play />}
-        <Watch />
+        <Grid item xs={5}>
+          <Paper elevation={2}>
+            <Grid
+              container
+              alignItems="center"
+              justifyContent="center"
+              direction="column"
+            >
+              {playState === stateNothing && <Start />}
+              {playState === stateWaiting && <Wait />}
+              {playState === statePlaying && <Play />}
+            </Grid>
+          </Paper>
+        </Grid>
+        <Grid item xs={5}>
+          <Paper elevation={2}>
+            <History />
+          </Paper>
+        </Grid>
+        <Grid item xs={5}>
+          <Paper elevation={2}>
+            <Watch />
+          </Paper>
+        </Grid>
       </Context.Provider>
     </Grid>
   );

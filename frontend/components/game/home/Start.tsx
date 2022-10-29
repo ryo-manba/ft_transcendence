@@ -19,11 +19,12 @@ export const Start = () => {
 
   return (
     <>
-      <Grid item>
+      <Grid item xs={12}>
         <TextField label="name" inputRef={playerNameRef} />
       </Grid>
-      <Grid item>
+      <Grid item xs={12}>
         <Button
+          size="large"
           variant="contained"
           color="secondary"
           onClick={() => {
@@ -31,10 +32,11 @@ export const Start = () => {
           }}
           endIcon={<VideogameAssetSharpIcon />}
           sx={{
-            mt: 3,
+            mt: 2,
+            boxShadow: 8,
           }}
         >
-          <b>Battle!!</b>
+          <b>Battle</b>
         </Button>
       </Grid>
     </>

@@ -1,5 +1,5 @@
 import VisibilityIcon from '@mui/icons-material/Visibility';
-import { List, ListItemText, ListItem, Grid } from '@mui/material';
+import { List, ListItemText, ListItem, Typography } from '@mui/material';
 import { useContext, useEffect, useState } from 'react';
 import { Context } from './Display';
 
@@ -26,13 +26,10 @@ export const Watch = () => {
   }, [clientSocket.socket]);
 
   return (
-    <Grid
-      item
-      sx={{
-        mt: 10,
-      }}
-    >
-      <h2>Currect Game Rooms</h2>
+    <>
+      <Typography variant="h3" align="center" gutterBottom>
+        Current Rooms
+      </Typography>
       <List>
         {rooms?.map((room) => (
           <ListItem
@@ -41,11 +38,11 @@ export const Watch = () => {
             secondaryAction={<VisibilityIcon />}
           >
             <ListItemText
-              primary={room.playerName1 + ' vs ' + room.playerName2}
+              primary={`${room.playerName1} vs ${room.playerName2}`}
             />
           </ListItem>
         ))}
       </List>
-    </Grid>
+    </>
   );
 };
