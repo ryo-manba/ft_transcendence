@@ -1,23 +1,16 @@
 import { io, Socket } from 'socket.io-client';
+import create from 'zustand';
 
-class ClientSocket {
-  public socket: Socket | null;
-  private url: string;
+type State = {
+  socket: Socket | null;
+  updateSocket: (payload: string) => void;
+};
 
-  constructor(url: string) {
-    this.socket = null;
-    this.url = url;
-  }
-
-  connect() {
-    this.socket = io(this.url);
-    this.socket.on('connect', () => {
-      console.log('connect success!!');
+export const useSocketStore = create<State>((set) => ({
+  socket: null,
+  updateSocket: (payload) => {
+    set({
+      socket: io(payload),
     });
-    this.socket.on('connect_error', () => {
-      console.log('connect failure!!');
-    });
-  }
-}
-
-export { ClientSocket };
+  },
+}));
