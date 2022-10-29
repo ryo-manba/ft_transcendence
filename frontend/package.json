@@ -6,9 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint 'pages/**/*.{js,jsx,ts,tsx}'",
-    "lint:fix": "eslint --fix 'pages/**/*.{js,jsx,ts,tsx}'",
-    "format": "prettier --write \"pages/**/*.{js,jsx,ts,tsx}\"",
+    "lint": "eslint '{components,pages,store}/**/*.{js,jsx,ts,tsx}'",
+    "lint:fix": "eslint --fix '{components,pages,store}/**/*.{js,jsx,ts,tsx}'",
+    "format": "prettier --write \"{components,pages,store}/**/*.{js,jsx,ts,tsx}\"",
     "preinstall": "typesync || :",
     "prepare": "cd .. && husky install .config/.husky"
   },
