@@ -17,6 +17,7 @@
     "lint:fix": "eslint --fix 'src/**/*.{js,jsx,ts,tsx}'",
     "preinstall": "typesync || :",
     "prepare": "cd .. && husky install .config/.husky",
+    "migrate": "npx prisma migrate dev && npx prisma generate",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
