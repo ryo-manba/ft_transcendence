@@ -14,6 +14,7 @@ type ChatRoom = {
 };
 
 const socket = io('http://localhost:3001/chat');
+const appBarHeight = '64px';
 
 // TODO: name以外も指定できるようにする
 const createChatRoom = () => {
@@ -31,7 +32,7 @@ const createChatRoom = () => {
 const Chat = () => {
   const [rooms, setRooms] = useState<ChatRoom[]>([]);
 
-  // TODO: fetchするように変更予定
+  // TODO: fetchに変更する
   useEffect(() => {
     socket.on('chat:connected', (data: ChatRoom[]) => {
       console.log('[DEBUG] chat:connected', data);
@@ -58,7 +59,13 @@ const Chat = () => {
   return (
     <>
       <ChatHeader />
-      <Grid container spacing={2} sx={{ margin: 0 }}>
+      <Grid
+        container
+        direction="row"
+        justifyContent="center"
+        alignItems="stretch"
+        style={{ height: `calc(100vh - ${appBarHeight})` }}
+      >
         <Grid
           xs={2}
           style={{
@@ -92,7 +99,7 @@ const Chat = () => {
             borderBottom: '1px solid',
           }}
         >
-          <h2 style={{ margin: '0px' }}>チャットスペース</h2>
+          <h2>チャットスペース</h2>
         </Grid>
         <Grid
           xs={2}
@@ -100,7 +107,7 @@ const Chat = () => {
             borderBottom: '1px solid',
           }}
         >
-          <h2 style={{ margin: '0px' }}>フレンドスペース</h2>
+          <h2>フレンドスペース</h2>
         </Grid>
       </Grid>
     </>
