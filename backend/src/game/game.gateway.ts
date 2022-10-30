@@ -213,12 +213,6 @@ export class GameGateway {
       ballVec.yVec = this.setBallYVec();
       room.isPlayer1Turn = !room.isPlayer1Turn;
     }
-    const gameInfo: GameInfo = {
-      height1: room.player1.height,
-      height2: room.player2.height,
-      ball: room.ball,
-    };
-    this.server.to(room.roomName).emit('updateGameInfo', gameInfo);
   }
 
   @Interval(33)
