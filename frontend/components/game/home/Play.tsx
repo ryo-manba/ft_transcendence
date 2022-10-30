@@ -5,12 +5,6 @@ import { useSocketStore } from 'store/game/ClientSocket';
 // backend while they are not used in the databases (therefore not defined or
 // managed by prisma)?
 
-// type Player = {
-//   name: string;
-//   socket: Socket;
-//   height: number;
-// };
-
 type Ball = {
   x: number;
   y: number;
@@ -126,6 +120,7 @@ export const Play = () => {
     return () => {
       window.cancelAnimationFrame(animationFrameId);
       clearInterval(id);
+      socket?.off('updateGameInfo');
     };
   }, [draw]);
 

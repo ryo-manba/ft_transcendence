@@ -11,6 +11,10 @@ export const Wait = () => {
     socket?.on('playStarted', () => {
       updatePlayState(statePlaying);
     });
+
+    return () => {
+      socket?.off('playStarted');
+    };
   }, [socket]);
 
   return (
