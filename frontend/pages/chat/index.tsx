@@ -2,13 +2,9 @@ import { useState, useEffect } from 'react';
 import { io } from 'socket.io-client';
 import { Button, List } from '@mui/material';
 import Grid from '@mui/material/Unstable_Grid2';
-import ListItem from '@mui/material/ListItem';
-import IconButton from '@mui/material/IconButton';
-import ListItemText from '@mui/material/ListItemText';
-import DeleteIcon from '@mui/icons-material/Delete';
 import AddCircleOutlineRounded from '@mui/icons-material/AddCircleOutlineRounded';
-import { ChatHeader } from '../../components/chat/ChatHeader';
-// import { ChatRoomList } from '../../components/chat/ChatRoomList';
+import { ChatHeader } from 'components/chat/ChatHeader';
+import { ChatRoomListItem } from 'components/chat/ChatRoomListItem';
 
 type ChatRoom = {
   name: string;
@@ -32,62 +28,10 @@ const createChatRoom = () => {
   console.log('[DEBUG] room:create', room);
 };
 
-const ChatRoomList = (props: ChatRoom[]) => {
-  return (
-    <>
-      <div style={{ backgroundColor: 'white' }}>
-        <Button
-          color="primary"
-          variant="outlined"
-          endIcon={
-            <AddCircleOutlineRounded color="primary" sx={{ fontSize: 32 }} />
-          }
-          fullWidth={true}
-          style={{ justifyContent: 'flex-start' }}
-          onClick={createChatRoom}
-        >
-          チャットルーム作成
-        </Button>
-        <List dense={false}>
-          {props.map((item, i) => {
-            return (
-              <ListItem
-                key={i}
-                secondaryAction={
-                  <IconButton
-                    edge="end"
-                    aria-label="delete"
-                    onClick={() => {
-                      // TODO: チャットルームを削除する
-                      console.log('click delete');
-                    }}
-                  >
-                    <DeleteIcon />
-                  </IconButton>
-                }
-                divider
-                button
-              >
-                <ListItemText
-                  primary={item.name}
-                  onClick={() => {
-                    // TODO: チャットルームに入る
-                    console.log('click text');
-                  }}
-                />
-              </ListItem>
-            );
-          })}
-        </List>
-      </div>
-    </>
-  );
-};
-
 const Chat = () => {
   const [rooms, setRooms] = useState<ChatRoom[]>([]);
 
-  // アクセス時にチャットルームのデータを受けとる
+  // TODO: fetchするように変更予定
   useEffect(() => {
     socket.on('chat:connected', (data: ChatRoom[]) => {
       console.log('[DEBUG] chat:connected', data);
@@ -114,19 +58,51 @@ const Chat = () => {
   return (
     <>
       <ChatHeader />
-      <div style={{ backgroundColor: 'white' }}>
-        <Grid container spacing={2}>
-          <Grid xs={2} style={{ borderRight: '1px solid grey' }}>
-            {ChatRoomList(rooms)}
-          </Grid>
-          <Grid xs={8} style={{ borderRight: '1px solid grey' }}>
-            <h2 style={{ margin: '0px' }}>チャットスペース</h2>
-          </Grid>
-          <Grid xs={2}>
-            <h2 style={{ margin: '0px' }}>フレンドスペース</h2>
-          </Grid>
+      <Grid container spacing={2} sx={{ margin: 0 }}>
+        <Grid
+          xs={2}
+          style={{
+            borderRight: '1px solid',
+            borderBottom: '1px solid',
+          }}
+        >
+          {/* TODO: Buttonコンポーネント作る */}
+          <Button
+            color="primary"
+            variant="outlined"
+            endIcon={
+              <AddCircleOutlineRounded color="primary" sx={{ fontSize: 32 }} />
+            }
+            fullWidth={true}
+            style={{ justifyContent: 'flex-start' }}
+            onClick={createChatRoom}
+          >
+            チャットルーム作成
+          </Button>
+          <List dense={false}>
+            {rooms.map((room, i) => (
+              <ChatRoomListItem key={i} name={room.name} />
+            ))}
+          </List>
         </Grid>
-      </div>
+        <Grid
+          xs={8}
+          style={{
+            borderRight: '1px solid',
+            borderBottom: '1px solid',
+          }}
+        >
+          <h2 style={{ margin: '0px' }}>チャットスペース</h2>
+        </Grid>
+        <Grid
+          xs={2}
+          style={{
+            borderBottom: '1px solid',
+          }}
+        >
+          <h2 style={{ margin: '0px' }}>フレンドスペース</h2>
+        </Grid>
+      </Grid>
     </>
   );
 };
