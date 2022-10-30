@@ -1,5 +1,12 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { Grid } from '@mui/material';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSocketStore } from 'store/game/ClientSocket';
+import { usePlayerNamesStore } from 'store/game/home/PlayerName';
+import {
+  usePlayStateStore,
+  stateWinner,
+  stateLoser,
+} from 'store/game/home/PlayState';
 
 // Question: Where should we define types that are used both in frontend and
 // backend while they are not used in the databases (therefore not defined or
@@ -20,6 +27,9 @@ type GameInfo = {
 export const Play = () => {
   const { socket } = useSocketStore();
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const { playerNames } = usePlayerNamesStore();
+  const [scores, updateScores] = useState<[number, number]>([0, 0]);
+  const updatePlayState = usePlayStateStore((store) => store.updatePlayState);
 
   // Game parameters
   const barWidth = 20;
@@ -39,7 +49,7 @@ export const Play = () => {
   const ballInitialY = 300;
   const ballRadius = 10;
 
-  const draw = useCallback(
+  const drawField = useCallback(
     (ctx: CanvasRenderingContext2D, y1: number, y2: number, ballInfo: Ball) => {
       ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
       ctx.fillRect(player1X, y1, barWidth, barLength);
@@ -100,7 +110,7 @@ export const Play = () => {
     document.addEventListener('keydown', onKeyDown);
 
     const render = () => {
-      draw(context, y1, y2, ball);
+      drawField(context, y1, y2, ball);
       animationFrameId = window.requestAnimationFrame(render);
     };
 
@@ -122,35 +132,97 @@ export const Play = () => {
       clearInterval(id);
       socket?.off('updateGameInfo');
     };
-  }, [draw]);
+  }, [drawField]);
 
-  return <canvas ref={canvasRef} width={canvasWidth} height={canvasHeight} />;
+  useEffect(() => {
+    socket?.on('updateScores', (newScores: [number, number]) => {
+      updateScores(newScores);
+    });
 
-  // const arrowFunc = useCallback(
-  //   (event: KeyboardEvent) => {
-  //     if (event.code === 'ArrowUp') {
-  //       console.log('up button pushed');
-  //       clientSocket.socket?.emit('playScore', 1);
-  //     } else if (event.code === 'ArrowDown') {
-  //       console.log('down button pushed');
-  //       clientSocket.socket?.emit('playScore', -1);
-  //     }
-  //   },
-  //   [clientSocket.socket],
-  // );
+    return () => {
+      socket?.off('updateScores');
+    };
+  }, [scores]);
 
-  // useEffect(() => {
-  //   document.addEventListener('keydown', arrowFunc, false);
+  useEffect(() => {
+    socket?.on('win', () => {
+      updatePlayState(stateWinner);
+    });
+    socket?.on('lose', () => {
+      updatePlayState(stateLoser);
+    });
 
-  //   clientSocket.socket?.on('playScored', (arg: number) => {
-  //     setScore((score) => score + arg);
-  //   });
-  // }, [clientSocket.socket]);
+    return () => {
+      socket?.off('win');
+      socket?.off('lose');
+    };
+  }, [socket]);
 
-  // return (
-  //   <div>
-  //     <h2>YOU VS </h2>
-  //     <h1 className="text-center">{score}</h1>
-  //   </div>
-  // );
+  return (
+    <div>
+      <Grid container>
+        <Grid
+          container
+          item
+          xs={5}
+          direction="row"
+          alignItems="center"
+          justifyContent="center"
+        >
+          <h2>{playerNames[0]}</h2>
+        </Grid>
+        <Grid
+          container
+          item
+          xs={2}
+          direction="row"
+          alignItems="center"
+          justifyContent="center"
+        >
+          <h2>VS</h2>
+        </Grid>
+        <Grid
+          container
+          item
+          xs={5}
+          direction="row"
+          alignItems="center"
+          justifyContent="center"
+        >
+          <h2>{playerNames[1]}</h2>
+        </Grid>
+        <Grid
+          container
+          item
+          xs={5}
+          direction="row"
+          alignItems="center"
+          justifyContent="center"
+        >
+          <h2>{scores[0]}</h2>
+        </Grid>
+        <Grid
+          container
+          item
+          xs={2}
+          direction="row"
+          alignItems="center"
+          justifyContent="center"
+        >
+          <h2>:</h2>
+        </Grid>
+        <Grid
+          container
+          item
+          xs={5}
+          direction="row"
+          alignItems="center"
+          justifyContent="center"
+        >
+          <h2>{scores[1]}</h2>
+        </Grid>
+      </Grid>
+      <canvas ref={canvasRef} width={canvasWidth} height={canvasHeight} />
+    </div>
+  );
 };
