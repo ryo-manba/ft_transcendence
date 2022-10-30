@@ -1,9 +1,16 @@
 import VisibilityIcon from '@mui/icons-material/Visibility';
-import { List, ListItemText, ListItem, Typography } from '@mui/material';
+import {
+  List,
+  ListItemText,
+  ListItem,
+  Typography,
+  Tooltip,
+  IconButton,
+} from '@mui/material';
 import { useEffect, useState } from 'react';
 import { useSocketStore } from '../../../store/game/ClientSocket';
 
-type RoomInfo = {
+type WatchInfo = {
   roomName: string;
   name1: string;
   name2: string;
@@ -11,12 +18,12 @@ type RoomInfo = {
 
 export const Watch = () => {
   const { socket } = useSocketStore();
-  const [rooms, setRooms] = useState<RoomInfo[]>([]);
+  const [rooms, setRooms] = useState<WatchInfo[]>([]);
 
   useEffect(() => {
     socket?.emit('watchList');
-    socket?.on('watchListed', (arg: string) => {
-      setRooms(JSON.parse(arg) as RoomInfo[]);
+    socket?.on('watchListed', (data: WatchInfo[]) => {
+      setRooms(data);
     });
     const id = setInterval(() => {
       socket?.emit('watchList');
@@ -35,7 +42,13 @@ export const Watch = () => {
           <ListItem
             key={room.roomName}
             sx={{ border: '1px solid' }}
-            secondaryAction={<VisibilityIcon />}
+            secondaryAction={
+              <Tooltip title="Watch !">
+                <IconButton href="https://github.com/ryo-manba/ft_transcendence">
+                  <VisibilityIcon />
+                </IconButton>
+              </Tooltip>
+            }
           >
             <ListItemText primary={`${room.name1} vs ${room.name2}`} />
           </ListItem>

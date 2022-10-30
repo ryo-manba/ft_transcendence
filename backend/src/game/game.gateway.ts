@@ -231,11 +231,23 @@ export class GameGateway {
     }
   }
 
-  // @SubscribeMessage('watchList')
-  // getGameRooms(@ConnectedSocket() socket: Socket) {
-  //   // exclude duplications
-  //   const gameRooms = Array.from(new Set(Array.from(this.gameRooms.values())));
+  @SubscribeMessage('watchList')
+  getGameRooms(@ConnectedSocket() socket: Socket) {
+    // exclude duplications
+    type WatchInfo = {
+      roomName: string;
+      name1: string;
+      name2: string;
+    };
 
-  //   socket.emit('watchListed', JSON.stringify(gameRooms));
-  // }
+    const watchInfo: WatchInfo[] = this.gameRooms.map(
+      (room) =>
+        <WatchInfo>{
+          roomName: room.roomName,
+          name1: room.player1.name,
+          name2: room.player2.name,
+        },
+    );
+    socket.emit('watchListed', watchInfo);
+  }
 }

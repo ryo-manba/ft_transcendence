@@ -1,5 +1,5 @@
 import VideogameAssetSharpIcon from '@mui/icons-material/VideogameAssetSharp';
-import { Button, Grid, TextField } from '@mui/material';
+import { Button, Grid, TextField, Box } from '@mui/material';
 import React, { useRef } from 'react';
 import {
   usePlayStateStore,
@@ -36,7 +36,7 @@ export const Start = () => {
             boxShadow: 8,
           }}
         >
-          <b>Battle</b>
+          <Box fontWeight="fontWeightBold">Battle</Box>
         </Button>
       </Grid>
     </>
