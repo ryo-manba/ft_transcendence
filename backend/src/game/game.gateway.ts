@@ -152,6 +152,7 @@ export class GameGateway {
       (r) =>
         r.player1.socket.id === socket.id || r.player2.socket.id === socket.id,
     );
+    if (!room) return;
     const player =
       room.player1.socket.id === socket.id ? room.player1 : room.player2;
     const ball = room.ball;
