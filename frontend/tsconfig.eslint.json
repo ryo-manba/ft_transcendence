@@ -1,10 +1,9 @@
 {
 	"extends": "./tsconfig.json",
 	"include": [
-	  "pages/**/*.js",
-	  "pages/**/*.jsx",
-	  "pages/**/*.ts",
-	  "pages/**/*.tsx",
+	  "pages",
+	  "store",
+	  "components",
 	],
 	"exclude": [
 	  "node_modules"
