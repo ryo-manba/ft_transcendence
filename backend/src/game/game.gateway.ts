@@ -35,11 +35,6 @@ type RoomInfo = {
   isPlayer1Turn: boolean;
 };
 
-// type GameInfo = {
-//   player1: Player;
-//   player2: Player;
-//   ball: Ball;
-// };
 type GameInfo = {
   height1: number;
   height2: number;
@@ -172,7 +167,7 @@ export class GameGateway {
       player.height = updatedHeight;
     }
 
-    // Update yVec of ball
+    // Update yVec of ball when bouncing on side bars
     if (
       (ballVec.yVec < 0 && ball.y < GameGateway.highestPos) ||
       (0 < ballVec.yVec &&
@@ -189,12 +184,18 @@ export class GameGateway {
         ball.y <= room.player1.height + GameGateway.barLength
       ) {
         ballVec.xVec = 1;
+        ballVec.yVec =
+          ((ball.y - (room.player1.height + GameGateway.barLength / 2)) * 2) /
+          GameGateway.barLength;
       } else if (
         0 < ballVec.xVec &&
         room.player2.height <= ball.y &&
         ball.y <= room.player2.height + GameGateway.barLength
       ) {
         ballVec.xVec = -1;
+        ballVec.yVec =
+          ((ball.y - (room.player2.height + GameGateway.barLength / 2)) * 2) /
+          GameGateway.barLength;
       } else {
         isGameOver = true;
       }
