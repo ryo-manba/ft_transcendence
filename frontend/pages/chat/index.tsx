@@ -1,6 +1,10 @@
 import { useState, useEffect } from 'react';
 import { io } from 'socket.io-client';
-import { Button } from '@mui/material';
+import { Button, List } from '@mui/material';
+import Grid from '@mui/material/Unstable_Grid2';
+import AddCircleOutlineRounded from '@mui/icons-material/AddCircleOutlineRounded';
+import { Header } from 'components/common/Header';
+import { ChatRoomListItem } from 'components/chat/ChatRoomListItem';
 
 type ChatRoom = {
   name: string;
@@ -10,10 +14,14 @@ type ChatRoom = {
 };
 
 const socket = io('http://localhost:3001/chat');
+const appBarHeight = '64px';
 
 // TODO: name以外も指定できるようにする
 const createChatRoom = () => {
-  const name = String(window.prompt('チャンネル名を入力してください'));
+  const name = window.prompt('チャンネル名を入力してください');
+  if (name === null || name.length === 0) {
+    return;
+  }
   const room = {
     name: name,
     type: true,
@@ -24,14 +32,10 @@ const createChatRoom = () => {
   console.log('[DEBUG] room:create', room);
 };
 
-const showRooms = (rooms: ChatRoom[]) => {
-  return rooms.map((item, i) => <li key={i}>{item.name}</li>);
-};
-
 const Chat = () => {
   const [rooms, setRooms] = useState<ChatRoom[]>([]);
 
-  // アクセス時にチャットルームのデータを受けとる
+  // TODO: fetchに変更する
   useEffect(() => {
     socket.on('chat:connected', (data: ChatRoom[]) => {
       console.log('[DEBUG] chat:connected', data);
@@ -57,13 +61,58 @@ const Chat = () => {
 
   return (
     <>
-      <h1>Chat app</h1>
-      <hr />
-      <Button onClick={createChatRoom} variant="contained">
-        チャットルームを作成する
-      </Button>
-      <h2>Chat Room</h2>
-      <ul>{showRooms(rooms)}</ul>
+      <Header title="Chatroom" />
+      <Grid
+        container
+        direction="row"
+        justifyContent="center"
+        alignItems="stretch"
+        style={{ height: `calc(100vh - ${appBarHeight})` }}
+      >
+        <Grid
+          xs={2}
+          style={{
+            borderRight: '1px solid',
+            borderBottom: '1px solid',
+          }}
+        >
+          {/* TODO: Buttonコンポーネント作る */}
+          <Button
+            color="primary"
+            variant="outlined"
+            endIcon={
+              <AddCircleOutlineRounded color="primary" sx={{ fontSize: 32 }} />
+            }
+            fullWidth={true}
+            style={{ justifyContent: 'flex-start' }}
+            onClick={createChatRoom}
+          >
+            チャットルーム作成
+          </Button>
+          <List dense={false}>
+            {rooms.map((room, i) => (
+              <ChatRoomListItem key={i} name={room.name} />
+            ))}
+          </List>
+        </Grid>
+        <Grid
+          xs={8}
+          style={{
+            borderRight: '1px solid',
+            borderBottom: '1px solid',
+          }}
+        >
+          <h2>チャットスペース</h2>
+        </Grid>
+        <Grid
+          xs={2}
+          style={{
+            borderBottom: '1px solid',
+          }}
+        >
+          <h2>フレンドスペース</h2>
+        </Grid>
+      </Grid>
     </>
   );
 };
