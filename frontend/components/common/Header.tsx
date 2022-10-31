@@ -5,11 +5,16 @@ import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import HomeIcon from '@mui/icons-material/Home';
 
-export const ChatHeader = () => {
+type Props = {
+  title: string;
+};
+
+// titleがbarの左側に表示されます
+export const Header = ({ title }: Props) => {
   return (
     <AppBar position="static">
       <Toolbar style={{ justifyContent: 'space-between' }}>
-        <Typography>Chat room</Typography>
+        <Typography>{title}</Typography>
         <Link href="/">
           <IconButton aria-label="home">
             <HomeIcon />

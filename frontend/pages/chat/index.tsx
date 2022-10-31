@@ -3,7 +3,7 @@ import { io } from 'socket.io-client';
 import { Button, List } from '@mui/material';
 import Grid from '@mui/material/Unstable_Grid2';
 import AddCircleOutlineRounded from '@mui/icons-material/AddCircleOutlineRounded';
-import { ChatHeader } from 'components/chat/ChatHeader';
+import { Header } from 'components/common/Header';
 import { ChatRoomListItem } from 'components/chat/ChatRoomListItem';
 
 type ChatRoom = {
@@ -18,7 +18,10 @@ const appBarHeight = '64px';
 
 // TODO: name以外も指定できるようにする
 const createChatRoom = () => {
-  const name = String(window.prompt('チャンネル名を入力してください'));
+  const name = window.prompt('チャンネル名を入力してください');
+  if (name === null || name.length === 0) {
+    return;
+  }
   const room = {
     name: name,
     type: true,
@@ -58,7 +61,7 @@ const Chat = () => {
 
   return (
     <>
-      <ChatHeader />
+      <Header title="Chatroom" />
       <Grid
         container
         direction="row"
