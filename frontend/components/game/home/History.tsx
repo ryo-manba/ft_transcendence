@@ -2,17 +2,18 @@ import {
   List,
   ListItem,
   ListItemText,
-  Box,
   ListItemAvatar,
   Typography,
 } from '@mui/material';
+import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 
 type GameHistory = {
   opponentName: string;
   opponentScore: number;
   myScore: number;
   status: 'WIN' | 'LOSE';
-  color: 'primary.main' | 'error.main';
+  color: 'success.main' | 'error.main';
 };
 
 export const History = () => {
@@ -31,14 +32,14 @@ export const History = () => {
       opponentScore: 1,
       myScore: 3,
       status: 'WIN',
-      color: 'primary.main',
+      color: 'success.main',
     },
     {
       opponentName: 'BUCCI',
       opponentScore: 2,
       myScore: 3,
       status: 'WIN',
-      color: 'primary.main',
+      color: 'success.main',
     },
   ];
 
@@ -47,15 +48,29 @@ export const History = () => {
       <Typography variant="h2" align="center" gutterBottom>
         History
       </Typography>
-      <List>
+      <List sx={{ width: '95%', margin: 'auto' }}>
         {gameHistory?.map((item, index) => (
           <ListItem key={index} sx={{ border: '1px solid' }}>
-            <ListItemAvatar sx={{ color: 'error' }}>
-              <Box color={item.color}>{item.status}</Box>
+            <ListItemAvatar
+              sx={{
+                mr: 2,
+              }}
+            >
+              {item.status === 'WIN' ? (
+                <KeyboardArrowUpIcon color="primary" />
+              ) : (
+                <KeyboardArrowDownIcon color="primary" />
+              )}
             </ListItemAvatar>
             <ListItemText
-              primary={`${myName} ${item.myScore} - ${item.opponentScore} ${item.opponentName}`}
+              primaryTypographyProps={{
+                color: `${item.color}`,
+              }}
+              primary={`${item.status}`}
             />
+            <ListItemText primary={`${myName}`} />
+            <ListItemText primary={`${item.myScore} - ${item.opponentScore}`} />
+            <ListItemText primary={`${item.opponentName}`} />
           </ListItem>
         ))}
       </List>

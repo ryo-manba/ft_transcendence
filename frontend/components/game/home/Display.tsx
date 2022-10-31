@@ -1,4 +1,4 @@
-import { Grid, Paper } from '@mui/material';
+import { Grid, Paper, Typography } from '@mui/material';
 import { useEffect } from 'react';
 import {
   usePlayStateStore,
@@ -12,7 +12,6 @@ import { Play } from './Play';
 import { Wait } from './Wait';
 import { Watch } from './Watch';
 import { History } from './History';
-import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 
 export const Display = () => {
   const { socket, updateSocket } = useSocketStore();
@@ -27,24 +26,15 @@ export const Display = () => {
   }, []);
 
   return (
-    <Grid
-      container
-      alignItems="center"
-      justifyContent="center"
-      direction="row"
-      spacing={2}
-    >
+    <Grid container justifyContent="center" direction="row" spacing={2}>
       <Grid item xs={10}>
         <h2 style={{ textAlign: 'center' }}>WebSocket Sample App</h2>
       </Grid>
       <Grid item xs={5}>
         <Paper elevation={2}>
-          <EmojiEventsIcon
-            sx={{
-              width: '100%',
-              height: '100%',
-            }}
-          />
+          <Typography variant="h2" align="center" gutterBottom>
+            Profile
+          </Typography>
         </Paper>
       </Grid>
       <Grid item xs={5}>

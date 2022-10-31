@@ -8,7 +8,7 @@ import {
   IconButton,
 } from '@mui/material';
 import { useEffect, useState } from 'react';
-import { useSocketStore } from '../../../store/game/ClientSocket';
+import { useSocketStore } from 'store/game/ClientSocket';
 
 type WatchInfo = {
   roomName: string;
@@ -34,7 +34,7 @@ export const Watch = () => {
 
   return (
     <>
-      <Typography variant="h3" align="center" gutterBottom>
+      <Typography variant="h2" align="center" gutterBottom>
         Current Rooms
       </Typography>
       <List>

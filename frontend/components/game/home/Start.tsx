@@ -1,5 +1,5 @@
 import VideogameAssetSharpIcon from '@mui/icons-material/VideogameAssetSharp';
-import { Button, Grid, TextField, Box } from '@mui/material';
+import { Button, Grid, TextField, Box, Typography } from '@mui/material';
 import React, { useRef } from 'react';
 import { usePlayStateStore, stateWaiting } from 'store/game/home/PlayState';
 import { useSocketStore } from 'store/game/ClientSocket';
@@ -16,6 +16,9 @@ export const Start = () => {
 
   return (
     <>
+      <Typography variant="h2" align="center" gutterBottom>
+        Start Your Challenge!!
+      </Typography>
       <Grid item xs={12}>
         <TextField label="name" inputRef={playerNameRef} />
       </Grid>
@@ -30,6 +33,7 @@ export const Start = () => {
           endIcon={<VideogameAssetSharpIcon />}
           sx={{
             mt: 2,
+            mb: 2,
             boxShadow: 8,
           }}
         >
