@@ -31,6 +31,9 @@ export const ChatRoomListItem = ({ name }: Props) => {
           // TODO: チャットルームに入る
           console.log('click text');
         }}
+        style={{
+          overflow: 'hidden',
+        }}
       />
     </ListItem>
   );
