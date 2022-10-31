@@ -12,6 +12,7 @@ type Player = {
   name: string;
   socket: Socket;
   height: number;
+  score: number;
 };
 
 type Ball = {
@@ -35,11 +36,6 @@ type RoomInfo = {
   isPlayer1Turn: boolean;
 };
 
-// type GameInfo = {
-//   player1: Player;
-//   player2: Player;
-//   ball: Ball;
-// };
 type GameInfo = {
   height1: number;
   height2: number;
@@ -69,6 +65,7 @@ export class GameGateway {
   static leftEnd = 40;
   static rightEnd = 960;
   static barLength = 100;
+  static matchPoint = 3;
 
   @WebSocketServer()
   server: Server;
@@ -85,9 +82,6 @@ export class GameGateway {
         room.player1.socket.id !== socket.id &&
         room.player2.socket.id !== socket.id,
     );
-    this.waitingQueue = this.waitingQueue.filter(
-      (n) => n.socket.id !== socket.id,
-    );
   }
 
   setBallYVec() {
@@ -101,6 +95,7 @@ export class GameGateway {
         name: data,
         socket: socket,
         height: GameGateway.initialHeight,
+        score: 0,
       });
     } else {
       const player1 = this.waitingQueue.pop();
@@ -108,6 +103,7 @@ export class GameGateway {
         name: data,
         socket: socket,
         height: GameGateway.initialHeight,
+        score: 0,
       };
       console.log(player1, player2);
       const roomName = String(this.roomNum);
@@ -141,8 +137,20 @@ export class GameGateway {
       };
       this.gameRooms.push(newRoom);
 
-      this.server.to(roomName).emit('playStarted');
+      const playerNames: [string, string] = [player1.name, player2.name];
+
+      this.server.to(roomName).emit('playStarted', playerNames);
     }
+  }
+
+  finishGame(winner: Player, loser: Player) {
+    winner.socket.emit('win');
+    loser.socket.emit('lose');
+    winner.socket.disconnect(true);
+    loser.socket.disconnect(true);
+    this.gameRooms = this.gameRooms.filter(
+      (room) => room.player1 !== winner && room.player2 !== winner,
+    );
   }
 
   @SubscribeMessage('barMove')
@@ -157,6 +165,7 @@ export class GameGateway {
       (r) =>
         r.player1.socket.id === socket.id || r.player2.socket.id === socket.id,
     );
+    if (!room) return;
     const player =
       room.player1.socket.id === socket.id ? room.player1 : room.player2;
     const ball = room.ball;
@@ -172,7 +181,7 @@ export class GameGateway {
       player.height = updatedHeight;
     }
 
-    // Update yVec of ball
+    // Update yVec of ball when bouncing on side bars
     if (
       (ballVec.yVec < 0 && ball.y < GameGateway.highestPos) ||
       (0 < ballVec.yVec &&
@@ -182,21 +191,33 @@ export class GameGateway {
     }
 
     // Update xVec of ball
-    if (ball.x < GameGateway.leftEnd || GameGateway.rightEnd < ball.x) {
+    if (ball.x < GameGateway.leftEnd) {
       if (
         ballVec.xVec < 0 &&
         room.player1.height <= ball.y &&
         ball.y <= room.player1.height + GameGateway.barLength
       ) {
         ballVec.xVec = 1;
-      } else if (
+        ballVec.yVec =
+          ((ball.y - (room.player1.height + GameGateway.barLength / 2)) * 2) /
+          GameGateway.barLength;
+      } else {
+        isGameOver = true;
+        room.player2.score++;
+      }
+    } else if (GameGateway.rightEnd < ball.x) {
+      if (
         0 < ballVec.xVec &&
         room.player2.height <= ball.y &&
         ball.y <= room.player2.height + GameGateway.barLength
       ) {
         ballVec.xVec = -1;
+        ballVec.yVec =
+          ((ball.y - (room.player2.height + GameGateway.barLength / 2)) * 2) /
+          GameGateway.barLength;
       } else {
         isGameOver = true;
+        room.player1.score++;
       }
     }
 
@@ -210,13 +231,16 @@ export class GameGateway {
       ballVec.xVec = room.isPlayer1Turn ? 1 : -1;
       ballVec.yVec = this.setBallYVec();
       room.isPlayer1Turn = !room.isPlayer1Turn;
+      if (GameGateway.matchPoint === room.player1.score) {
+        this.finishGame(room.player1, room.player2);
+      } else if (GameGateway.matchPoint === room.player2.score) {
+        this.finishGame(room.player2, room.player1);
+      } else {
+        this.server
+          .to(room.roomName)
+          .emit('updateScores', [room.player1.score, room.player2.score]);
+      }
     }
-    const gameInfo: GameInfo = {
-      height1: room.player1.height,
-      height2: room.player2.height,
-      ball: room.ball,
-    };
-    this.server.to(room.roomName).emit('updateGameInfo', gameInfo);
   }
 
   @Interval(33)
