@@ -5,6 +5,8 @@ import {
   stateNothing,
   stateWaiting,
   statePlaying,
+  stateWinner,
+  stateLoser,
 } from 'store/game/home/PlayState';
 import { useSocketStore } from 'store/game/ClientSocket';
 import { Start } from './Start';
@@ -12,6 +14,8 @@ import { Play } from './Play';
 import { Wait } from './Wait';
 import { Watch } from './Watch';
 import { History } from './History';
+import { Winner } from './Winner';
+import { Loser } from './Loser';
 
 export const Display = () => {
   const { socket, updateSocket } = useSocketStore();
@@ -48,6 +52,8 @@ export const Display = () => {
             {playState === stateNothing && <Start />}
             {playState === stateWaiting && <Wait />}
             {playState === statePlaying && <Play />}
+            {playState === stateWinner && <Winner />}
+            {playState === stateLoser && <Loser />}
           </Grid>
         </Paper>
       </Grid>
