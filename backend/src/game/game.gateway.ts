@@ -82,6 +82,9 @@ export class GameGateway {
         room.player1.socket.id !== socket.id &&
         room.player2.socket.id !== socket.id,
     );
+    this.waitingQueue = this.waitingQueue.filter(
+      (player) => player.socket.id !== socket.id,
+    );
   }
 
   setBallYVec() {
