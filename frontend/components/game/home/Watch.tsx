@@ -29,7 +29,10 @@ export const Watch = () => {
       socket?.emit('watchList');
     }, 2000);
 
-    return () => clearInterval(id);
+    return () => {
+      clearInterval(id);
+      socket?.off('watchList');
+    };
   }, [socket]);
 
   return (
