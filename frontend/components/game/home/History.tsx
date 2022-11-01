@@ -18,25 +18,25 @@ type GameHistory = {
 
 export const History = () => {
   // [TODO] replace with DB data
-  const myName = 'shigechi';
+  const myName = 'YEAH';
   const gameHistory: GameHistory[] = [
     {
-      opponentName: 'JOJO',
+      opponentName: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
       opponentScore: 3,
       myScore: 2,
       status: 'LOSE',
       color: 'error.main',
     },
     {
-      opponentName: 'DIO',
+      opponentName: 'PLAYER1',
       opponentScore: 1,
       myScore: 3,
       status: 'WIN',
       color: 'success.main',
     },
     {
-      opponentName: 'BUCCI',
-      opponentScore: 2,
+      opponentName: 'PLAYER2',
+      opponentScore: 1,
       myScore: 3,
       status: 'WIN',
       color: 'success.main',
@@ -51,26 +51,61 @@ export const History = () => {
       <List sx={{ width: '95%', margin: 'auto' }}>
         {gameHistory?.map((item, index) => (
           <ListItem key={index} sx={{ border: '1px solid' }}>
-            <ListItemAvatar
-              sx={{
-                mr: 2,
-              }}
-            >
+            <ListItemAvatar>
               {item.status === 'WIN' ? (
-                <KeyboardArrowUpIcon color="primary" />
+                <KeyboardArrowUpIcon color="success" />
               ) : (
-                <KeyboardArrowDownIcon color="primary" />
+                <KeyboardArrowDownIcon color="error" />
               )}
             </ListItemAvatar>
+            {item.status === 'WIN' ? (
+              <ListItemText
+                primaryTypographyProps={{
+                  align: 'left',
+                  color: 'success.main',
+                }}
+                sx={{ width: '6%' }}
+                primary={'WIN'}
+              />
+            ) : (
+              <ListItemText
+                primaryTypographyProps={{
+                  align: 'left',
+                  color: 'error.main',
+                }}
+                sx={{ width: '6%' }}
+                primary={'LOSE'}
+              />
+            )}
             <ListItemText
+              primary={`${myName}`}
               primaryTypographyProps={{
-                color: `${item.color}`,
+                align: 'center',
+                style: {
+                  overflow: 'hidden',
+                },
               }}
-              primary={`${item.status}`}
+              sx={{ width: '30%' }}
             />
-            <ListItemText primary={`${myName}`} />
-            <ListItemText primary={`${item.myScore} - ${item.opponentScore}`} />
-            <ListItemText primary={`${item.opponentName}`} />
+            <ListItemText
+              primary={`${item.myScore} - ${item.opponentScore}`}
+              primaryTypographyProps={{
+                align: 'center',
+                style: {
+                  overflow: 'hidden',
+                },
+              }}
+            />
+            <ListItemText
+              primary={`${item.opponentName}`}
+              primaryTypographyProps={{
+                align: 'center',
+                style: {
+                  overflow: 'hidden',
+                },
+              }}
+              sx={{ width: '30%' }}
+            />
           </ListItem>
         ))}
       </List>

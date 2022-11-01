@@ -16,6 +16,7 @@ import { Watch } from './Watch';
 import { History } from './History';
 import { Winner } from './Winner';
 import { Loser } from './Loser';
+import { Header } from 'components/common/Header';
 
 export const Display = () => {
   const { socket, updateSocket } = useSocketStore();
@@ -30,43 +31,50 @@ export const Display = () => {
   }, []);
 
   return (
-    <Grid container justifyContent="center" direction="row" spacing={2}>
-      <Grid item xs={10}>
-        <h2 style={{ textAlign: 'center' }}>WebSocket Sample App</h2>
+    <>
+      <Header title="game" />
+      <Grid
+        container
+        justifyContent="center"
+        alignItems="stretch"
+        direction="row"
+        spacing={4}
+        sx={{ mt: 1 }}
+      >
+        <Grid item xs={5}>
+          <Paper elevation={2} sx={{ height: '100%' }}>
+            <Typography variant="h2" align="center" gutterBottom>
+              Profile
+            </Typography>
+          </Paper>
+        </Grid>
+        <Grid item xs={5}>
+          <Paper elevation={2} sx={{ height: '100%' }}>
+            <Grid
+              container
+              alignItems="center"
+              justifyContent="center"
+              direction="column"
+            >
+              {playState === stateNothing && <Start />}
+              {playState === stateWaiting && <Wait />}
+              {playState === statePlaying && <Play />}
+              {playState === stateWinner && <Winner />}
+              {playState === stateLoser && <Loser />}
+            </Grid>
+          </Paper>
+        </Grid>
+        <Grid item xs={5}>
+          <Paper elevation={2} sx={{ height: '100%' }}>
+            <History />
+          </Paper>
+        </Grid>
+        <Grid item xs={5}>
+          <Paper elevation={2} sx={{ height: '100%' }}>
+            <Watch />
+          </Paper>
+        </Grid>
       </Grid>
-      <Grid item xs={5}>
-        <Paper elevation={2}>
-          <Typography variant="h2" align="center" gutterBottom>
-            Profile
-          </Typography>
-        </Paper>
-      </Grid>
-      <Grid item xs={5}>
-        <Paper elevation={2}>
-          <Grid
-            container
-            alignItems="center"
-            justifyContent="center"
-            direction="column"
-          >
-            {playState === stateNothing && <Start />}
-            {playState === stateWaiting && <Wait />}
-            {playState === statePlaying && <Play />}
-            {playState === stateWinner && <Winner />}
-            {playState === stateLoser && <Loser />}
-          </Grid>
-        </Paper>
-      </Grid>
-      <Grid item xs={5}>
-        <Paper elevation={2}>
-          <History />
-        </Paper>
-      </Grid>
-      <Grid item xs={5}>
-        <Paper elevation={2}>
-          <Watch />
-        </Paper>
-      </Grid>
-    </Grid>
+    </>
   );
 };

@@ -37,7 +37,7 @@ export const Watch = () => {
       <Typography variant="h2" align="center" gutterBottom>
         Current Rooms
       </Typography>
-      <List>
+      <List sx={{ width: '95%', margin: 'auto' }}>
         {rooms?.map((room) => (
           <ListItem
             key={room.roomName}
@@ -50,7 +50,32 @@ export const Watch = () => {
               </Tooltip>
             }
           >
-            <ListItemText primary={`${room.name1} vs ${room.name2}`} />
+            <ListItemText
+              primary={`${room.name1}`}
+              primaryTypographyProps={{
+                align: 'center',
+                style: {
+                  overflow: 'hidden',
+                },
+              }}
+              sx={{ width: '40%' }}
+            />
+            <ListItemText
+              primary={`vs`}
+              primaryTypographyProps={{
+                align: 'center',
+              }}
+            />
+            <ListItemText
+              primary={`${room.name2}`}
+              primaryTypographyProps={{
+                align: 'center',
+                style: {
+                  overflow: 'hidden',
+                },
+              }}
+              sx={{ width: '40%' }}
+            />
           </ListItem>
         ))}
       </List>
