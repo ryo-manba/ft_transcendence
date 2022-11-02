@@ -7,6 +7,7 @@ import {
 } from '@nestjs/websockets';
 import { Socket, Server } from 'socket.io';
 import { Interval } from '@nestjs/schedule';
+import { RecordsService } from '../records/records.service';
 
 type Player = {
   name: string;
@@ -28,6 +29,7 @@ type BallVec = {
 };
 
 type RoomInfo = {
+  id: number;
   roomName: string;
   player1: Player;
   player2: Player;
@@ -49,6 +51,8 @@ type GameInfo = {
   namespace: '/game',
 })
 export class GameGateway {
+  constructor(private readonly records: RecordsService) {}
+
   roomNum = 0;
   gameRooms: RoomInfo[] = [];
   waitingQueue: Player[] = [];
@@ -74,9 +78,16 @@ export class GameGateway {
     console.log('hello', socket.id);
   }
 
-  handleDisconnect(socket: Socket) {
+  async handleDisconnect(socket: Socket) {
     console.log('bye', socket.id);
 
+    const room = this.gameRooms.find(
+      (r) =>
+        r.player1.socket.id === socket.id || r.player2.socket.id === socket.id,
+    );
+    if (!room) return;
+
+    await this.records.deleteGameRecord({ id: room.id });
     this.gameRooms = this.gameRooms.filter(
       (room) =>
         room.player1.socket.id !== socket.id &&
@@ -89,7 +100,10 @@ export class GameGateway {
   }
 
   @SubscribeMessage('playStart')
-  joinRoom(@ConnectedSocket() socket: Socket, @MessageBody() data: string) {
+  async joinRoom(
+    @ConnectedSocket() socket: Socket,
+    @MessageBody() data: string,
+  ) {
     if (this.waitingQueue.length == 0) {
       this.waitingQueue.push({
         name: data,
@@ -128,6 +142,7 @@ export class GameGateway {
       };
 
       const newRoom: RoomInfo = {
+        id: this.roomNum,
         roomName: roomName,
         player1: player1,
         player2: player2,
@@ -135,6 +150,18 @@ export class GameGateway {
         ballVec: ballVec,
         isPlayer1Turn: true,
       };
+
+      await this.records
+        .createGameRecord({
+          player1Name: player1.name,
+          player2Name: player2.name,
+          player1Score: 0,
+          player2Score: 0,
+          isPlaying: true,
+          winnerName: '',
+        })
+        .then((gameRecord) => (newRoom.id = gameRecord.id));
+
       this.gameRooms.push(newRoom);
 
       const playerNames: [string, string] = [player1.name, player2.name];
@@ -143,18 +170,22 @@ export class GameGateway {
     }
   }
 
-  finishGame(winner: Player, loser: Player) {
+  async finishGame(currentRoom: RoomInfo, winner: Player, loser: Player) {
     winner.socket.emit('win');
     loser.socket.emit('lose');
+    await this.records.updateGameRecord({
+      where: { id: currentRoom.id },
+      data: { winnerName: winner.name, isPlaying: false },
+    });
     winner.socket.disconnect(true);
     loser.socket.disconnect(true);
     this.gameRooms = this.gameRooms.filter(
-      (room) => room.player1 !== winner && room.player2 !== winner,
+      (room) => room.id !== currentRoom.id,
     );
   }
 
   @SubscribeMessage('barMove')
-  updatePlayerPos(
+  async updatePlayerPos(
     @ConnectedSocket() socket: Socket,
     @MessageBody() move: number,
   ) {
@@ -204,6 +235,10 @@ export class GameGateway {
       } else {
         isGameOver = true;
         room.player2.score++;
+        await this.records.updateGameRecord({
+          where: { id: room.id },
+          data: { player2Score: room.player2.score },
+        });
       }
     } else if (GameGateway.rightEnd < ball.x) {
       if (
@@ -218,6 +253,10 @@ export class GameGateway {
       } else {
         isGameOver = true;
         room.player1.score++;
+        await this.records.updateGameRecord({
+          where: { id: room.id },
+          data: { player1Score: room.player1.score },
+        });
       }
     }
 
@@ -232,9 +271,9 @@ export class GameGateway {
       ballVec.yVec = this.setBallYVec();
       room.isPlayer1Turn = !room.isPlayer1Turn;
       if (GameGateway.matchPoint === room.player1.score) {
-        this.finishGame(room.player1, room.player2);
+        await this.finishGame(room, room.player1, room.player2);
       } else if (GameGateway.matchPoint === room.player2.score) {
-        this.finishGame(room.player2, room.player1);
+        await this.finishGame(room, room.player2, room.player1);
       } else {
         this.server
           .to(room.roomName)

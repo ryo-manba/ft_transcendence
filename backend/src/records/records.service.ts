@@ -40,7 +40,7 @@ export class RecordsService {
     });
   }
 
-  async updateChatRoom(params: {
+  async updateGameRecord(params: {
     where: Prisma.GameRecordWhereUniqueInput;
     data: Prisma.GameRecordUpdateInput;
   }): Promise<GameRecord> {
@@ -52,7 +52,7 @@ export class RecordsService {
     });
   }
 
-  async deleteChatRoom(
+  async deleteGameRecord(
     where: Prisma.GameRecordWhereUniqueInput,
   ): Promise<GameRecord> {
     return this.prisma.gameRecord.delete({
