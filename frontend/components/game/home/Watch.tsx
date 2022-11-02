@@ -38,7 +38,7 @@ export const Watch = () => {
   return (
     <>
       <Typography variant="h2" align="center" gutterBottom>
-        Current Rooms
+        Ongoing battles
       </Typography>
       <List sx={{ width: '95%', margin: 'auto' }}>
         {rooms?.map((room) => (

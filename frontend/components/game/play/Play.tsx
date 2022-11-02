@@ -1,12 +1,12 @@
 import { Grid } from '@mui/material';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSocketStore } from 'store/game/ClientSocket';
-import { usePlayerNamesStore } from 'store/game/home/PlayerName';
+import { usePlayerNamesStore } from 'store/game/PlayerName';
 import {
   usePlayStateStore,
   stateWinner,
   stateLoser,
-} from 'store/game/home/PlayState';
+} from 'store/game/PlayState';
 
 // Question: Where should we define types that are used both in frontend and
 // backend while they are not used in the databases (therefore not defined or

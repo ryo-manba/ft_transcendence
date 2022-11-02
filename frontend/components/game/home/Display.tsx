@@ -4,18 +4,12 @@ import {
   usePlayStateStore,
   stateNothing,
   stateWaiting,
-  statePlaying,
-  stateWinner,
-  stateLoser,
-} from 'store/game/home/PlayState';
+} from 'store/game/PlayState';
 import { useSocketStore } from 'store/game/ClientSocket';
 import { Start } from './Start';
-import { Play } from './Play';
 import { Wait } from './Wait';
 import { Watch } from './Watch';
 import { History } from './History';
-import { Winner } from './Winner';
-import { Loser } from './Loser';
 import { Header } from 'components/common/Header';
 
 export const Display = () => {
@@ -58,9 +52,6 @@ export const Display = () => {
             >
               {playState === stateNothing && <Start />}
               {playState === stateWaiting && <Wait />}
-              {playState === statePlaying && <Play />}
-              {playState === stateWinner && <Winner />}
-              {playState === stateLoser && <Loser />}
             </Grid>
           </Paper>
         </Grid>
