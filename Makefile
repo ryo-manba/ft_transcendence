@@ -1,9 +1,11 @@
 NAME = ft_transcendence
+BACKEND = ./backend
+FRONTEND = ./frontend
 
 .PHONY: all
 all: $(NAME)
 
-$(NAME):
+$(NAME): setup
 	docker-compose up --build -d
 
 .PHONY: up
@@ -17,6 +19,12 @@ down:
 
 ps:
 		docker-compose ps
+
+migrate:
+		cd $(BACKEND) && yarn && yarn migrate
+
+setup: migrate
+		cd $(FRONTEND) && yarn
 
 .PHONY: clean
 clean: down
