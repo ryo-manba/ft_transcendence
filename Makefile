@@ -13,16 +13,18 @@ up:
 		docker-compose up -d
 
 .PHONY: down
-
 down:
 		docker-compose down
 
+.PHONY: ps
 ps:
 		docker-compose ps
 
+.PHONY: migrate
 migrate:
 		cd $(BACKEND) && yarn && yarn migrate
 
+.PHONY: setup
 setup: migrate
 		cd $(FRONTEND) && yarn
 
