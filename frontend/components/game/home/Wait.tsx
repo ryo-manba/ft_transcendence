@@ -1,8 +1,9 @@
 import { CircularProgress, Grid } from '@mui/material';
 import { useEffect } from 'react';
-import { usePlayStateStore, statePlaying } from 'store/game/home/PlayState';
+import { usePlayStateStore, statePlaying } from 'store/game/PlayState';
 import { useSocketStore } from 'store/game/ClientSocket';
-import { usePlayerNamesStore } from 'store/game/home/PlayerName';
+import { usePlayerNamesStore } from 'store/game/PlayerName';
+import { useRouter } from 'next/router';
 
 export const Wait = () => {
   const { socket } = useSocketStore();
@@ -11,10 +12,12 @@ export const Wait = () => {
     (store) => store.updatePlayerNames,
   );
 
+  const router = useRouter();
   useEffect(() => {
     socket?.on('playStarted', (playerNames: [string, string]) => {
-      updatePlayState(statePlaying);
       updatePlayerNames(playerNames);
+      updatePlayState(statePlaying);
+      void router.push('/game/play');
     });
 
     return () => {
