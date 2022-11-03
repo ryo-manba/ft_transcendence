@@ -34,3 +34,12 @@ model Message {
   chatRoom ChatRoom @relation(fields: [roomId], references: [id], onDelete: Cascade) // Roomが消されたらメッセージも削除される
   user     User     @relation(fields: [userId], references: [id])
 }
+
+model GameRecord {
+  id          Int       @id @default(autoincrement())
+  winnerName  String
+  loserName   String
+  winnerScore Int
+  loserScore  Int
+  createdAt   DateTime  @default(now())
+}
