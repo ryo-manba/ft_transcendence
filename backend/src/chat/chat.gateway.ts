@@ -30,21 +30,21 @@ export class ChatGateway {
   /**
    * チャットルームを作成する
    */
-  @SubscribeMessage('room:create')
+  @SubscribeMessage('chat:create')
   CreateRoom(@MessageBody() data: ChatRoomModel): void {
-    this.logger.log(`room:create': ${data.name}`);
+    this.logger.log(`chat:create': ${data.name}`);
     // とりあえずvoidで受ける
     void this.chatService.createChatRoom(data);
     // 送信者にdataを送り返す
-    this.server.emit('room:create', data);
+    this.server.emit('chat:create', data);
   }
 
   /**
    * チャットルーム一覧を返す
    */
-  @SubscribeMessage('room:getRooms')
+  @SubscribeMessage('chat:getRooms')
   async GetRooms(@ConnectedSocket() client: Socket) {
-    this.logger.log(`room:getRooms: ${client.id}`);
+    this.logger.log(`chat:getRooms: ${client.id}`);
     const data = await this.chatService.chatRooms({});
     this.server.emit('chat:getRooms', data);
   }

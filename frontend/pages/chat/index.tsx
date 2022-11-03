@@ -28,8 +28,8 @@ const createChatRoom = () => {
     author: 'admin',
     hashedPassword: '',
   };
-  socket.emit('room:create', room);
-  console.log('[DEBUG] room:create', room);
+  socket.emit('chat:create', room);
+  console.log('chat:create', room);
 };
 
 const Chat = () => {
@@ -50,13 +50,13 @@ const Chat = () => {
 
   // dbに保存ができたら,backendからreceiveする
   useEffect(() => {
-    socket.on('room:create', (data: ChatRoom) => {
-      console.log('room:create', data);
+    socket.on('chat:create', (data: ChatRoom) => {
+      console.log('chat:create', data);
       setRooms((rooms) => [...rooms, data]);
     });
 
     return () => {
-      socket.off('room:create');
+      socket.off('chat:create');
     };
   }, []);
 
