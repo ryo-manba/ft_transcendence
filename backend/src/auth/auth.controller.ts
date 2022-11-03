@@ -17,7 +17,7 @@ import { Csrf, Msg } from './interfaces/auth.interface';
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  @Get('/csrf')
+  @Get('csrf')
   getCsfrToken(@Req() req: Request): Csrf {
     return { csrfToken: req.csrfToken() };
   }
@@ -47,7 +47,7 @@ export class AuthController {
   }
 
   @HttpCode(HttpStatus.OK)
-  @Post('/logout')
+  @Post('logout')
   logout(@Req() req: Request, @Res({ passthrough: true }) res: Response): Msg {
     res.cookie('access_token', '', {
       httpOnly: true,

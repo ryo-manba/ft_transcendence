@@ -28,6 +28,5 @@ export class UserController {
     const req_user: RequestUser = req.user;
 
     return this.userService.updateUser(req_user.id, dto);
-    // return this.userService.updateUser(req.user.id, dto);
   }
 }
