@@ -80,12 +80,6 @@ export class GameGateway {
   handleDisconnect(socket: Socket) {
     console.log('bye', socket.id);
 
-    const room = this.gameRooms.find(
-      (r) =>
-        r.player1.socket.id === socket.id || r.player2.socket.id === socket.id,
-    );
-    if (!room) return;
-
     this.gameRooms = this.gameRooms.filter(
       (room) =>
         room.player1.socket.id !== socket.id &&
