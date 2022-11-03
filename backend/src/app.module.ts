@@ -8,6 +8,7 @@ import { ConfigModule } from '@nestjs/config';
 import { ChatModule } from './chat/chat.module';
 import { GameModule } from './game/game.module';
 import { ScheduleModule } from '@nestjs/schedule';
+import { RecordsModule } from './records/records.module';
 
 @Module({
   imports: [
@@ -17,7 +18,8 @@ import { ScheduleModule } from '@nestjs/schedule';
     PrismaModule,
     ChatModule,
     GameModule,
-    ScheduleModule.forRoot()
+    ScheduleModule.forRoot(),
+    RecordsModule
   ],
   controllers: [AppController],
   providers: [AppService],
