@@ -11,6 +11,7 @@ import { Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { ChatService } from './chat.service';
 import { ChatRoom as ChatRoomModel } from '@prisma/client';
+import { PostMessagesDto } from './dto/message.dto';
 
 @WebSocketGateway({
   cors: {
@@ -35,12 +36,27 @@ export class ChatGateway implements OnGatewayConnection {
     this.server.emit('chat:connected', data);
   }
 
+  /**
+   * チャットルームを作成する
+   * @param data
+   */
   @SubscribeMessage('room:create')
   CreateRoom(@MessageBody() data: ChatRoomModel): void {
-    this.logger.log(`[DEBUG] room:create': ${data.name}`);
+    this.logger.log(`room:create: ${data.name}`);
     // とりあえずvoidで受ける
     void this.chatService.createChatRoom(data);
     // 送信者にdataを送り返す
     this.server.emit('room:created', data);
+  }
+
+  /**
+   * メッセージを受け取る
+   * @param Message
+   * Todo: DBに保存する
+   */
+  @SubscribeMessage('chat:sendMessage')
+  Echo(@MessageBody() data: PostMessagesDto): void {
+    this.logger.log(`chat:sendMessage received`);
+    this.server.emit('chat:sendMessage', data);
   }
 }
