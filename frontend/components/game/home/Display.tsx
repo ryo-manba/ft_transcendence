@@ -4,6 +4,7 @@ import {
   usePlayStateStore,
   stateNothing,
   stateWaiting,
+  statePlaying,
 } from 'store/game/PlayState';
 import { useSocketStore } from 'store/game/ClientSocket';
 import { Start } from './Start';
@@ -51,7 +52,9 @@ export const Display = () => {
               direction="column"
             >
               {playState === stateNothing && <Start />}
-              {playState === stateWaiting && <Wait />}
+              {(playState === stateWaiting || playState === statePlaying) && (
+                <Wait />
+              )}
             </Grid>
           </Paper>
         </Grid>
