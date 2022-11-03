@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { io } from 'socket.io-client';
-import { Button, List } from '@mui/material';
+import { Button, List, TextField, IconButton } from '@mui/material';
 import Grid from '@mui/material/Unstable_Grid2';
 import AddCircleOutlineRounded from '@mui/icons-material/AddCircleOutlineRounded';
+import SendIcon from '@mui/icons-material/Send';
 import { Header } from 'components/common/Header';
 import { ChatRoomListItem } from 'components/chat/ChatRoomListItem';
 
@@ -11,6 +12,12 @@ type ChatRoom = {
   type: boolean;
   author: string;
   hashedPassword?: string;
+};
+
+type Message = {
+  userId: number;
+  roomId: number;
+  message: string;
 };
 
 const socket = io('http://localhost:3001/chat');
@@ -34,6 +41,8 @@ const createChatRoom = () => {
 
 const Chat = () => {
   const [rooms, setRooms] = useState<ChatRoom[]>([]);
+  const [text, setText] = useState('');
+  const [messages, setMessages] = useState<Message[]>([]);
 
   // TODO: fetchに変更する
   useEffect(() => {
@@ -56,6 +65,44 @@ const Chat = () => {
 
     return () => {
       socket.off('room:created');
+    };
+  }, []);
+
+  const showMessage = (list: Message[]) => {
+    return list.map((item, i) => (
+      <li key={i}>
+        <strong>{item.userId}: </strong>
+        {item.message}
+      </li>
+    ));
+  };
+
+  const sample = () => {
+    console.log('sample: before->', text);
+    setText('');
+    console.log('sample: after->', text);
+  };
+
+  // send a message to the server
+  const sendMessage = () => {
+    console.log('chat:sendMessage -> emit');
+    const message = { userId: 1, roomId: 1, message: text };
+    socket.emit('chat:sendMessage', message);
+    console.log('text before:', text);
+    // setText('');
+    sample();
+    console.log('text after:', text);
+  };
+
+  // receive a message from the server
+  useEffect(() => {
+    socket.on('chat:sendMessage', (data: Message) => {
+      console.log('chat:sendMessage -> receive', data.message);
+      setMessages((prev) => [...prev, data]);
+    });
+
+    return () => {
+      socket.off('chat:sendMessage');
     };
   }, []);
 
@@ -103,6 +150,38 @@ const Chat = () => {
           }}
         >
           <h2>チャットスペース</h2>
+          <div style={{ marginLeft: 5, marginRight: 5 }}>
+            <TextField
+              autoFocus
+              fullWidth
+              label="Message"
+              id="Message"
+              type="text"
+              variant="standard"
+              size="small"
+              value={text}
+              placeholder={`#roomへメッセージを送信`}
+              onKeyPress={(e) => {
+                if (e.key === 'Enter') {
+                  sendMessage();
+                }
+              }}
+              onChange={(e) => {
+                setText(e.target.value);
+              }}
+              InputProps={{
+                endAdornment: (
+                  <IconButton onClick={sendMessage}>
+                    <SendIcon />
+                  </IconButton>
+                ),
+              }}
+            />
+            <p>
+              <strong>Talk Room</strong>
+            </p>
+            <ul>{showMessage(messages)}</ul>
+          </div>
         </Grid>
         <Grid
           xs={2}
