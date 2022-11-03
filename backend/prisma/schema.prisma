@@ -36,12 +36,10 @@ model Message {
 }
 
 model GameRecord {
-  id            Int       @id @default(autoincrement())
-  player1Name   String
-  player2Name   String
-  createdAt     DateTime  @default(now())
-  player1Score  Int
-  player2Score  Int
-  isPlaying     Boolean
-  winnerName    String
+  id          Int       @id @default(autoincrement())
+  winnerName  String
+  loserName   String
+  winnerScore Int
+  loserScore  Int
+  createdAt   DateTime  @default(now())
 }

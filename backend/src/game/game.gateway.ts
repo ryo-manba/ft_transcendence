@@ -29,7 +29,6 @@ type BallVec = {
 };
 
 type RoomInfo = {
-  id: number;
   roomName: string;
   player1: Player;
   player2: Player;
@@ -78,7 +77,7 @@ export class GameGateway {
     console.log('hello', socket.id);
   }
 
-  async handleDisconnect(socket: Socket) {
+  handleDisconnect(socket: Socket) {
     console.log('bye', socket.id);
 
     const room = this.gameRooms.find(
@@ -87,7 +86,6 @@ export class GameGateway {
     );
     if (!room) return;
 
-    await this.records.deleteGameRecord({ id: room.id });
     this.gameRooms = this.gameRooms.filter(
       (room) =>
         room.player1.socket.id !== socket.id &&
@@ -100,10 +98,7 @@ export class GameGateway {
   }
 
   @SubscribeMessage('playStart')
-  async joinRoom(
-    @ConnectedSocket() socket: Socket,
-    @MessageBody() data: string,
-  ) {
+  joinRoom(@ConnectedSocket() socket: Socket, @MessageBody() data: string) {
     if (this.waitingQueue.length == 0) {
       this.waitingQueue.push({
         name: data,
@@ -142,7 +137,6 @@ export class GameGateway {
       };
 
       const newRoom: RoomInfo = {
-        id: this.roomNum,
         roomName: roomName,
         player1: player1,
         player2: player2,
@@ -150,17 +144,6 @@ export class GameGateway {
         ballVec: ballVec,
         isPlayer1Turn: true,
       };
-
-      await this.records
-        .createGameRecord({
-          player1Name: player1.name,
-          player2Name: player2.name,
-          player1Score: 0,
-          player2Score: 0,
-          isPlaying: true,
-          winnerName: '',
-        })
-        .then((gameRecord) => (newRoom.id = gameRecord.id));
 
       this.gameRooms.push(newRoom);
 
@@ -173,14 +156,16 @@ export class GameGateway {
   async finishGame(currentRoom: RoomInfo, winner: Player, loser: Player) {
     winner.socket.emit('win');
     loser.socket.emit('lose');
-    await this.records.updateGameRecord({
-      where: { id: currentRoom.id },
-      data: { winnerName: winner.name, isPlaying: false },
+    await this.records.createGameRecord({
+      winnerName: winner.name,
+      loserName: loser.name,
+      winnerScore: winner.score,
+      loserScore: loser.score,
     });
     winner.socket.disconnect(true);
     loser.socket.disconnect(true);
     this.gameRooms = this.gameRooms.filter(
-      (room) => room.id !== currentRoom.id,
+      (room) => room.roomName !== currentRoom.roomName,
     );
   }
 
@@ -235,10 +220,6 @@ export class GameGateway {
       } else {
         isGameOver = true;
         room.player2.score++;
-        await this.records.updateGameRecord({
-          where: { id: room.id },
-          data: { player2Score: room.player2.score },
-        });
       }
     } else if (GameGateway.rightEnd < ball.x) {
       if (
@@ -253,10 +234,6 @@ export class GameGateway {
       } else {
         isGameOver = true;
         room.player1.score++;
-        await this.records.updateGameRecord({
-          where: { id: room.id },
-          data: { player1Score: room.player1.score },
-        });
       }
     }
 
