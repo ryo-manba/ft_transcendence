@@ -70,8 +70,13 @@ export const Wait = () => {
               <DoneOutlineIcon />
             )}
           </Grid>
-          <Grid item sx={{ mt: 1, mb: 1 }}>
-            <Typography id="modal-modal-title" align="center" fontSize="1.2rem">
+          <Grid item sx={{ mt: 3 }}>
+            <Typography
+              variant="h6"
+              id="modal-modal-title"
+              align="center"
+              gutterBottom
+            >
               Waiting for Opponent...
             </Typography>
           </Grid>

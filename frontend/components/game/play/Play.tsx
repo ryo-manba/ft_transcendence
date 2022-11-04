@@ -1,4 +1,4 @@
-import { Grid } from '@mui/material';
+import { Grid, Typography, Zoom } from '@mui/material';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSocketStore } from 'store/game/ClientSocket';
 import { usePlayerNamesStore } from 'store/game/PlayerName';
@@ -30,6 +30,8 @@ export const Play = () => {
   const { playerNames } = usePlayerNamesStore();
   const [scores, updateScores] = useState<[number, number]>([0, 0]);
   const updatePlayState = usePlayStateStore((store) => store.updatePlayState);
+  const [countDown, updateCountDown] = useState(3);
+  const [changeCount, updateChangeCount] = useState(true);
 
   // Game parameters
   const barWidth = 20;
@@ -123,8 +125,10 @@ export const Play = () => {
     });
 
     const id = setInterval(() => {
-      socket?.emit('barMove', move);
-      move = 0;
+      if (countDown === 0) {
+        socket?.emit('barMove', move);
+        move = 0;
+      }
     }, 33);
 
     return () => {
@@ -132,7 +136,7 @@ export const Play = () => {
       clearInterval(id);
       socket?.off('updateGameInfo');
     };
-  }, [drawField]);
+  }, [drawField, countDown]);
 
   useEffect(() => {
     socket?.on('updateScores', (newScores: [number, number]) => {
@@ -158,71 +162,110 @@ export const Play = () => {
     };
   }, [socket]);
 
+  useEffect(() => {
+    setTimeout(() => {
+      updateChangeCount(false);
+      updateCountDown(0);
+    }, 3000);
+    setTimeout(() => {
+      updateChangeCount(false);
+    }, 2000);
+    setTimeout(() => {
+      updateCountDown(1);
+      updateChangeCount(true);
+    }, 2200);
+    setTimeout(() => {
+      updateChangeCount(false);
+    }, 1000);
+    setTimeout(() => {
+      updateCountDown(2);
+      updateChangeCount(true);
+    }, 1200);
+  }, []);
+
   return (
-    <div>
-      <Grid container>
+    <>
+      {countDown !== 0 && (
         <Grid
-          container
-          item
-          xs={5}
-          direction="row"
-          alignItems="center"
-          justifyContent="center"
+          sx={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+          }}
         >
-          <h2>{playerNames[0]}</h2>
+          <Zoom in={changeCount}>
+            <Typography variant="h1" fontFamily="sans-serif">
+              {countDown}
+            </Typography>
+          </Zoom>
         </Grid>
-        <Grid
-          container
-          item
-          xs={2}
-          direction="row"
-          alignItems="center"
-          justifyContent="center"
-        >
-          <h2>VS</h2>
+      )}
+      <div>
+        <Grid container>
+          <Grid
+            container
+            item
+            xs={5}
+            direction="row"
+            alignItems="center"
+            justifyContent="center"
+          >
+            <h2>{playerNames[0]}</h2>
+          </Grid>
+          <Grid
+            container
+            item
+            xs={2}
+            direction="row"
+            alignItems="center"
+            justifyContent="center"
+          >
+            <h2>VS</h2>
+          </Grid>
+          <Grid
+            container
+            item
+            xs={5}
+            direction="row"
+            alignItems="center"
+            justifyContent="center"
+          >
+            <h2>{playerNames[1]}</h2>
+          </Grid>
+          <Grid
+            container
+            item
+            xs={5}
+            direction="row"
+            alignItems="center"
+            justifyContent="center"
+          >
+            <h2>{scores[0]}</h2>
+          </Grid>
+          <Grid
+            container
+            item
+            xs={2}
+            direction="row"
+            alignItems="center"
+            justifyContent="center"
+          >
+            <h2>:</h2>
+          </Grid>
+          <Grid
+            container
+            item
+            xs={5}
+            direction="row"
+            alignItems="center"
+            justifyContent="center"
+          >
+            <h2>{scores[1]}</h2>
+          </Grid>
         </Grid>
-        <Grid
-          container
-          item
-          xs={5}
-          direction="row"
-          alignItems="center"
-          justifyContent="center"
-        >
-          <h2>{playerNames[1]}</h2>
-        </Grid>
-        <Grid
-          container
-          item
-          xs={5}
-          direction="row"
-          alignItems="center"
-          justifyContent="center"
-        >
-          <h2>{scores[0]}</h2>
-        </Grid>
-        <Grid
-          container
-          item
-          xs={2}
-          direction="row"
-          alignItems="center"
-          justifyContent="center"
-        >
-          <h2>:</h2>
-        </Grid>
-        <Grid
-          container
-          item
-          xs={5}
-          direction="row"
-          alignItems="center"
-          justifyContent="center"
-        >
-          <h2>{scores[1]}</h2>
-        </Grid>
-      </Grid>
-      <canvas ref={canvasRef} width={canvasWidth} height={canvasHeight} />
-    </div>
+        <canvas ref={canvasRef} width={canvasWidth} height={canvasHeight} />
+      </div>
+    </>
   );
 };

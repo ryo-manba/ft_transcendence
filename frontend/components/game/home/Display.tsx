@@ -16,9 +16,11 @@ import { Header } from 'components/common/Header';
 export const Display = () => {
   const { socket, updateSocket } = useSocketStore();
   const { playState } = usePlayStateStore();
+  const updatePlayState = usePlayStateStore((store) => store.updatePlayState);
 
   useEffect(() => {
     updateSocket('ws://localhost:3001/game');
+    updatePlayState(stateNothing);
 
     return () => {
       socket?.disconnect();

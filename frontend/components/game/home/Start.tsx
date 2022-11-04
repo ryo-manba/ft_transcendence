@@ -17,7 +17,7 @@ export const Start = () => {
   return (
     <>
       <Typography variant="h2" align="center" gutterBottom>
-        Play Game!!
+        New Game!!
       </Typography>
       <Grid item xs={12}>
         <TextField label="name" inputRef={playerNameRef} />
