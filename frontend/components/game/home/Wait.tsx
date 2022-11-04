@@ -90,17 +90,3 @@ export const Wait = () => {
     </Grid>
   );
 };
-
-{
-  /* <Box sx={{
-  margin: 'auto',
-  position: 'absolute' as 'absolute',
-  top: '50%',
-  left: '50%',
-  transform: 'translate(-50%, -50%)',
-  width: '30%',
-  height: '20%',
-  bgcolor: 'background.paper',
-  textAlign: 'center'
-}}> */
-}
