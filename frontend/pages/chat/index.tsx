@@ -18,6 +18,7 @@ type Message = {
   userId: number;
   roomId: number;
   message: string;
+  userName?: string;
 };
 
 const socket = io('http://localhost:3001/chat');
@@ -39,10 +40,25 @@ const createChatRoom = () => {
   console.log('chat:create', room);
 };
 
+const sampleMessage = [
+  {
+    userId: 1,
+    roomId: 1,
+    message: 'hey!',
+    // userName: 'user1',
+  },
+  {
+    userId: 2,
+    roomId: 1,
+    message: 'hello!',
+    // userName: 'user2',
+  },
+];
+
 const Chat = () => {
   const [rooms, setRooms] = useState<ChatRoom[]>([]);
   const [text, setText] = useState('');
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<Message[]>(sampleMessage);
 
   useEffect(() => {
     socket.on('chat:getRooms', (data: ChatRoom[]) => {
@@ -72,16 +88,11 @@ const Chat = () => {
   const showMessage = (list: Message[]) => {
     return list.map((item, i) => (
       <li key={i}>
-        <strong>{item.userId}: </strong>
+        {/* <strong>{`user${item.userId}`}: </strong> */}
+        <strong>{item.userName}: </strong>
         {item.message}
       </li>
     ));
-  };
-
-  const sample = () => {
-    console.log('sample: before->', text);
-    setText('');
-    console.log('sample: after->', text);
   };
 
   // send a message to the server
@@ -89,10 +100,7 @@ const Chat = () => {
     console.log('chat:sendMessage -> emit');
     const message = { userId: 1, roomId: 1, message: text };
     socket.emit('chat:sendMessage', message);
-    console.log('text before:', text);
-    // setText('');
-    sample();
-    console.log('text after:', text);
+    setText('');
   };
 
   // receive a message from the server
@@ -106,6 +114,35 @@ const Chat = () => {
       socket.off('chat:sendMessage');
     };
   }, []);
+  useEffect(() => {
+    socket.on('chat:receiveMessage', (data: Message) => {
+      console.log('chat:receiveMessage -> receive', data.message);
+      setMessages((prev) => [...prev, data]);
+    });
+
+    return () => {
+      socket.off('chat:receiveMessage');
+    };
+  }, []);
+
+  // 入室に成功したら、既存のメッセージを受け取る
+  useEffect(() => {
+    socket.on('chat:joinRoom', (data: Message[]) => {
+      console.log('chat:joinRoom -> receive', data[0].message);
+      setMessages(data);
+    });
+
+    return () => {
+      socket.off('chat:joinRoom');
+    };
+  });
+
+  const joinRoom = () => {
+    socket.emit('chat:joinRoom', sampleMessage[1]);
+  };
+  const leaveRoom = () => {
+    socket.emit('chat:leaveRoom', sampleMessage[1]);
+  };
 
   return (
     <>
@@ -151,6 +188,8 @@ const Chat = () => {
           }}
         >
           <h2>チャットスペース</h2>
+          <button onClick={joinRoom}>joinRoom1</button>
+          <button onClick={leaveRoom}>leaveRoom1</button>
           <div style={{ marginLeft: 5, marginRight: 5 }}>
             <TextField
               autoFocus

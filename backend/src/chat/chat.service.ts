@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
-import { ChatRoom, Prisma } from '@prisma/client';
+import { ChatRoom, Message, Prisma } from '@prisma/client';
 
 @Injectable()
 export class ChatService {
@@ -56,5 +56,12 @@ export class ChatService {
     return this.prisma.chatRoom.delete({
       where,
     });
+  }
+
+  /**
+   * 引数がUncheckedでいいのか
+   */
+  async addMessage(data: Prisma.MessageUncheckedCreateInput): Promise<Message> {
+    return this.prisma.message.create({ data });
   }
 }
