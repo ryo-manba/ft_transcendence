@@ -62,13 +62,15 @@ export class GameGateway {
   static ballInitialY = 300;
   static ballRadius = 10;
   static ballInitialXVec = -1;
-  static ballSpeed = 1.5;
+  static ballSpeed = 4;
   static highestPos = 10; // top left corner of the canvas is (0, 0)
   static lowestPos = 490;
   static leftEnd = 40;
   static rightEnd = 960;
   static barLength = 100;
   static matchPoint = 3;
+  static boardWidth = 1000;
+  static barSpeed = 20;
 
   @WebSocketServer()
   server: Server;
@@ -105,7 +107,7 @@ export class GameGateway {
       });
     } else {
       const player1 = this.waitingQueue.pop();
-      const player2 = {
+      const player2: Player = {
         name: data,
         socket: socket,
         height: GameGateway.initialHeight,
@@ -185,7 +187,7 @@ export class GameGateway {
     const ballVec = room.ballVec;
 
     // Update player position using information received
-    const updatedHeight = player.height + move;
+    const updatedHeight = player.height + move * GameGateway.barSpeed;
     if (updatedHeight < GameGateway.highestPos) {
       player.height = GameGateway.highestPos;
     } else if (GameGateway.lowestPos < updatedHeight) {

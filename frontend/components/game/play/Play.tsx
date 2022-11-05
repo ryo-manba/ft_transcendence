@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSocketStore } from 'store/game/ClientSocket';
-import { usePlayerNamesStore } from 'store/game/PlayerName';
+import { usePlayerNamesStore } from 'store/game/PlayerNames';
 import {
   usePlayStateStore,
   stateWinner,
@@ -37,38 +37,43 @@ type GameParameters = {
   ballInitialX: number;
   ballInitialY: number;
   ballRadius: number;
+  widthRatio: number;
 };
+
+const convert2Int = (float: number) => float - (float % 1);
 
 const getGameParameters = (canvasWidth: number) => {
   const gameParameters: GameParameters = {
     canvasWidth,
-    canvasHeight: canvasWidth * 0.6,
-    barWidth: canvasWidth * 0.02,
+    canvasHeight: convert2Int(canvasWidth * 0.6),
+    barWidth: convert2Int(canvasWidth * 0.02),
     barLength: 0,
     barSpeed: 0,
-    player1X: canvasWidth * 0.02,
-    player2X: canvasWidth * 0.96,
+    player1X: convert2Int(canvasWidth * 0.02),
+    player2X: convert2Int(canvasWidth * 0.96),
     highestPos: 0,
     lowestPos: 0,
-    sideBarLeft: canvasWidth * 0.05,
-    sideBarRight: canvasWidth * 0.95,
+    sideBarLeft: convert2Int(canvasWidth * 0.05),
+    sideBarRight: convert2Int(canvasWidth * 0.95),
     lineDashStyle: [20, 5],
     initialHeight: 0,
-    ballInitialX: canvasWidth / 2,
+    ballInitialX: convert2Int(canvasWidth / 2),
     ballInitialY: 0,
-    ballRadius: 10,
-    //  ballRadius: canvasWidth * 0.01,
+    ballRadius: convert2Int(canvasWidth * 0.01),
+    widthRatio: 0,
   };
-  gameParameters.barLength = gameParameters.canvasHeight / 6;
-  gameParameters.barSpeed = gameParameters.barLength / 5;
-  gameParameters.highestPos = gameParameters.canvasHeight / 60;
+  gameParameters.barLength = convert2Int(gameParameters.canvasHeight / 6);
+  gameParameters.barSpeed = convert2Int(gameParameters.barLength / 5);
+  gameParameters.highestPos = convert2Int(gameParameters.canvasHeight / 60);
   gameParameters.lowestPos =
     gameParameters.canvasHeight -
     gameParameters.highestPos -
     gameParameters.barLength;
-  gameParameters.initialHeight =
-    gameParameters.canvasHeight / 2 - gameParameters.barLength / 2;
-  gameParameters.ballInitialY = gameParameters.canvasHeight / 2;
+  gameParameters.initialHeight = convert2Int(
+    gameParameters.canvasHeight / 2 - gameParameters.barLength / 2,
+  );
+  gameParameters.ballInitialY = convert2Int(gameParameters.canvasHeight / 2);
+  gameParameters.widthRatio = gameParameters.canvasWidth / 1000; // 1000 is the width of the gameboard in the backend
 
   return gameParameters;
 };
@@ -161,9 +166,9 @@ export const Play = () => {
     const onKeyDown = (e: KeyboardEvent) => {
       const key = e.code;
       if (key === 'ArrowDown') {
-        move += gameParameters.barSpeed;
+        ++move;
       } else if (key === 'ArrowUp') {
-        move -= gameParameters.barSpeed;
+        --move;
       }
       console.log(move);
     };
@@ -178,7 +183,18 @@ export const Play = () => {
     render();
 
     socket?.on('updateGameInfo', (newGameInfo: GameInfo) => {
-      updateGameInfo(newGameInfo);
+      const rescaledGameInfo: GameInfo = {
+        height1: convert2Int(newGameInfo.height1 * gameParameters.widthRatio),
+        height2: convert2Int(newGameInfo.height2 * gameParameters.widthRatio),
+        ball: {
+          x: convert2Int(newGameInfo.ball.x * gameParameters.widthRatio),
+          y: convert2Int(newGameInfo.ball.y * gameParameters.widthRatio),
+          radius: convert2Int(
+            newGameInfo.ball.radius * gameParameters.widthRatio,
+          ),
+        },
+      };
+      updateGameInfo(rescaledGameInfo);
     });
 
     const id = setInterval(() => {

@@ -2,7 +2,7 @@ import { CircularProgress, Grid } from '@mui/material';
 import { useEffect } from 'react';
 import { usePlayStateStore, statePlaying } from 'store/game/PlayState';
 import { useSocketStore } from 'store/game/ClientSocket';
-import { usePlayerNamesStore } from 'store/game/PlayerName';
+import { usePlayerNamesStore } from 'store/game/PlayerNames';
 import { useRouter } from 'next/router';
 
 export const Wait = () => {
