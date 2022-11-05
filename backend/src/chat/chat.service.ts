@@ -59,9 +59,26 @@ export class ChatService {
   }
 
   /**
-   * 引数がUncheckedでいいのか
+   * TODO: 引数をDTOにしたい
    */
   async addMessage(data: Prisma.MessageUncheckedCreateInput): Promise<Message> {
     return this.prisma.message.create({ data });
+  }
+
+  /**
+   * chatroomに紐づいたメッセージを取得する
+   * TODO: 引数に応じて取得する数を調整する
+   */
+  async findMessages(
+    charRoomWhereUniqueInput: Prisma.ChatRoomWhereUniqueInput,
+  ): Promise<Message[] | null> {
+    const res = await this.prisma.chatRoom.findUnique({
+      where: charRoomWhereUniqueInput,
+      include: {
+        message: true,
+      },
+    });
+
+    return res.message;
   }
 }

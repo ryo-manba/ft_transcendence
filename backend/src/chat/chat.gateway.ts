@@ -53,9 +53,8 @@ export class ChatGateway {
   }
 
   /**
-   * メッセージを受け取る
+   * メッセージを保存してチャットルーム全体に内容を送信する
    * @param Message
-   * Todo: DBに保存する
    */
   @SubscribeMessage('chat:sendMessage')
   async onMessage(
@@ -69,33 +68,27 @@ export class ChatGateway {
   }
 
   /**
+   * チャットルームに入室する
    * @param RoomID
    */
   @SubscribeMessage('chat:joinRoom')
-  JoinRoom(client: Socket, data: MessageModel): void {
+  async JoinRoom(client: Socket, data: MessageModel): Promise<any> {
     this.logger.log(`chat:joinRoom received -> ${data.roomId}`);
-    this.logger.log(data);
-    this.logger.log(`chat:roomId: ${data.roomId}`);
 
-    const res = client.join(String(data.roomId));
-    if (res) {
-      console.log(`join: ${data.message}}`);
-    }
+    await client.join(String(data.roomId));
 
-    //    const messages = await this.chatService.findMessages(data, 25);
-    // Send last messages to the connected user
-    //    client.emit('message', messages);
-
-    // メッセージを取得する
-    const m1 = { userId: 1, roomId: 1, message: '111' };
-    const m2 = { userId: 1, roomId: 1, message: '222' };
-    const m3 = { userId: 1, roomId: 1, message: '333' };
-    const m = [m1, m2, m3];
-
-    // そのチャットルームのメッセージを送り返す
-    this.server.emit('chat:joinRoom', m);
+    // 既存のメッセージを取得する
+    // TODO: limitで上限をつける
+    const messages = await this.chatService.findMessages({ id: data.roomId });
+    // 既存のメッセージを送り返す
+    this.server.emit('chat:joinRoom', messages);
   }
 
+  /**
+   * チャットルームから退出する
+   * @param client
+   * @param data
+   */
   @SubscribeMessage('chat:leaveRoom')
   async onRoomLeave(
     @ConnectedSocket() client: Socket,
