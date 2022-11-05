@@ -170,7 +170,6 @@ export const Play = () => {
       } else if (key === 'ArrowUp') {
         --move;
       }
-      console.log(move);
     };
 
     document.addEventListener('keydown', onKeyDown);
@@ -200,7 +199,7 @@ export const Play = () => {
     const id = setInterval(() => {
       socket?.emit('barMove', move);
       move = 0;
-    }, 33);
+    }, 17);
 
     return () => {
       window.cancelAnimationFrame(animationFrameId);

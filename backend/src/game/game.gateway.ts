@@ -6,7 +6,6 @@ import {
   WebSocketServer,
 } from '@nestjs/websockets';
 import { Socket, Server } from 'socket.io';
-import { Interval } from '@nestjs/schedule';
 import { RecordsService } from '../records/records.service';
 
 type Player = {
@@ -62,7 +61,7 @@ export class GameGateway {
   static ballInitialY = 300;
   static ballRadius = 10;
   static ballInitialXVec = -1;
-  static ballSpeed = 4;
+  static ballSpeed = 2.5;
   static highestPos = 10; // top left corner of the canvas is (0, 0)
   static lowestPos = 490;
   static leftEnd = 40;
@@ -70,7 +69,7 @@ export class GameGateway {
   static barLength = 100;
   static matchPoint = 3;
   static boardWidth = 1000;
-  static barSpeed = 20;
+  static barSpeed = 30;
 
   @WebSocketServer()
   server: Server;
@@ -256,9 +255,9 @@ export class GameGateway {
           .emit('updateScores', [room.player1.score, room.player2.score]);
       }
     }
+    this.sendGameInfo();
   }
 
-  @Interval(33)
   sendGameInfo() {
     for (const room of this.gameRooms) {
       const gameInfo: GameInfo = {
