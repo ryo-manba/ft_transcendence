@@ -8,6 +8,7 @@ import { Header } from 'components/common/Header';
 import { ChatRoomListItem } from 'components/chat/ChatRoomListItem';
 
 type ChatRoom = {
+  id: number;
   name: string;
   type: boolean;
   author: string;
@@ -59,6 +60,7 @@ const Chat = () => {
   const [rooms, setRooms] = useState<ChatRoom[]>([]);
   const [text, setText] = useState('');
   const [messages, setMessages] = useState<Message[]>(sampleMessage);
+  const [currentRoomId, setCurrentRoomId] = useState(0);
 
   useEffect(() => {
     socket.on('chat:getRooms', (data: ChatRoom[]) => {
@@ -98,7 +100,7 @@ const Chat = () => {
   // send a message to the server
   const sendMessage = () => {
     console.log('chat:sendMessage -> emit');
-    const message = { userId: 1, roomId: 1, message: text };
+    const message = { userId: 1, roomId: currentRoomId, message: text };
     socket.emit('chat:sendMessage', message);
     setText('');
   };
@@ -128,7 +130,6 @@ const Chat = () => {
   // 入室に成功したら、既存のメッセージを受け取る
   useEffect(() => {
     socket.on('chat:joinRoom', (data: Message[]) => {
-      console.log('chat:joinRoom -> receive', data[0].message);
       setMessages(data);
     });
 
@@ -137,12 +138,18 @@ const Chat = () => {
     };
   });
 
-  const joinRoom = () => {
-    socket.emit('chat:joinRoom', sampleMessage[1]);
+  const joinRoom = (id: number) => {
+    const res = socket.emit('chat:joinRoom', id);
+    if (res) {
+      setCurrentRoomId(id);
+    }
   };
-  const leaveRoom = () => {
-    socket.emit('chat:leaveRoom', sampleMessage[1]);
-  };
+  // const leaveRoom = (id: number) => {
+  //   const res = socket.emit('chat:leaveRoom', id);
+  //   if (!res) {
+  //     setCurrentRoomId(0);
+  //   }
+  // };
 
   return (
     <>
@@ -176,7 +183,7 @@ const Chat = () => {
           </Button>
           <List dense={false}>
             {rooms.map((room, i) => (
-              <ChatRoomListItem key={i} name={room.name} />
+              <ChatRoomListItem key={i} room={room} joinRoom={joinRoom} />
             ))}
           </List>
         </Grid>
@@ -188,8 +195,6 @@ const Chat = () => {
           }}
         >
           <h2>チャットスペース</h2>
-          <button onClick={joinRoom}>joinRoom1</button>
-          <button onClick={leaveRoom}>leaveRoom1</button>
           <div style={{ marginLeft: 5, marginRight: 5 }}>
             <TextField
               autoFocus

@@ -61,8 +61,7 @@ export class ChatGateway {
     @ConnectedSocket() client: Socket,
     @MessageBody() data: MessageModel,
   ): Promise<any> {
-    this.logger.log(`chat:sendMessage received`);
-    this.logger.log(`chat:roomId: ${data.roomId}`);
+    this.logger.log(`chat:sendMessage received -> ${data.roomId}`);
     await this.chatService.addMessage(data);
     this.server.to(String(data.roomId)).emit('chat:receiveMessage', data);
   }
@@ -72,14 +71,14 @@ export class ChatGateway {
    * @param RoomID
    */
   @SubscribeMessage('chat:joinRoom')
-  async JoinRoom(client: Socket, data: MessageModel): Promise<any> {
-    this.logger.log(`chat:joinRoom received -> ${data.roomId}`);
+  async JoinRoom(client: Socket, roomId: number): Promise<any> {
+    this.logger.log(`chat:joinRoom received -> ${roomId}`);
 
-    await client.join(String(data.roomId));
+    await client.join(String(roomId));
 
     // 既存のメッセージを取得する
     // TODO: limitで上限をつける
-    const messages = await this.chatService.findMessages({ id: data.roomId });
+    const messages = await this.chatService.findMessages({ id: roomId });
     // 既存のメッセージを送り返す
     this.server.emit('chat:joinRoom', messages);
   }
@@ -92,9 +91,9 @@ export class ChatGateway {
   @SubscribeMessage('chat:leaveRoom')
   async onRoomLeave(
     @ConnectedSocket() client: Socket,
-    @MessageBody() data: MessageModel,
+    @MessageBody() roomId: number,
   ): Promise<any> {
-    this.logger.log(`chat:leaveRoom received -> ${data.roomId}`);
-    await client.leave(String(data.roomId));
+    this.logger.log(`chat:leaveRoom received -> ${roomId}`);
+    await client.leave(String(roomId));
   }
 }
