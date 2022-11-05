@@ -35,8 +35,8 @@ const createChatRoom = () => {
     author: 'admin',
     hashedPassword: '',
   };
-  socket.emit('room:create', room);
-  console.log('[DEBUG] room:create', room);
+  socket.emit('chat:create', room);
+  console.log('chat:create', room);
 };
 
 const Chat = () => {
@@ -44,27 +44,28 @@ const Chat = () => {
   const [text, setText] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
 
-  // TODO: fetchに変更する
   useEffect(() => {
-    socket.on('chat:connected', (data: ChatRoom[]) => {
-      console.log('[DEBUG] chat:connected', data);
+    socket.on('chat:getRooms', (data: ChatRoom[]) => {
+      console.log('chat:getRooms', data);
       setRooms(data);
     });
+    // chatroom一覧を取得する
+    socket.emit('chat:getRooms');
 
     return () => {
-      socket.off('chat:connected');
+      socket.off('chat:getRooms');
     };
   }, []);
 
   // dbに保存ができたら,backendからreceiveする
   useEffect(() => {
-    socket.on('room:created', (data: ChatRoom) => {
-      console.log('[DEBUG] room:created', data);
+    socket.on('chat:create', (data: ChatRoom) => {
+      console.log('chat:create', data);
       setRooms((rooms) => [...rooms, data]);
     });
 
     return () => {
-      socket.off('room:created');
+      socket.off('chat:create');
     };
   }, []);
 

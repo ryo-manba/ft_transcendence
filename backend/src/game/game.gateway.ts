@@ -7,6 +7,7 @@ import {
 } from '@nestjs/websockets';
 import { Socket, Server } from 'socket.io';
 import { Interval } from '@nestjs/schedule';
+import { RecordsService } from '../records/records.service';
 
 type Player = {
   name: string;
@@ -49,6 +50,8 @@ type GameInfo = {
   namespace: '/game',
 })
 export class GameGateway {
+  constructor(private readonly records: RecordsService) {}
+
   roomNum = 0;
   gameRooms: RoomInfo[] = [];
   waitingQueue: Player[] = [];
@@ -81,6 +84,9 @@ export class GameGateway {
       (room) =>
         room.player1.socket.id !== socket.id &&
         room.player2.socket.id !== socket.id,
+    );
+    this.waitingQueue = this.waitingQueue.filter(
+      (player) => player.socket.id !== socket.id,
     );
   }
 
@@ -135,6 +141,7 @@ export class GameGateway {
         ballVec: ballVec,
         isPlayer1Turn: true,
       };
+
       this.gameRooms.push(newRoom);
 
       const playerNames: [string, string] = [player1.name, player2.name];
@@ -143,18 +150,24 @@ export class GameGateway {
     }
   }
 
-  finishGame(winner: Player, loser: Player) {
+  async finishGame(currentRoom: RoomInfo, winner: Player, loser: Player) {
     winner.socket.emit('win');
     loser.socket.emit('lose');
+    await this.records.createGameRecord({
+      winnerName: winner.name,
+      loserName: loser.name,
+      winnerScore: winner.score,
+      loserScore: loser.score,
+    });
     winner.socket.disconnect(true);
     loser.socket.disconnect(true);
     this.gameRooms = this.gameRooms.filter(
-      (room) => room.player1 !== winner && room.player2 !== winner,
+      (room) => room.roomName !== currentRoom.roomName,
     );
   }
 
   @SubscribeMessage('barMove')
-  updatePlayerPos(
+  async updatePlayerPos(
     @ConnectedSocket() socket: Socket,
     @MessageBody() move: number,
   ) {
@@ -232,9 +245,9 @@ export class GameGateway {
       ballVec.yVec = this.setBallYVec();
       room.isPlayer1Turn = !room.isPlayer1Turn;
       if (GameGateway.matchPoint === room.player1.score) {
-        this.finishGame(room.player1, room.player2);
+        await this.finishGame(room, room.player1, room.player2);
       } else if (GameGateway.matchPoint === room.player2.score) {
-        this.finishGame(room.player2, room.player1);
+        await this.finishGame(room, room.player2, room.player1);
       } else {
         this.server
           .to(room.roomName)
@@ -255,11 +268,23 @@ export class GameGateway {
     }
   }
 
-  // @SubscribeMessage('watchList')
-  // getGameRooms(@ConnectedSocket() socket: Socket) {
-  //   // exclude duplications
-  //   const gameRooms = Array.from(new Set(Array.from(this.gameRooms.values())));
+  @SubscribeMessage('watchList')
+  getGameRooms(@ConnectedSocket() socket: Socket) {
+    // exclude duplications
+    type WatchInfo = {
+      roomName: string;
+      name1: string;
+      name2: string;
+    };
 
-  //   socket.emit('watchListed', JSON.stringify(gameRooms));
-  // }
+    const watchInfo: WatchInfo[] = this.gameRooms.map(
+      (room) =>
+        <WatchInfo>{
+          roomName: room.roomName,
+          name1: room.player1.name,
+          name2: room.player2.name,
+        },
+    );
+    socket.emit('watchListed', watchInfo);
+  }
 }

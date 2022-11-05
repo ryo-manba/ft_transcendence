@@ -3,7 +3,6 @@ import {
   SubscribeMessage,
   WebSocketGateway,
   WebSocketServer,
-  OnGatewayConnection,
   ConnectedSocket,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
@@ -19,7 +18,7 @@ import { PostMessagesDto } from './dto/message.dto';
   },
   namespace: '/chat',
 })
-export class ChatGateway implements OnGatewayConnection {
+export class ChatGateway {
   constructor(
     private prisma: PrismaService,
     private readonly chatService: ChatService,
@@ -29,24 +28,26 @@ export class ChatGateway implements OnGatewayConnection {
 
   private logger: Logger = new Logger('ChatGateway');
 
-  // 新しいクライアントが接続してきたときの処理
-  async handleConnection(@ConnectedSocket() client: Socket) {
-    this.logger.log(`Client connected: ${client.id}`);
-    const data = await this.chatService.chatRooms({});
-    this.server.emit('chat:connected', data);
-  }
-
   /**
    * チャットルームを作成する
-   * @param data
    */
-  @SubscribeMessage('room:create')
+  @SubscribeMessage('chat:create')
   CreateRoom(@MessageBody() data: ChatRoomModel): void {
-    this.logger.log(`room:create: ${data.name}`);
+    this.logger.log(`chat:create': ${data.name}`);
     // とりあえずvoidで受ける
     void this.chatService.createChatRoom(data);
     // 送信者にdataを送り返す
-    this.server.emit('room:created', data);
+    this.server.emit('chat:create', data);
+  }
+
+  /**
+   * チャットルーム一覧を返す
+   */
+  @SubscribeMessage('chat:getRooms')
+  async GetRooms(@ConnectedSocket() client: Socket) {
+    this.logger.log(`chat:getRooms: ${client.id}`);
+    const data = await this.chatService.chatRooms({});
+    this.server.emit('chat:getRooms', data);
   }
 
   /**
