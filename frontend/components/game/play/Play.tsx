@@ -5,6 +5,7 @@ import {
   usePlayStateStore,
   stateWinner,
   stateLoser,
+  stateNothing,
 } from 'store/game/PlayState';
 import { GameHeader } from 'components/game/play/GameHeader';
 
@@ -225,10 +226,14 @@ export const Play = () => {
     socket?.on('lose', () => {
       updatePlayState(stateLoser);
     });
+    socket?.on('error', () => {
+      updatePlayState(stateNothing);
+    });
 
     return () => {
       socket?.off('win');
       socket?.off('lose');
+      socket?.off('error');
     };
   }, [socket]);
 
