@@ -1,0 +1,10 @@
+{
+  // formatter settings
+  "editor.formatOnSave": true,
+  "editor.formatOnPaste": true,
+  "editor.formatOnType": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode", // デフォルトフォーマッターをPrettierに指定
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": true // ファイル保存時に ESLint でフォーマット
+  },
+}
