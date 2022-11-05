@@ -107,8 +107,8 @@ module.exports = {
       'import/resolver': {
         node: {
           paths: ['./'],
+          moduleDirectory: ['node_modules', './']
         },
       },
     },
-  };
-  
+};
