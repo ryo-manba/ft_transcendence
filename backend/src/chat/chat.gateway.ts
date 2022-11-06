@@ -30,6 +30,14 @@ export class ChatGateway {
 
   private logger: Logger = new Logger('ChatGateway');
 
+  handleConnection(socket: Socket) {
+    this.logger.log(`Connected: ${socket.id}`);
+  }
+
+  handleDisconnect(socket: Socket) {
+    this.logger.log(`Disconnect: ${socket.id}`);
+  }
+
   /**
    * チャットルームを作成する
    */
@@ -71,16 +79,24 @@ export class ChatGateway {
    * @param RoomID
    */
   @SubscribeMessage('chat:joinRoom')
-  async JoinRoom(client: Socket, roomId: number): Promise<any> {
+  async JoinRoom(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() roomId: number,
+  ): Promise<any> {
     this.logger.log(`chat:joinRoom received -> ${roomId}`);
 
+    // roomに入っている場合は退出する
+    if (client.rooms.size >= 1) {
+      const target = Array.from(client.rooms)[1];
+      await client.leave(target);
+    }
     await client.join(String(roomId));
 
     // 既存のメッセージを取得する
     // TODO: limitで上限をつける
     const messages = await this.chatService.findMessages({ id: roomId });
     // 既存のメッセージを送り返す
-    this.server.emit('chat:joinRoom', messages);
+    client.emit('chat:joinRoom', messages);
   }
 
   /**

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { io } from 'socket.io-client';
+import { io, Socket } from 'socket.io-client';
 import { Button, List, TextField, IconButton } from '@mui/material';
 import Grid from '@mui/material/Unstable_Grid2';
 import AddCircleOutlineRounded from '@mui/icons-material/AddCircleOutlineRounded';
@@ -22,47 +22,27 @@ type Message = {
   userName?: string;
 };
 
-const socket = io('http://localhost:3001/chat');
 const appBarHeight = '64px';
-
-// TODO: name以外も指定できるようにする
-const createChatRoom = () => {
-  const name = window.prompt('チャンネル名を入力してください');
-  if (name === null || name.length === 0) {
-    return;
-  }
-  const room = {
-    name: name,
-    type: true,
-    author: 'admin',
-    hashedPassword: '',
-  };
-  socket.emit('chat:create', room);
-  console.log('chat:create', room);
-};
-
-const sampleMessage = [
-  {
-    userId: 1,
-    roomId: 1,
-    message: 'hey!',
-    // userName: 'user1',
-  },
-  {
-    userId: 2,
-    roomId: 1,
-    message: 'hello!',
-    // userName: 'user2',
-  },
-];
 
 const Chat = () => {
   const [rooms, setRooms] = useState<ChatRoom[]>([]);
   const [text, setText] = useState('');
-  const [messages, setMessages] = useState<Message[]>(sampleMessage);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [currentRoomId, setCurrentRoomId] = useState(0);
+  const [socket, setSocket] = useState<Socket>();
 
   useEffect(() => {
+    const temp = io('ws://localhost:3001/chat');
+    setSocket(temp);
+
+    return () => {
+      temp.disconnect();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!socket) return;
+
     socket.on('chat:getRooms', (data: ChatRoom[]) => {
       console.log('chat:getRooms', data);
       setRooms(data);
@@ -73,10 +53,11 @@ const Chat = () => {
     return () => {
       socket.off('chat:getRooms');
     };
-  }, []);
+  }, [socket]);
 
   // dbに保存ができたら,backendからreceiveする
   useEffect(() => {
+    if (!socket) return;
     socket.on('chat:create', (data: ChatRoom) => {
       console.log('chat:create', data);
       setRooms((rooms) => [...rooms, data]);
@@ -85,38 +66,10 @@ const Chat = () => {
     return () => {
       socket.off('chat:create');
     };
-  }, []);
+  }, [socket]);
 
-  const showMessage = (list: Message[]) => {
-    return list.map((item, i) => (
-      <li key={i}>
-        {/* <strong>{`user${item.userId}`}: </strong> */}
-        <strong>{item.userName}: </strong>
-        {item.message}
-      </li>
-    ));
-  };
-
-  // send a message to the server
-  const sendMessage = () => {
-    console.log('chat:sendMessage -> emit');
-    const message = { userId: 1, roomId: currentRoomId, message: text };
-    socket.emit('chat:sendMessage', message);
-    setText('');
-  };
-
-  // receive a message from the server
   useEffect(() => {
-    socket.on('chat:sendMessage', (data: Message) => {
-      console.log('chat:sendMessage -> receive', data.message);
-      setMessages((prev) => [...prev, data]);
-    });
-
-    return () => {
-      socket.off('chat:sendMessage');
-    };
-  }, []);
-  useEffect(() => {
+    if (!socket) return;
     socket.on('chat:receiveMessage', (data: Message) => {
       console.log('chat:receiveMessage -> receive', data.message);
       setMessages((prev) => [...prev, data]);
@@ -125,10 +78,11 @@ const Chat = () => {
     return () => {
       socket.off('chat:receiveMessage');
     };
-  }, []);
+  }, [socket]);
 
   // 入室に成功したら、既存のメッセージを受け取る
   useEffect(() => {
+    if (!socket) return;
     socket.on('chat:joinRoom', (data: Message[]) => {
       setMessages(data);
     });
@@ -138,18 +92,61 @@ const Chat = () => {
     };
   });
 
+  // receive a message from the server
+  useEffect(() => {
+    if (!socket) return;
+    socket.on('chat:sendMessage', (data: Message) => {
+      console.log('chat:sendMessage -> receive', data.message);
+      setMessages((prev) => [...prev, data]);
+    });
+
+    return () => {
+      socket.off('chat:sendMessage');
+    };
+  }, [socket]);
+
+  const showMessage = (list: Message[]) => {
+    return list.map((item, i) => (
+      <li key={i}>
+        <strong>{item.userId}: </strong>
+        {item.message}
+      </li>
+    ));
+  };
+
+  // send a message to the server
+  const sendMessage = () => {
+    if (!socket) return;
+    const message = { userId: 1, roomId: currentRoomId, message: text };
+    socket.emit('chat:sendMessage', message);
+    setText('');
+  };
+
   const joinRoom = (id: number) => {
+    if (!socket) return;
+
     const res = socket.emit('chat:joinRoom', id);
     if (res) {
       setCurrentRoomId(id);
     }
   };
-  // const leaveRoom = (id: number) => {
-  //   const res = socket.emit('chat:leaveRoom', id);
-  //   if (!res) {
-  //     setCurrentRoomId(0);
-  //   }
-  // };
+
+  // TODO: name以外も指定できるようにする
+  const createChatRoom = () => {
+    if (!socket) return;
+    const name = window.prompt('チャンネル名を入力してください');
+    if (name === null || name.length === 0) {
+      return;
+    }
+    const room = {
+      name: name,
+      type: true,
+      author: 'admin',
+      hashedPassword: '',
+    };
+    socket.emit('chat:create', room);
+    console.log('chat:create', room);
+  };
 
   return (
     <>
