@@ -1,6 +1,7 @@
 import { Grid } from '@mui/material';
 
 type GameHeaderProps = {
+  maxWidth: number;
   left: string | number;
   center: string | number;
   right: string | number;
@@ -8,7 +9,7 @@ type GameHeaderProps = {
 
 export const GameHeader = (props: GameHeaderProps) => {
   return (
-    <Grid container>
+    <Grid container maxWidth={props.maxWidth}>
       <Grid
         container
         item

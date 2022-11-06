@@ -82,9 +82,10 @@ const getGameParameters = (canvasWidth: number) => {
 export const Play = () => {
   // function to get window width
   const getWindowWidth = () => {
-    const { innerWidth } = window;
+    const { innerWidth, innerHeight } = window;
+    const widthFromHeight = convert2Int((innerHeight - 150) / 0.6);
 
-    return innerWidth;
+    return innerWidth < widthFromHeight ? innerWidth : widthFromHeight;
   };
 
   const { socket } = useSocketStore();
@@ -251,8 +252,18 @@ export const Play = () => {
 
   return (
     <div>
-      <GameHeader left={playerNames[0]} center="VS" right={playerNames[1]} />
-      <GameHeader left={scores[0]} center=":" right={scores[1]} />
+      <GameHeader
+        maxWidth={gameParameters.canvasWidth}
+        left={playerNames[0]}
+        center="VS"
+        right={playerNames[1]}
+      />
+      <GameHeader
+        maxWidth={gameParameters.canvasWidth}
+        left={scores[0]}
+        center=":"
+        right={scores[1]}
+      />
       <canvas
         ref={canvasRef}
         width={gameParameters.canvasWidth}
