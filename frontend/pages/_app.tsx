@@ -1,9 +1,56 @@
 /* eslint-disable react/jsx-props-no-spreading */
+// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 import '../styles/globals.css';
+import { useEffect } from 'react';
 import type { AppProps } from 'next/app';
+import { MantineProvider } from '@mantine/core';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
+import axios from 'axios';
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: false,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
+
+// backendのauth.interface.tsと同じ型を定義
+export interface Csrf {
+  csrfToken: string;
+}
 
 function MyApp({ Component, pageProps }: AppProps) {
-  return <Component {...pageProps} />;
+  axios.defaults.withCredentials = true;
+  useEffect(() => {
+    const getCsrfToken = async () => {
+      if (process.env.NEXT_PUBLIC_API_URL) {
+        const { data } = await axios.get<Csrf>(
+          `${process.env.NEXT_PUBLIC_API_URL}/auth/csrf`,
+        );
+        axios.defaults.headers.common['csrf-token'] = data.csrfToken;
+      }
+    };
+    void getCsrfToken();
+  }, []);
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <MantineProvider
+        withGlobalStyles
+        withNormalizeCSS
+        theme={{
+          // colorScheme: 'dark',
+          fontFamily: 'Verdana, sans-serif',
+        }}
+      >
+        <Component {...pageProps} />
+      </MantineProvider>
+      <ReactQueryDevtools />
+    </QueryClientProvider>
+  );
 }
 
 export default MyApp;

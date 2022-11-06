@@ -1,3 +1,4 @@
+import { Grid, Typography, Zoom } from '@mui/material';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSocketStore } from 'store/game/ClientSocket';
 import { usePlayerNamesStore } from 'store/game/PlayerNames';
@@ -105,6 +106,8 @@ export const Play = () => {
     },
   });
   const updatePlayState = usePlayStateStore((store) => store.updatePlayState);
+  const [countDown, updateCountDown] = useState(3);
+  const [changeCount, updateChangeCount] = useState(true);
 
   const drawField = useCallback(
     (
@@ -199,8 +202,10 @@ export const Play = () => {
     });
 
     const id = setInterval(() => {
-      socket?.emit('barMove', move);
-      move = 0;
+      if (countDown === 0) {
+        socket?.emit('barMove', move);
+        move = 0;
+      }
     }, 17);
 
     return () => {
@@ -208,7 +213,7 @@ export const Play = () => {
       clearInterval(id);
       socket?.off('updateGameInfo');
     };
-  }, [drawField, gameInfo, gameParameters]);
+  }, [drawField, countDown, gameInfo, gameParameters]);
 
   useEffect(() => {
     socket?.on('updateScores', (newScores: [number, number]) => {
@@ -249,26 +254,56 @@ export const Play = () => {
       window.removeEventListener('resize', handleWindowResize);
     };
   }, []);
-
+  
+  useEffect(() => {
+    if (countDown > 0) {
+      setTimeout(() => {
+        updateChangeCount(false);
+      }, 800);
+      setTimeout(() => {
+        updateCountDown(countDown - 1);
+        updateChangeCount(true);
+      }, 1000);
+    }
+  }, [countDown]);
+    
   return (
-    <div>
-      <GameHeader
-        maxWidth={gameParameters.canvasWidth}
-        left={playerNames[0]}
-        center="VS"
-        right={playerNames[1]}
-      />
-      <GameHeader
-        maxWidth={gameParameters.canvasWidth}
-        left={scores[0]}
-        center=":"
-        right={scores[1]}
-      />
-      <canvas
-        ref={canvasRef}
-        width={gameParameters.canvasWidth}
-        height={gameParameters.canvasHeight}
-      />
-    </div>
+    <>
+      {countDown !== 0 && (
+        <Grid
+          sx={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+          }}
+        >
+          <Zoom in={changeCount}>
+            <Typography variant="h1" fontFamily="sans-serif">
+              {countDown}
+            </Typography>
+          </Zoom>
+        </Grid>
+      )}
+      <div>
+        <GameHeader
+          maxWidth={gameParameters.canvasWidth}
+          left={playerNames[0]}
+          center="VS"
+          right={playerNames[1]}
+        />
+        <GameHeader
+          maxWidth={gameParameters.canvasWidth}
+          left={scores[0]}
+          center=":"
+          right={scores[1]}
+        />
+        <canvas
+          ref={canvasRef}
+          width={gameParameters.canvasWidth}
+          height={gameParameters.canvasHeight}
+        />
+      </div>
+    </>
   );
 };
