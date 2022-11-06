@@ -163,25 +163,16 @@ export const Play = () => {
   }, [socket]);
 
   useEffect(() => {
-    setTimeout(() => {
-      updateChangeCount(false);
-      updateCountDown(0);
-    }, 3000);
-    setTimeout(() => {
-      updateChangeCount(false);
-    }, 2000);
-    setTimeout(() => {
-      updateCountDown(1);
-      updateChangeCount(true);
-    }, 2200);
-    setTimeout(() => {
-      updateChangeCount(false);
-    }, 1000);
-    setTimeout(() => {
-      updateCountDown(2);
-      updateChangeCount(true);
-    }, 1200);
-  }, []);
+    if (countDown > 0) {
+      setTimeout(() => {
+        updateChangeCount(false);
+      }, 800);
+      setTimeout(() => {
+        updateCountDown(countDown - 1);
+        updateChangeCount(true);
+      }, 1000);
+    }
+  }, [countDown]);
 
   return (
     <>
