@@ -85,8 +85,9 @@ export class ChatGateway {
   ): Promise<any> {
     this.logger.log(`chat:joinRoom received -> ${roomId}`);
 
-    // roomに入っている場合は退出する
-    if (client.rooms.size >= 1) {
+    // 0番目には、socketのidが入っている
+    if (client.rooms.size >= 2) {
+      // roomに入っている場合は退出する
       const target = Array.from(client.rooms)[1];
       await client.leave(target);
     }
