@@ -166,6 +166,13 @@ export class GameGateway {
     );
   }
 
+  @SubscribeMessage('playCancel')
+  cancelMatching(@ConnectedSocket() socket: Socket) {
+    this.waitingQueue = this.waitingQueue.filter(
+      (player) => player.socket.id !== socket.id,
+    );
+  }
+
   @SubscribeMessage('barMove')
   async updatePlayerPos(
     @ConnectedSocket() socket: Socket,
