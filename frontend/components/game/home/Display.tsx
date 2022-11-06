@@ -4,6 +4,7 @@ import {
   usePlayStateStore,
   stateNothing,
   stateWaiting,
+  statePlaying,
 } from 'store/game/PlayState';
 import { useSocketStore } from 'store/game/ClientSocket';
 import { Start } from './Start';
@@ -15,9 +16,11 @@ import { Header } from 'components/common/Header';
 export const Display = () => {
   const { socket, updateSocket } = useSocketStore();
   const { playState } = usePlayStateStore();
+  const updatePlayState = usePlayStateStore((store) => store.updatePlayState);
 
   useEffect(() => {
     updateSocket('ws://localhost:3001/game');
+    updatePlayState(stateNothing);
 
     return () => {
       socket?.disconnect();
@@ -51,7 +54,9 @@ export const Display = () => {
               direction="column"
             >
               {playState === stateNothing && <Start />}
-              {playState === stateWaiting && <Wait />}
+              {(playState === stateWaiting || playState === statePlaying) && (
+                <Wait />
+              )}
             </Grid>
           </Paper>
         </Grid>
