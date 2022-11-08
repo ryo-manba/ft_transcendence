@@ -55,19 +55,6 @@ const Chat = () => {
     };
   }, [socket]);
 
-  // dbに保存ができたら,backendからreceiveする
-  useEffect(() => {
-    if (!socket) return;
-    socket.on('chat:create', (data: ChatRoom) => {
-      console.log('chat:create', data);
-      setRooms((rooms) => [...rooms, data]);
-    });
-
-    return () => {
-      socket.off('chat:create');
-    };
-  }, [socket]);
-
   useEffect(() => {
     if (!socket) return;
     socket.on('chat:receiveMessage', (data: Message) => {
@@ -144,8 +131,9 @@ const Chat = () => {
       author: 'admin',
       hashedPassword: '',
     };
-    socket.emit('chat:create', room);
     console.log('chat:create', room);
+    socket.emit('chat:create', room);
+    socket.emit('chat:getRooms');
   };
 
   return (

@@ -46,8 +46,6 @@ export class ChatGateway {
     this.logger.log(`chat:create': ${data.name}`);
     // とりあえずvoidで受ける
     void this.chatService.createChatRoom(data);
-    // 送信者にdataを送り返す
-    this.server.emit('chat:create', data);
   }
 
   /**
