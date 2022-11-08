@@ -7,58 +7,31 @@ import {
 } from '@mui/material';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
-
-type GameHistory = {
-  opponentName: string;
-  opponentScore: number;
-  myScore: number;
-  status: 'WIN' | 'LOSE';
-  color: 'success.main' | 'error.main';
-};
+import { useQueryGameRecords } from 'hooks/useQueryGameRecords';
 
 export const History = () => {
   // [TODO] replace with DB data
-  const myName = 'YEAH';
-  const gameHistory: GameHistory[] = [
-    {
-      opponentName: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
-      opponentScore: 3,
-      myScore: 2,
-      status: 'LOSE',
-      color: 'error.main',
-    },
-    {
-      opponentName: 'PLAYER1',
-      opponentScore: 1,
-      myScore: 3,
-      status: 'WIN',
-      color: 'success.main',
-    },
-    {
-      opponentName: 'PLAYER2',
-      opponentScore: 1,
-      myScore: 3,
-      status: 'WIN',
-      color: 'success.main',
-    },
-  ];
+  const myName = 'PLAYER';
+  const { data } = useQueryGameRecords();
 
   return (
     <>
       <Typography variant="h2" align="center" gutterBottom>
         History
       </Typography>
-      <List sx={{ width: '95%', margin: 'auto' }}>
-        {gameHistory?.map((item, index) => (
+      <List
+        sx={{ width: '95%', margin: 'auto', height: '70%', overflow: 'auto' }}
+      >
+        {data?.map((item, index) => (
           <ListItem key={index} sx={{ border: '1px solid' }}>
             <ListItemAvatar>
-              {item.status === 'WIN' ? (
+              {item.winnerName === myName ? (
                 <KeyboardArrowUpIcon color="success" />
               ) : (
                 <KeyboardArrowDownIcon color="error" />
               )}
             </ListItemAvatar>
-            {item.status === 'WIN' ? (
+            {item.winnerName === myName ? (
               <ListItemText
                 primaryTypographyProps={{
                   align: 'left',
@@ -78,7 +51,7 @@ export const History = () => {
               />
             )}
             <ListItemText
-              primary={`${myName}`}
+              primary={`${item.winnerName}`}
               primaryTypographyProps={{
                 align: 'center',
                 style: {
@@ -88,7 +61,7 @@ export const History = () => {
               sx={{ width: '30%' }}
             />
             <ListItemText
-              primary={`${item.myScore} - ${item.opponentScore}`}
+              primary={`${item.winnerScore} - ${item.loserScore}`}
               primaryTypographyProps={{
                 align: 'center',
                 style: {
@@ -97,7 +70,7 @@ export const History = () => {
               }}
             />
             <ListItemText
-              primary={`${item.opponentName}`}
+              primary={`${item.loserName}`}
               primaryTypographyProps={{
                 align: 'center',
                 style: {

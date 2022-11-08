@@ -36,7 +36,7 @@ export const Display = () => {
         alignItems="stretch"
         direction="row"
         spacing={4}
-        sx={{ mt: 1 }}
+        sx={{ mt: 1, height: 800 }}
       >
         <Grid item xs={5}>
           <Paper elevation={2} sx={{ height: '100%' }}>
@@ -60,12 +60,12 @@ export const Display = () => {
             </Grid>
           </Paper>
         </Grid>
-        <Grid item xs={5}>
+        <Grid item xs={5} sx={{ height: '50%' }}>
           <Paper elevation={2} sx={{ height: '100%' }}>
             <History />
           </Paper>
         </Grid>
-        <Grid item xs={5}>
+        <Grid item xs={5} sx={{ height: '50%' }}>
           <Paper elevation={2} sx={{ height: '100%' }}>
             <Watch />
           </Paper>
