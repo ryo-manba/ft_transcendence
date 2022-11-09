@@ -254,7 +254,7 @@ export const Play = () => {
       window.removeEventListener('resize', handleWindowResize);
     };
   }, []);
-  
+
   useEffect(() => {
     if (countDown > 0) {
       setTimeout(() => {
@@ -266,7 +266,7 @@ export const Play = () => {
       }, 1000);
     }
   }, [countDown]);
-    
+
   return (
     <>
       {countDown !== 0 && (
