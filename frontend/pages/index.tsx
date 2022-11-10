@@ -1,11 +1,12 @@
 import type { NextPage } from 'next';
 import Link from 'next/link';
-import { Stack, Button } from '@mui/material';
+import { Stack, Button, Typography } from '@mui/material';
 import { useRouter } from 'next/router';
 import axios from 'axios';
 import { LogoutIcon } from '@heroicons/react/solid';
 import { Layout } from '../components/Layout';
 import { useQueryClient } from '@tanstack/react-query';
+import { useQueryUser } from 'hooks/useQueryUser';
 
 const Home: NextPage = () => {
   const router = useRouter();
@@ -18,9 +19,12 @@ const Home: NextPage = () => {
       void router.push('/auth_index');
     }
   };
+  const { data: user, status } = useQueryUser();
+  if (status !== 'success') return <Typography>loading...</Typography>;
 
   return (
     <div>
+      <Typography>HELLO!! {user?.name}</Typography>
       <Stack spacing={2} direction="row">
         <Link href="/chat">
           <Button variant="contained">Chat</Button>
