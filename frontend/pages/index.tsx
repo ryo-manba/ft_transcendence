@@ -5,6 +5,7 @@ import { useRouter } from 'next/router';
 import axios from 'axios';
 import * as Yup from 'yup';
 import { IconDatabase } from '@tabler/icons';
+import Image from 'next/image';
 import { ShieldCheckIcon } from '@heroicons/react/solid';
 import { ExclamationCircleIcon } from '@heroicons/react/outline';
 import {
@@ -76,7 +77,6 @@ const Home: NextPage = () => {
           {error}
         </Alert>
       )}
-
       <form onSubmit={form.onSubmit(handleSubmit as VoidFunction)}>
         <TextInput
           mt="md"
@@ -117,6 +117,14 @@ const Home: NextPage = () => {
           </Button>
         </Group>
       </form>
+      <br></br>
+      <a href="/auth42">
+        <Image src="/images/ico-42-logo.jpg" width={50} height={50} />
+      </a>
+      <br></br>
+      <a href="/google">
+        <Image src="/images/ico-google-logo-96.png" width={50} height={50} />
+      </a>
     </Layout>
   );
 };
