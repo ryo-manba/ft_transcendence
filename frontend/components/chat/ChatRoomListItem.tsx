@@ -3,11 +3,24 @@ import IconButton from '@mui/material/IconButton';
 import ListItemText from '@mui/material/ListItemText';
 import DeleteIcon from '@mui/icons-material/Delete';
 
-type Props = {
+type ChatRoom = {
+  id: number;
   name: string;
+  type: boolean;
+  author: string;
+  hashedPassword?: string;
 };
 
-export const ChatRoomListItem = ({ name }: Props) => {
+type Props = {
+  room: ChatRoom;
+  joinRoom: (id: number) => void;
+};
+
+export const ChatRoomListItem = ({ room, joinRoom }: Props) => {
+  if (room === undefined) {
+    return null;
+  }
+
   return (
     <ListItem
       secondaryAction={
@@ -26,10 +39,9 @@ export const ChatRoomListItem = ({ name }: Props) => {
       button
     >
       <ListItemText
-        primary={name}
+        primary={room.name}
         onClick={() => {
-          // TODO: チャットルームに入る
-          console.log('click text');
+          joinRoom(room.id);
         }}
         style={{
           overflow: 'hidden',

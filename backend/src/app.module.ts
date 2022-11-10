@@ -17,7 +17,7 @@ import { RecordsModule } from './records/records.module';
     PrismaModule,
     ChatModule,
     GameModule,
-    RecordsModule
+    RecordsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
