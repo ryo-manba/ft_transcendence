@@ -13,7 +13,7 @@ import {
   stateWaiting,
 } from 'store/game/PlayState';
 import { useSocketStore } from 'store/game/ClientSocket';
-import { usePlayerNamesStore } from 'store/game/PlayerName';
+import { usePlayerNamesStore } from 'store/game/PlayerNames';
 import { useRouter } from 'next/router';
 import DoneOutlineIcon from '@mui/icons-material/DoneOutline';
 
