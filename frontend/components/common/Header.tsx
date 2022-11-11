@@ -15,7 +15,7 @@ export const Header = ({ title }: Props) => {
     <AppBar position="static">
       <Toolbar style={{ justifyContent: 'space-between' }}>
         <Typography>{title}</Typography>
-        <Link href="/">
+        <Link href="/dashboard">
           <IconButton aria-label="home">
             <HomeIcon />
           </IconButton>
