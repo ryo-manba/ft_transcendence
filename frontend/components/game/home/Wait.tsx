@@ -6,12 +6,7 @@ import {
   Button,
 } from '@mui/material';
 import { useEffect, useState } from 'react';
-import {
-  usePlayStateStore,
-  statePlaying,
-  stateNothing,
-  stateWaiting,
-} from 'store/game/PlayState';
+import { usePlayStateStore, PlayState } from 'store/game/PlayState';
 import { useSocketStore } from 'store/game/ClientSocket';
 import { usePlayerNamesStore } from 'store/game/PlayerNames';
 import { useRouter } from 'next/router';
@@ -25,7 +20,7 @@ export const Wait = () => {
 
   const handleClose = () => {
     setOpen(false);
-    updatePlayState(stateNothing);
+    updatePlayState(PlayState.stateNothing);
     socket?.emit('playCancel');
   };
   const updatePlayerNames = usePlayerNamesStore(
@@ -36,7 +31,7 @@ export const Wait = () => {
   useEffect(() => {
     socket?.on('playStarted', (playerNames: [string, string]) => {
       updatePlayerNames(playerNames);
-      updatePlayState(statePlaying);
+      updatePlayState(PlayState.statePlaying);
       void router.push('/game/play');
     });
 
@@ -64,7 +59,7 @@ export const Wait = () => {
           }}
         >
           <Grid item>
-            {playState === stateWaiting ? (
+            {playState === PlayState.stateWaiting ? (
               <CircularProgress />
             ) : (
               <DoneOutlineIcon />
@@ -81,7 +76,10 @@ export const Wait = () => {
             </Typography>
           </Grid>
           <Grid item>
-            <Button disabled={playState !== stateWaiting} onClick={handleClose}>
+            <Button
+              disabled={playState !== PlayState.stateWaiting}
+              onClick={handleClose}
+            >
               cancel
             </Button>
           </Grid>

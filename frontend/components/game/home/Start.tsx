@@ -1,7 +1,7 @@
 import VideogameAssetSharpIcon from '@mui/icons-material/VideogameAssetSharp';
 import { Button, Grid, TextField, Box, Typography } from '@mui/material';
 import React, { useRef } from 'react';
-import { usePlayStateStore, stateWaiting } from 'store/game/PlayState';
+import { usePlayStateStore, PlayState } from 'store/game/PlayState';
 import { useSocketStore } from 'store/game/ClientSocket';
 
 export const Start = () => {
@@ -11,7 +11,7 @@ export const Start = () => {
 
   const start = () => {
     socket?.emit('playStart', playerNameRef.current?.value);
-    updatePlayState(stateWaiting);
+    updatePlayState(PlayState.stateWaiting);
   };
 
   return (

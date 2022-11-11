@@ -2,12 +2,7 @@ import { Grid, Typography, Zoom } from '@mui/material';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSocketStore } from 'store/game/ClientSocket';
 import { usePlayerNamesStore } from 'store/game/PlayerNames';
-import {
-  usePlayStateStore,
-  stateWinner,
-  stateLoser,
-  stateNothing,
-} from 'store/game/PlayState';
+import { usePlayStateStore, PlayState } from 'store/game/PlayState';
 import { GameHeader } from 'components/game/play/GameHeader';
 
 type Ball = {
@@ -227,13 +222,13 @@ export const Play = () => {
 
   useEffect(() => {
     socket?.on('win', () => {
-      updatePlayState(stateWinner);
+      updatePlayState(PlayState.stateWinner);
     });
     socket?.on('lose', () => {
-      updatePlayState(stateLoser);
+      updatePlayState(PlayState.stateLoser);
     });
     socket?.on('error', () => {
-      updatePlayState(stateNothing);
+      updatePlayState(PlayState.stateNothing);
     });
 
     return () => {

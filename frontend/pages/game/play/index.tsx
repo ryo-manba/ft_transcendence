@@ -4,13 +4,7 @@ import { Winner } from 'components/game/play/Winner';
 import { Loser } from 'components/game/play/Loser';
 import { Error } from 'components/game/play/Error';
 import { Layout } from 'components/game/home/Layout';
-import {
-  usePlayStateStore,
-  statePlaying,
-  stateWinner,
-  stateLoser,
-  stateNothing,
-} from 'store/game/PlayState';
+import { usePlayStateStore, PlayState } from 'store/game/PlayState';
 
 const Home: NextPage = () => {
   const { playState } = usePlayStateStore();
@@ -18,10 +12,10 @@ const Home: NextPage = () => {
 
   return (
     <Layout title="Play">
-      {playState === statePlaying && <Play />}
-      {playState === stateWinner && <Winner />}
-      {playState === stateLoser && <Loser />}
-      {playState === stateNothing && <Error />}
+      {playState === PlayState.statePlaying && <Play />}
+      {playState === PlayState.stateWinner && <Winner />}
+      {playState === PlayState.stateLoser && <Loser />}
+      {playState === PlayState.stateNothing && <Error />}
     </Layout>
   );
 };
