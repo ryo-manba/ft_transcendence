@@ -8,8 +8,7 @@ import { useQueryUser } from 'hooks/useQueryUser';
 export const Start = () => {
   const { socket } = useSocketStore();
   const updatePlayState = usePlayStateStore((store) => store.updatePlayState);
-  const { data: user, status } = useQueryUser();
-  if (status !== 'success') return <Typography>loading...</Typography>;
+  const { data: user } = useQueryUser();
 
   const start = () => {
     socket?.emit('playStart', user?.name);

@@ -21,7 +21,7 @@ export const useQueryUser = (enabled = true) => {
         void router.push('/');
     },
     staleTime: Infinity,
-    cacheTime: 60 * 60 * 1000,
+    cacheTime: 10 * 60 * 1000,
     enabled: enabled,
   });
 };
