@@ -18,7 +18,7 @@ export const Setting = () => {
   const { playState } = usePlayStateStore();
   const updatePlayState = usePlayStateStore((store) => store.updatePlayState);
   const { socket } = useSocketStore();
-  const [speed, setSpeed] = useState('easy');
+  const [speed, setSpeed] = useState('Easy');
   const [matchPoint, setMatchPoint] = useState(3);
   const updateGameSetting = useGameSettingStore(
     (store) => store.updateGameSetting,
@@ -88,23 +88,23 @@ export const Setting = () => {
               <RadioGroup
                 row
                 aria-labelledby="speed-radio-buttons-group-label"
-                defaultValue="easy"
+                defaultValue="Easy"
                 name="speed-buttons-group"
                 value={speed}
                 onChange={handleSpeedSetting}
               >
                 <FormControlLabel
-                  value="easy"
+                  value="Easy"
                   control={<Radio />}
                   label="Easy"
                 />
                 <FormControlLabel
-                  value="normal"
+                  value="Normal"
                   control={<Radio />}
                   label="Normal"
                 />
                 <FormControlLabel
-                  value="hard"
+                  value="Hard"
                   control={<Radio />}
                   label="Hard"
                 />

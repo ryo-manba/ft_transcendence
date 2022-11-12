@@ -182,13 +182,13 @@ export class GameGateway {
 
       room.matchPoint = matchPoint;
       switch (difficulty) {
-        case 'normal':
+        case 'Normal':
           room.barSpeed = 40;
           room.ballVec.speed = 4;
           break;
-        case 'hard':
-          room.barSpeed = 55;
-          room.ballVec.speed = 6;
+        case 'Hard':
+          room.barSpeed = 50;
+          room.ballVec.speed = 5;
           break;
         default:
           break;

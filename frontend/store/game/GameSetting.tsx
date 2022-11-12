@@ -6,7 +6,7 @@ type State = {
 };
 
 export const useGameSettingStore = create<State>((set) => ({
-  gameSetting: ['easy', 3],
+  gameSetting: ['Easy', 3],
   updateGameSetting: (payload) => {
     set({
       gameSetting: payload,

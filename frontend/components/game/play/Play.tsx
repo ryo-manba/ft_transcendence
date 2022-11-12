@@ -300,7 +300,10 @@ export const Play = () => {
           width={gameParameters.canvasWidth}
           height={gameParameters.canvasHeight}
         />
-        <Typography align="center">{`Speed: ${gameSetting[0]} / Match Point: ${gameSetting[1]}`}</Typography>
+        <Typography
+          align="center"
+          maxWidth={gameParameters.canvasWidth}
+        >{`Speed: ${gameSetting[0]} / Match Point: ${gameSetting[1]}`}</Typography>
       </div>
     </>
   );
