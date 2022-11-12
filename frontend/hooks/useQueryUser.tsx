@@ -3,7 +3,7 @@ import axios, { AxiosError } from 'axios';
 import { useQuery } from '@tanstack/react-query';
 import { User } from '@prisma/client';
 
-export const useQueryUser = (enabled = true) => {
+export const useQueryUser = () => {
   const router = useRouter();
   const getUser = async () => {
     const { data } = await axios.get<Omit<User, 'hashedPassword'>>(
@@ -22,6 +22,5 @@ export const useQueryUser = (enabled = true) => {
     },
     staleTime: Infinity,
     cacheTime: 10 * 60 * 1000,
-    enabled: enabled,
   });
 };
