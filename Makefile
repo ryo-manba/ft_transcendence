@@ -39,8 +39,10 @@ fclean: down
 #		docker volume rm $(shell docker volume ls -q) 2>/dev/null   || :
 #		docker network rm $(shell docker network ls -q) 2>/dev/null || :
 
+.PHONY
 b:
 	yarn --cwd ./backend start:dev
 
+.PHONY
 f:
 	yarn --cwd ./frontend dev
