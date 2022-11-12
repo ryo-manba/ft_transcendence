@@ -1,29 +1,31 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
-import { ChatRoom, Message, Prisma } from '@prisma/client';
+import { Chatroom, Message, Prisma } from '@prisma/client';
+import { CreateChatroomDto } from './dto/create-chatroom.dto';
+import { CreateMessageDto } from './dto/create-message.dto';
 
 @Injectable()
 export class ChatService {
   constructor(private prisma: PrismaService) {}
 
-  async chatRoom(
-    charRoomWhereUniqueInput: Prisma.ChatRoomWhereUniqueInput,
-  ): Promise<ChatRoom | null> {
-    return this.prisma.chatRoom.findUnique({
-      where: charRoomWhereUniqueInput,
+  async findOne(
+    chatroomWhereUniqueInput: Prisma.ChatroomWhereUniqueInput,
+  ): Promise<Chatroom | null> {
+    return this.prisma.chatroom.findUnique({
+      where: chatroomWhereUniqueInput,
     });
   }
 
-  async chatRooms(params: {
+  async findAll(params: {
     skip?: number;
     take?: number;
-    cursor?: Prisma.ChatRoomWhereUniqueInput;
-    where?: Prisma.ChatRoomWhereInput;
-    orderBy?: Prisma.ChatRoomOrderByWithRelationInput;
-  }): Promise<ChatRoom[]> {
+    cursor?: Prisma.ChatroomWhereUniqueInput;
+    where?: Prisma.ChatroomWhereInput;
+    orderBy?: Prisma.ChatroomOrderByWithRelationInput;
+  }): Promise<Chatroom[]> {
     const { skip, take, cursor, where, orderBy } = params;
 
-    return this.prisma.chatRoom.findMany({
+    return this.prisma.chatroom.findMany({
       skip,
       take,
       cursor,
@@ -32,28 +34,31 @@ export class ChatService {
     });
   }
 
-  async createChatRoom(data: Prisma.ChatRoomCreateInput): Promise<ChatRoom> {
-    return this.prisma.chatRoom.create({
-      data,
+  async create(CreateChatroomDto: CreateChatroomDto): Promise<Chatroom> {
+    console.log(CreateChatroomDto);
+    const chatroom = await this.prisma.chatroom.create({
+      data: {
+        ...CreateChatroomDto,
+      },
     });
+
+    return chatroom;
   }
 
-  async updateChatRoom(params: {
-    where: Prisma.ChatRoomWhereUniqueInput;
-    data: Prisma.ChatRoomUpdateInput;
-  }): Promise<ChatRoom> {
+  async update(params: {
+    where: Prisma.ChatroomWhereUniqueInput;
+    data: Prisma.ChatroomUpdateInput;
+  }): Promise<Chatroom> {
     const { where, data } = params;
 
-    return this.prisma.chatRoom.update({
+    return this.prisma.chatroom.update({
       data,
       where,
     });
   }
 
-  async deleteChatRoom(
-    where: Prisma.ChatRoomWhereUniqueInput,
-  ): Promise<ChatRoom> {
-    return this.prisma.chatRoom.delete({
+  async remove(where: Prisma.ChatroomWhereUniqueInput): Promise<Chatroom> {
+    return this.prisma.chatroom.delete({
       where,
     });
   }
@@ -61,8 +66,16 @@ export class ChatService {
   /**
    * TODO: 引数をDTOにしたい
    */
-  async addMessage(data: Prisma.MessageUncheckedCreateInput): Promise<Message> {
-    return this.prisma.message.create({ data });
+  async addMessage(createMessageDto: CreateMessageDto): Promise<Message> {
+    console.log(createMessageDto);
+
+    const Message = await this.prisma.message.create({
+      data: {
+        ...createMessageDto,
+      },
+    });
+
+    return Message;
   }
 
   /**
@@ -70,9 +83,9 @@ export class ChatService {
    * TODO: 引数に応じて取得する数を調整する
    */
   async findMessages(
-    charRoomWhereUniqueInput: Prisma.ChatRoomWhereUniqueInput,
+    charRoomWhereUniqueInput: Prisma.ChatroomWhereUniqueInput,
   ): Promise<Message[] | null> {
-    const res = await this.prisma.chatRoom.findUnique({
+    const res = await this.prisma.chatroom.findUnique({
       where: charRoomWhereUniqueInput,
       include: {
         message: true,

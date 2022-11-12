@@ -9,10 +9,8 @@ import { Server, Socket } from 'socket.io';
 import { Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { ChatService } from './chat.service';
-import {
-  ChatRoom as ChatRoomModel,
-  Message as MessageModel,
-} from '@prisma/client';
+import { CreateChatroomDto } from './dto/create-chatroom.dto';
+import { CreateMessageDto } from './dto/create-message.dto';
 
 @WebSocketGateway({
   cors: {
@@ -42,10 +40,12 @@ export class ChatGateway {
    * チャットルームを作成する
    */
   @SubscribeMessage('chat:create')
-  CreateRoom(@MessageBody() data: ChatRoomModel): void {
+  async CreateRoom(@MessageBody() data: CreateChatroomDto): Promise<any> {
     this.logger.log(`chat:create': ${data.name}`);
-    // とりあえずvoidで受ける
-    void this.chatService.createChatRoom(data);
+    const res = await this.chatService.create(data);
+
+    // TODO: チャットルームを見ることができるユーザーにデータを送信する
+    return res;
   }
 
   /**
@@ -54,7 +54,7 @@ export class ChatGateway {
   @SubscribeMessage('chat:getRooms')
   async GetRooms(@ConnectedSocket() client: Socket) {
     this.logger.log(`chat:getRooms: ${client.id}`);
-    const data = await this.chatService.chatRooms({});
+    const data = await this.chatService.findAll({});
     this.server.emit('chat:getRooms', data);
   }
 
@@ -65,11 +65,15 @@ export class ChatGateway {
   @SubscribeMessage('chat:sendMessage')
   async onMessage(
     @ConnectedSocket() client: Socket,
-    @MessageBody() data: MessageModel,
+    @MessageBody() createMessageDto: CreateMessageDto,
   ): Promise<any> {
-    this.logger.log(`chat:sendMessage received -> ${data.roomId}`);
-    await this.chatService.addMessage(data);
-    this.server.to(String(data.roomId)).emit('chat:receiveMessage', data);
+    this.logger.log(
+      `chat:sendMessage received -> ${createMessageDto.chatroomId}`,
+    );
+    await this.chatService.addMessage(createMessageDto);
+    this.server
+      .to(String(createMessageDto.chatroomId))
+      .emit('chat:receiveMessage', createMessageDto);
   }
 
   /**
