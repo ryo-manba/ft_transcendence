@@ -4,6 +4,7 @@ import { useSocketStore } from 'store/game/ClientSocket';
 import { usePlayerNamesStore } from 'store/game/PlayerNames';
 import { usePlayStateStore, PlayState } from 'store/game/PlayState';
 import { GameHeader } from 'components/game/play/GameHeader';
+import { useGameSettingStore } from 'store/game/GameSetting';
 
 type Ball = {
   x: number;
@@ -103,6 +104,7 @@ export const Play = () => {
   const updatePlayState = usePlayStateStore((store) => store.updatePlayState);
   const [countDown, updateCountDown] = useState(3);
   const [changeCount, updateChangeCount] = useState(true);
+  const { gameSetting } = useGameSettingStore();
 
   const drawField = useCallback(
     (
@@ -298,6 +300,7 @@ export const Play = () => {
           width={gameParameters.canvasWidth}
           height={gameParameters.canvasHeight}
         />
+        <Typography align="center">{`Speed: ${gameSetting[0]} / Match Point: ${gameSetting[1]}`}</Typography>
       </div>
     </>
   );

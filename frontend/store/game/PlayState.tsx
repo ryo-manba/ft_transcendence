@@ -3,7 +3,8 @@ import create from 'zustand';
 enum PlayState {
   stateNothing,
   stateWaiting,
-  stateSetting,
+  stateSelecting,
+  stateStandingBy,
   statePlaying,
   stateWinner,
   stateLoser,

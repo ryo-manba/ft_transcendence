@@ -34,6 +34,8 @@ type RoomInfo = {
   ball: Ball;
   ballVec: BallVec;
   isPlayer1Turn: boolean;
+  matchPoint: number;
+  barSpeed: number;
 };
 
 type GameInfo = {
@@ -56,12 +58,12 @@ export class GameGateway {
   waitingQueue: Player[] = [];
 
   // Game parameters
-  static initialHeight = 220;
+  static initialHeight = 250;
   static ballInitialX = 500;
   static ballInitialY = 300;
   static ballRadius = 10;
   static ballInitialXVec = -1;
-  static ballSpeed = 2.5;
+  static ballSpeed = 3;
   static highestPos = 10; // top left corner of the canvas is (0, 0)
   static lowestPos = 490;
   static leftEnd = 40;
@@ -93,6 +95,18 @@ export class GameGateway {
 
   setBallYVec() {
     return Math.random() * (Math.random() < 0.5 ? 1 : -1);
+  }
+
+  updatePlayerStatus(player1: Player, player2: Player) {
+    const playerNames: [string, string] = [player1.name, player2.name];
+
+    if (player1.name < player2.name) {
+      player1.socket.emit('select', playerNames);
+      player2.socket.emit('standBy', playerNames);
+    } else {
+      player1.socket.emit('standBy', playerNames);
+      player2.socket.emit('select', playerNames);
+    }
   }
 
   @SubscribeMessage('playStart')
@@ -141,13 +155,45 @@ export class GameGateway {
         ball: ball,
         ballVec: ballVec,
         isPlayer1Turn: true,
+        matchPoint: GameGateway.matchPoint,
+        barSpeed: GameGateway.barSpeed,
       };
 
       this.gameRooms.push(newRoom);
 
-      const playerNames: [string, string] = [player1.name, player2.name];
+      this.updatePlayerStatus(player1, player2);
+    }
+  }
 
-      this.server.to(roomName).emit('playStarted', playerNames);
+  @SubscribeMessage('completeSetting')
+  playGame(
+    @ConnectedSocket() socket: Socket,
+    @MessageBody() data: [string, number],
+  ) {
+    const room = this.gameRooms.find(
+      (r) =>
+        r.player1.socket.id === socket.id || r.player2.socket.id === socket.id,
+    );
+    if (!room) {
+      socket.emit('error');
+    } else {
+      const difficulty = data[0];
+      const matchPoint = data[1];
+
+      room.matchPoint = matchPoint;
+      switch (difficulty) {
+        case 'normal':
+          room.barSpeed = 40;
+          room.ballVec.speed = 4;
+          break;
+        case 'hard':
+          room.barSpeed = 55;
+          room.ballVec.speed = 6;
+          break;
+        default:
+          break;
+      }
+      this.server.to(room.roomName).emit('playStarted', data);
     }
   }
 
@@ -197,7 +243,7 @@ export class GameGateway {
     const ballVec = room.ballVec;
 
     // Update player position using information received
-    const updatedHeight = player.height + move * GameGateway.barSpeed;
+    const updatedHeight = player.height + move * room.barSpeed;
     if (updatedHeight < GameGateway.highestPos) {
       player.height = GameGateway.highestPos;
     } else if (GameGateway.lowestPos < updatedHeight) {
@@ -256,9 +302,9 @@ export class GameGateway {
       ballVec.xVec = room.isPlayer1Turn ? 1 : -1;
       ballVec.yVec = this.setBallYVec();
       room.isPlayer1Turn = !room.isPlayer1Turn;
-      if (GameGateway.matchPoint === room.player1.score) {
+      if (room.matchPoint === room.player1.score) {
         await this.finishGame(room, room.player1, room.player2);
-      } else if (GameGateway.matchPoint === room.player2.score) {
+      } else if (room.matchPoint === room.player2.score) {
         await this.finishGame(room, room.player2, room.player1);
       } else {
         this.server
