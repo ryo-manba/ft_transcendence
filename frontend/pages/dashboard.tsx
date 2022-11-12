@@ -1,11 +1,12 @@
 import type { NextPage } from 'next';
 import Link from 'next/link';
-import { Stack, Button } from '@mui/material';
+import { Stack, Button, Typography } from '@mui/material';
 import { useRouter } from 'next/router';
 import axios from 'axios';
 import { LogoutIcon } from '@heroicons/react/solid';
 import { Layout } from '../components/Layout';
 import { useQueryClient } from '@tanstack/react-query';
+import { useQueryUser } from 'hooks/useQueryUser';
 
 const Dashboard: NextPage = () => {
   const router = useRouter();
@@ -18,9 +19,11 @@ const Dashboard: NextPage = () => {
       void router.push('/');
     }
   };
+  const { data: user } = useQueryUser();
 
   return (
     <div>
+      <Typography>HELLO {user?.name}</Typography>
       <Stack spacing={2} direction="row">
         <Link href="/chat">
           <Button variant="contained">Chat</Button>

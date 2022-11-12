@@ -19,6 +19,7 @@ import {
 import { useForm, yupResolver } from '@mantine/form';
 import { Layout } from '../components/Layout';
 import { AuthForm } from '../types';
+import { useQueryUser } from 'hooks/useQueryUser';
 
 const schema = Yup.object().shape({
   email: Yup.string().email('Invalid email').required('No email provided'),
@@ -31,6 +32,9 @@ const Home: NextPage = () => {
   const router = useRouter();
   const [isRegister, setIsRegister] = useState(false);
   const [error, setError] = useState('');
+  const [isEnable, setIsEnable] = useState(false);
+  useQueryUser(isEnable);
+
   const form = useForm<AuthForm>({
     validate: yupResolver(schema),
     initialValues: {
@@ -52,6 +56,8 @@ const Home: NextPage = () => {
           email: form.values.email,
           password: form.values.password,
         });
+        // set cache
+        setIsEnable(true);
         form.reset();
         await router.push('/dashboard');
       }
@@ -61,8 +67,6 @@ const Home: NextPage = () => {
       }
     }
   };
-  // const { data: user, status } = useQueryUser();
-  // if (status !== 'success') return <Typography>loading...</Typography>;
 
   return (
     <Layout title="Auth">
