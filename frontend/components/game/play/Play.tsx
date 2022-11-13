@@ -4,7 +4,11 @@ import { useSocketStore } from 'store/game/ClientSocket';
 import { usePlayerNamesStore } from 'store/game/PlayerNames';
 import { usePlayStateStore, PlayState } from 'store/game/PlayState';
 import { GameHeader } from 'components/game/play/GameHeader';
-import { useGameSettingStore } from 'store/game/GameSetting';
+import { GameSetting } from 'types';
+
+type Props = {
+  gameSetting: GameSetting;
+};
 
 type Ball = {
   x: number;
@@ -76,7 +80,7 @@ const getGameParameters = (canvasWidth: number) => {
   return gameParameters;
 };
 
-export const Play = () => {
+export const Play = ({ gameSetting }: Props) => {
   // function to get window width
   const getWindowWidth = () => {
     const { innerWidth, innerHeight } = window;
@@ -104,7 +108,6 @@ export const Play = () => {
   const updatePlayState = usePlayStateStore((store) => store.updatePlayState);
   const [countDown, updateCountDown] = useState(3);
   const [changeCount, updateChangeCount] = useState(true);
-  const { gameSetting } = useGameSettingStore();
 
   const drawField = useCallback(
     (
@@ -303,7 +306,7 @@ export const Play = () => {
         <Typography
           align="center"
           maxWidth={gameParameters.canvasWidth}
-        >{`Difficulty: ${gameSetting[0]} / Match Point: ${gameSetting[1]}`}</Typography>
+        >{`Difficulty: ${gameSetting.difficulty} / Match Point: ${gameSetting.matchPoint}`}</Typography>
       </div>
     </>
   );

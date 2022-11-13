@@ -44,6 +44,13 @@ type GameInfo = {
   ball: Ball;
 };
 
+type DifficultyLevel = 'Easy' | 'Normal' | 'Hard';
+
+type GameSetting = {
+  difficulty: DifficultyLevel;
+  matchPoint: number;
+};
+
 @WebSocketGateway({
   cors: {
     origin: '*',
@@ -168,7 +175,7 @@ export class GameGateway {
   @SubscribeMessage('completeSetting')
   playGame(
     @ConnectedSocket() socket: Socket,
-    @MessageBody() data: [string, number],
+    @MessageBody() data: GameSetting,
   ) {
     const room = this.gameRooms.find(
       (r) =>
@@ -177,11 +184,8 @@ export class GameGateway {
     if (!room) {
       socket.emit('error');
     } else {
-      const difficulty = data[0];
-      const matchPoint = data[1];
-
-      room.matchPoint = matchPoint;
-      switch (difficulty) {
+      room.matchPoint = data.matchPoint;
+      switch (data.difficulty) {
         case 'Normal':
           room.barSpeed = 40;
           room.ballVec.speed = 4;

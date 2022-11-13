@@ -12,25 +12,18 @@ import {
 import { useEffect, useState } from 'react';
 import { useSocketStore } from 'store/game/ClientSocket';
 import { PlayState, usePlayStateStore } from 'store/game/PlayState';
-import { useGameSettingStore } from 'store/game/GameSetting';
+import { DifficultyLevel, isDifficultyLevel, GameSetting } from 'types';
 
-const difficultyLevelArray = ['Eary', 'Normal', 'Hard'];
-
-type DifficultyLevel = typeof difficultyLevelArray[number];
-
-const isDifficultyLevel = (value: unknown): value is DifficultyLevel => {
-  return typeof value === 'string' && difficultyLevelArray.includes(value);
+type Props = {
+  updateSetting: (newSetting: GameSetting) => void;
 };
 
-export const Setting = () => {
+export const Setting = ({ updateSetting }: Props) => {
   const { playState } = usePlayStateStore();
   const updatePlayState = usePlayStateStore((store) => store.updatePlayState);
   const { socket } = useSocketStore();
   const [difficulty, setDifficulty] = useState<DifficultyLevel>('Easy');
   const [matchPoint, setMatchPoint] = useState(3);
-  const updateGameSetting = useGameSettingStore(
-    (store) => store.updateGameSetting,
-  );
 
   const handleDifficultySetting = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value: unknown = e.target.value;
@@ -44,9 +37,9 @@ export const Setting = () => {
   };
 
   useEffect(() => {
-    socket?.on('playStarted', (data: [string, number]) => {
+    socket?.on('playStarted', (newSetting: GameSetting) => {
+      updateSetting(newSetting);
       updatePlayState(PlayState.statePlaying);
-      updateGameSetting(data);
     });
 
     return () => {
@@ -55,7 +48,7 @@ export const Setting = () => {
   }, [socket]);
 
   const handleSubmit = () => {
-    socket?.emit('completeSetting', [difficulty, matchPoint]);
+    socket?.emit('completeSetting', { difficulty, matchPoint });
   };
 
   return (
