@@ -1,17 +1,11 @@
 import { Grid, Paper, Typography } from '@mui/material';
 import { useEffect } from 'react';
-import {
-  usePlayStateStore,
-  stateNothing,
-  stateWaiting,
-  statePlaying,
-} from 'store/game/PlayState';
+import { usePlayStateStore, PlayState } from 'store/game/PlayState';
 import { useSocketStore } from 'store/game/ClientSocket';
 import { Start } from './Start';
 import { Wait } from './Wait';
 import { Watch } from './Watch';
 import { History } from './History';
-import { Header } from 'components/common/Header';
 
 export const Display = () => {
   const { socket, updateSocket } = useSocketStore();
@@ -20,7 +14,7 @@ export const Display = () => {
 
   useEffect(() => {
     updateSocket('ws://localhost:3001/game');
-    updatePlayState(stateNothing);
+    updatePlayState(PlayState.stateNothing);
 
     return () => {
       socket?.disconnect();
@@ -29,7 +23,6 @@ export const Display = () => {
 
   return (
     <>
-      <Header title="game" />
       <Grid
         container
         justifyContent="center"
@@ -53,10 +46,9 @@ export const Display = () => {
               justifyContent="center"
               direction="column"
             >
-              {playState === stateNothing && <Start />}
-              {(playState === stateWaiting || playState === statePlaying) && (
-                <Wait />
-              )}
+              {playState === PlayState.stateNothing && <Start />}
+              {(playState === PlayState.stateWaiting ||
+                playState === PlayState.statePlaying) && <Wait />}
             </Grid>
           </Paper>
         </Grid>

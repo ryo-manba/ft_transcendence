@@ -2,13 +2,13 @@ import { Grid, Typography, Zoom } from '@mui/material';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSocketStore } from 'store/game/ClientSocket';
 import { usePlayerNamesStore } from 'store/game/PlayerNames';
-import {
-  usePlayStateStore,
-  stateWinner,
-  stateLoser,
-  stateNothing,
-} from 'store/game/PlayState';
+import { usePlayStateStore, PlayState } from 'store/game/PlayState';
 import { GameHeader } from 'components/game/play/GameHeader';
+import { GameSetting } from 'types/game';
+
+type Props = {
+  gameSetting: GameSetting;
+};
 
 type Ball = {
   x: number;
@@ -80,7 +80,7 @@ const getGameParameters = (canvasWidth: number) => {
   return gameParameters;
 };
 
-export const Play = () => {
+export const Play = ({ gameSetting }: Props) => {
   // function to get window width
   const getWindowWidth = () => {
     const { innerWidth, innerHeight } = window;
@@ -227,13 +227,13 @@ export const Play = () => {
 
   useEffect(() => {
     socket?.on('win', () => {
-      updatePlayState(stateWinner);
+      updatePlayState(PlayState.stateWinner);
     });
     socket?.on('lose', () => {
-      updatePlayState(stateLoser);
+      updatePlayState(PlayState.stateLoser);
     });
     socket?.on('error', () => {
-      updatePlayState(stateNothing);
+      updatePlayState(PlayState.stateNothing);
     });
 
     return () => {
@@ -303,6 +303,10 @@ export const Play = () => {
           width={gameParameters.canvasWidth}
           height={gameParameters.canvasHeight}
         />
+        <Typography
+          align="center"
+          maxWidth={gameParameters.canvasWidth}
+        >{`Difficulty: ${gameSetting.difficulty} / Match Point: ${gameSetting.matchPoint}`}</Typography>
       </div>
     </>
   );
