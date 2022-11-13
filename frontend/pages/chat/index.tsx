@@ -1,33 +1,12 @@
 import { useState, useEffect } from 'react';
 import { io, Socket } from 'socket.io-client';
-import {
-  Button,
-  List,
-  TextField,
-  IconButton,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  InputLabel,
-  Select,
-  SelectChangeEvent,
-  MenuItem,
-  FormControl,
-} from '@mui/material';
-
+import { List, TextField, IconButton } from '@mui/material';
 import Grid from '@mui/material/Unstable_Grid2';
-import AddCircleOutlineRounded from '@mui/icons-material/AddCircleOutlineRounded';
 import SendIcon from '@mui/icons-material/Send';
 import { Header } from 'components/common/Header';
 import { ChatroomListItem } from 'components/chat/ChatroomListItem';
-import {
-  CreateChatroom,
-  Chatroom,
-  Message,
-  ChatroomType,
-  CHATROOM_TYPE,
-} from 'types/chat';
+import { ChatroomCreateButton } from 'components/chat/ChatroomCreateButton';
+import { Chatroom, Message } from 'types/chat';
 
 const appBarHeight = '64px';
 
@@ -129,65 +108,6 @@ const Chat = () => {
     }
   };
 
-  const [chatroomType, setChatroomType] = useState<ChatroomType>(
-    CHATROOM_TYPE.PUBLIC,
-  );
-  const handleChange = (event: SelectChangeEvent) => {
-    console.log('ChatroomType:', event.target.value);
-    setChatroomType(event.target.value as ChatroomType);
-  };
-
-  const [open, setOpen] = useState(false);
-  const handleClickOpen = () => {
-    setOpen(true);
-  };
-
-  const [name, setName] = useState('');
-  const [password, setPassword] = useState('');
-
-  const initDialog = () => {
-    setName('');
-    setChatroomType(CHATROOM_TYPE.PUBLIC);
-    setPassword('');
-  };
-
-  const handleClose = () => {
-    setOpen(false);
-    initDialog();
-  };
-
-  const getRooms = () => {
-    if (!socket) return;
-
-    socket.emit('chat:getRooms');
-  };
-
-  const createChatroom = (room: CreateChatroom) => {
-    if (!socket) return;
-    console.log('chat:create', room);
-    socket.emit('chat:create', room);
-  };
-
-  const handleSubmit = () => {
-    if (!socket || name.length === 0) {
-      handleClose();
-
-      return;
-    }
-
-    const room: CreateChatroom = {
-      name: name,
-      type: chatroomType,
-      ownerId: 1, // TODO:userのidに変更する
-    };
-    if (chatroomType === CHATROOM_TYPE.PROTECTED) {
-      room.hashedPassword = password;
-    }
-    createChatroom(room);
-    getRooms();
-    handleClose();
-  };
-
   return (
     <>
       <Header title="Chatroom" />
@@ -205,75 +125,7 @@ const Chat = () => {
             borderBottom: '1px solid',
           }}
         >
-          {/* TODO: Buttonコンポーネント作る */}
-          <Button
-            color="primary"
-            variant="outlined"
-            endIcon={
-              <AddCircleOutlineRounded color="primary" sx={{ fontSize: 32 }} />
-            }
-            fullWidth={true}
-            style={{ justifyContent: 'flex-start' }}
-            onClick={handleClickOpen}
-          >
-            チャットルーム作成
-          </Button>
-          <Dialog open={open} onClose={handleClose}>
-            <DialogTitle>Subscribe</DialogTitle>
-            <DialogContent>
-              <TextField
-                autoFocus
-                margin="dense"
-                id="name"
-                label="Room name"
-                type="text"
-                value={name}
-                onChange={(e) => {
-                  setName(e.target.value);
-                }}
-                fullWidth
-                variant="standard"
-              />
-            </DialogContent>
-            {chatroomType === CHATROOM_TYPE.PROTECTED && (
-              <DialogContent>
-                <TextField
-                  autoFocus
-                  margin="dense"
-                  id="name"
-                  label="Password"
-                  type="text"
-                  value={password}
-                  onChange={(e) => {
-                    setPassword(e.target.value);
-                  }}
-                  fullWidth
-                  variant="standard"
-                />
-              </DialogContent>
-            )}
-            <DialogContent>
-              <FormControl sx={{ m: 1, minWidth: 120 }}>
-                <InputLabel id="room-type-select-label">Type</InputLabel>
-                <Select
-                  labelId="room-type-select-label"
-                  id="room-type"
-                  value={chatroomType}
-                  label="ChatroomType"
-                  onChange={handleChange}
-                >
-                  <MenuItem value={CHATROOM_TYPE.PUBLIC}>Public</MenuItem>
-                  <MenuItem value={CHATROOM_TYPE.PRIVATE}>Private</MenuItem>
-                  <MenuItem value={CHATROOM_TYPE.PROTECTED}>Protected</MenuItem>
-                </Select>
-              </FormControl>
-            </DialogContent>
-
-            <DialogActions>
-              <Button onClick={handleClose}>Cancel</Button>
-              <Button onClick={handleSubmit}>Subscribe</Button>
-            </DialogActions>
-          </Dialog>
+          {socket !== undefined && <ChatroomCreateButton socket={socket} />}
           <List dense={false}>
             {rooms.map((room, i) => (
               <ChatroomListItem key={i} room={room} joinRoom={joinRoom} />
