@@ -79,7 +79,7 @@ export const ChatroomCreateButton = memo(function ChatroomCreateButton({
     createChatroom(room);
     getRooms();
     handleClose();
-  }, [name]);
+  }, [name, roomType, password]);
 
   return (
     <>
