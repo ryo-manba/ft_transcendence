@@ -14,18 +14,29 @@ import { useSocketStore } from 'store/game/ClientSocket';
 import { PlayState, usePlayStateStore } from 'store/game/PlayState';
 import { useGameSettingStore } from 'store/game/GameSetting';
 
+const difficultyLevelArray = ['Eary', 'Normal', 'Hard'];
+
+type DifficultyLevel = typeof difficultyLevelArray[number];
+
+const isDifficultyLevel = (value: unknown): value is DifficultyLevel => {
+  return typeof value === 'string' && difficultyLevelArray.includes(value);
+};
+
 export const Setting = () => {
   const { playState } = usePlayStateStore();
   const updatePlayState = usePlayStateStore((store) => store.updatePlayState);
   const { socket } = useSocketStore();
-  const [speed, setSpeed] = useState('Easy');
+  const [difficulty, setDifficulty] = useState<DifficultyLevel>('Easy');
   const [matchPoint, setMatchPoint] = useState(3);
   const updateGameSetting = useGameSettingStore(
     (store) => store.updateGameSetting,
   );
 
-  const handleSpeedSetting = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSpeed(e.target.value);
+  const handleDifficultySetting = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value: unknown = e.target.value;
+    if (isDifficultyLevel(value)) {
+      setDifficulty(value);
+    }
   };
 
   const handleMatchPointSetting = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -44,7 +55,7 @@ export const Setting = () => {
   }, [socket]);
 
   const handleSubmit = () => {
-    socket?.emit('completeSetting', [speed, matchPoint]);
+    socket?.emit('completeSetting', [difficulty, matchPoint]);
   };
 
   return (
@@ -84,14 +95,16 @@ export const Setting = () => {
         {playState === PlayState.stateSelecting && (
           <Grid item>
             <FormControl>
-              <FormLabel id="speed-radio-buttons-group-label">Speed</FormLabel>
+              <FormLabel id="difficulty-radio-buttons-group-label">
+                Difficulty
+              </FormLabel>
               <RadioGroup
                 row
-                aria-labelledby="speed-radio-buttons-group-label"
+                aria-labelledby="difficulty-radio-buttons-group-label"
                 defaultValue="Easy"
-                name="speed-buttons-group"
-                value={speed}
-                onChange={handleSpeedSetting}
+                name="difficulty-buttons-group"
+                value={difficulty}
+                onChange={handleDifficultySetting}
               >
                 <FormControlLabel
                   value="Easy"

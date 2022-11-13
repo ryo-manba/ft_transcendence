@@ -303,7 +303,7 @@ export const Play = () => {
         <Typography
           align="center"
           maxWidth={gameParameters.canvasWidth}
-        >{`Speed: ${gameSetting[0]} / Match Point: ${gameSetting[1]}`}</Typography>
+        >{`Difficulty: ${gameSetting[0]} / Match Point: ${gameSetting[1]}`}</Typography>
       </div>
     </>
   );
