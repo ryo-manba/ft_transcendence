@@ -1,31 +1,17 @@
 import { useState, useEffect } from 'react';
 import { io, Socket } from 'socket.io-client';
-import { Button, List, TextField, IconButton } from '@mui/material';
+import { List, TextField, IconButton } from '@mui/material';
 import Grid from '@mui/material/Unstable_Grid2';
-import AddCircleOutlineRounded from '@mui/icons-material/AddCircleOutlineRounded';
 import SendIcon from '@mui/icons-material/Send';
 import { Header } from 'components/common/Header';
-import { ChatRoomListItem } from 'components/chat/ChatRoomListItem';
-
-type ChatRoom = {
-  id: number;
-  name: string;
-  type: boolean;
-  author: string;
-  hashedPassword?: string;
-};
-
-type Message = {
-  userId: number;
-  roomId: number;
-  message: string;
-  userName?: string;
-};
+import { ChatroomListItem } from 'components/chat/ChatroomListItem';
+import { ChatroomCreateButton } from 'components/chat/ChatroomCreateButton';
+import { Chatroom, Message } from 'types/chat';
 
 const appBarHeight = '64px';
 
 const Chat = () => {
-  const [rooms, setRooms] = useState<ChatRoom[]>([]);
+  const [rooms, setRooms] = useState<Chatroom[]>([]);
   const [text, setText] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
   const [currentRoomId, setCurrentRoomId] = useState(0);
@@ -43,7 +29,7 @@ const Chat = () => {
   useEffect(() => {
     if (!socket) return;
 
-    socket.on('chat:getRooms', (data: ChatRoom[]) => {
+    socket.on('chat:getRooms', (data: Chatroom[]) => {
       console.log('chat:getRooms', data);
       setRooms(data);
     });
@@ -104,36 +90,22 @@ const Chat = () => {
   // send a message to the server
   const sendMessage = () => {
     if (!socket) return;
-    const message = { userId: 1, roomId: currentRoomId, message: text };
+
+    // TODO: userIdをuserから取得できるようにする置き換える
+    const message = { userId: 1, chatroomId: currentRoomId, message: text };
+    console.log('sendMessage:', message);
+
     socket.emit('chat:sendMessage', message);
     setText('');
   };
 
   const joinRoom = (id: number) => {
     if (!socket) return;
-
+    console.log('joinRoom:', id);
     const res = socket.emit('chat:joinRoom', id);
     if (res) {
       setCurrentRoomId(id);
     }
-  };
-
-  // TODO: name以外も指定できるようにする
-  const createChatRoom = () => {
-    if (!socket) return;
-    const name = window.prompt('チャンネル名を入力してください');
-    if (name === null || name.length === 0) {
-      return;
-    }
-    const room = {
-      name: name,
-      type: true,
-      author: 'admin',
-      hashedPassword: '',
-    };
-    console.log('chat:create', room);
-    socket.emit('chat:create', room);
-    socket.emit('chat:getRooms');
   };
 
   return (
@@ -153,22 +125,10 @@ const Chat = () => {
             borderBottom: '1px solid',
           }}
         >
-          {/* TODO: Buttonコンポーネント作る */}
-          <Button
-            color="primary"
-            variant="outlined"
-            endIcon={
-              <AddCircleOutlineRounded color="primary" sx={{ fontSize: 32 }} />
-            }
-            fullWidth={true}
-            style={{ justifyContent: 'flex-start' }}
-            onClick={createChatRoom}
-          >
-            チャットルーム作成
-          </Button>
+          {socket !== undefined && <ChatroomCreateButton socket={socket} />}
           <List dense={false}>
             {rooms.map((room, i) => (
-              <ChatRoomListItem key={i} room={room} joinRoom={joinRoom} />
+              <ChatroomListItem key={i} room={room} joinRoom={joinRoom} />
             ))}
           </List>
         </Grid>
@@ -181,32 +141,34 @@ const Chat = () => {
         >
           <h2>チャットスペース</h2>
           <div style={{ marginLeft: 5, marginRight: 5 }}>
-            <TextField
-              autoFocus
-              fullWidth
-              label="Message"
-              id="Message"
-              type="text"
-              variant="standard"
-              size="small"
-              value={text}
-              placeholder={`#roomへメッセージを送信`}
-              onKeyPress={(e) => {
-                if (e.key === 'Enter') {
-                  sendMessage();
-                }
-              }}
-              onChange={(e) => {
-                setText(e.target.value);
-              }}
-              InputProps={{
-                endAdornment: (
-                  <IconButton onClick={sendMessage}>
-                    <SendIcon />
-                  </IconButton>
-                ),
-              }}
-            />
+            <div style={{ display: 'flex', alignItems: 'end' }}>
+              <TextField
+                autoFocus
+                fullWidth
+                label="Message"
+                id="Message"
+                type="text"
+                variant="standard"
+                size="small"
+                value={text}
+                placeholder={`#roomへメッセージを送信`}
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter') {
+                    sendMessage();
+                  }
+                }}
+                onChange={(e) => {
+                  setText(e.target.value);
+                }}
+                InputProps={{
+                  endAdornment: (
+                    <IconButton onClick={sendMessage}>
+                      <SendIcon />
+                    </IconButton>
+                  ),
+                }}
+              />
+            </div>
             <p>
               <strong>Talk Room</strong>
             </p>

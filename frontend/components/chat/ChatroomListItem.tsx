@@ -1,22 +1,13 @@
-import ListItem from '@mui/material/ListItem';
-import IconButton from '@mui/material/IconButton';
-import ListItemText from '@mui/material/ListItemText';
+import { ListItem, IconButton, ListItemText } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
-
-type ChatRoom = {
-  id: number;
-  name: string;
-  type: boolean;
-  author: string;
-  hashedPassword?: string;
-};
+import { Chatroom } from 'types/chat';
 
 type Props = {
-  room: ChatRoom;
+  room: Chatroom;
   joinRoom: (id: number) => void;
 };
 
-export const ChatRoomListItem = ({ room, joinRoom }: Props) => {
+export const ChatroomListItem = ({ room, joinRoom }: Props) => {
   if (room === undefined) {
     return null;
   }
