@@ -6,7 +6,7 @@ export type Chatroom = {
   hashedPassword?: string;
 };
 
-export type CreateChatroom = {
+export type CreateChatroomInfo = {
   name: string;
   type: string;
   ownerId: number;

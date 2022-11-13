@@ -14,7 +14,7 @@ import {
   FormControl,
 } from '@mui/material';
 import AddCircleOutlineRounded from '@mui/icons-material/AddCircleOutlineRounded';
-import { CreateChatroom, ChatroomType, CHATROOM_TYPE } from 'types/chat';
+import { CreateChatroomInfo, ChatroomType, CHATROOM_TYPE } from 'types/chat';
 
 type Props = {
   socket: Socket;
@@ -52,7 +52,7 @@ export const ChatroomCreateButton = memo(function ChatroomCreateButton({
   }, [socket]);
 
   const createChatroom = useCallback(
-    (room: CreateChatroom) => {
+    (room: CreateChatroomInfo) => {
       socket.emit('chat:create', room);
     },
     [socket],
@@ -68,7 +68,7 @@ export const ChatroomCreateButton = memo(function ChatroomCreateButton({
       return;
     }
 
-    const room: CreateChatroom = {
+    const room: CreateChatroomInfo = {
       name: name,
       type: roomType,
       ownerId: 1, // TODO:userのidに変更する
