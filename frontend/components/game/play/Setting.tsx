@@ -12,7 +12,7 @@ import {
 import { useEffect, useState } from 'react';
 import { useSocketStore } from 'store/game/ClientSocket';
 import { PlayState, usePlayStateStore } from 'store/game/PlayState';
-import { DifficultyLevel, isDifficultyLevel, GameSetting } from 'types';
+import { DifficultyLevel, isDifficultyLevel, GameSetting } from 'types/game';
 
 type Props = {
   updateSetting: (newSetting: GameSetting) => void;

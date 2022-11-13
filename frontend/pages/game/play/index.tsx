@@ -4,7 +4,7 @@ import { Play } from 'components/game/play/Play';
 import { Result } from 'components/game/play/Result';
 import { Layout } from 'components/game/home/Layout';
 import { usePlayStateStore, PlayState } from 'store/game/PlayState';
-import { GameSetting } from 'types';
+import { GameSetting } from 'types/game';
 import { useState } from 'react';
 
 const defaultGameSetting: GameSetting = {
