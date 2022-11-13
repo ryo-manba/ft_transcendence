@@ -7,4 +7,9 @@
   "editor.codeActionsOnSave": {
     "source.fixAll.eslint": true // ファイル保存時に ESLint でフォーマット
   },
+  "eslint.workingDirectories": [
+    "frontend",
+    "backend"
+  ],
+  "nuxt.isNuxtApp": false
 }
