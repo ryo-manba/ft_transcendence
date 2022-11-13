@@ -1,0 +1,45 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model ChatRoom {
+  id             Int       @id @default(autoincrement())
+  name           String
+  type           Boolean
+  author         String
+  hashedPassword String
+  Message        Message[]
+}
+
+model GameRecord {
+  id          Int      @id @default(autoincrement())
+  winnerName  String
+  loserName   String
+  winnerScore Int
+  loserScore  Int
+  createdAt   DateTime @default(now())
+}
+
+model Message {
+  id       Int      @id @default(autoincrement())
+  roomId   Int
+  userId   Int
+  message  String
+  ChatRoom ChatRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  User     User     @relation(fields: [userId], references: [id])
+}
+
+model User {
+  id             Int       @id @default(autoincrement())
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime
+  name           String
+  email          String    @unique
+  hashedPassword String
+  Message        Message[]
+}

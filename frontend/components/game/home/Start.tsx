@@ -1,16 +1,16 @@
 import VideogameAssetSharpIcon from '@mui/icons-material/VideogameAssetSharp';
-import { Button, Grid, TextField, Box, Typography } from '@mui/material';
-import React, { useRef } from 'react';
+import { Button, Grid, Box, Typography } from '@mui/material';
 import { usePlayStateStore, PlayState } from 'store/game/PlayState';
 import { useSocketStore } from 'store/game/ClientSocket';
+import { useQueryUser } from 'hooks/useQueryUser';
 
 export const Start = () => {
-  const playerNameRef = useRef<HTMLInputElement>(null);
   const { socket } = useSocketStore();
   const updatePlayState = usePlayStateStore((store) => store.updatePlayState);
+  const { data: user } = useQueryUser();
 
   const start = () => {
-    socket?.emit('playStart', playerNameRef.current?.value);
+    socket?.emit('playStart', user?.name);
     updatePlayState(PlayState.stateWaiting);
   };
 
@@ -19,9 +19,6 @@ export const Start = () => {
       <Typography variant="h2" align="center" gutterBottom>
         New Game!!
       </Typography>
-      <Grid item xs={12}>
-        <TextField label="name" inputRef={playerNameRef} />
-      </Grid>
       <Grid item xs={12}>
         <Button
           size="large"
