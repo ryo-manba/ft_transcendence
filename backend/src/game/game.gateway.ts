@@ -1,3 +1,4 @@
+import { Logger } from '@nestjs/common';
 import {
   SubscribeMessage,
   WebSocketGateway,
@@ -60,6 +61,8 @@ type GameSetting = {
 export class GameGateway {
   constructor(private readonly records: RecordsService) {}
 
+  private logger: Logger = new Logger('GameGateway');
+
   roomNum = 0;
   gameRooms: RoomInfo[] = [];
   waitingQueue: Player[] = [];
@@ -84,11 +87,11 @@ export class GameGateway {
   server: Server;
 
   handleConnection(socket: Socket) {
-    console.log('hello', socket.id);
+    this.logger.log('hello', socket.id);
   }
 
   handleDisconnect(socket: Socket) {
-    console.log('bye', socket.id);
+    this.logger.log('bye', socket.id);
 
     this.gameRooms = this.gameRooms.filter(
       (room) =>
@@ -118,7 +121,8 @@ export class GameGateway {
 
   @SubscribeMessage('playStart')
   joinRoom(@ConnectedSocket() socket: Socket, @MessageBody() data: string) {
-    if (this.waitingQueue.length == 0) {
+    const player1 = this.waitingQueue.find((player) => player.name !== data);
+    if (player1 === undefined) {
       this.waitingQueue.push({
         name: data,
         socket: socket,
@@ -126,19 +130,18 @@ export class GameGateway {
         score: 0,
       });
     } else {
-      const player1 = this.waitingQueue.pop();
       const player2: Player = {
         name: data,
         socket: socket,
         height: GameGateway.initialHeight,
         score: 0,
       };
-      console.log(player1, player2);
+      this.logger.log(player1, player2);
       const roomName = String(this.roomNum);
       this.roomNum++;
 
-      console.log(player1.socket.id, 'joined to room', roomName);
-      console.log(player2.socket.id, 'joined to room', roomName);
+      this.logger.log(player1.socket.id, 'joined to room', roomName);
+      this.logger.log(player2.socket.id, 'joined to room', roomName);
 
       void player1.socket.join(roomName);
       void player2.socket.join(roomName);
