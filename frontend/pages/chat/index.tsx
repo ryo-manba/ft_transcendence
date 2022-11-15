@@ -99,14 +99,9 @@ const Chat = () => {
     setText('');
   };
 
-  const joinRoom = (id: number) => {
-    if (!socket) return;
-    console.log('joinRoom:', id);
-    const res = socket.emit('chat:joinRoom', id);
-    if (res) {
-      setCurrentRoomId(id);
-    }
-  };
+  if (socket === undefined) {
+    return null;
+  }
 
   return (
     <>
@@ -125,10 +120,15 @@ const Chat = () => {
             borderBottom: '1px solid',
           }}
         >
-          {socket !== undefined && <ChatroomCreateButton socket={socket} />}
+          <ChatroomCreateButton socket={socket} />
           <List dense={false}>
             {rooms.map((room, i) => (
-              <ChatroomListItem key={i} room={room} joinRoom={joinRoom} />
+              <ChatroomListItem
+                key={i}
+                room={room}
+                socket={socket}
+                setCurrentRoomId={setCurrentRoomId}
+              />
             ))}
           </List>
         </Grid>

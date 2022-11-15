@@ -105,7 +105,7 @@ export class ChatGateway {
   /**
    * チャットルームから退出する
    * @param client
-   * @param data
+   * @param roomId
    */
   @SubscribeMessage('chat:leaveRoom')
   async onRoomLeave(
@@ -114,5 +114,21 @@ export class ChatGateway {
   ): Promise<any> {
     this.logger.log(`chat:leaveRoom received -> ${roomId}`);
     await client.leave(String(roomId));
+  }
+
+  /**
+   * チャットルームを削除する
+   * @param client
+   * @param roomId
+   */
+  @SubscribeMessage('chat:deleteRoom')
+  async onRoomDelete(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() roomId: number,
+  ): Promise<any> {
+    this.logger.log(`chat:deleteRoom received -> ${roomId}`);
+    const data = { id: roomId };
+    const res = await this.chatService.remove(data);
+    void res;
   }
 }
