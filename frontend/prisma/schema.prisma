@@ -7,15 +7,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model ChatRoom {
-  id             Int       @id @default(autoincrement())
-  name           String
-  type           Boolean
-  author         String
-  hashedPassword String
-  Message        Message[]
-}
-
 model GameRecord {
   id          Int      @id @default(autoincrement())
   winnerName  String
@@ -26,20 +17,53 @@ model GameRecord {
 }
 
 model Message {
-  id       Int      @id @default(autoincrement())
-  roomId   Int
-  userId   Int
-  message  String
-  ChatRoom ChatRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
-  User     User     @relation(fields: [userId], references: [id])
+  id         Int      @id @default(autoincrement())
+  userId     Int
+  message    String
+  chatroomId Int
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @default(now())
+  Chatroom   Chatroom @relation(fields: [chatroomId], references: [id], onDelete: Cascade)
+  User       User     @relation(fields: [userId], references: [id])
 }
 
 model User {
-  id             Int       @id @default(autoincrement())
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime
+  id             Int             @id @default(autoincrement())
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @default(now())
   name           String
-  email          String    @unique
-  hashedPassword String
+  email          String          @unique
+  hashedPassword String?
+  Chatroom       Chatroom[]
+  ChatroomAdmin  ChatroomAdmin[]
   Message        Message[]
+}
+
+model Chatroom {
+  id             Int             @id @default(autoincrement())
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @default(now())
+  name           String
+  type           ChatroomType    @default(PUBLIC)
+  ownerId        Int
+  hashedPassword String?
+  User           User            @relation(fields: [ownerId], references: [id])
+  ChatroomAdmin  ChatroomAdmin[]
+  Message        Message[]
+}
+
+model ChatroomAdmin {
+  id         Int      @id @default(autoincrement())
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @default(now())
+  chatroomId Int
+  userId     Int
+  Chatroom   Chatroom @relation(fields: [chatroomId], references: [id], onDelete: Cascade)
+  User       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+enum ChatroomType {
+  PUBLIC
+  PRIVATE
+  PROTECTED
 }
