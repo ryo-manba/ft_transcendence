@@ -10,7 +10,7 @@ export const Start = () => {
   const { data: user } = useQueryUser();
 
   const start = () => {
-    socket?.emit('playStart', user?.name);
+    socket?.emit('playStart', user?.id);
     updatePlayState(PlayState.stateWaiting);
   };
 

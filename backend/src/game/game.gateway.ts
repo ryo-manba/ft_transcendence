@@ -1,3 +1,4 @@
+import { Logger } from '@nestjs/common';
 import {
   SubscribeMessage,
   WebSocketGateway,
@@ -7,9 +8,12 @@ import {
 } from '@nestjs/websockets';
 import { Socket, Server } from 'socket.io';
 import { RecordsService } from '../records/records.service';
+import { UserService } from '../user/user.service';
 
 type Player = {
   name: string;
+  id: number;
+  elo: number;
   socket: Socket;
   height: number;
   score: number;
@@ -36,6 +40,7 @@ type RoomInfo = {
   isPlayer1Turn: boolean;
   matchPoint: number;
   barSpeed: number;
+  rewards: number;
 };
 
 type GameInfo = {
@@ -58,7 +63,10 @@ type GameSetting = {
   namespace: '/game',
 })
 export class GameGateway {
-  constructor(private readonly records: RecordsService) {}
+  constructor(
+    private readonly records: RecordsService,
+    private readonly user: UserService,
+  ) {}
 
   roomNum = 0;
   gameRooms: RoomInfo[] = [];
@@ -83,12 +91,14 @@ export class GameGateway {
   @WebSocketServer()
   server: Server;
 
+  private logger: Logger = new Logger('GameGateway');
+
   handleConnection(socket: Socket) {
-    console.log('hello', socket.id);
+    this.logger.log(`Connected: ${socket.id}`);
   }
 
   handleDisconnect(socket: Socket) {
-    console.log('bye', socket.id);
+    this.logger.log(`Disconnected: ${socket.id}`);
 
     this.gameRooms = this.gameRooms.filter(
       (room) =>
@@ -107,7 +117,8 @@ export class GameGateway {
   updatePlayerStatus(player1: Player, player2: Player) {
     const playerNames: [string, string] = [player1.name, player2.name];
 
-    if (player1.name < player2.name) {
+    // if both players' elos are equal, first player joining the que will select the rule
+    if (player1.elo <= player2.elo) {
       player1.socket.emit('select', playerNames);
       player2.socket.emit('standBy', playerNames);
     } else {
@@ -117,31 +128,52 @@ export class GameGateway {
   }
 
   @SubscribeMessage('playStart')
-  joinRoom(@ConnectedSocket() socket: Socket, @MessageBody() data: string) {
+  async joinRoom(
+    @ConnectedSocket() socket: Socket,
+    @MessageBody() data: number,
+  ) {
     if (this.waitingQueue.length == 0) {
-      this.waitingQueue.push({
-        name: data,
-        socket: socket,
-        height: GameGateway.initialHeight,
-        score: 0,
-      });
+      await this.user
+        .findOne(data)
+        .then((user) => {
+          this.waitingQueue.push({
+            name: user.name,
+            id: data,
+            elo: user.elo,
+            socket: socket,
+            height: GameGateway.initialHeight,
+            score: 0,
+          });
+        })
+        .catch((error) => {
+          this.logger.log(error);
+        });
     } else {
       const player1 = this.waitingQueue.pop();
-      const player2: Player = {
-        name: data,
-        socket: socket,
-        height: GameGateway.initialHeight,
-        score: 0,
-      };
-      console.log(player1, player2);
+      let player2: Player;
+      await this.user
+        .findOne(data)
+        .then((user) => {
+          player2 = {
+            name: user.name,
+            id: data,
+            elo: user.elo,
+            socket: socket,
+            height: GameGateway.initialHeight,
+            score: 0,
+          };
+        })
+        .catch((error) => {
+          this.logger.log(error);
+        });
       const roomName = String(this.roomNum);
       this.roomNum++;
 
-      console.log(player1.socket.id, 'joined to room', roomName);
-      console.log(player2.socket.id, 'joined to room', roomName);
+      this.logger.log(`${player1.socket.id} joined to room ${roomName}`);
+      this.logger.log(`${player2.socket.id} joined to room ${roomName}`);
 
-      void player1.socket.join(roomName);
-      void player2.socket.join(roomName);
+      await player1.socket.join(roomName);
+      await player2.socket.join(roomName);
 
       const ball: Ball = {
         x: GameGateway.ballInitialX,
@@ -164,6 +196,7 @@ export class GameGateway {
         isPlayer1Turn: true,
         matchPoint: GameGateway.matchPoint,
         barSpeed: GameGateway.barSpeed,
+        rewards: 0,
       };
 
       this.gameRooms.push(newRoom);
@@ -185,6 +218,7 @@ export class GameGateway {
       socket.emit('error');
     } else {
       room.matchPoint = data.matchPoint;
+      room.rewards = 10 * room.matchPoint;
       switch (data.difficulty) {
         case 'Normal':
           room.barSpeed = 40;
@@ -193,8 +227,10 @@ export class GameGateway {
         case 'Hard':
           room.barSpeed = 50;
           room.ballVec.speed = 5;
+          room.rewards *= 2;
           break;
         default:
+          room.rewards *= 0.5;
           break;
       }
       this.server.to(room.roomName).emit('playStarted', data);
@@ -205,11 +241,13 @@ export class GameGateway {
     winner.socket.emit('win');
     loser.socket.emit('lose');
     await this.records.createGameRecord({
-      winnerName: winner.name,
-      loserName: loser.name,
+      winnerId: winner.id,
+      loserId: loser.id,
       winnerScore: winner.score,
       loserScore: loser.score,
     });
+    await this.user.updateUserElo(winner.id, { elo: currentRoom.rewards });
+    await this.user.updateUserElo(loser.id, { elo: -currentRoom.rewards });
     winner.socket.disconnect(true);
     loser.socket.disconnect(true);
     this.gameRooms = this.gameRooms.filter(
