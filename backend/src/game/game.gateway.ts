@@ -13,7 +13,7 @@ import { UserService } from '../user/user.service';
 type Player = {
   name: string;
   id: number;
-  elo: number;
+  point: number;
   socket: Socket;
   height: number;
   score: number;
@@ -117,8 +117,8 @@ export class GameGateway {
   updatePlayerStatus(player1: Player, player2: Player) {
     const playerNames: [string, string] = [player1.name, player2.name];
 
-    // if both players' elos are equal, first player joining the que will select the rule
-    if (player1.elo <= player2.elo) {
+    // if both players' points are equal, first player joining the que will select the rule
+    if (player1.point <= player2.point) {
       player1.socket.emit('select', playerNames);
       player2.socket.emit('standBy', playerNames);
     } else {
@@ -139,7 +139,7 @@ export class GameGateway {
           this.waitingQueue.push({
             name: user.name,
             id: data,
-            elo: user.elo,
+            point: user.point,
             socket: socket,
             height: GameGateway.initialHeight,
             score: 0,
@@ -157,7 +157,7 @@ export class GameGateway {
           player2 = {
             name: user.name,
             id: data,
-            elo: user.elo,
+            point: user.point,
             socket: socket,
             height: GameGateway.initialHeight,
             score: 0,
@@ -246,8 +246,8 @@ export class GameGateway {
       winnerScore: winner.score,
       loserScore: loser.score,
     });
-    await this.user.updateUserElo(winner.id, { elo: currentRoom.rewards });
-    await this.user.updateUserElo(loser.id, { elo: -currentRoom.rewards });
+    await this.user.updateUserPoint(winner.id, { point: currentRoom.rewards });
+    await this.user.updateUserPoint(loser.id, { point: -currentRoom.rewards });
     winner.socket.disconnect(true);
     loser.socket.disconnect(true);
     this.gameRooms = this.gameRooms.filter(

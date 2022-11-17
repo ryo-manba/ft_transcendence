@@ -1,7 +1,7 @@
 import { IsNotEmpty, IsNumber } from 'class-validator';
 
-export class UpdateUserEloDto {
+export class UpdateUserPointDto {
   @IsNumber()
   @IsNotEmpty()
-  elo: number;
+  point: number;
 }

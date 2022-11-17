@@ -8,14 +8,14 @@ datasource db {
 }
 
 model GameRecord {
-  id                             Int      @id @default(autoincrement())
-  winnerScore                    Int
-  loserScore                     Int
-  createdAt                      DateTime @default(now())
-  loserId                        Int
-  winnerId                       Int
-  User_GameRecord_loserIdToUser  User     @relation("GameRecord_loserIdToUser", fields: [loserId], references: [id])
-  User_GameRecord_winnerIdToUser User     @relation("GameRecord_winnerIdToUser", fields: [winnerId], references: [id])
+  id          Int      @id @default(autoincrement())
+  winnerScore Int
+  loserScore  Int
+  createdAt   DateTime @default(now())
+  loserId     Int
+  winnerId    Int
+  loser       User     @relation("Loser", fields: [loserId], references: [id])
+  winner      User     @relation("Winner", fields: [winnerId], references: [id])
 }
 
 model Message {
@@ -30,18 +30,18 @@ model Message {
 }
 
 model User {
-  id                                   Int             @id @default(autoincrement())
-  createdAt                            DateTime        @default(now())
-  updatedAt                            DateTime        @default(now())
-  name                                 String
-  email                                String          @unique
-  hashedPassword                       String?
-  elo                                  Int             @default(1000)
-  Chatroom                             Chatroom[]
-  ChatroomAdmin                        ChatroomAdmin[]
-  GameRecord_GameRecord_loserIdToUser  GameRecord[]    @relation("GameRecord_loserIdToUser")
-  GameRecord_GameRecord_winnerIdToUser GameRecord[]    @relation("GameRecord_winnerIdToUser")
-  Message                              Message[]
+  id             Int             @id @default(autoincrement())
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @default(now())
+  name           String
+  email          String          @unique
+  hashedPassword String?
+  point          Int             @default(1000)
+  Chatroom       Chatroom[]
+  ChatroomAdmin  ChatroomAdmin[]
+  loseGameRecord GameRecord[]    @relation("Loser")
+  winGameRecord  GameRecord[]    @relation("Winner")
+  Message        Message[]
 }
 
 model Chatroom {
