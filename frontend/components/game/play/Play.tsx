@@ -27,7 +27,6 @@ type GameParameters = {
   canvasHeight: number;
   barWidth: number;
   barLength: number;
-  barSpeed: number;
   player1X: number;
   player2X: number;
   highestPos: number;
@@ -50,7 +49,6 @@ const getGameParameters = (canvasWidth: number) => {
     canvasHeight: convert2Int(canvasWidth * 0.6),
     barWidth: convert2Int(canvasWidth * 0.02),
     barLength: 0,
-    barSpeed: 0,
     player1X: convert2Int(canvasWidth * 0.02),
     player2X: convert2Int(canvasWidth * 0.96),
     highestPos: 0,
@@ -65,7 +63,6 @@ const getGameParameters = (canvasWidth: number) => {
     widthRatio: 0,
   };
   gameParameters.barLength = convert2Int(gameParameters.canvasHeight / 6);
-  gameParameters.barSpeed = convert2Int(gameParameters.barLength / 5);
   gameParameters.highestPos = convert2Int(gameParameters.canvasHeight / 60);
   gameParameters.lowestPos =
     gameParameters.canvasHeight -
@@ -108,6 +105,8 @@ export const Play = ({ gameSetting }: Props) => {
   const updatePlayState = usePlayStateStore((store) => store.updatePlayState);
   const [countDown, updateCountDown] = useState(3);
   const [changeCount, updateChangeCount] = useState(true);
+  const [isArrowDownPressed, updateIsArrowDownPressed] = useState(false);
+  const [isArrowUpPressed, updateIsArrowUpPressed] = useState(false);
 
   const drawField = useCallback(
     (
@@ -166,18 +165,35 @@ export const Play = ({ gameSetting }: Props) => {
     const canvas = canvasRef.current as HTMLCanvasElement;
     const context = canvas.getContext('2d') as CanvasRenderingContext2D;
     let animationFrameId: number;
-    let move = 0;
 
     const onKeyDown = (e: KeyboardEvent) => {
       const key = e.code;
-      if (key === 'ArrowDown') {
-        ++move;
-      } else if (key === 'ArrowUp') {
-        --move;
+      if (
+        !isArrowDownPressed &&
+        !isArrowUpPressed &&
+        (key === 'ArrowDown' || key === 'ArrowUp')
+      ) {
+        if (key === 'ArrowDown') {
+          updateIsArrowDownPressed(true);
+        } else if (key === 'ArrowUp') {
+          updateIsArrowUpPressed(true);
+        }
+      }
+    };
+
+    const onKeyUp = (e: KeyboardEvent) => {
+      const key = e.code;
+      if (key === 'ArrowDown' || key === 'ArrowUp') {
+        if (isArrowDownPressed) {
+          updateIsArrowDownPressed(false);
+        } else if (isArrowUpPressed) {
+          updateIsArrowUpPressed(false);
+        }
       }
     };
 
     document.addEventListener('keydown', onKeyDown);
+    document.addEventListener('keyup', onKeyUp);
 
     const render = () => {
       drawField(context, gameInfo, gameParameters);
@@ -202,9 +218,16 @@ export const Play = ({ gameSetting }: Props) => {
     });
 
     const id = setInterval(() => {
+      let move = 0;
       if (countDown === 0) {
+        if (isArrowDownPressed || isArrowUpPressed) {
+          if (isArrowDownPressed) {
+            move = 1;
+          } else if (isArrowUpPressed) {
+            move = -1;
+          }
+        }
         socket?.emit('barMove', move);
-        move = 0;
       }
     }, 17);
 
@@ -212,6 +235,8 @@ export const Play = ({ gameSetting }: Props) => {
       window.cancelAnimationFrame(animationFrameId);
       clearInterval(id);
       socket?.off('updateGameInfo');
+      document.removeEventListener('keydown', onKeyDown);
+      document.removeEventListener('keyup', onKeyUp);
     };
   }, [drawField, countDown, gameInfo, gameParameters]);
 
