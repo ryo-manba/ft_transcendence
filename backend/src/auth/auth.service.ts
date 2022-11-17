@@ -24,7 +24,7 @@ export class AuthService {
         data: {
           email: dto.email,
           hashedPassword: hashed,
-          name: '', //ここで設定せず空欄許可した方が良さそう。
+          name: dto.username,
         },
       });
 
@@ -42,7 +42,7 @@ export class AuthService {
     }
   }
 
-  async login(dto: AuthDto): Promise<Jwt> {
+  async login(dto: Omit<AuthDto, 'username'>): Promise<Jwt> {
     const user = await this.prisma.user.findUnique({
       where: {
         email: dto.email,
