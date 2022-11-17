@@ -98,7 +98,6 @@ const Home: NextPage = () => {
             control={control}
             render={({ field }) => (
               <TextField
-                required
                 placeholder="example@gmail.com"
                 fullWidth
                 size="small"
@@ -115,7 +114,6 @@ const Home: NextPage = () => {
             control={control}
             render={({ field }) => (
               <TextField
-                required
                 label="Password"
                 type={showPassword ? 'text' : 'password'}
                 error={errors.password ? true : false}
@@ -155,7 +153,6 @@ const Home: NextPage = () => {
               control={control}
               render={({ field }) => (
                 <TextField
-                  required
                   fullWidth
                   size="small"
                   sx={{ mb: 2 }}

@@ -9,6 +9,7 @@
     "lint": "eslint '{components,pages,store,hooks}/**/*.{js,jsx,ts,tsx}'",
     "lint:fix": "eslint --fix '{components,pages,store,hooks}/**/*.{js,jsx,ts,tsx}'",
     "format": "prettier --write \"{components,pages,store,hooks}/**/*.{js,jsx,ts,tsx}\"",
+    "preinstall": "typesync || :",
     "prepare": "cd .. && husky install .config/.husky"
   },
   "dependencies": {
