@@ -7,6 +7,7 @@ import { Header } from 'components/common/Header';
 import { ChatroomListItem } from 'components/chat/ChatroomListItem';
 import { ChatroomCreateButton } from 'components/chat/ChatroomCreateButton';
 import { Chatroom, Message } from 'types/chat';
+import { useQueryUser } from 'hooks/useQueryUser';
 
 const appBarHeight = '64px';
 
@@ -16,6 +17,10 @@ const Chat = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [currentRoomId, setCurrentRoomId] = useState(0);
   const [socket, setSocket] = useState<Socket>();
+  const { data: user } = useQueryUser();
+  if (user === undefined) {
+    return <h1>ユーザーが存在しません</h1>;
+  }
 
   useEffect(() => {
     const temp = io('ws://localhost:3001/chat');
@@ -91,9 +96,11 @@ const Chat = () => {
   const sendMessage = () => {
     if (!socket) return;
 
-    // TODO: userIdをuserから取得できるようにする置き換える
-    const message = { userId: 1, chatroomId: currentRoomId, message: text };
-    console.log('sendMessage:', message);
+    const message = {
+      userId: user.id,
+      chatroomId: currentRoomId,
+      message: text,
+    };
 
     socket.emit('chat:sendMessage', message);
     setText('');
@@ -139,7 +146,7 @@ const Chat = () => {
             borderBottom: '1px solid',
           }}
         >
-          <h2>チャットスペース</h2>
+          <h2>{`Hello: ${user?.name}`}</h2>
           <div style={{ marginLeft: 5, marginRight: 5 }}>
             <div style={{ display: 'flex', alignItems: 'end' }}>
               <TextField
