@@ -78,7 +78,7 @@ export class GameGateway {
   static barLength = 100;
   static matchPoint = 3;
   static boardWidth = 1000;
-  static barSpeed = 30;
+  static barSpeed = 10;
 
   @WebSocketServer()
   server: Server;
@@ -187,12 +187,12 @@ export class GameGateway {
       room.matchPoint = data.matchPoint;
       switch (data.difficulty) {
         case 'Normal':
-          room.barSpeed = 40;
-          room.ballVec.speed = 4;
+          room.barSpeed = 20;
+          room.ballVec.speed = 5;
           break;
         case 'Hard':
-          room.barSpeed = 50;
-          room.ballVec.speed = 5;
+          room.barSpeed = 30;
+          room.ballVec.speed = 7;
           break;
         default:
           break;
