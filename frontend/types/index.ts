@@ -3,3 +3,9 @@ export type AuthForm = {
   password: string;
   username?: string;
 };
+
+export type AxiosErrorResponse = {
+  statusCode: number;
+  message: string;
+  error: string;
+};

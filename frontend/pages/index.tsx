@@ -10,7 +10,7 @@ import GppGoodIcon from '@mui/icons-material/GppGood';
 import { useForm, SubmitHandler, Controller } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { Layout } from '../components/Layout';
-import { AuthForm } from '../types';
+import { AuthForm, AxiosErrorResponse } from '../types';
 import {
   Grid,
   IconButton,
@@ -69,7 +69,8 @@ const Home: NextPage = () => {
       }
     } catch (e) {
       if (axios.isAxiosError(e) && e.response && e.response.data) {
-        setError(e.message);
+        const message = (e.response.data as AxiosErrorResponse).message;
+        setError(message);
       }
     }
   };
@@ -81,7 +82,7 @@ const Home: NextPage = () => {
         justifyContent="center"
         direction="column"
         alignItems="center"
-        xs={3.5}
+        sx={{ width: 360 }}
       >
         <GppGoodIcon color="primary" sx={{ width: 100, height: 100 }} />
         {error && (
@@ -91,19 +92,21 @@ const Home: NextPage = () => {
           </Alert>
         )}
         <form onSubmit={handleSubmit(onSubmit) as VoidFunction}>
+          {/* [TODO] remove email */}
           <Controller
             name="email"
             control={control}
             render={({ field }) => (
               <TextField
-                {...field}
+                required
                 placeholder="example@gmail.com"
                 fullWidth
                 size="small"
-                sx={{ mt: 2 }}
+                sx={{ my: 2 }}
                 label="Email"
                 error={errors.email ? true : false}
                 helperText={errors.email?.message}
+                {...field}
               />
             )}
           />
@@ -112,6 +115,7 @@ const Home: NextPage = () => {
             control={control}
             render={({ field }) => (
               <TextField
+                required
                 label="Password"
                 type={showPassword ? 'text' : 'password'}
                 error={errors.password ? true : false}
@@ -139,7 +143,7 @@ const Home: NextPage = () => {
                   ),
                 }}
                 size="small"
-                sx={{ mt: 4 }}
+                sx={{ my: 1 }}
                 fullWidth
                 {...field}
               />
@@ -151,13 +155,14 @@ const Home: NextPage = () => {
               control={control}
               render={({ field }) => (
                 <TextField
-                  {...field}
+                  required
                   fullWidth
                   size="small"
-                  sx={{ my: 2 }}
+                  sx={{ mb: 2 }}
                   label="Username"
                   error={errors.username ? true : false}
                   helperText={errors.username?.message}
+                  {...field}
                 />
               )}
             />

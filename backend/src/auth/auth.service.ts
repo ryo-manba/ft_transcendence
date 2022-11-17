@@ -35,7 +35,7 @@ export class AuthService {
       if (error instanceof PrismaClientKnownRequestError) {
         // Prismaが新規作成時に発行するエラー。
         if (error.code === 'P2002') {
-          throw new ForbiddenException('This email is already taken');
+          throw new ForbiddenException('email or username is already taken');
         }
       }
       throw error;
