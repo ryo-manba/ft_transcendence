@@ -20,10 +20,11 @@ const Dashboard: NextPage = () => {
     }
   };
   const { data: user } = useQueryUser();
+  if (user === undefined) return <div>Loading...</div>;
 
   return (
     <div>
-      <Typography>HELLO {user?.name}</Typography>
+      <Typography>HELLO {user.name}</Typography>
       <Stack spacing={2} direction="row">
         <Link href="/chat">
           <Button variant="contained">Chat</Button>

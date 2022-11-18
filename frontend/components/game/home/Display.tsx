@@ -13,12 +13,8 @@ export const Display = () => {
   const updatePlayState = usePlayStateStore((store) => store.updatePlayState);
 
   useEffect(() => {
-    socket.connect();
+    if (socket.disconnected) socket.connect();
     updatePlayState(PlayState.stateNothing);
-
-    return () => {
-      socket.disconnect();
-    };
   }, []);
 
   return (
