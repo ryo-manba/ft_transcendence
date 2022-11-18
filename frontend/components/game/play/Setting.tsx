@@ -37,18 +37,18 @@ export const Setting = ({ updateSetting }: Props) => {
   };
 
   useEffect(() => {
-    socket?.on('playStarted', (newSetting: GameSetting) => {
+    socket.on('playStarted', (newSetting: GameSetting) => {
       updateSetting(newSetting);
       updatePlayState(PlayState.statePlaying);
     });
 
     return () => {
-      socket?.off('playStarted');
+      socket.off('playStarted');
     };
   }, [socket]);
 
   const handleSubmit = () => {
-    socket?.emit('completeSetting', { difficulty, matchPoint });
+    socket.emit('completeSetting', { difficulty, matchPoint });
   };
 
   return (

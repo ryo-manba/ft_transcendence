@@ -202,7 +202,7 @@ export const Play = ({ gameSetting }: Props) => {
 
     render();
 
-    socket?.on('updateGameInfo', (newGameInfo: GameInfo) => {
+    socket.on('updateGameInfo', (newGameInfo: GameInfo) => {
       const rescaledGameInfo: GameInfo = {
         height1: convert2Int(newGameInfo.height1 * gameParameters.widthRatio),
         height2: convert2Int(newGameInfo.height2 * gameParameters.widthRatio),
@@ -227,44 +227,44 @@ export const Play = ({ gameSetting }: Props) => {
             move = -1;
           }
         }
-        socket?.emit('barMove', move);
+        socket.emit('barMove', move);
       }
     }, 17);
 
     return () => {
       window.cancelAnimationFrame(animationFrameId);
       clearInterval(id);
-      socket?.off('updateGameInfo');
+      socket.off('updateGameInfo');
       document.removeEventListener('keydown', onKeyDown);
       document.removeEventListener('keyup', onKeyUp);
     };
   }, [drawField, countDown, gameInfo, gameParameters]);
 
   useEffect(() => {
-    socket?.on('updateScores', (newScores: [number, number]) => {
+    socket.on('updateScores', (newScores: [number, number]) => {
       updateScores(newScores);
     });
 
     return () => {
-      socket?.off('updateScores');
+      socket.off('updateScores');
     };
   }, [scores]);
 
   useEffect(() => {
-    socket?.on('win', () => {
+    socket.on('win', () => {
       updatePlayState(PlayState.stateWinner);
     });
-    socket?.on('lose', () => {
+    socket.on('lose', () => {
       updatePlayState(PlayState.stateLoser);
     });
-    socket?.on('error', () => {
+    socket.on('error', () => {
       updatePlayState(PlayState.stateNothing);
     });
 
     return () => {
-      socket?.off('win');
-      socket?.off('lose');
-      socket?.off('error');
+      socket.off('win');
+      socket.off('lose');
+      socket.off('error');
     };
   }, [socket]);
 

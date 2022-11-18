@@ -8,16 +8,16 @@ import { Watch } from './Watch';
 import { History } from './History';
 
 export const Display = () => {
-  const { socket, updateSocket } = useSocketStore();
+  const { socket } = useSocketStore();
   const { playState } = usePlayStateStore();
   const updatePlayState = usePlayStateStore((store) => store.updatePlayState);
 
   useEffect(() => {
-    updateSocket('ws://localhost:3001/game');
+    socket.connect();
     updatePlayState(PlayState.stateNothing);
 
     return () => {
-      socket?.disconnect();
+      socket.disconnect();
     };
   }, []);
 
