@@ -42,6 +42,7 @@ const Home: NextPage = () => {
     formState: { errors },
     handleSubmit,
     clearErrors,
+    reset,
   } = useForm<AuthForm>({
     mode: 'onSubmit',
     resolver: yupResolver(schema),
@@ -69,6 +70,7 @@ const Home: NextPage = () => {
       }
     } catch (e) {
       if (axios.isAxiosError(e) && e.response && e.response.data) {
+        reset();
         const message = (e.response.data as AxiosErrorResponse).message;
         setError(message);
       }
