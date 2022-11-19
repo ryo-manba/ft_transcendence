@@ -81,7 +81,11 @@ export const Play = ({ gameSetting }: Props) => {
   // function to get window width
   const getWindowWidth = () => {
     const { innerWidth, innerHeight } = window;
-    const widthFromHeight = convert2Int((innerHeight - 150) / 0.6);
+    const heightOfHeader = 80;
+    const heightOfFooter = 25;
+    const widthFromHeight = convert2Int(
+      (innerHeight - (heightOfHeader * 2 + heightOfFooter)) / 0.6,
+    );
 
     return innerWidth < widthFromHeight ? innerWidth : widthFromHeight;
   };
