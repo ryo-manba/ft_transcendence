@@ -11,12 +11,15 @@ model User {
   id             Int             @id @default(autoincrement())
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @default(now()) @updatedAt
-  name           String
+  name           String          @unique
   email          String          @unique
   hashedPassword String?
-  message        Message[]
+  point          Int             @default(1000)
   chatroom       Chatroom[]
   chatroomAdmin  ChatroomAdmin[]
+  loseGameRecord GameRecord[]    @relation("Loser")
+  winGameRecord  GameRecord[]    @relation("Winner")
+  message        Message[]
 }
 
 // オーナー -> チャットルーム作成者(管理者権限も持つ)
@@ -63,9 +66,11 @@ model ChatroomAdmin {
 
 model GameRecord {
   id          Int      @id @default(autoincrement())
-  winnerName  String
-  loserName   String
   winnerScore Int
   loserScore  Int
   createdAt   DateTime @default(now())
+  loserId     Int
+  winnerId    Int
+  loser       User     @relation("Loser", fields: [loserId], references: [id])
+  winner      User     @relation("Winner", fields: [winnerId], references: [id])
 }

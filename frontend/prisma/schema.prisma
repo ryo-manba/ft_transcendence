@@ -9,11 +9,13 @@ datasource db {
 
 model GameRecord {
   id          Int      @id @default(autoincrement())
-  winnerName  String
-  loserName   String
   winnerScore Int
   loserScore  Int
   createdAt   DateTime @default(now())
+  loserId     Int
+  winnerId    Int
+  loser       User     @relation("Loser", fields: [loserId], references: [id])
+  winner      User     @relation("Winner", fields: [winnerId], references: [id])
 }
 
 model Message {
@@ -34,8 +36,11 @@ model User {
   name           String
   email          String          @unique
   hashedPassword String?
+  point          Int             @default(1000)
   Chatroom       Chatroom[]
   ChatroomAdmin  ChatroomAdmin[]
+  loseGameRecord GameRecord[]    @relation("Loser")
+  winGameRecord  GameRecord[]    @relation("Winner")
   Message        Message[]
 }
 

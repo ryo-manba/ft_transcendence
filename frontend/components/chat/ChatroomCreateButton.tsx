@@ -15,6 +15,7 @@ import {
 } from '@mui/material';
 import AddCircleOutlineRounded from '@mui/icons-material/AddCircleOutlineRounded';
 import { CreateChatroomInfo, ChatroomType, CHATROOM_TYPE } from 'types/chat';
+import { useQueryUser } from 'hooks/useQueryUser';
 
 type Props = {
   socket: Socket;
@@ -27,6 +28,10 @@ export const ChatroomCreateButton = memo(function ChatroomCreateButton({
   const [open, setOpen] = useState(false);
   const [password, setPassword] = useState('');
   const [roomType, setRoomType] = useState<ChatroomType>(CHATROOM_TYPE.PUBLIC);
+  const { data: user } = useQueryUser();
+  if (user === undefined) {
+    return <h1>ユーザーが存在しません</h1>;
+  }
 
   const initDialog = useCallback(() => {
     setName('');
@@ -71,7 +76,7 @@ export const ChatroomCreateButton = memo(function ChatroomCreateButton({
     const room: CreateChatroomInfo = {
       name: name,
       type: roomType,
-      ownerId: 1, // TODO:userのidに変更する
+      ownerId: user.id,
     };
     if (roomType === CHATROOM_TYPE.PROTECTED) {
       room.hashedPassword = password;

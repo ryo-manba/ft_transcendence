@@ -12,7 +12,7 @@ export const Start = () => {
   if (user === undefined) return <div>Loading...</div>;
 
   const start = () => {
-    socket.emit('playStart', user.name);
+    socket.emit('playStart', user.id);
     updatePlayState(PlayState.stateWaiting);
   };
 
