@@ -34,22 +34,16 @@ export const ChatroomListItem = ({ room, socket, setCurrentRoomId }: Props) => {
 
   const joinRoom = (id: number) => {
     console.log('joinRoom:', id);
-    const res = socket.emit('chat:joinRoom', id);
-    if (res) {
-      setCurrentRoomId(id);
-    }
+    socket.emit('chat:joinRoom', id);
+    setCurrentRoomId(id);
   };
 
   const deleteRoom = (id: number) => {
     console.log('deleteRoom:', id);
-    const res = socket.emit('chat:deleteRoom', {
+    socket.emit('chat:deleteRoom', {
       id: id,
       userId: user.id,
     });
-    if (res) {
-      // const initialRoomId = 0;
-      // setCurrentRoomId(initialRoomId);
-    }
   };
 
   const handleClickOpen = () => {
