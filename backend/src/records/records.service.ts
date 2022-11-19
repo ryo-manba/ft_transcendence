@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { GameRecord, Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma.service';
+import { CreateGameRecordDto } from './dto/create-gamerecord.dto';
 
 @Injectable()
 export class RecordsService {
@@ -32,9 +33,7 @@ export class RecordsService {
     });
   }
 
-  async createGameRecord(
-    data: Prisma.GameRecordCreateInput,
-  ): Promise<GameRecord> {
+  async createGameRecord(data: CreateGameRecordDto): Promise<GameRecord> {
     return this.prisma.gameRecord.create({
       data,
     });

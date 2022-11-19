@@ -42,8 +42,13 @@ export const Setting = ({ updateSetting }: Props) => {
       updatePlayState(PlayState.statePlaying);
     });
 
+    socket?.on('error', () => {
+      updatePlayState(PlayState.stateNothing);
+    });
+
     return () => {
       socket?.off('playStarted');
+      socket?.off('error');
     };
   }, [socket]);
 
