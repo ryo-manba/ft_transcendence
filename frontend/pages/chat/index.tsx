@@ -17,10 +17,6 @@ const Chat = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [currentRoomId, setCurrentRoomId] = useState(0);
   const [socket, setSocket] = useState<Socket>();
-  const { data: user } = useQueryUser();
-  if (user === undefined) {
-    return <h1>ユーザーが存在しません</h1>;
-  }
 
   useEffect(() => {
     const temp = io('ws://localhost:3001/chat');
@@ -82,6 +78,11 @@ const Chat = () => {
       socket.off('chat:sendMessage');
     };
   }, [socket]);
+
+  const { data: user } = useQueryUser();
+  if (user === undefined) {
+    return <h1>ユーザーが存在しません</h1>;
+  }
 
   const showMessage = (list: Message[]) => {
     return list.map((item, i) => (
