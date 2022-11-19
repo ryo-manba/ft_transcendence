@@ -6,6 +6,6 @@ export type AuthForm = {
 
 export type AxiosErrorResponse = {
   statusCode: number;
-  message: string;
+  message: string[] | string;
   error: string;
 };

@@ -20,6 +20,7 @@ import {
   Alert,
   Button,
   AlertTitle,
+  Typography,
 } from '@mui/material';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
@@ -34,7 +35,7 @@ const schema = Yup.object().shape({
 const Home: NextPage = () => {
   const router = useRouter();
   const [isRegister, setIsRegister] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState<string[]>([]);
   const [showPassword, setShowPassword] = useState(false);
 
   const {
@@ -49,6 +50,7 @@ const Home: NextPage = () => {
     defaultValues: {
       email: '',
       password: '',
+      username: '',
     },
   });
   const onSubmit: SubmitHandler<AuthForm> = async (data: AuthForm) => {
@@ -71,8 +73,9 @@ const Home: NextPage = () => {
     } catch (e) {
       if (axios.isAxiosError(e) && e.response && e.response.data) {
         reset();
-        const message = (e.response.data as AxiosErrorResponse).message;
-        setError(message);
+        const messages = (e.response.data as AxiosErrorResponse).message;
+        if (Array.isArray(messages)) setError(messages);
+        else setError([messages]);
       }
     }
   };
@@ -87,10 +90,16 @@ const Home: NextPage = () => {
         sx={{ width: 360 }}
       >
         <GppGoodIcon color="primary" sx={{ width: 100, height: 100 }} />
-        {error && (
+        {error.length !== 0 && (
           <Alert severity="error">
-            <AlertTitle>Authorization Error</AlertTitle>
-            {error}
+            <>
+              <AlertTitle>Authorization Error</AlertTitle>
+              {error.map((e, i) => (
+                <Typography variant="body2" key={i}>
+                  {e}
+                </Typography>
+              ))}
+            </>
           </Alert>
         )}
         <form onSubmit={handleSubmit(onSubmit) as VoidFunction}>
@@ -174,7 +183,7 @@ const Home: NextPage = () => {
                 variant="body2"
                 onClick={() => {
                   clearErrors();
-                  setError('');
+                  setError([]);
                   setIsRegister(!isRegister);
                 }}
               >
@@ -188,6 +197,9 @@ const Home: NextPage = () => {
                 variant="contained"
                 type="submit"
                 startIcon={<IconDatabase />}
+                onClick={() => {
+                  setError([]);
+                }}
               >
                 {isRegister ? 'Register' : 'Login'}
               </Button>
