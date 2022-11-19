@@ -9,6 +9,7 @@
     "lint": "eslint '{components,pages,store,hooks}/**/*.{js,jsx,ts,tsx}'",
     "lint:fix": "eslint --fix '{components,pages,store,hooks}/**/*.{js,jsx,ts,tsx}'",
     "format": "prettier --write \"{components,pages,store,hooks}/**/*.{js,jsx,ts,tsx}\"",
+    "migrate": "yarn prisma db pull && yarn prisma generate",
     "preinstall": "typesync || :",
     "prepare": "cd .. && husky install .config/.husky"
   },
@@ -43,6 +44,7 @@
     "@types/prettier": "^2.7.1",
     "@types/react": "18.0.21",
     "@types/react-dom": "18.0.6",
+    "@types/yup": "^0.32.0",
     "@typescript-eslint/eslint-plugin": "^5.40.1",
     "@typescript-eslint/parser": "^5.40.1",
     "autoprefixer": "^10.4.13",

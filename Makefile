@@ -5,7 +5,10 @@ FRONTEND = ./frontend
 .PHONY: all
 all: $(NAME)
 
-$(NAME): setup
+$(NAME): build setup
+
+.PHONY: build
+build:
 	docker-compose up --build -d
 
 .PHONY: up
@@ -23,10 +26,10 @@ ps:
 .PHONY: migrate
 migrate:
 		cd $(BACKEND) && yarn && yarn migrate
+		cd $(FRONTEND) && yarn && yarn migrate
 
 .PHONY: setup
 setup: migrate
-		cd $(FRONTEND) && yarn
 
 .PHONY: clean
 clean: down
