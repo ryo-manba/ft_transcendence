@@ -35,7 +35,7 @@ const Dashboard: NextPage = () => {
           <Button variant="contained">Friend</Button>
         </Link>
       </Stack>
-      <Layout title="Task Board">
+      <Layout title="Dashboard">
         <LogoutIcon
           className="mb-6 h-6 w-6 cursor-pointer text-blue-500"
           onClick={() => {
