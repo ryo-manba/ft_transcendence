@@ -7,6 +7,7 @@ import { LogoutIcon } from '@heroicons/react/solid';
 import { Layout } from '../components/Layout';
 import { useQueryClient } from '@tanstack/react-query';
 import { useQueryUser } from 'hooks/useQueryUser';
+import { signOut, useSession } from 'next-auth/react';
 
 const Dashboard: NextPage = () => {
   const router = useRouter();
@@ -20,6 +21,9 @@ const Dashboard: NextPage = () => {
     }
   };
   const { data: user } = useQueryUser();
+  const { data: session } = useSession();
+
+  console.log(session?.user);
 
   return (
     <div>
@@ -36,12 +40,26 @@ const Dashboard: NextPage = () => {
         </Link>
       </Stack>
       <Layout title="Task Board">
+        <p>Sign out for mail login</p>
         <LogoutIcon
           className="mb-6 h-6 w-6 cursor-pointer text-blue-500"
           onClick={() => {
             void logout();
           }}
         />
+        <>
+          {/* Signed in as <img src={session.user.image ?? ''} width="50px" />
+            {session.user.name} <br />
+            AccessToken : {session.accessToken} <br /> */}
+          <button
+            onClick={() => {
+              void signOut(); //oauthのログアウト
+              // void logout(); //backendへのログアウト
+            }}
+          >
+            Sign out for oauth login
+          </button>
+        </>
       </Layout>
     </div>
   );
