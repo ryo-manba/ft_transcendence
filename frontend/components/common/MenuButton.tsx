@@ -48,7 +48,7 @@ export const MenuButton = () => {
         <Link href="/dashboard">
           <MenuItem>Home</MenuItem>
         </Link>
-        <Link href="/dashboard">
+        <Link href="/profile">
           <MenuItem>Profile</MenuItem>
         </Link>
         <MenuItem onClick={handleClose}>Setting</MenuItem>
