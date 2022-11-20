@@ -17,7 +17,7 @@ import {
   Alert,
 } from '@mantine/core';
 import { useForm, yupResolver } from '@mantine/form';
-import { Layout } from '../components/Layout';
+import { Layout } from 'components/common/Layout';
 import { AuthForm } from '../types';
 
 const schema = Yup.object().shape({
@@ -63,7 +63,11 @@ const Home: NextPage = () => {
   };
 
   return (
-    <Layout title="Auth">
+    <Layout
+      title="Auth"
+      divClassName="flex min-h-screen flex-col items-center justify-center"
+      mainClassName="flex w-screen flex-1 flex-col items-center justify-center"
+    >
       <ShieldCheckIcon className="h-16 w-16 text-blue-500" />
       {error && (
         <Alert

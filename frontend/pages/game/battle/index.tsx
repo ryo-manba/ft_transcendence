@@ -2,7 +2,7 @@ import { NextPage } from 'next';
 import { Setting } from 'components/game/battle/Setting';
 import { Play } from 'components/game/battle/Play';
 import { Result } from 'components/game/battle/Result';
-import { Layout } from 'components/game/home/Layout';
+import { Layout } from 'components/common/Layout';
 import { usePlayStateStore, PlayState } from 'store/game/PlayState';
 import { GameSetting } from 'types/game';
 import { useState } from 'react';
