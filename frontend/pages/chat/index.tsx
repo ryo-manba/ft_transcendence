@@ -6,7 +6,7 @@ import SendIcon from '@mui/icons-material/Send';
 import { Header } from 'components/common/Header';
 import { ChatroomListItem } from 'components/chat/ChatroomListItem';
 import { ChatroomCreateButton } from 'components/chat/ChatroomCreateButton';
-// import { ChatroomJoinButton } from 'components/chat/ChatroomJoinButton';
+import { ChatroomJoinButton } from 'components/chat/ChatroomJoinButton';
 import { Chatroom, Message } from 'types/chat';
 import { useQueryUser } from 'hooks/useQueryUser';
 
@@ -130,7 +130,7 @@ const Chat = () => {
           }}
         >
           <ChatroomCreateButton socket={socket} />
-          {/* <ChatroomJoinButton socket={socket} user={user} /> */}
+          <ChatroomJoinButton socket={socket} user={user} />
           <List dense={false}>
             {rooms &&
               rooms.map((room, i) => (

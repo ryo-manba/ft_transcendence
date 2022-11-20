@@ -12,6 +12,7 @@ import { ChatService } from './chat.service';
 import { CreateChatroomDto } from './dto/create-chatroom.dto';
 import { DeleteChatroomDto } from './dto/delete-chatroom.dto';
 import { CreateMessageDto } from './dto/create-message.dto';
+import { Chatroom, ChatroomType } from '@prisma/client';
 
 @WebSocketGateway({
   cors: {
@@ -166,21 +167,60 @@ export class ChatGateway {
     }
   }
 
-  // /**
-  //  * 入室可能な部屋の一覧を返す
-  //  * @param userId
-  //  */
-  // @SubscribeMessage('chat:getCanJoinRoomList')
-  // async onRoomCanJoin(
-  //   @ConnectedSocket() client: Socket,
-  //   @MessageBody() userId: number,
-  // ): Promise<any> {
-  //   this.logger.log(`chat:getCanJoinRoomList received -> roomId: ${userId}`);
+  /**
+   * 重複要素を除去した配列を返す関数
+   */
+  getChatroomDiff = (array1: Chatroom[], array2: Chatroom[]) => {
+    // 引数の各々の配列から id のみの配列を生成
+    const array1LabelArray = array1.map((itm) => {
+      return itm.id;
+    });
+    const array2LabelArray = array2.map((itm) => {
+      return itm.id;
+    });
+    // id のみの配列で比較
+    const arr1 = [...new Set(array1LabelArray)];
+    const arr2 = [...new Set(array2LabelArray)];
 
-  //   // userが所属しているチャットルームの一覧を取得する
-  //   const rooms = await this.chatService.findJoinedRooms(userId);
-  //   console.log('rooms:', rooms);
-  //   // フロントエンドへ送信し返す
-  //   this.server.emit('chat:getJoinedRooms', rooms);
-  // }
+    return [...arr1, ...arr2].filter((val) => {
+      return !arr1.includes(val) || !arr2.includes(val);
+    });
+  };
+
+  /**
+   * 入室可能な部屋の一覧を返す
+   * @param userId
+   */
+  @SubscribeMessage('chat:getJoinableRooms')
+  async onRoomJoinable(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() userId: number,
+  ): Promise<any> {
+    this.logger.log(`chat:getJoinableRooms received -> roomId: ${userId}`);
+
+    // Private以外のチャットルームに絞る
+    const notPrivate = {
+      where: {
+        type: {
+          notIn: <ChatroomType>'PRIVATE',
+        },
+      },
+    };
+
+    // public, protectedのチャットルーム一覧を取得する
+    const viewableRooms = await this.chatService.findAll(notPrivate);
+
+    // userが所属しているチャットルームの一覧を取得する
+    const joinedRooms = await this.chatService.findJoinedRooms(userId);
+
+    const roomsDiff = this.getChatroomDiff(viewableRooms, joinedRooms);
+    const publicAndNotJoinedRooms = viewableRooms.filter((item) => {
+      return roomsDiff.includes(item.id);
+    });
+
+    console.log('publicAndNotJoinedRooms: ', publicAndNotJoinedRooms);
+
+    // フロントエンドへ送信し返す
+    this.server.emit('chat:getJoinableRooms', publicAndNotJoinedRooms);
+  }
 }
