@@ -29,12 +29,16 @@ export const useMutatePoint = () => {
           queryClient.setQueryData(['user'], res);
         }
       },
-      onError: (err: AxiosError) => {
+      onError: async (err: AxiosError) => {
         if (
           err.response &&
           (err.response.status === 401 || err.response.status === 403)
         ) {
-          void router.push('/');
+          queryClient.removeQueries(['user']);
+          await axios.post(
+            `${process.env.NEXT_PUBLIC_API_URL as string}/auth/logout`,
+          );
+          await router.push('/');
         }
       },
     },
