@@ -1,21 +1,15 @@
-import { styled, Typography, Grid } from '@mui/material';
+import { Typography, Grid, Avatar } from '@mui/material';
 import { useQueryUser } from 'hooks/useQueryUser';
 import PaidIcon from '@mui/icons-material/Paid';
 import ThumbUpOffAltIcon from '@mui/icons-material/ThumbUpOffAlt';
 import ThumbDownOffAltIcon from '@mui/icons-material/ThumbDownOffAlt';
 
-const Img = styled('img')({
-  margin: 'auto',
-  display: 'block',
-  maxWidth: '100%',
-  maxHeight: '100%',
-  padding: 10,
-});
-
 export const Profile = () => {
   const { data: user } = useQueryUser();
   const userName = user !== undefined ? user.name : 'No name';
   const point = user !== undefined ? user.point : 0;
+  const avatar: string =
+    user !== undefined && user.avatar !== null ? user.avatar : 'no_image';
 
   return (
     <>
@@ -23,14 +17,28 @@ export const Profile = () => {
         Profile
       </Typography>
       <Grid container spacing={2}>
-        <Grid item xs={6}>
-          <Img alt="complex" src="/images/ico-default-avatar.png" />
+        <Grid
+          container
+          direction="column"
+          xs={6}
+          justifyContent="center"
+          alignItems="center"
+          spacing={1}
+        >
+          <Grid item>
+            <Avatar
+              src={avatar} // Avatar can show a default avatar image when the provided path is invalid
+              sx={{ width: 100, height: 100 }}
+            />
+          </Grid>
+          <Grid item>
+            <Typography gutterBottom variant="h5" component="div">
+              {`${userName}`}
+            </Typography>
+          </Grid>
         </Grid>
         <Grid item xs={6} sm container>
           <Grid item xs container direction="column" spacing={2} sx={{ p: 2 }}>
-            <Typography gutterBottom variant="h4" component="div">
-              {`${userName}`}
-            </Typography>
             <Grid
               container
               direction="row"
@@ -57,6 +65,7 @@ export const Profile = () => {
               </Grid>
               <Grid item>
                 <Typography variant="h5" gutterBottom>
+                  {/* TODO: update with the number of wins */}
                   {`Wins: ${point}`}
                 </Typography>
               </Grid>
@@ -72,6 +81,7 @@ export const Profile = () => {
               </Grid>
               <Grid item>
                 <Typography variant="h5" gutterBottom>
+                  {/* TODO: update with the number of loses */}
                   {`Loses: ${point}`}
                 </Typography>
               </Grid>
