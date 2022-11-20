@@ -52,8 +52,8 @@ export const ChatroomCreateButton = memo(function ChatroomCreateButton({
     initDialog();
   }, [open]);
 
-  const getRooms = useCallback(() => {
-    socket.emit('chat:getRooms');
+  const getJoinedRooms = useCallback(() => {
+    socket.emit('chat:getJoinedRooms');
   }, [socket]);
 
   const createChatroom = useCallback(
@@ -82,7 +82,7 @@ export const ChatroomCreateButton = memo(function ChatroomCreateButton({
       room.hashedPassword = password;
     }
     createChatroom(room);
-    getRooms();
+    getJoinedRooms();
     handleClose();
   }, [name, roomType, password]);
 

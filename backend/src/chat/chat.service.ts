@@ -63,9 +63,6 @@ export class ChatService {
     });
   }
 
-  /**
-   * TODO: 引数をDTOにしたい
-   */
   async addMessage(createMessageDto: CreateMessageDto): Promise<Message> {
     console.log(createMessageDto);
 
@@ -88,17 +85,14 @@ export class ChatService {
     const res = await this.prisma.chatroom.findUnique({
       where: chatroomWhereUniqueInput,
       include: {
-        message: true,
+        messages: true,
       },
     });
 
-    return res.message;
+    return res.messages;
   }
 
-  async findAdmins(
-    // chatroomAdminWhereUniquebInput: Prisma.ChatroomAdminWhereUniquebInput,
-    id: number,
-  ): Promise<ChatroomAdmin[] | null> {
+  async findAdmins(id: number): Promise<ChatroomAdmin[] | null> {
     const res = await this.prisma.chatroomAdmin.findMany({
       where: {
         chatroomId: id,
@@ -106,5 +100,23 @@ export class ChatService {
     });
 
     return res;
+  }
+
+  // ユーザーが入室しているチャットルームの一覧を返す
+  async findJoinedRooms(id: number): Promise<Chatroom[] | null> {
+    // チャットルームメンバーからuserIdが含まれているものを取得する
+    const joinedRoomInfo = await this.prisma.chatroomMembers.findMany({
+      where: {
+        userId: id,
+      },
+      include: {
+        chatroom: true,
+      },
+    });
+
+    // ユーザーが所属しているチャットルームのみ返す
+    const joinedRoom = joinedRoomInfo.map((room) => room.chatroom);
+
+    return joinedRoom;
   }
 }

@@ -50,13 +50,19 @@ export class ChatGateway {
   }
 
   /**
-   * チャットルーム一覧を返す
+   * 入室しているチャットルーム一覧を返す
+   * @params userId
    */
-  @SubscribeMessage('chat:getRooms')
-  async GetRooms(@ConnectedSocket() client: Socket) {
-    this.logger.log(`chat:getRooms: ${client.id}`);
-    const data = await this.chatService.findAll({});
-    this.server.emit('chat:getRooms', data);
+  @SubscribeMessage('chat:getJoinedRooms')
+  async onGetRooms(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() userId: number,
+  ) {
+    this.logger.log(`chat:getJoinedRooms: ${userId}`);
+    // ユーザーが入室しているチャットルームを取得する
+    const rooms = await this.chatService.findJoinedRooms(userId);
+    // フロントエンドへ送り返す
+    this.server.emit('chat:getJoinedRooms', rooms);
   }
 
   /**
@@ -78,15 +84,15 @@ export class ChatGateway {
   }
 
   /**
-   * チャットルームに入室する
+   * チャットルームに対応したメッセージを取得して返す
    * @param RoomID
    */
-  @SubscribeMessage('chat:joinRoom')
-  async JoinRoom(
+  @SubscribeMessage('chat:getMessage')
+  async onGetMessage(
     @ConnectedSocket() client: Socket,
     @MessageBody() roomId: number,
   ): Promise<any> {
-    this.logger.log(`chat:joinRoom received -> ${roomId}`);
+    this.logger.log(`chat:getMessage received -> ${roomId}`);
 
     // 0番目には、socketのidが入っている
     if (client.rooms.size >= 2) {
@@ -100,8 +106,22 @@ export class ChatGateway {
     // TODO: limitで上限をつける
     const messages = await this.chatService.findMessages({ id: roomId });
     // 既存のメッセージを送り返す
-    client.emit('chat:joinRoom', messages);
+    client.emit('chat:getMessage', messages);
   }
+
+  /**
+   * チャットルームに入室する
+   * @param client
+   * @param roomId
+   */
+  // @SubscribeMessage('chat:joinRoom')
+  // async onRoomJoin(
+  //   @ConnectedSocket() client: Socket,
+  //   @MessageBody() name: string,
+  // ): Promise<any> {
+  //   this.logger.log(`chat:joinRoom received -> ${name}`);
+  //   // 引数で受け取ったチャットルームが存在するか探す
+  // }
 
   /**
    * チャットルームから退出する
@@ -145,4 +165,22 @@ export class ChatGateway {
       await this.chatService.remove(data);
     }
   }
+
+  // /**
+  //  * 入室可能な部屋の一覧を返す
+  //  * @param userId
+  //  */
+  // @SubscribeMessage('chat:getCanJoinRoomList')
+  // async onRoomCanJoin(
+  //   @ConnectedSocket() client: Socket,
+  //   @MessageBody() userId: number,
+  // ): Promise<any> {
+  //   this.logger.log(`chat:getCanJoinRoomList received -> roomId: ${userId}`);
+
+  //   // userが所属しているチャットルームの一覧を取得する
+  //   const rooms = await this.chatService.findJoinedRooms(userId);
+  //   console.log('rooms:', rooms);
+  //   // フロントエンドへ送信し返す
+  //   this.server.emit('chat:getJoinedRooms', rooms);
+  // }
 }
