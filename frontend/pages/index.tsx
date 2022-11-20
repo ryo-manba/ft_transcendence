@@ -24,6 +24,7 @@ import {
 } from '@mui/material';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
+import { signIn, signOut, useSession } from 'next-auth/react';
 
 const schema = Yup.object().shape({
   username: Yup.string().required('No username provided'),
@@ -52,6 +53,8 @@ const Home: NextPage = () => {
       username: '',
     },
   });
+  const { data: session } = useSession();
+
   const onSubmit: SubmitHandler<AuthForm> = async (data: AuthForm) => {
     try {
       if (process.env.NEXT_PUBLIC_API_URL) {
@@ -77,6 +80,55 @@ const Home: NextPage = () => {
       }
     }
   };
+
+  // const oauthLogin = async () => {
+  //   try {
+  //     if (process.env.NEXT_PUBLIC_API_URL) {
+  //       try {
+  //         form.reset();
+  //         console.log(session.user?.name);
+  //         console.log(session.user?.email);
+  //         await router.push('/dashboard');
+  //       } catch (e) {
+  //         if (axios.isAxiosError(e) && e.response && e.response.data) {
+  //           setError(e.message);
+  //         }
+  //       }
+  //     }
+  //   } catch (e) {
+  //     if (axios.isAxiosError(e) && e.response && e.response.data) {
+  //       setError(e.message);
+  //     }
+  //   }
+  //   await router.push('/dashboard');
+  // };
+
+  if (session) {
+    // ここのconsoleはブラウザに表示
+    console.log(session.user);
+
+    // oauthLogin();
+    if (session.user === undefined) {
+      return <p>session.user is undefined</p>;
+    }
+
+    return (
+      <>
+        Signed in as <img src={session.user.image ?? ''} width="50px" />
+        {session.user.name} <br />
+        Mail: {session.user.email} <br />
+        <button
+          onClick={() => {
+            void (async () => {
+              await signOut();
+            })();
+          }}
+        >
+          Sign out
+        </button>
+      </>
+    );
+  }
 
   return (
     <Layout title="Auth">
@@ -185,13 +237,33 @@ const Home: NextPage = () => {
             </Grid>
           </Grid>
         </form>
-        <a href="/auth42">
-          <Image src="/images/ico-42-logo.jpg" width={50} height={50} />
-        </a>
-        <br></br>
-        <a href="/google">
-          <Image src="/images/ico-google-logo-96.png" width={50} height={50} />
-        </a>
+        <br />
+        <Grid container justifyContent="space-evenly">
+          <Grid item>
+            <Image
+              src="/images/ico-42-logo.jpg"
+              onClick={() => {
+                void (async () => {
+                  await signIn('42-school');
+                })();
+              }}
+              width={50}
+              height={50}
+            />
+          </Grid>
+          <Grid item>
+            <Image
+              src="/images/ico-google-logo-96.png"
+              onClick={() => {
+                void (async () => {
+                  await signIn('google');
+                })();
+              }}
+              width={50}
+              height={50}
+            />
+          </Grid>
+        </Grid>
       </Grid>
     </Layout>
   );
