@@ -10,6 +10,7 @@ import { Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { ChatService } from './chat.service';
 import { CreateChatroomDto } from './dto/create-chatroom.dto';
+import { DeleteChatroomDto } from './dto/delete-chatroom.dto';
 import { CreateMessageDto } from './dto/create-message.dto';
 
 @WebSocketGateway({
@@ -105,7 +106,7 @@ export class ChatGateway {
   /**
    * チャットルームから退出する
    * @param client
-   * @param data
+   * @param roomId
    */
   @SubscribeMessage('chat:leaveRoom')
   async onRoomLeave(
@@ -114,5 +115,34 @@ export class ChatGateway {
   ): Promise<any> {
     this.logger.log(`chat:leaveRoom received -> ${roomId}`);
     await client.leave(String(roomId));
+  }
+
+  /**
+   * チャットルームを削除する
+   * @param client
+   * @param roomId
+   */
+  @SubscribeMessage('chat:deleteRoom')
+  async onRoomDelete(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() deleteChatroomDto: DeleteChatroomDto,
+  ): Promise<any> {
+    this.logger.log(
+      `chat:deleteRoom received -> roomId: ${deleteChatroomDto.id}, userId: ${deleteChatroomDto.userId}`,
+    );
+    const roomId = deleteChatroomDto.id;
+    const userId = deleteChatroomDto.userId;
+
+    const data = { id: deleteChatroomDto.id };
+    const room = await this.chatService.findOne(data);
+    const admins = await this.chatService.findAdmins(roomId);
+
+    // 削除を実行したユーザーがadminに含まれているかを確かめる
+    const isAdmin = admins.findIndex((admin) => admin.userId === userId) != -1;
+
+    // adminかownerの場合削除が実行できる
+    if (isAdmin || room.ownerId === userId) {
+      await this.chatService.remove(data);
+    }
   }
 }

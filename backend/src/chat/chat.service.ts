@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
-import { Chatroom, Message, Prisma } from '@prisma/client';
+import { Chatroom, ChatroomAdmin, Message, Prisma } from '@prisma/client';
 import { CreateChatroomDto } from './dto/create-chatroom.dto';
 import { CreateMessageDto } from './dto/create-message.dto';
 
@@ -83,15 +83,28 @@ export class ChatService {
    * TODO: 引数に応じて取得する数を調整する
    */
   async findMessages(
-    charRoomWhereUniqueInput: Prisma.ChatroomWhereUniqueInput,
+    chatroomWhereUniqueInput: Prisma.ChatroomWhereUniqueInput,
   ): Promise<Message[] | null> {
     const res = await this.prisma.chatroom.findUnique({
-      where: charRoomWhereUniqueInput,
+      where: chatroomWhereUniqueInput,
       include: {
         message: true,
       },
     });
 
     return res.message;
+  }
+
+  async findAdmins(
+    // chatroomAdminWhereUniquebInput: Prisma.ChatroomAdminWhereUniquebInput,
+    id: number,
+  ): Promise<ChatroomAdmin[] | null> {
+    const res = await this.prisma.chatroomAdmin.findMany({
+      where: {
+        chatroomId: id,
+      },
+    });
+
+    return res;
   }
 }
