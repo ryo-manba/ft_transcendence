@@ -9,7 +9,7 @@ export const Start = () => {
   const updatePlayState = usePlayStateStore((store) => store.updatePlayState);
   const { data: user } = useQueryUser();
 
-  if (user === undefined) return <div>Loading...</div>;
+  if (user === undefined) return <></>;
 
   const start = () => {
     socket.emit('playStart', user.id);

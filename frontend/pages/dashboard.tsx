@@ -20,7 +20,8 @@ const Dashboard: NextPage = () => {
     }
   };
   const { data: user } = useQueryUser();
-  if (user === undefined) return <div>Loading...</div>;
+
+  if (user === undefined) return <></>;
 
   return (
     <div>
