@@ -1,6 +1,6 @@
 import { IsNotEmpty, IsNumber } from 'class-validator';
 
-export class UpdateUserPointDto {
+export class UpdatePointDto {
   @IsNumber()
   @IsNotEmpty()
   point: number;

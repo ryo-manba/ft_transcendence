@@ -238,16 +238,14 @@ export class GameGateway {
   }
 
   async finishGame(currentRoom: RoomInfo, winner: Player, loser: Player) {
-    winner.socket.emit('win');
-    loser.socket.emit('lose');
+    winner.socket.emit('win', winner.point + currentRoom.rewards);
+    loser.socket.emit('lose', loser.point - currentRoom.rewards);
     await this.records.createGameRecord({
       winnerId: winner.id,
       loserId: loser.id,
       winnerScore: winner.score,
       loserScore: loser.score,
     });
-    await this.user.updateUserPoint(winner.id, { point: currentRoom.rewards });
-    await this.user.updateUserPoint(loser.id, { point: -currentRoom.rewards });
     winner.socket.disconnect(true);
     loser.socket.disconnect(true);
     this.gameRooms = this.gameRooms.filter(

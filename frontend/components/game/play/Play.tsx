@@ -5,6 +5,8 @@ import { usePlayerNamesStore } from 'store/game/PlayerNames';
 import { usePlayStateStore, PlayState } from 'store/game/PlayState';
 import { GameHeader } from 'components/game/play/GameHeader';
 import { GameSetting } from 'types/game';
+import { useMutatePoint } from 'hooks/useMutatePoint';
+import { useQueryUser } from 'hooks/useQueryUser';
 
 type Props = {
   gameSetting: GameSetting;
@@ -111,6 +113,8 @@ export const Play = ({ gameSetting }: Props) => {
   const [changeCount, updateChangeCount] = useState(true);
   const [isArrowDownPressed, updateIsArrowDownPressed] = useState(false);
   const [isArrowUpPressed, updateIsArrowUpPressed] = useState(false);
+  const { updatePointMutation } = useMutatePoint();
+  const { data: user } = useQueryUser();
 
   const drawField = useCallback(
     (
@@ -255,10 +259,14 @@ export const Play = ({ gameSetting }: Props) => {
   }, [scores]);
 
   useEffect(() => {
-    socket?.on('win', () => {
+    socket?.on('win', (updatedPoint: number) => {
+      // TODO: need to properly handle without type casting
+      updatePointMutation.mutate({ userId: user?.id as number, updatedPoint });
       updatePlayState(PlayState.stateWinner);
     });
-    socket?.on('lose', () => {
+    socket?.on('lose', (updatedPoint: number) => {
+      // TODO: need to properly handle without type casting
+      updatePointMutation.mutate({ userId: user?.id as number, updatedPoint });
       updatePlayState(PlayState.stateLoser);
     });
     socket?.on('error', () => {
