@@ -36,6 +36,7 @@
   "devDependencies": {
     "@emotion/react": "^11.10.4",
     "@emotion/styled": "^11.10.4",
+    "@hookform/resolvers": "^2.9.10",
     "@mui/icons-material": "^5.10.9",
     "@mui/material": "^5.10.10",
     "@prisma/client": "^4.5.0",
@@ -58,6 +59,7 @@
     "prettier": "^2.7.1",
     "prettier-plugin-tailwindcss": "^0.1.13",
     "prisma": "^4.5.0",
+    "react-hook-form": "^7.39.4",
     "socket.io": "^4.5.3",
     "socket.io-client": "^4.5.3",
     "tailwindcss": "^3.2.1",
