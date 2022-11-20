@@ -30,34 +30,46 @@ model Message {
 }
 
 model User {
-  id             Int             @id @default(autoincrement())
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @default(now())
-  name           String
-  email          String          @unique
-  hashedPassword String?
-  point          Int             @default(1000)
-  Chatroom       Chatroom[]
-  ChatroomAdmin  ChatroomAdmin[]
-  loseGameRecord GameRecord[]    @relation("Loser")
-  winGameRecord  GameRecord[]    @relation("Winner")
-  Message        Message[]
+  id              Int               @id @default(autoincrement())
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @default(now())
+  name            String
+  email           String            @unique
+  hashedPassword  String?
+  point           Int               @default(1000)
+  Chatroom        Chatroom[]
+  ChatroomAdmin   ChatroomAdmin[]
+  ChatroomMembers ChatroomMembers[]
+  loseGameRecord  GameRecord[]      @relation("Loser")
+  winGameRecord   GameRecord[]      @relation("Winner")
+  Message         Message[]
 }
 
 model Chatroom {
-  id             Int             @id @default(autoincrement())
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @default(now())
-  name           String
-  type           ChatroomType    @default(PUBLIC)
-  ownerId        Int
-  hashedPassword String?
-  User           User            @relation(fields: [ownerId], references: [id])
-  ChatroomAdmin  ChatroomAdmin[]
-  Message        Message[]
+  id              Int               @id @default(autoincrement())
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @default(now())
+  name            String
+  type            ChatroomType      @default(PUBLIC)
+  ownerId         Int
+  hashedPassword  String?
+  User            User              @relation(fields: [ownerId], references: [id])
+  ChatroomAdmin   ChatroomAdmin[]
+  ChatroomMembers ChatroomMembers[]
+  Message         Message[]
 }
 
 model ChatroomAdmin {
+  id         Int      @id @default(autoincrement())
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @default(now())
+  chatroomId Int
+  userId     Int
+  Chatroom   Chatroom @relation(fields: [chatroomId], references: [id], onDelete: Cascade)
+  User       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model ChatroomMembers {
   id         Int      @id @default(autoincrement())
   createdAt  DateTime @default(now())
   updatedAt  DateTime @default(now())
