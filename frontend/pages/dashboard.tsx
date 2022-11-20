@@ -3,7 +3,8 @@ import Link from 'next/link';
 import { Stack, Button, Typography } from '@mui/material';
 import { useQueryUser } from 'hooks/useQueryUser';
 import { Header } from 'components/common/Header';
-import { signOut, useSession } from 'next-auth/react';
+import { useSession } from 'next-auth/react';
+import { Layout } from 'components/common/Layout';
 
 const Dashboard: NextPage = () => {
   const { data: user } = useQueryUser();
@@ -12,7 +13,7 @@ const Dashboard: NextPage = () => {
   console.log(session?.user);
 
   return (
-    <div>
+    <Layout title="Dashboard">
       <Header title="ft_transcendence" />
       <Typography>HELLO {user?.name}</Typography>
       <Stack spacing={2} direction="row">
@@ -26,29 +27,7 @@ const Dashboard: NextPage = () => {
           <Button variant="contained">Friend</Button>
         </Link>
       </Stack>
-      <Layout title="Task Board">
-        <p>Sign out for mail login</p>
-        <LogoutIcon
-          className="mb-6 h-6 w-6 cursor-pointer text-blue-500"
-          onClick={() => {
-            void logout();
-          }}
-        />
-        <>
-          {/* Signed in as <img src={session.user.image ?? ''} width="50px" />
-            {session.user.name} <br />
-            AccessToken : {session.accessToken} <br /> */}
-          <button
-            onClick={() => {
-              void signOut(); //oauthのログアウト
-              // void logout(); //backendへのログアウト
-            }}
-          >
-            Sign out for oauth login
-          </button>
-        </>
-      </Layout>
-    </div>
+    </Layout>
   );
 };
 

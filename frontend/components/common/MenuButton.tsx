@@ -7,8 +7,10 @@ import { useRouter } from 'next/router';
 import { useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import Link from 'next/link';
+import { signOut, useSession } from 'next-auth/react';
 
 export const MenuButton = () => {
+  const { data: session } = useSession();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -20,9 +22,15 @@ export const MenuButton = () => {
   const router = useRouter();
   const queryClient = useQueryClient();
   const logout = () => {
-    queryClient.removeQueries(['user']);
-    void axios.post(`${process.env.NEXT_PUBLIC_API_URL as string}/auth/logout`);
-    void router.push('/');
+    if (session) {
+      void signOut();
+    } else {
+      queryClient.removeQueries(['user']);
+      void axios.post(
+        `${process.env.NEXT_PUBLIC_API_URL as string}/auth/logout`,
+      );
+      void router.push('/');
+    }
   };
 
   return (
