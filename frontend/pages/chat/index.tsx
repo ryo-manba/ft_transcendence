@@ -7,6 +7,7 @@ import { Header } from 'components/common/Header';
 import { ChatroomListItem } from 'components/chat/ChatroomListItem';
 import { ChatroomCreateButton } from 'components/chat/ChatroomCreateButton';
 import { Chatroom, Message } from 'types/chat';
+import { useQueryUser } from 'hooks/useQueryUser';
 
 const appBarHeight = '64px';
 
@@ -78,6 +79,11 @@ const Chat = () => {
     };
   }, [socket]);
 
+  const { data: user } = useQueryUser();
+  if (user === undefined) {
+    return <h1>ユーザーが存在しません</h1>;
+  }
+
   const showMessage = (list: Message[]) => {
     return list.map((item, i) => (
       <li key={i}>
@@ -91,22 +97,19 @@ const Chat = () => {
   const sendMessage = () => {
     if (!socket) return;
 
-    // TODO: userIdをuserから取得できるようにする置き換える
-    const message = { userId: 1, chatroomId: currentRoomId, message: text };
-    console.log('sendMessage:', message);
+    const message = {
+      userId: user.id,
+      chatroomId: currentRoomId,
+      message: text,
+    };
 
     socket.emit('chat:sendMessage', message);
     setText('');
   };
 
-  const joinRoom = (id: number) => {
-    if (!socket) return;
-    console.log('joinRoom:', id);
-    const res = socket.emit('chat:joinRoom', id);
-    if (res) {
-      setCurrentRoomId(id);
-    }
-  };
+  if (socket === undefined) {
+    return null;
+  }
 
   return (
     <>
@@ -125,10 +128,15 @@ const Chat = () => {
             borderBottom: '1px solid',
           }}
         >
-          {socket !== undefined && <ChatroomCreateButton socket={socket} />}
+          <ChatroomCreateButton socket={socket} />
           <List dense={false}>
             {rooms.map((room, i) => (
-              <ChatroomListItem key={i} room={room} joinRoom={joinRoom} />
+              <ChatroomListItem
+                key={i}
+                room={room}
+                socket={socket}
+                setCurrentRoomId={setCurrentRoomId}
+              />
             ))}
           </List>
         </Grid>
@@ -139,7 +147,7 @@ const Chat = () => {
             borderBottom: '1px solid',
           }}
         >
-          <h2>チャットスペース</h2>
+          <h2>{`Hello: ${user?.name}`}</h2>
           <div style={{ marginLeft: 5, marginRight: 5 }}>
             <div style={{ display: 'flex', alignItems: 'end' }}>
               <TextField
