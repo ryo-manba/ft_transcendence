@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSocketStore } from 'store/game/ClientSocket';
 import { usePlayerNamesStore } from 'store/game/PlayerNames';
 import { usePlayStateStore, PlayState } from 'store/game/PlayState';
-import { GameHeader } from 'components/game/play/GameHeader';
+import { GameHeader } from 'components/game/battle/GameHeader';
 import { GameSetting } from 'types/game';
 
 type Props = {
