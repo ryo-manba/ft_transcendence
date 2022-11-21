@@ -21,7 +21,7 @@ export const Wait = () => {
   const handleClose = () => {
     setOpen(false);
     updatePlayState(PlayState.stateNothing);
-    socket?.emit('playCancel');
+    socket.emit('playCancel');
   };
   const updatePlayerNames = usePlayerNamesStore(
     (store) => store.updatePlayerNames,
@@ -29,20 +29,20 @@ export const Wait = () => {
 
   const router = useRouter();
   useEffect(() => {
-    socket?.on('select', (playerNames: [string, string]) => {
+    socket.on('select', (playerNames: [string, string]) => {
       updatePlayerNames(playerNames);
       updatePlayState(PlayState.stateSelecting);
       void router.push('/game/play');
     });
-    socket?.on('standBy', (playerNames: [string, string]) => {
+    socket.on('standBy', (playerNames: [string, string]) => {
       updatePlayerNames(playerNames);
       updatePlayState(PlayState.stateStandingBy);
       void router.push('/game/play');
     });
 
     return () => {
-      socket?.off('select');
-      socket?.off('standBy');
+      socket.off('select');
+      socket.off('standBy');
     };
   }, [socket]);
 

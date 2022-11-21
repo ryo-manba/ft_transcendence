@@ -25,9 +25,11 @@ const Dashboard: NextPage = () => {
 
   console.log(session?.user);
 
+  if (user === undefined) return <></>;
+
   return (
     <div>
-      <Typography>HELLO {user?.name}</Typography>
+      <Typography>HELLO {user.name}</Typography>
       <Stack spacing={2} direction="row">
         <Link href="/chat">
           <Button variant="contained">Chat</Button>
