@@ -62,11 +62,11 @@ export const ChatroomJoinButton = memo(function ChatroomJoinButton({
         チャットルームを探す
       </Button>
       <JoinRoomDialog
-        selectedValue={'selectedValue'}
         rooms={rooms}
         open={open}
         onClose={handleClose}
-      ></JoinRoomDialog>
+        socket={socket}
+      />
     </>
   );
 });

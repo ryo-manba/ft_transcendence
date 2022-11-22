@@ -122,7 +122,7 @@ export const ChatroomCreateButton = memo(function ChatroomCreateButton({
             <TextField
               autoFocus
               margin="dense"
-              id="name"
+              id="password"
               label="Password"
               type="text"
               value={password}
