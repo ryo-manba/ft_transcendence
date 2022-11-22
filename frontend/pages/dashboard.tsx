@@ -17,7 +17,7 @@ const Dashboard: NextPage = () => {
   return (
     <Layout title="Dashboard">
       <Header title="ft_transcendence" />
-      <Typography>HELLO {user?.name}</Typography>
+      <Typography>HELLO {user.name}</Typography>
       <Stack spacing={2} direction="row">
         <Link href="/chat">
           <Button variant="contained">Chat</Button>
