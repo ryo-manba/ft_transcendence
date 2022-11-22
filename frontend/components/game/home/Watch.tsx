@@ -21,17 +21,17 @@ export const Watch = () => {
   const [rooms, setRooms] = useState<WatchInfo[]>([]);
 
   useEffect(() => {
-    socket?.emit('watchList');
-    socket?.on('watchListed', (data: WatchInfo[]) => {
+    socket.emit('watchList');
+    socket.on('watchListed', (data: WatchInfo[]) => {
       setRooms(data);
     });
     const id = setInterval(() => {
-      socket?.emit('watchList');
+      socket.emit('watchList');
     }, 2000);
 
     return () => {
       clearInterval(id);
-      socket?.off('watchList');
+      socket.off('watchList');
     };
   }, [socket]);
 

@@ -27,7 +27,7 @@ import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import { signIn, signOut, useSession } from 'next-auth/react';
 
 const schema = Yup.object().shape({
-  email: Yup.string().email('Invalid email').required('No email provided'),
+  username: Yup.string().required('No username provided'),
   password: Yup.string()
     .required('No password provided')
     .min(5, 'Password should be min 5 chars'),
@@ -49,7 +49,6 @@ const Home: NextPage = () => {
     mode: 'onSubmit',
     resolver: yupResolver(schema),
     defaultValues: {
-      email: '',
       password: '',
       username: '',
     },
@@ -62,13 +61,12 @@ const Home: NextPage = () => {
         if (isRegister) {
           const url_signup = `${process.env.NEXT_PUBLIC_API_URL}/auth/signup`;
           await axios.post(url_signup, {
-            email: data.email,
             password: data.password,
             username: data.username,
           });
         }
         await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/auth/login`, {
-          email: data.email,
+          username: data.username,
           password: data.password,
         });
         await router.push('/dashboard');
@@ -155,19 +153,17 @@ const Home: NextPage = () => {
           </Alert>
         )}
         <form onSubmit={handleSubmit(onSubmit) as VoidFunction}>
-          {/* [TODO] remove email */}
           <Controller
-            name="email"
+            name="username"
             control={control}
             render={({ field }) => (
               <TextField
-                placeholder="example@gmail.com"
                 fullWidth
                 size="small"
                 sx={{ my: 2 }}
-                label="Email"
-                error={errors.email ? true : false}
-                helperText={errors.email?.message}
+                label="Username"
+                error={errors.username ? true : false}
+                helperText={errors.username?.message}
                 {...field}
               />
             )}
@@ -210,23 +206,6 @@ const Home: NextPage = () => {
               />
             )}
           />
-          {isRegister && (
-            <Controller
-              name="username"
-              control={control}
-              render={({ field }) => (
-                <TextField
-                  fullWidth
-                  size="small"
-                  sx={{ mb: 2 }}
-                  label="Username"
-                  error={errors.username ? true : false}
-                  helperText={errors.username?.message}
-                  {...field}
-                />
-              )}
-            />
-          )}
           <Grid container justifyContent="space-between">
             <Grid item>
               <Link

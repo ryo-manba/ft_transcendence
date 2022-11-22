@@ -9,17 +9,13 @@ import { History } from './History';
 import { Profile } from './Profile';
 
 export const Display = () => {
-  const { socket, updateSocket } = useSocketStore();
+  const { socket } = useSocketStore();
   const { playState } = usePlayStateStore();
   const updatePlayState = usePlayStateStore((store) => store.updatePlayState);
 
   useEffect(() => {
-    updateSocket('ws://localhost:3001/game');
+    if (socket.disconnected) socket.connect();
     updatePlayState(PlayState.stateNothing);
-
-    return () => {
-      socket?.disconnect();
-    };
   }, []);
 
   return (
