@@ -13,7 +13,6 @@ const Dashboard: NextPage = () => {
   const router = useRouter();
   const queryClient = useQueryClient();
   const logout = async () => {
-    queryClient.removeQueries(['tasks']);
     queryClient.removeQueries(['user']);
     if (process.env.NEXT_PUBLIC_API_URL) {
       await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/auth/logout`);
@@ -41,7 +40,7 @@ const Dashboard: NextPage = () => {
           <Button variant="contained">Friend</Button>
         </Link>
       </Stack>
-      <Layout title="Task Board">
+      <Layout title="Dashboard">
         <p>Sign out for mail login</p>
         <LogoutIcon
           className="mb-6 h-6 w-6 cursor-pointer text-blue-500"

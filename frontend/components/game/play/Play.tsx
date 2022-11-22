@@ -5,6 +5,8 @@ import { usePlayerNamesStore } from 'store/game/PlayerNames';
 import { usePlayStateStore, PlayState } from 'store/game/PlayState';
 import { GameHeader } from 'components/game/play/GameHeader';
 import { GameSetting } from 'types/game';
+import { useMutatePoint } from 'hooks/useMutatePoint';
+import { useQueryUser } from 'hooks/useQueryUser';
 
 type Props = {
   gameSetting: GameSetting;
@@ -81,7 +83,11 @@ export const Play = ({ gameSetting }: Props) => {
   // function to get window width
   const getWindowWidth = () => {
     const { innerWidth, innerHeight } = window;
-    const widthFromHeight = convert2Int((innerHeight - 150) / 0.6);
+    const heightOfHeader = 80;
+    const heightOfFooter = 25;
+    const widthFromHeight = convert2Int(
+      (innerHeight - (heightOfHeader * 2 + heightOfFooter)) / 0.6,
+    );
 
     return innerWidth < widthFromHeight ? innerWidth : widthFromHeight;
   };
@@ -107,6 +113,9 @@ export const Play = ({ gameSetting }: Props) => {
   const [changeCount, updateChangeCount] = useState(true);
   const [isArrowDownPressed, updateIsArrowDownPressed] = useState(false);
   const [isArrowUpPressed, updateIsArrowUpPressed] = useState(false);
+  const { updatePointMutation } = useMutatePoint();
+  const { data: user } = useQueryUser();
+  if (user === undefined) return <></>;
 
   const drawField = useCallback(
     (
@@ -251,10 +260,12 @@ export const Play = ({ gameSetting }: Props) => {
   }, [scores]);
 
   useEffect(() => {
-    socket.on('win', () => {
+    socket.on('win', (updatedPoint: number) => {
+      updatePointMutation.mutate({ userId: user.id, updatedPoint });
       updatePlayState(PlayState.stateWinner);
     });
-    socket.on('lose', () => {
+    socket.on('lose', (updatedPoint: number) => {
+      updatePointMutation.mutate({ userId: user.id, updatedPoint });
       updatePlayState(PlayState.stateLoser);
     });
     socket.on('error', () => {
