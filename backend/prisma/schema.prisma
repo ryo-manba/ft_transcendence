@@ -12,9 +12,9 @@ model User {
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @default(now()) @updatedAt
   name           String          @unique
-  email          String          @unique
   hashedPassword String?
   point          Int             @default(1000)
+  avatarPath     String?
   chatroom       Chatroom[]
   chatroomAdmin  ChatroomAdmin[]
   loseGameRecord GameRecord[]    @relation("Loser")

@@ -12,6 +12,8 @@ const Dashboard: NextPage = () => {
 
   console.log(session?.user);
 
+  if (user === undefined) return <></>;
+
   return (
     <Layout title="Dashboard">
       <Header title="ft_transcendence" />

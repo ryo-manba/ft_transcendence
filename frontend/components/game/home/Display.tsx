@@ -1,4 +1,4 @@
-import { Grid, Paper, Typography } from '@mui/material';
+import { Grid, Paper } from '@mui/material';
 import { useEffect } from 'react';
 import { usePlayStateStore, PlayState } from 'store/game/PlayState';
 import { useSocketStore } from 'store/game/ClientSocket';
@@ -6,19 +6,16 @@ import { Start } from './Start';
 import { Wait } from './Wait';
 import { Watch } from './Watch';
 import { History } from './History';
+import { Profile } from './Profile';
 
 export const Display = () => {
-  const { socket, updateSocket } = useSocketStore();
+  const { socket } = useSocketStore();
   const { playState } = usePlayStateStore();
   const updatePlayState = usePlayStateStore((store) => store.updatePlayState);
 
   useEffect(() => {
-    updateSocket('ws://localhost:3001/game');
+    if (socket.disconnected) socket.connect();
     updatePlayState(PlayState.stateNothing);
-
-    return () => {
-      socket?.disconnect();
-    };
   }, []);
 
   return (
@@ -33,9 +30,7 @@ export const Display = () => {
       >
         <Grid item xs={5}>
           <Paper elevation={2} sx={{ height: '100%' }}>
-            <Typography variant="h2" align="center" gutterBottom>
-              Profile
-            </Typography>
+            <Profile />
           </Paper>
         </Grid>
         <Grid item xs={5}>

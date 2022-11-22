@@ -5,6 +5,8 @@ import { usePlayerNamesStore } from 'store/game/PlayerNames';
 import { usePlayStateStore, PlayState } from 'store/game/PlayState';
 import { GameHeader } from 'components/game/battle/GameHeader';
 import { GameSetting } from 'types/game';
+import { useMutatePoint } from 'hooks/useMutatePoint';
+import { useQueryUser } from 'hooks/useQueryUser';
 
 type Props = {
   gameSetting: GameSetting;
@@ -81,7 +83,11 @@ export const Play = ({ gameSetting }: Props) => {
   // function to get window width
   const getWindowWidth = () => {
     const { innerWidth, innerHeight } = window;
-    const widthFromHeight = convert2Int((innerHeight - 150) / 0.6);
+    const heightOfHeader = 80;
+    const heightOfFooter = 25;
+    const widthFromHeight = convert2Int(
+      (innerHeight - (heightOfHeader * 2 + heightOfFooter)) / 0.6,
+    );
 
     return innerWidth < widthFromHeight ? innerWidth : widthFromHeight;
   };
@@ -107,6 +113,9 @@ export const Play = ({ gameSetting }: Props) => {
   const [changeCount, updateChangeCount] = useState(true);
   const [isArrowDownPressed, updateIsArrowDownPressed] = useState(false);
   const [isArrowUpPressed, updateIsArrowUpPressed] = useState(false);
+  const { updatePointMutation } = useMutatePoint();
+  const { data: user } = useQueryUser();
+  if (user === undefined) return <></>;
 
   const drawField = useCallback(
     (
@@ -202,7 +211,7 @@ export const Play = ({ gameSetting }: Props) => {
 
     render();
 
-    socket?.on('updateGameInfo', (newGameInfo: GameInfo) => {
+    socket.on('updateGameInfo', (newGameInfo: GameInfo) => {
       const rescaledGameInfo: GameInfo = {
         height1: convert2Int(newGameInfo.height1 * gameParameters.widthRatio),
         height2: convert2Int(newGameInfo.height2 * gameParameters.widthRatio),
@@ -227,44 +236,46 @@ export const Play = ({ gameSetting }: Props) => {
             move = -1;
           }
         }
-        socket?.emit('barMove', move);
+        socket.emit('barMove', move);
       }
     }, 17);
 
     return () => {
       window.cancelAnimationFrame(animationFrameId);
       clearInterval(id);
-      socket?.off('updateGameInfo');
+      socket.off('updateGameInfo');
       document.removeEventListener('keydown', onKeyDown);
       document.removeEventListener('keyup', onKeyUp);
     };
   }, [drawField, countDown, gameInfo, gameParameters]);
 
   useEffect(() => {
-    socket?.on('updateScores', (newScores: [number, number]) => {
+    socket.on('updateScores', (newScores: [number, number]) => {
       updateScores(newScores);
     });
 
     return () => {
-      socket?.off('updateScores');
+      socket.off('updateScores');
     };
   }, [scores]);
 
   useEffect(() => {
-    socket?.on('win', () => {
+    socket.on('win', (updatedPoint: number) => {
+      updatePointMutation.mutate({ userId: user.id, updatedPoint });
       updatePlayState(PlayState.stateWinner);
     });
-    socket?.on('lose', () => {
+    socket.on('lose', (updatedPoint: number) => {
+      updatePointMutation.mutate({ userId: user.id, updatedPoint });
       updatePlayState(PlayState.stateLoser);
     });
-    socket?.on('error', () => {
+    socket.on('error', () => {
       updatePlayState(PlayState.stateNothing);
     });
 
     return () => {
-      socket?.off('win');
-      socket?.off('lose');
-      socket?.off('error');
+      socket.off('win');
+      socket.off('lose');
+      socket.off('error');
     };
   }, [socket]);
 
