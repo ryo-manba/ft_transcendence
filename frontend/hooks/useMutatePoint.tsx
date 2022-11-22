@@ -14,7 +14,7 @@ export const useMutatePoint = () => {
   >(
     async ({ userId, updatedPoint }) => {
       const { data } = await axios.patch<Omit<User, 'hashedPassword'>>(
-        `${process.env.NEXT_PUBLIC_API_URL as string}/user/${userId}`,
+        `${process.env.NEXT_PUBLIC_API_URL as string}/user/point/${userId}`,
         { point: updatedPoint },
       );
 

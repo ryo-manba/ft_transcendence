@@ -25,7 +25,7 @@ export class UserController {
     return req.user;
   }
 
-  @Patch(':id')
+  @Patch('point/:id')
   updatePoint(
     @Param('id') id: string,
     @Body() dto: UpdatePointDto,
