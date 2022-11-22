@@ -8,38 +8,68 @@ datasource db {
 }
 
 model User {
-  id             Int       @id @default(autoincrement())
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
-  name           String
-  email          String    @unique
-  hashedPassword String
-  Message        Message[]
-}
-
-model ChatRoom {
-  id             Int       @id @default(autoincrement())
-  name           String
-  type           Boolean // TODO: private or public(DMは別にする?)
-  author         String // 最初は作成者にする -> 後で変更できるようにする
-  hashedPassword String
+  id             Int             @id @default(autoincrement())
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @default(now()) @updatedAt
+  name           String          @unique
+  hashedPassword String?
+  point          Int             @default(1000)
+  chatroom       Chatroom[]
+  chatroomAdmin  ChatroomAdmin[]
+  loseGameRecord GameRecord[]    @relation("Loser")
+  winGameRecord  GameRecord[]    @relation("Winner")
   message        Message[]
 }
 
+// オーナー -> チャットルーム作成者(管理者権限も持つ)
+// 管理者   -> あとから追加できる(複数人)
+model Chatroom {
+  id             Int             @id @default(autoincrement())
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @default(now()) @updatedAt
+  name           String
+  type           ChatroomType    @default(PUBLIC)
+  owner          User            @relation(fields: [ownerId], references: [id])
+  ownerId        Int
+  hashedPassword String?
+  message        Message[]
+  admin          ChatroomAdmin[]
+}
+
+enum ChatroomType {
+  PUBLIC
+  PRIVATE
+  PROTECTED
+}
+
 model Message {
-  id       Int      @id @default(autoincrement())
-  roomId   Int
-  userId   Int
-  message  String
-  chatRoom ChatRoom @relation(fields: [roomId], references: [id], onDelete: Cascade) // Roomが消されたらメッセージも削除される
-  user     User     @relation(fields: [userId], references: [id])
+  id         Int      @id @default(autoincrement())
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @default(now()) @updatedAt
+  message    String
+  chatroom   Chatroom @relation(fields: [chatroomId], references: [id], onDelete: Cascade) // Roomが消されたらメッセージも削除される
+  chatroomId Int
+  user       User     @relation(fields: [userId], references: [id])
+  userId     Int
+}
+
+model ChatroomAdmin {
+  id         Int      @id @default(autoincrement())
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @default(now()) @updatedAt
+  chatroom   Chatroom @relation(fields: [chatroomId], references: [id], onDelete: Cascade) // Roomが消されたらメッセージも削除される
+  chatroomId Int
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId     Int
 }
 
 model GameRecord {
-  id          Int       @id @default(autoincrement())
-  winnerName  String
-  loserName   String
+  id          Int      @id @default(autoincrement())
   winnerScore Int
   loserScore  Int
-  createdAt   DateTime  @default(now())
+  createdAt   DateTime @default(now())
+  loserId     Int
+  winnerId    Int
+  loser       User     @relation("Loser", fields: [loserId], references: [id])
+  winner      User     @relation("Winner", fields: [winnerId], references: [id])
 }

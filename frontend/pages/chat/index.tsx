@@ -1,42 +1,36 @@
 import { useState, useEffect } from 'react';
-import { io } from 'socket.io-client';
-import { Button, List } from '@mui/material';
+import { io, Socket } from 'socket.io-client';
+import { List, TextField, IconButton } from '@mui/material';
 import Grid from '@mui/material/Unstable_Grid2';
-import AddCircleOutlineRounded from '@mui/icons-material/AddCircleOutlineRounded';
+import SendIcon from '@mui/icons-material/Send';
 import { Header } from 'components/common/Header';
-import { ChatRoomListItem } from 'components/chat/ChatRoomListItem';
+import { ChatroomListItem } from 'components/chat/ChatroomListItem';
+import { ChatroomCreateButton } from 'components/chat/ChatroomCreateButton';
+import { Chatroom, Message } from 'types/chat';
+import { useQueryUser } from 'hooks/useQueryUser';
 
-type ChatRoom = {
-  name: string;
-  type: boolean;
-  author: string;
-  hashedPassword?: string;
-};
-
-const socket = io('http://localhost:3001/chat');
 const appBarHeight = '64px';
 
-// TODO: name以外も指定できるようにする
-const createChatRoom = () => {
-  const name = window.prompt('チャンネル名を入力してください');
-  if (name === null || name.length === 0) {
-    return;
-  }
-  const room = {
-    name: name,
-    type: true,
-    author: 'admin',
-    hashedPassword: '',
-  };
-  socket.emit('chat:create', room);
-  console.log('chat:create', room);
-};
-
 const Chat = () => {
-  const [rooms, setRooms] = useState<ChatRoom[]>([]);
+  const [rooms, setRooms] = useState<Chatroom[]>([]);
+  const [text, setText] = useState('');
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [currentRoomId, setCurrentRoomId] = useState(0);
+  const [socket, setSocket] = useState<Socket>();
 
   useEffect(() => {
-    socket.on('chat:getRooms', (data: ChatRoom[]) => {
+    const temp = io('ws://localhost:3001/chat');
+    setSocket(temp);
+
+    return () => {
+      temp.disconnect();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!socket) return;
+
+    socket.on('chat:getRooms', (data: Chatroom[]) => {
       console.log('chat:getRooms', data);
       setRooms(data);
     });
@@ -46,19 +40,76 @@ const Chat = () => {
     return () => {
       socket.off('chat:getRooms');
     };
-  }, []);
+  }, [socket]);
 
-  // dbに保存ができたら,backendからreceiveする
   useEffect(() => {
-    socket.on('chat:create', (data: ChatRoom) => {
-      console.log('chat:create', data);
-      setRooms((rooms) => [...rooms, data]);
+    if (!socket) return;
+    socket.on('chat:receiveMessage', (data: Message) => {
+      console.log('chat:receiveMessage -> receive', data.message);
+      setMessages((prev) => [...prev, data]);
     });
 
     return () => {
-      socket.off('chat:create');
+      socket.off('chat:receiveMessage');
     };
-  }, []);
+  }, [socket]);
+
+  // 入室に成功したら、既存のメッセージを受け取る
+  useEffect(() => {
+    if (!socket) return;
+    socket.on('chat:joinRoom', (data: Message[]) => {
+      setMessages(data);
+    });
+
+    return () => {
+      socket.off('chat:joinRoom');
+    };
+  });
+
+  // receive a message from the server
+  useEffect(() => {
+    if (!socket) return;
+    socket.on('chat:sendMessage', (data: Message) => {
+      console.log('chat:sendMessage -> receive', data.message);
+      setMessages((prev) => [...prev, data]);
+    });
+
+    return () => {
+      socket.off('chat:sendMessage');
+    };
+  }, [socket]);
+
+  const { data: user } = useQueryUser();
+  if (user === undefined) {
+    return <h1>ユーザーが存在しません</h1>;
+  }
+
+  const showMessage = (list: Message[]) => {
+    return list.map((item, i) => (
+      <li key={i}>
+        <strong>{item.userId}: </strong>
+        {item.message}
+      </li>
+    ));
+  };
+
+  // send a message to the server
+  const sendMessage = () => {
+    if (!socket) return;
+
+    const message = {
+      userId: user.id,
+      chatroomId: currentRoomId,
+      message: text,
+    };
+
+    socket.emit('chat:sendMessage', message);
+    setText('');
+  };
+
+  if (socket === undefined) {
+    return null;
+  }
 
   return (
     <>
@@ -77,22 +128,15 @@ const Chat = () => {
             borderBottom: '1px solid',
           }}
         >
-          {/* TODO: Buttonコンポーネント作る */}
-          <Button
-            color="primary"
-            variant="outlined"
-            endIcon={
-              <AddCircleOutlineRounded color="primary" sx={{ fontSize: 32 }} />
-            }
-            fullWidth={true}
-            style={{ justifyContent: 'flex-start' }}
-            onClick={createChatRoom}
-          >
-            チャットルーム作成
-          </Button>
+          <ChatroomCreateButton socket={socket} />
           <List dense={false}>
             {rooms.map((room, i) => (
-              <ChatRoomListItem key={i} name={room.name} />
+              <ChatroomListItem
+                key={i}
+                room={room}
+                socket={socket}
+                setCurrentRoomId={setCurrentRoomId}
+              />
             ))}
           </List>
         </Grid>
@@ -103,7 +147,41 @@ const Chat = () => {
             borderBottom: '1px solid',
           }}
         >
-          <h2>チャットスペース</h2>
+          <h2>{`Hello: ${user?.name}`}</h2>
+          <div style={{ marginLeft: 5, marginRight: 5 }}>
+            <div style={{ display: 'flex', alignItems: 'end' }}>
+              <TextField
+                autoFocus
+                fullWidth
+                label="Message"
+                id="Message"
+                type="text"
+                variant="standard"
+                size="small"
+                value={text}
+                placeholder={`#roomへメッセージを送信`}
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter') {
+                    sendMessage();
+                  }
+                }}
+                onChange={(e) => {
+                  setText(e.target.value);
+                }}
+                InputProps={{
+                  endAdornment: (
+                    <IconButton onClick={sendMessage}>
+                      <SendIcon />
+                    </IconButton>
+                  ),
+                }}
+              />
+            </div>
+            <p>
+              <strong>Talk Room</strong>
+            </p>
+            <ul>{showMessage(messages)}</ul>
+          </div>
         </Grid>
         <Grid
           xs={2}

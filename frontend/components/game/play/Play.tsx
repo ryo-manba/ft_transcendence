@@ -1,16 +1,14 @@
 import { Grid, Typography, Zoom } from '@mui/material';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSocketStore } from 'store/game/ClientSocket';
-import { usePlayerNamesStore } from 'store/game/PlayerName';
-import {
-  usePlayStateStore,
-  stateWinner,
-  stateLoser,
-} from 'store/game/PlayState';
+import { usePlayerNamesStore } from 'store/game/PlayerNames';
+import { usePlayStateStore, PlayState } from 'store/game/PlayState';
+import { GameHeader } from 'components/game/play/GameHeader';
+import { GameSetting } from 'types/game';
 
-// Question: Where should we define types that are used both in frontend and
-// backend while they are not used in the databases (therefore not defined or
-// managed by prisma)?
+type Props = {
+  gameSetting: GameSetting;
+};
 
 type Ball = {
   x: number;
@@ -24,61 +22,140 @@ type GameInfo = {
   ball: Ball;
 };
 
-export const Play = () => {
+type GameParameters = {
+  canvasWidth: number;
+  canvasHeight: number;
+  barWidth: number;
+  barLength: number;
+  player1X: number;
+  player2X: number;
+  highestPos: number;
+  lowestPos: number;
+  sideBarLeft: number;
+  sideBarRight: number;
+  lineDashStyle: [number, number];
+  initialHeight: number;
+  ballInitialX: number;
+  ballInitialY: number;
+  ballRadius: number;
+  widthRatio: number;
+};
+
+const convert2Int = (float: number) => float - (float % 1);
+
+const getGameParameters = (canvasWidth: number) => {
+  const gameParameters: GameParameters = {
+    canvasWidth,
+    canvasHeight: convert2Int(canvasWidth * 0.6),
+    barWidth: convert2Int(canvasWidth * 0.02),
+    barLength: 0,
+    player1X: convert2Int(canvasWidth * 0.02),
+    player2X: convert2Int(canvasWidth * 0.96),
+    highestPos: 0,
+    lowestPos: 0,
+    sideBarLeft: convert2Int(canvasWidth * 0.05),
+    sideBarRight: convert2Int(canvasWidth * 0.95),
+    lineDashStyle: [20, 5],
+    initialHeight: 0,
+    ballInitialX: convert2Int(canvasWidth / 2),
+    ballInitialY: 0,
+    ballRadius: convert2Int(canvasWidth * 0.01),
+    widthRatio: 0,
+  };
+  gameParameters.barLength = convert2Int(gameParameters.canvasHeight / 6);
+  gameParameters.highestPos = convert2Int(gameParameters.canvasHeight / 60);
+  gameParameters.lowestPos =
+    gameParameters.canvasHeight -
+    gameParameters.highestPos -
+    gameParameters.barLength;
+  gameParameters.initialHeight = convert2Int(
+    gameParameters.canvasHeight / 2 - gameParameters.barLength / 2,
+  );
+  gameParameters.ballInitialY = convert2Int(gameParameters.canvasHeight / 2);
+  gameParameters.widthRatio = gameParameters.canvasWidth / 1000; // 1000 is the width of the gameboard in the backend
+
+  return gameParameters;
+};
+
+export const Play = ({ gameSetting }: Props) => {
+  // function to get window width
+  const getWindowWidth = () => {
+    const { innerWidth, innerHeight } = window;
+    const widthFromHeight = convert2Int((innerHeight - 150) / 0.6);
+
+    return innerWidth < widthFromHeight ? innerWidth : widthFromHeight;
+  };
+
   const { socket } = useSocketStore();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const { playerNames } = usePlayerNamesStore();
   const [scores, updateScores] = useState<[number, number]>([0, 0]);
+  const [gameParameters, setGameParameters] = useState(
+    getGameParameters(getWindowWidth()),
+  );
+  const [gameInfo, updateGameInfo] = useState<GameInfo>({
+    height1: gameParameters.initialHeight,
+    height2: gameParameters.initialHeight,
+    ball: {
+      x: gameParameters.ballInitialX,
+      y: gameParameters.ballInitialY,
+      radius: gameParameters.ballRadius,
+    },
+  });
   const updatePlayState = usePlayStateStore((store) => store.updatePlayState);
   const [countDown, updateCountDown] = useState(3);
   const [changeCount, updateChangeCount] = useState(true);
-
-  // Game parameters
-  const barWidth = 20;
-  const barLength = 100;
-  const barSpeed = 20;
-  const player1X = 20;
-  const player2X = 960;
-  const canvasWidth = '1000';
-  const canvasHeight = '600';
-  const highestPos = 10;
-  const lowestPos = 490;
-  const sideBarLeft = 50;
-  const sideBarRight = 950;
-  const lineDashStyle = [20, 5];
-  const initialHeight = 220;
-  const ballInitialX = 500;
-  const ballInitialY = 300;
-  const ballRadius = 10;
+  const [isArrowDownPressed, updateIsArrowDownPressed] = useState(false);
+  const [isArrowUpPressed, updateIsArrowUpPressed] = useState(false);
 
   const drawField = useCallback(
-    (ctx: CanvasRenderingContext2D, y1: number, y2: number, ballInfo: Ball) => {
+    (
+      ctx: CanvasRenderingContext2D,
+      gameInfo: GameInfo,
+      params: GameParameters,
+    ) => {
       ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-      ctx.fillRect(player1X, y1, barWidth, barLength);
-      ctx.fillRect(player2X, y2, barWidth, barLength);
+      ctx.fillRect(
+        params.player1X,
+        gameInfo.height1,
+        params.barWidth,
+        params.barLength,
+      );
+      ctx.fillRect(
+        params.player2X,
+        gameInfo.height2,
+        params.barWidth,
+        params.barLength,
+      );
 
       // draw upper side line
       ctx.beginPath();
       ctx.setLineDash([]);
-      ctx.moveTo(sideBarLeft, highestPos);
-      ctx.lineTo(sideBarRight, highestPos);
+      ctx.moveTo(params.sideBarLeft, params.highestPos);
+      ctx.lineTo(params.sideBarRight, params.highestPos);
 
       // draw bottom side line
-      ctx.moveTo(sideBarLeft, lowestPos + barLength);
-      ctx.lineTo(sideBarRight, lowestPos + barLength);
+      ctx.moveTo(params.sideBarLeft, params.lowestPos + params.barLength);
+      ctx.lineTo(params.sideBarRight, params.lowestPos + params.barLength);
       ctx.stroke();
 
       // draw center line
       ctx.beginPath();
-      ctx.setLineDash(lineDashStyle);
-      ctx.moveTo(+canvasWidth / 2, highestPos);
-      ctx.lineTo(+canvasWidth / 2, lowestPos + barLength);
+      ctx.setLineDash(params.lineDashStyle);
+      ctx.moveTo(params.canvasWidth / 2, params.highestPos);
+      ctx.lineTo(params.canvasWidth / 2, params.lowestPos + params.barLength);
       ctx.stroke();
 
       // draw ball
       ctx.beginPath();
-      ctx.moveTo(ballInfo.x, ballInfo.y);
-      ctx.arc(ballInfo.x, ballInfo.y, ballInfo.radius, 0, Math.PI * 2);
+      ctx.moveTo(gameInfo.ball.x, gameInfo.ball.y);
+      ctx.arc(
+        gameInfo.ball.x,
+        gameInfo.ball.y,
+        gameInfo.ball.radius,
+        0,
+        Math.PI * 2,
+      );
       ctx.fill();
     },
     [],
@@ -88,79 +165,120 @@ export const Play = () => {
     const canvas = canvasRef.current as HTMLCanvasElement;
     const context = canvas.getContext('2d') as CanvasRenderingContext2D;
     let animationFrameId: number;
-    let y1 = initialHeight;
-    let y2 = initialHeight;
-    let move = 0;
-    let ball: Ball = {
-      x: ballInitialX,
-      y: ballInitialY,
-      radius: ballRadius,
-    };
 
     const onKeyDown = (e: KeyboardEvent) => {
       const key = e.code;
-      if (key === 'ArrowDown') {
-        move += barSpeed;
-      } else if (key === 'ArrowUp') {
-        move -= barSpeed;
+      if (
+        !isArrowDownPressed &&
+        !isArrowUpPressed &&
+        (key === 'ArrowDown' || key === 'ArrowUp')
+      ) {
+        if (key === 'ArrowDown') {
+          updateIsArrowDownPressed(true);
+        } else if (key === 'ArrowUp') {
+          updateIsArrowUpPressed(true);
+        }
       }
-      console.log(move);
     };
 
-    // TODO: prioritize bar move than screen move when the screen height is
-    // smaller than the canvas height
+    const onKeyUp = (e: KeyboardEvent) => {
+      const key = e.code;
+      if (key === 'ArrowDown' || key === 'ArrowUp') {
+        if (isArrowDownPressed) {
+          updateIsArrowDownPressed(false);
+        } else if (isArrowUpPressed) {
+          updateIsArrowUpPressed(false);
+        }
+      }
+    };
+
     document.addEventListener('keydown', onKeyDown);
+    document.addEventListener('keyup', onKeyUp);
 
     const render = () => {
-      drawField(context, y1, y2, ball);
+      drawField(context, gameInfo, gameParameters);
       animationFrameId = window.requestAnimationFrame(render);
     };
 
     render();
 
-    socket?.on('updateGameInfo', (gameInfo: GameInfo) => {
-      y1 = gameInfo.height1;
-      y2 = gameInfo.height2;
-      ball = gameInfo.ball;
+    socket.on('updateGameInfo', (newGameInfo: GameInfo) => {
+      const rescaledGameInfo: GameInfo = {
+        height1: convert2Int(newGameInfo.height1 * gameParameters.widthRatio),
+        height2: convert2Int(newGameInfo.height2 * gameParameters.widthRatio),
+        ball: {
+          x: convert2Int(newGameInfo.ball.x * gameParameters.widthRatio),
+          y: convert2Int(newGameInfo.ball.y * gameParameters.widthRatio),
+          radius: convert2Int(
+            newGameInfo.ball.radius * gameParameters.widthRatio,
+          ),
+        },
+      };
+      updateGameInfo(rescaledGameInfo);
     });
 
     const id = setInterval(() => {
+      let move = 0;
       if (countDown === 0) {
-        socket?.emit('barMove', move);
-        move = 0;
+        if (isArrowDownPressed || isArrowUpPressed) {
+          if (isArrowDownPressed) {
+            move = 1;
+          } else if (isArrowUpPressed) {
+            move = -1;
+          }
+        }
+        socket.emit('barMove', move);
       }
-    }, 33);
+    }, 17);
 
     return () => {
       window.cancelAnimationFrame(animationFrameId);
       clearInterval(id);
-      socket?.off('updateGameInfo');
+      socket.off('updateGameInfo');
+      document.removeEventListener('keydown', onKeyDown);
+      document.removeEventListener('keyup', onKeyUp);
     };
-  }, [drawField, countDown]);
+  }, [drawField, countDown, gameInfo, gameParameters]);
 
   useEffect(() => {
-    socket?.on('updateScores', (newScores: [number, number]) => {
+    socket.on('updateScores', (newScores: [number, number]) => {
       updateScores(newScores);
     });
 
     return () => {
-      socket?.off('updateScores');
+      socket.off('updateScores');
     };
   }, [scores]);
 
   useEffect(() => {
-    socket?.on('win', () => {
-      updatePlayState(stateWinner);
+    socket.on('win', () => {
+      updatePlayState(PlayState.stateWinner);
     });
-    socket?.on('lose', () => {
-      updatePlayState(stateLoser);
+    socket.on('lose', () => {
+      updatePlayState(PlayState.stateLoser);
+    });
+    socket.on('error', () => {
+      updatePlayState(PlayState.stateNothing);
     });
 
     return () => {
-      socket?.off('win');
-      socket?.off('lose');
+      socket.off('win');
+      socket.off('lose');
+      socket.off('error');
     };
   }, [socket]);
+
+  useEffect(() => {
+    const handleWindowResize = () => {
+      setGameParameters(getGameParameters(getWindowWidth()));
+    };
+
+    window.addEventListener('resize', handleWindowResize);
+
+    return () => {
+      window.removeEventListener('resize', handleWindowResize);
+    };
+  }, []);
 
   useEffect(() => {
     if (countDown > 0) {
@@ -193,69 +311,27 @@ export const Play = () => {
         </Grid>
       )}
       <div>
-        <Grid container>
-          <Grid
-            container
-            item
-            xs={5}
-            direction="row"
-            alignItems="center"
-            justifyContent="center"
-          >
-            <h2>{playerNames[0]}</h2>
-          </Grid>
-          <Grid
-            container
-            item
-            xs={2}
-            direction="row"
-            alignItems="center"
-            justifyContent="center"
-          >
-            <h2>VS</h2>
-          </Grid>
-          <Grid
-            container
-            item
-            xs={5}
-            direction="row"
-            alignItems="center"
-            justifyContent="center"
-          >
-            <h2>{playerNames[1]}</h2>
-          </Grid>
-          <Grid
-            container
-            item
-            xs={5}
-            direction="row"
-            alignItems="center"
-            justifyContent="center"
-          >
-            <h2>{scores[0]}</h2>
-          </Grid>
-          <Grid
-            container
-            item
-            xs={2}
-            direction="row"
-            alignItems="center"
-            justifyContent="center"
-          >
-            <h2>:</h2>
-          </Grid>
-          <Grid
-            container
-            item
-            xs={5}
-            direction="row"
-            alignItems="center"
-            justifyContent="center"
-          >
-            <h2>{scores[1]}</h2>
-          </Grid>
-        </Grid>
-        <canvas ref={canvasRef} width={canvasWidth} height={canvasHeight} />
+        <GameHeader
+          maxWidth={gameParameters.canvasWidth}
+          left={playerNames[0]}
+          center="VS"
+          right={playerNames[1]}
+        />
+        <GameHeader
+          maxWidth={gameParameters.canvasWidth}
+          left={scores[0]}
+          center=":"
+          right={scores[1]}
+        />
+        <canvas
+          ref={canvasRef}
+          width={gameParameters.canvasWidth}
+          height={gameParameters.canvasHeight}
+        />
+        <Typography
+          align="center"
+          maxWidth={gameParameters.canvasWidth}
+        >{`Difficulty: ${gameSetting.difficulty} / Match Point: ${gameSetting.matchPoint}`}</Typography>
       </div>
     </>
   );

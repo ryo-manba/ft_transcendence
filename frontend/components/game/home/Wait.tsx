@@ -6,14 +6,9 @@ import {
   Button,
 } from '@mui/material';
 import { useEffect, useState } from 'react';
-import {
-  usePlayStateStore,
-  statePlaying,
-  stateNothing,
-  stateWaiting,
-} from 'store/game/PlayState';
+import { usePlayStateStore, PlayState } from 'store/game/PlayState';
 import { useSocketStore } from 'store/game/ClientSocket';
-import { usePlayerNamesStore } from 'store/game/PlayerName';
+import { usePlayerNamesStore } from 'store/game/PlayerNames';
 import { useRouter } from 'next/router';
 import DoneOutlineIcon from '@mui/icons-material/DoneOutline';
 
@@ -25,8 +20,8 @@ export const Wait = () => {
 
   const handleClose = () => {
     setOpen(false);
-    updatePlayState(stateNothing);
-    socket?.emit('playCancel');
+    updatePlayState(PlayState.stateNothing);
+    socket.emit('playCancel');
   };
   const updatePlayerNames = usePlayerNamesStore(
     (store) => store.updatePlayerNames,
@@ -34,14 +29,20 @@ export const Wait = () => {
 
   const router = useRouter();
   useEffect(() => {
-    socket?.on('playStarted', (playerNames: [string, string]) => {
+    socket.on('select', (playerNames: [string, string]) => {
       updatePlayerNames(playerNames);
-      updatePlayState(statePlaying);
+      updatePlayState(PlayState.stateSelecting);
+      void router.push('/game/play');
+    });
+    socket.on('standBy', (playerNames: [string, string]) => {
+      updatePlayerNames(playerNames);
+      updatePlayState(PlayState.stateStandingBy);
       void router.push('/game/play');
     });
 
     return () => {
-      socket?.off('playStarted');
+      socket.off('select');
+      socket.off('standBy');
     };
   }, [socket]);
 
@@ -64,7 +65,7 @@ export const Wait = () => {
           }}
         >
           <Grid item>
-            {playState === stateWaiting ? (
+            {playState === PlayState.stateWaiting ? (
               <CircularProgress />
             ) : (
               <DoneOutlineIcon />
@@ -81,7 +82,10 @@ export const Wait = () => {
             </Typography>
           </Grid>
           <Grid item>
-            <Button disabled={playState !== stateWaiting} onClick={handleClose}>
+            <Button
+              disabled={playState !== PlayState.stateWaiting}
+              onClick={handleClose}
+            >
               cancel
             </Button>
           </Grid>

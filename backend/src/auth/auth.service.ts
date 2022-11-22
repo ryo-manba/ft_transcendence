@@ -22,9 +22,8 @@ export class AuthService {
       // DBへ新規追加
       await this.prisma.user.create({
         data: {
-          email: dto.email,
+          name: dto.username,
           hashedPassword: hashed,
-          name: '', //ここで設定せず空欄許可した方が良さそう。
         },
       });
 
@@ -35,7 +34,7 @@ export class AuthService {
       if (error instanceof PrismaClientKnownRequestError) {
         // Prismaが新規作成時に発行するエラー。
         if (error.code === 'P2002') {
-          throw new ForbiddenException('This email is already taken');
+          throw new ForbiddenException('username is already taken');
         }
       }
       throw error;
@@ -45,20 +44,21 @@ export class AuthService {
   async login(dto: AuthDto): Promise<Jwt> {
     const user = await this.prisma.user.findUnique({
       where: {
-        email: dto.email,
+        name: dto.username,
       },
     });
-    if (!user) throw new ForbiddenException('Email or password incorrect');
+    if (!user) throw new ForbiddenException('username or password incorrect');
     const isValid = await bcrypt.compare(dto.password, user.hashedPassword);
-    if (!isValid) throw new ForbiddenException('Email or password incorrect');
+    if (!isValid)
+      throw new ForbiddenException('username or password incorrect');
 
-    return this.generateJwt(user.id, user.email);
+    return this.generateJwt(user.id, user.name);
   }
 
-  async generateJwt(userId: number, email: string): Promise<Jwt> {
+  async generateJwt(userId: number, username: string): Promise<Jwt> {
     const payload = {
       sub: userId,
-      email,
+      username,
     };
     const secret = this.config.get<string>('JWT_SECRET');
     const token = await this.jwt.signAsync(payload, {

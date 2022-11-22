@@ -1,3 +1,4 @@
+import { Logger } from '@nestjs/common';
 import {
   SubscribeMessage,
   WebSocketGateway,
@@ -6,11 +7,13 @@ import {
   WebSocketServer,
 } from '@nestjs/websockets';
 import { Socket, Server } from 'socket.io';
-import { Interval } from '@nestjs/schedule';
 import { RecordsService } from '../records/records.service';
+import { UserService } from '../user/user.service';
 
 type Player = {
   name: string;
+  id: number;
+  point: number;
   socket: Socket;
   height: number;
   score: number;
@@ -35,12 +38,22 @@ type RoomInfo = {
   ball: Ball;
   ballVec: BallVec;
   isPlayer1Turn: boolean;
+  matchPoint: number;
+  barSpeed: number;
+  rewards: number;
 };
 
 type GameInfo = {
   height1: number;
   height2: number;
   ball: Ball;
+};
+
+type DifficultyLevel = 'Easy' | 'Normal' | 'Hard';
+
+type GameSetting = {
+  difficulty: DifficultyLevel;
+  matchPoint: number;
 };
 
 @WebSocketGateway({
@@ -50,35 +63,42 @@ type GameInfo = {
   namespace: '/game',
 })
 export class GameGateway {
-  constructor(private readonly records: RecordsService) {}
+  constructor(
+    private readonly records: RecordsService,
+    private readonly user: UserService,
+  ) {}
 
   roomNum = 0;
   gameRooms: RoomInfo[] = [];
   waitingQueue: Player[] = [];
 
   // Game parameters
-  static initialHeight = 220;
+  static initialHeight = 250;
   static ballInitialX = 500;
   static ballInitialY = 300;
   static ballRadius = 10;
   static ballInitialXVec = -1;
-  static ballSpeed = 1.5;
+  static ballSpeed = 3;
   static highestPos = 10; // top left corner of the canvas is (0, 0)
   static lowestPos = 490;
   static leftEnd = 40;
   static rightEnd = 960;
   static barLength = 100;
   static matchPoint = 3;
+  static boardWidth = 1000;
+  static barSpeed = 10;
 
   @WebSocketServer()
   server: Server;
 
+  private logger: Logger = new Logger('GameGateway');
+
   handleConnection(socket: Socket) {
-    console.log('hello', socket.id);
+    this.logger.log(`Connected: ${socket.id}`);
   }
 
   handleDisconnect(socket: Socket) {
-    console.log('bye', socket.id);
+    this.logger.log(`Disconnected: ${socket.id}`);
 
     this.gameRooms = this.gameRooms.filter(
       (room) =>
@@ -94,32 +114,66 @@ export class GameGateway {
     return Math.random() * (Math.random() < 0.5 ? 1 : -1);
   }
 
+  updatePlayerStatus(player1: Player, player2: Player) {
+    const playerNames: [string, string] = [player1.name, player2.name];
+
+    // if both players' points are equal, first player joining the que will select the rule
+    if (player1.point <= player2.point) {
+      player1.socket.emit('select', playerNames);
+      player2.socket.emit('standBy', playerNames);
+    } else {
+      player1.socket.emit('standBy', playerNames);
+      player2.socket.emit('select', playerNames);
+    }
+  }
+
   @SubscribeMessage('playStart')
-  joinRoom(@ConnectedSocket() socket: Socket, @MessageBody() data: string) {
+  async joinRoom(
+    @ConnectedSocket() socket: Socket,
+    @MessageBody() data: number,
+  ) {
     if (this.waitingQueue.length == 0) {
-      this.waitingQueue.push({
-        name: data,
-        socket: socket,
-        height: GameGateway.initialHeight,
-        score: 0,
-      });
+      await this.user
+        .findOne(data)
+        .then((user) => {
+          this.waitingQueue.push({
+            name: user.name,
+            id: data,
+            point: user.point,
+            socket: socket,
+            height: GameGateway.initialHeight,
+            score: 0,
+          });
+        })
+        .catch((error) => {
+          this.logger.log(error);
+        });
     } else {
       const player1 = this.waitingQueue.pop();
-      const player2 = {
-        name: data,
-        socket: socket,
-        height: GameGateway.initialHeight,
-        score: 0,
-      };
-      console.log(player1, player2);
+      let player2: Player;
+      await this.user
+        .findOne(data)
+        .then((user) => {
+          player2 = {
+            name: user.name,
+            id: data,
+            point: user.point,
+            socket: socket,
+            height: GameGateway.initialHeight,
+            score: 0,
+          };
+        })
+        .catch((error) => {
+          this.logger.log(error);
+        });
       const roomName = String(this.roomNum);
       this.roomNum++;
 
-      console.log(player1.socket.id, 'joined to room', roomName);
-      console.log(player2.socket.id, 'joined to room', roomName);
+      this.logger.log(`${player1.socket.id} joined to room ${roomName}`);
+      this.logger.log(`${player2.socket.id} joined to room ${roomName}`);
 
-      void player1.socket.join(roomName);
-      void player2.socket.join(roomName);
+      await player1.socket.join(roomName);
+      await player2.socket.join(roomName);
 
       const ball: Ball = {
         x: GameGateway.ballInitialX,
@@ -140,13 +194,46 @@ export class GameGateway {
         ball: ball,
         ballVec: ballVec,
         isPlayer1Turn: true,
+        matchPoint: GameGateway.matchPoint,
+        barSpeed: GameGateway.barSpeed,
+        rewards: 0,
       };
 
       this.gameRooms.push(newRoom);
 
-      const playerNames: [string, string] = [player1.name, player2.name];
+      this.updatePlayerStatus(player1, player2);
+    }
+  }
 
-      this.server.to(roomName).emit('playStarted', playerNames);
+  @SubscribeMessage('completeSetting')
+  playGame(
+    @ConnectedSocket() socket: Socket,
+    @MessageBody() data: GameSetting,
+  ) {
+    const room = this.gameRooms.find(
+      (r) =>
+        r.player1.socket.id === socket.id || r.player2.socket.id === socket.id,
+    );
+    if (!room) {
+      socket.emit('error');
+    } else {
+      room.matchPoint = data.matchPoint;
+      room.rewards = 10 * room.matchPoint;
+      switch (data.difficulty) {
+        case 'Normal':
+          room.barSpeed = 20;
+          room.ballVec.speed = 5;
+          break;
+        case 'Hard':
+          room.barSpeed = 30;
+          room.ballVec.speed = 7;
+          room.rewards *= 2;
+          break;
+        default:
+          room.rewards *= 0.5;
+          break;
+      }
+      this.server.to(room.roomName).emit('playStarted', data);
     }
   }
 
@@ -154,11 +241,13 @@ export class GameGateway {
     winner.socket.emit('win');
     loser.socket.emit('lose');
     await this.records.createGameRecord({
-      winnerName: winner.name,
-      loserName: loser.name,
+      winnerId: winner.id,
+      loserId: loser.id,
       winnerScore: winner.score,
       loserScore: loser.score,
     });
+    await this.user.updateUserPoint(winner.id, { point: currentRoom.rewards });
+    await this.user.updateUserPoint(loser.id, { point: -currentRoom.rewards });
     winner.socket.disconnect(true);
     loser.socket.disconnect(true);
     this.gameRooms = this.gameRooms.filter(
@@ -185,14 +274,18 @@ export class GameGateway {
       (r) =>
         r.player1.socket.id === socket.id || r.player2.socket.id === socket.id,
     );
-    if (!room) return;
+    if (!room) {
+      socket.emit('error');
+
+      return;
+    }
     const player =
       room.player1.socket.id === socket.id ? room.player1 : room.player2;
     const ball = room.ball;
     const ballVec = room.ballVec;
 
     // Update player position using information received
-    const updatedHeight = player.height + move;
+    const updatedHeight = player.height + move * room.barSpeed;
     if (updatedHeight < GameGateway.highestPos) {
       player.height = GameGateway.highestPos;
     } else if (GameGateway.lowestPos < updatedHeight) {
@@ -251,9 +344,9 @@ export class GameGateway {
       ballVec.xVec = room.isPlayer1Turn ? 1 : -1;
       ballVec.yVec = this.setBallYVec();
       room.isPlayer1Turn = !room.isPlayer1Turn;
-      if (GameGateway.matchPoint === room.player1.score) {
+      if (room.matchPoint === room.player1.score) {
         await this.finishGame(room, room.player1, room.player2);
-      } else if (GameGateway.matchPoint === room.player2.score) {
+      } else if (room.matchPoint === room.player2.score) {
         await this.finishGame(room, room.player2, room.player1);
       } else {
         this.server
@@ -261,9 +354,9 @@ export class GameGateway {
           .emit('updateScores', [room.player1.score, room.player2.score]);
       }
     }
+    this.sendGameInfo();
   }
 
-  @Interval(33)
   sendGameInfo() {
     for (const room of this.gameRooms) {
       const gameInfo: GameInfo = {
