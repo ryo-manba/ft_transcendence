@@ -36,7 +36,7 @@ model User {
   name           String          @unique
   hashedPassword String?
   point          Int             @default(1000)
-  avatar         String?
+  avatarPath     String?
   Chatroom       Chatroom[]
   ChatroomAdmin  ChatroomAdmin[]
   loseGameRecord GameRecord[]    @relation("Loser")
