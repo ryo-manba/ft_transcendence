@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from '@prisma/client';
-import { UpdateUserPointDto } from './dto/update-user-point.dto';
+import { UpdatePointDto } from './dto/update-point.dto';
 
 @Injectable()
 export class UserService {
@@ -36,16 +36,16 @@ export class UserService {
     return user;
   }
 
-  async updateUserPoint(
+  async updatePoint(
     userId: number,
-    dto: UpdateUserPointDto,
+    dto: UpdatePointDto,
   ): Promise<Omit<User, 'hashedPassword'>> {
     const user = await this.prisma.user.update({
       where: {
         id: userId,
       },
       data: {
-        point: { increment: dto.point },
+        ...dto,
       },
     });
     delete user.hashedPassword;

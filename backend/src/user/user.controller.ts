@@ -1,9 +1,18 @@
-import { Body, Controller, Get, Patch, Req, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { Request } from 'express';
 import { UserService } from './user.service';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from '@prisma/client';
+import { UpdatePointDto } from './dto/update-point.dto';
 
 @UseGuards(AuthGuard('jwt'))
 @Controller('user')
@@ -14,6 +23,14 @@ export class UserController {
   getLoginUser(@Req() req: Request): Omit<User, 'hashedPassword'> {
     // custom.d.ts で型変換してる
     return req.user;
+  }
+
+  @Patch('point/:id')
+  updatePoint(
+    @Param('id') id: string,
+    @Body() dto: UpdatePointDto,
+  ): Promise<Omit<User, 'hashedPassword'>> {
+    return this.userService.updatePoint(Number(id), dto);
   }
 
   @Patch()

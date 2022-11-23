@@ -24,9 +24,10 @@ import {
 } from '@mui/material';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
+import { signIn, signOut, useSession } from 'next-auth/react';
 
 const schema = Yup.object().shape({
-  email: Yup.string().email('Invalid email').required('No email provided'),
+  username: Yup.string().required('No username provided'),
   password: Yup.string()
     .required('No password provided')
     .min(5, 'Password should be min 5 chars'),
@@ -48,24 +49,24 @@ const Home: NextPage = () => {
     mode: 'onSubmit',
     resolver: yupResolver(schema),
     defaultValues: {
-      email: '',
       password: '',
       username: '',
     },
   });
+  const { data: session } = useSession();
+
   const onSubmit: SubmitHandler<AuthForm> = async (data: AuthForm) => {
     try {
       if (process.env.NEXT_PUBLIC_API_URL) {
         if (isRegister) {
           const url_signup = `${process.env.NEXT_PUBLIC_API_URL}/auth/signup`;
           await axios.post(url_signup, {
-            email: data.email,
             password: data.password,
             username: data.username,
           });
         }
         await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/auth/login`, {
-          email: data.email,
+          username: data.username,
           password: data.password,
         });
         await router.push('/dashboard');
@@ -79,6 +80,55 @@ const Home: NextPage = () => {
       }
     }
   };
+
+  // const oauthLogin = async () => {
+  //   try {
+  //     if (process.env.NEXT_PUBLIC_API_URL) {
+  //       try {
+  //         form.reset();
+  //         console.log(session.user?.name);
+  //         console.log(session.user?.email);
+  //         await router.push('/dashboard');
+  //       } catch (e) {
+  //         if (axios.isAxiosError(e) && e.response && e.response.data) {
+  //           setError(e.message);
+  //         }
+  //       }
+  //     }
+  //   } catch (e) {
+  //     if (axios.isAxiosError(e) && e.response && e.response.data) {
+  //       setError(e.message);
+  //     }
+  //   }
+  //   await router.push('/dashboard');
+  // };
+
+  if (session) {
+    // ここのconsoleはブラウザに表示
+    console.log(session.user);
+
+    // oauthLogin();
+    if (session.user === undefined) {
+      return <p>session.user is undefined</p>;
+    }
+
+    return (
+      <>
+        Signed in as <img src={session.user.image ?? ''} width="50px" />
+        {session.user.name} <br />
+        Mail: {session.user.email} <br />
+        <button
+          onClick={() => {
+            void (async () => {
+              await signOut();
+            })();
+          }}
+        >
+          Sign out
+        </button>
+      </>
+    );
+  }
 
   return (
     <Layout title="Auth">
@@ -103,19 +153,17 @@ const Home: NextPage = () => {
           </Alert>
         )}
         <form onSubmit={handleSubmit(onSubmit) as VoidFunction}>
-          {/* [TODO] remove email */}
           <Controller
-            name="email"
+            name="username"
             control={control}
             render={({ field }) => (
               <TextField
-                placeholder="example@gmail.com"
                 fullWidth
                 size="small"
                 sx={{ my: 2 }}
-                label="Email"
-                error={errors.email ? true : false}
-                helperText={errors.email?.message}
+                label="Username"
+                error={errors.username ? true : false}
+                helperText={errors.username?.message}
                 {...field}
               />
             )}
@@ -158,23 +206,6 @@ const Home: NextPage = () => {
               />
             )}
           />
-          {isRegister && (
-            <Controller
-              name="username"
-              control={control}
-              render={({ field }) => (
-                <TextField
-                  fullWidth
-                  size="small"
-                  sx={{ mb: 2 }}
-                  label="Username"
-                  error={errors.username ? true : false}
-                  helperText={errors.username?.message}
-                  {...field}
-                />
-              )}
-            />
-          )}
           <Grid container justifyContent="space-between">
             <Grid item>
               <Link
@@ -206,13 +237,33 @@ const Home: NextPage = () => {
             </Grid>
           </Grid>
         </form>
-        <a href="/auth42">
-          <Image src="/images/ico-42-logo.jpg" width={50} height={50} />
-        </a>
-        <br></br>
-        <a href="/google">
-          <Image src="/images/ico-google-logo-96.png" width={50} height={50} />
-        </a>
+        <br />
+        <Grid container justifyContent="space-evenly">
+          <Grid item>
+            <Image
+              src="/images/ico-42-logo.jpg"
+              onClick={() => {
+                void (async () => {
+                  await signIn('42-school');
+                })();
+              }}
+              width={50}
+              height={50}
+            />
+          </Grid>
+          <Grid item>
+            <Image
+              src="/images/ico-google-logo-96.png"
+              onClick={() => {
+                void (async () => {
+                  await signIn('google');
+                })();
+              }}
+              width={50}
+              height={50}
+            />
+          </Grid>
+        </Grid>
       </Grid>
     </Layout>
   );
