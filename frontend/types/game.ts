@@ -1,3 +1,5 @@
+import { User } from '@prisma/client';
+
 const difficultyLevelArray: readonly string[] = [
   'Easy',
   'Normal',
@@ -13,4 +15,13 @@ export const isDifficultyLevel = (value: unknown): value is DifficultyLevel => {
 export type GameSetting = {
   difficulty: DifficultyLevel;
   matchPoint: number;
+};
+
+export type GameRecordWithUserName = {
+  id: number;
+  winnerScore: number;
+  loserScore: number;
+  createdAt: Date;
+  loser: User;
+  winner: User;
 };

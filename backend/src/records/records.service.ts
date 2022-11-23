@@ -1,7 +1,16 @@
 import { Injectable } from '@nestjs/common';
-import { GameRecord, Prisma } from '@prisma/client';
+import { GameRecord, Prisma, User } from '@prisma/client';
 import { PrismaService } from '../prisma.service';
 import { CreateGameRecordDto } from './dto/create-gamerecord.dto';
+
+type GameRecordWithUserName = {
+  id: number;
+  winnerScore: number;
+  loserScore: number;
+  createdAt: Date;
+  loser: User;
+  winner: User;
+};
 
 @Injectable()
 export class RecordsService {
@@ -21,7 +30,7 @@ export class RecordsService {
     cursor?: Prisma.GameRecordWhereUniqueInput;
     where?: Prisma.GameRecordWhereInput;
     orderBy?: Prisma.UserOrderByWithAggregationInput;
-  }): Promise<GameRecord[]> {
+  }): Promise<GameRecordWithUserName[]> {
     const { skip, take, cursor, where, orderBy } = params;
 
     return this.prisma.gameRecord.findMany({
@@ -30,6 +39,10 @@ export class RecordsService {
       cursor,
       where,
       orderBy,
+      include: {
+        loser: true,
+        winner: true,
+      },
     });
   }
 
