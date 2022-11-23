@@ -29,7 +29,5 @@ export const useQueryUser = () => {
         void router.push('/');
       }
     },
-    staleTime: Infinity,
-    cacheTime: 10 * 60 * 1000,
   });
 };
