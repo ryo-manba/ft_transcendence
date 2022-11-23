@@ -1,17 +1,8 @@
 import { Controller, Get, Req, UseGuards } from '@nestjs/common';
 import { RecordsService } from './records.service';
-import { User } from '@prisma/client';
 import { Request } from 'express';
 import { AuthGuard } from '@nestjs/passport';
-
-type GameRecordWithUserName = {
-  id: number;
-  winnerScore: number;
-  loserScore: number;
-  createdAt: Date;
-  loser: User;
-  winner: User;
-};
+import { GameRecordWithUserName } from './interfaces/records.interface';
 
 @UseGuards(AuthGuard('jwt'))
 @Controller('records')

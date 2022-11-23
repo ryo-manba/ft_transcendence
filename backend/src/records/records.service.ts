@@ -1,16 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { GameRecord, Prisma, User } from '@prisma/client';
+import { GameRecord, Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma.service';
 import { CreateGameRecordDto } from './dto/create-gamerecord.dto';
-
-type GameRecordWithUserName = {
-  id: number;
-  winnerScore: number;
-  loserScore: number;
-  createdAt: Date;
-  loser: User;
-  winner: User;
-};
+import { GameRecordWithUserName } from './interfaces/records.interface';
 
 @Injectable()
 export class RecordsService {

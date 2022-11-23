@@ -4,9 +4,8 @@ import {
   ListItemText,
   ListItemAvatar,
   Typography,
+  Avatar,
 } from '@mui/material';
-import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
-import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import { useQueryGameRecords } from 'hooks/useQueryGameRecords';
 import { useQueryUser } from 'hooks/useQueryUser';
 
@@ -26,61 +25,75 @@ export const History = () => {
       >
         {records.map((item, index) => (
           <ListItem key={index} sx={{ border: '1px solid' }}>
-            <ListItemAvatar>
-              {item.winner.name === user.name ? (
-                <KeyboardArrowUpIcon color="success" />
-              ) : (
-                <KeyboardArrowDownIcon color="error" />
-              )}
-            </ListItemAvatar>
+            <ListItemText
+              primary={user.name}
+              primaryTypographyProps={{
+                variant: 'h6',
+                align: 'center',
+                style: {
+                  overflow: 'hidden',
+                },
+              }}
+              sx={{ width: '30%' }}
+            />
             {item.winner.name === user.name ? (
-              <ListItemText
-                primaryTypographyProps={{
-                  align: 'left',
-                  color: 'success.main',
-                }}
-                sx={{ width: '6%' }}
-                primary={'WIN'}
-              />
+              <>
+                <ListItemAvatar>
+                  <Avatar
+                    sx={{
+                      bgcolor: 'text.primary',
+                      margin: 'auto',
+                    }}
+                    variant="rounded"
+                  >
+                    {item.winnerScore}
+                  </Avatar>
+                </ListItemAvatar>
+                <ListItemAvatar>
+                  <Avatar variant="rounded" sx={{ margin: 'auto' }}>
+                    {item.loserScore}
+                  </Avatar>
+                </ListItemAvatar>
+                <ListItemText
+                  primary={item.loser.name}
+                  primaryTypographyProps={{
+                    variant: 'h6',
+                    align: 'center',
+                    style: {
+                      overflow: 'hidden',
+                    },
+                  }}
+                  sx={{ width: '30%' }}
+                />
+              </>
             ) : (
-              <ListItemText
-                primaryTypographyProps={{
-                  align: 'left',
-                  color: 'error.main',
-                }}
-                sx={{ width: '6%' }}
-                primary={'LOSE'}
-              />
+              <>
+                <ListItemAvatar>
+                  <Avatar variant="rounded" sx={{ margin: 'auto' }}>
+                    {item.loserScore}
+                  </Avatar>
+                </ListItemAvatar>
+                <ListItemAvatar>
+                  <Avatar
+                    sx={{ bgcolor: 'text.primary', margin: 'auto' }}
+                    variant="rounded"
+                  >
+                    {item.winnerScore}
+                  </Avatar>
+                </ListItemAvatar>
+                <ListItemText
+                  primary={item.winner.name}
+                  primaryTypographyProps={{
+                    variant: 'h6',
+                    align: 'center',
+                    style: {
+                      overflow: 'hidden',
+                    },
+                  }}
+                  sx={{ width: '30%' }}
+                />
+              </>
             )}
-            <ListItemText
-              primary={`${item.winner.name}`}
-              primaryTypographyProps={{
-                align: 'center',
-                style: {
-                  overflow: 'hidden',
-                },
-              }}
-              sx={{ width: '30%' }}
-            />
-            <ListItemText
-              primary={`${item.winnerScore} - ${item.loserScore}`}
-              primaryTypographyProps={{
-                align: 'center',
-                style: {
-                  overflow: 'hidden',
-                },
-              }}
-            />
-            <ListItemText
-              primary={`${item.loser.name}`}
-              primaryTypographyProps={{
-                align: 'center',
-                style: {
-                  overflow: 'hidden',
-                },
-              }}
-              sx={{ width: '30%' }}
-            />
           </ListItem>
         ))}
       </List>
