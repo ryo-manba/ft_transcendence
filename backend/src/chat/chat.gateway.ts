@@ -44,16 +44,21 @@ export class ChatGateway {
    * 作成者はそのまま入室する
    * @param CreateChatroomDto
    */
-  @SubscribeMessage('chat:create')
+  @SubscribeMessage('chat:createRoom')
   async CreateRoom(
     @ConnectedSocket() client: Socket,
     @MessageBody() dto: CreateChatroomDto,
-  ): Promise<boolean> {
-    this.logger.log(`chat:create: ${dto.name}`);
+  ): Promise<any> {
+    this.logger.log(`chat:createRoom: ${dto.name}`);
 
+    // 作成と入室を行う
     const res = await this.chatService.createAndJoinRoom(dto);
+    if (res === undefined) {
+      return;
+    }
 
-    return res;
+    // チャットルームが作成できたら作成者のフロントエンドに反映させる
+    client.emit('chat:createRoom', res);
   }
 
   /**

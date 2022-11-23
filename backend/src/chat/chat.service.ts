@@ -183,22 +183,23 @@ export class ChatService {
     return true;
   }
 
-  async createAndJoinRoom(dto: CreateChatroomDto): Promise<boolean> {
+  async createAndJoinRoom(dto: CreateChatroomDto): Promise<Chatroom> {
     // Chatroomを作成する
-    const room = await this.create(dto);
-    if (room === undefined) {
-      return false;
+    const createdRoom = await this.create(dto);
+    if (createdRoom === undefined) {
+      return undefined;
     }
 
     // 作成できた場合、チャットルームに入室する
     const joinDto: JoinChatroomDto = {
       userId: dto.ownerId,
       type: dto.type,
-      roomId: room.id,
+      roomId: createdRoom.id,
       password: dto.password,
     };
     const isSuccess = await this.joinRoom(joinDto);
 
-    return isSuccess;
+    // 入室できたら作成したチャットルームの情報を返す
+    return isSuccess ? createdRoom : undefined;
   }
 }

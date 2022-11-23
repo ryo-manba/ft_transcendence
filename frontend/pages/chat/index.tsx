@@ -37,7 +37,8 @@ const Chat = () => {
       console.log('chat:getJoinedRooms', data);
       setRooms(data);
     });
-    // 一覧を取得する
+
+    // 入室中のチャットルーム一覧を取得する
     socket.emit('chat:getJoinedRooms', user.id);
 
     return () => {
@@ -69,7 +70,7 @@ const Chat = () => {
     };
   });
 
-  // receive a message from the server
+  // メッセージを送信する
   useEffect(() => {
     if (!socket) return;
     socket.on('chat:sendMessage', (data: Message) => {
@@ -79,6 +80,19 @@ const Chat = () => {
 
     return () => {
       socket.off('chat:sendMessage');
+    };
+  }, [socket]);
+
+  useEffect(() => {
+    if (!socket) return;
+    socket.on('chat:createRoom', (chatroom: Chatroom) => {
+      console.log('chat:createRoom -> receive', chatroom.name);
+      // チャットルームの作成に成功したらフロントエンドに反映させる
+      setRooms((prev) => [...prev, chatroom]);
+    });
+
+    return () => {
+      socket.off('chat:createRoom');
     };
   }, [socket]);
 
