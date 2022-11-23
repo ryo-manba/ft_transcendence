@@ -7,9 +7,9 @@ import * as Yup from 'yup';
 import { IconDatabase } from '@tabler/icons';
 import Image from 'next/image';
 import GppGoodIcon from '@mui/icons-material/GppGood';
+import { Layout } from 'components/common/Layout';
 import { useForm, SubmitHandler, Controller } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { Layout } from '../components/Layout';
 import { AuthForm, AxiosErrorResponse } from '../types';
 import {
   Grid,
@@ -131,7 +131,11 @@ const Home: NextPage = () => {
   }
 
   return (
-    <Layout title="Auth">
+    <Layout
+      title="Auth"
+      divClassName="flex min-h-screen flex-col items-center justify-center"
+      mainClassName="flex w-screen flex-1 flex-col items-center justify-center"
+    >
       <Grid
         container
         justifyContent="center"

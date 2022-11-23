@@ -32,12 +32,12 @@ export const Wait = () => {
     socket.on('select', (playerNames: [string, string]) => {
       updatePlayerNames(playerNames);
       updatePlayState(PlayState.stateSelecting);
-      void router.push('/game/play');
+      void router.push('/game/battle');
     });
     socket.on('standBy', (playerNames: [string, string]) => {
       updatePlayerNames(playerNames);
       updatePlayState(PlayState.stateStandingBy);
-      void router.push('/game/play');
+      void router.push('/game/battle');
     });
 
     return () => {
