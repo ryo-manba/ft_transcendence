@@ -53,7 +53,7 @@ export const ChatroomCreateButton = memo(function ChatroomCreateButton({
   }, [open]);
 
   const getJoinedRooms = useCallback(() => {
-    socket.emit('chat:getJoinedRooms');
+    socket.emit('chat:getJoinedRooms', user.id);
   }, [socket]);
 
   const createChatroom = useCallback(
@@ -77,10 +77,9 @@ export const ChatroomCreateButton = memo(function ChatroomCreateButton({
       name: name,
       type: roomType,
       ownerId: user.id,
+      password: roomType === CHATROOM_TYPE.PROTECTED ? password : undefined,
     };
-    if (roomType === CHATROOM_TYPE.PROTECTED) {
-      room.hashedPassword = password;
-    }
+    console.log('room: %o', room);
     createChatroom(room);
     getJoinedRooms();
     handleClose();

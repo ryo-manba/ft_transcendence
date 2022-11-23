@@ -10,7 +10,7 @@ export type CreateChatroomInfo = {
   name: string;
   type: string;
   ownerId: number;
-  hashedPassword?: string;
+  password?: string;
 };
 
 export type Message = {

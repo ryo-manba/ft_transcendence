@@ -7,18 +7,18 @@ import {
 } from 'class-validator';
 import { ChatroomType } from '@prisma/client';
 
-export class CreateChatroomDto {
-  @IsString()
+export class JoinChatroomDto {
+  @IsNumber()
   @IsNotEmpty()
-  name: string;
+  userId: number;
+
+  @IsNumber()
+  @IsNotEmpty()
+  roomId: number;
 
   @IsEnum(ChatroomType)
   @IsNotEmpty()
   type: ChatroomType;
-
-  @IsNumber()
-  @IsNotEmpty()
-  ownerId: number;
 
   @IsString()
   @IsOptional()

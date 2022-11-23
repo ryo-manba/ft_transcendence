@@ -11,6 +11,7 @@ import { PrismaService } from '../prisma.service';
 import { ChatService } from './chat.service';
 import { CreateChatroomDto } from './dto/create-chatroom.dto';
 import { DeleteChatroomDto } from './dto/delete-chatroom.dto';
+import { JoinChatroomDto } from './dto/join-chatroom.dto';
 import { CreateMessageDto } from './dto/create-message.dto';
 import { Chatroom, ChatroomType } from '@prisma/client';
 
@@ -40,13 +41,18 @@ export class ChatGateway {
 
   /**
    * チャットルームを作成する
+   * 作成者はそのまま入室する
+   * @param CreateChatroomDto
    */
   @SubscribeMessage('chat:create')
-  async CreateRoom(@MessageBody() data: CreateChatroomDto): Promise<any> {
-    this.logger.log(`chat:create': ${data.name}`);
-    const res = await this.chatService.create(data);
+  async CreateRoom(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() dto: CreateChatroomDto,
+  ): Promise<boolean> {
+    this.logger.log(`chat:create: ${dto.name}`);
 
-    // TODO: チャットルームを見ることができるユーザーにデータを送信する
+    const res = await this.chatService.createAndJoinRoom(dto);
+
     return res;
   }
 
@@ -113,16 +119,19 @@ export class ChatGateway {
   /**
    * チャットルームに入室する
    * @param client
-   * @param roomId
+   * @param JoinChatroomDto
    */
-  // @SubscribeMessage('chat:joinRoom')
-  // async onRoomJoin(
-  //   @ConnectedSocket() client: Socket,
-  //   @MessageBody() name: string,
-  // ): Promise<any> {
-  //   this.logger.log(`chat:joinRoom received -> ${name}`);
-  //   // 引数で受け取ったチャットルームが存在するか探す
-  // }
+  @SubscribeMessage('chat:joinRoom')
+  async onRoomJoin(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() dto: JoinChatroomDto,
+  ): Promise<any> {
+    this.logger.log(`chat:joinRoom received -> ${dto.userId}`);
+
+    const isSuccess = await this.chatService.joinRoom(dto);
+    // 入室できたかどうかを送り返す
+    client.emit('chat:joinRoom', isSuccess);
+  }
 
   /**
    * チャットルームから退出する

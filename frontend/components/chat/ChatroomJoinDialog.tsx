@@ -1,4 +1,4 @@
-import { memo, useState } from 'react';
+import { memo, useState, useEffect } from 'react';
 import {
   Avatar,
   Box,
@@ -18,7 +18,8 @@ import ChatIcon from '@mui/icons-material/Chat';
 import LockIcon from '@mui/icons-material/Lock';
 import { Chatroom } from '@prisma/client';
 import { Socket } from 'socket.io-client';
-import { CHATROOM_TYPE } from 'types/chat';
+import { CHATROOM_TYPE, ChatroomType } from 'types/chat';
+import { useQueryUser } from 'hooks/useQueryUser';
 
 type Props = {
   open: boolean;
@@ -27,7 +28,14 @@ type Props = {
   onClose: () => void;
 };
 
-export const JoinRoomDialog = memo(function JoinRoomDialog({
+type JoinRoomInfo = {
+  userId: number;
+  roomId: number;
+  type: ChatroomType;
+  password?: string;
+};
+
+export const ChatroomJoinDialog = memo(function ChatroomJoinDialog({
   onClose,
   socket,
   rooms,
@@ -37,6 +45,11 @@ export const JoinRoomDialog = memo(function JoinRoomDialog({
   const [isValidPassword, setIsValidPassword] = useState(true);
   const [password, setPassword] = useState('');
   const [selectedRoom, setSelectedRoom] = useState<Chatroom | null>(null);
+
+  const { data: user } = useQueryUser();
+  if (user === undefined) {
+    return <h1>ユーザーが存在しません</h1>;
+  }
 
   const handleClose = () => {
     setSelectedRoom(null);
@@ -63,6 +76,22 @@ export const JoinRoomDialog = memo(function JoinRoomDialog({
     }
   };
 
+  useEffect(() => {
+    socket.on('chat:joinRoom', (isSuccess: boolean) => {
+      // 入室に成功したらダイアログを閉じる
+      if (isSuccess) {
+        handleClose();
+      } else {
+        // パスワードが不正だった場合のエラーを想定している(今後変えるかもしれない)
+        setIsValidPassword(false);
+      }
+    });
+
+    return () => {
+      socket.off('chat:joinRoom');
+    };
+  }, []);
+
   const joinRoom = () => {
     if (selectedRoom === null) return;
 
@@ -71,12 +100,14 @@ export const JoinRoomDialog = memo(function JoinRoomDialog({
 
       return;
     }
+    const joinRoomInfo: JoinRoomInfo = {
+      userId: user.id,
+      roomId: selectedRoom.id,
+      type: selectedRoom.type,
+      password: isProtected(selectedRoom) ? password : undefined,
+    };
 
-    // 成功したらcloseする
-    // socket.emit('chat:joinRoom', selectedRoom, password);
-    void socket;
-
-    console.log('password: ', password);
+    socket.emit('chat:joinRoom', joinRoomInfo);
   };
 
   return (
