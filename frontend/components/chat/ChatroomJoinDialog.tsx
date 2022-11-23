@@ -64,6 +64,10 @@ export const ChatroomJoinDialog = memo(function ChatroomJoinDialog({
   };
 
   const handleListItemClick = (room: Chatroom) => {
+    // 現在選択しているチャットルームの場合は何もしない
+    if (selectedRoom === room) return;
+
+    setPassword('');
     setSelectedRoom(room);
 
     if (isProtected(room)) {
@@ -72,7 +76,6 @@ export const ChatroomJoinDialog = memo(function ChatroomJoinDialog({
     } else {
       // Publicの場合、パスワードの表示を消す
       setIsInputPassword(false);
-      setPassword('');
     }
   };
 
