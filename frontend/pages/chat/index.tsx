@@ -18,6 +18,7 @@ const Chat = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [currentRoomId, setCurrentRoomId] = useState(0);
   const [socket, setSocket] = useState<Socket>();
+
   const { data: user } = useQueryUser();
 
   useEffect(() => {
@@ -30,14 +31,14 @@ const Chat = () => {
   }, []);
 
   useEffect(() => {
-    if (!socket) return;
+    if (!socket || !user) return;
 
     socket.on('chat:getJoinedRooms', (data: Chatroom[]) => {
       console.log('chat:getJoinedRooms', data);
       setRooms(data);
     });
     // 一覧を取得する
-    socket.emit('chat:getJoinedRooms', user?.id);
+    socket.emit('chat:getJoinedRooms', user.id);
 
     return () => {
       socket.off('chat:getJoinedRooms');
@@ -150,7 +151,7 @@ const Chat = () => {
             borderBottom: '1px solid',
           }}
         >
-          <h2>{`Hello: ${user?.name}`}</h2>
+          <h2>{`Hello: ${user.name}`}</h2>
           <div style={{ marginLeft: 5, marginRight: 5 }}>
             <div style={{ display: 'flex', alignItems: 'end' }}>
               <TextField
