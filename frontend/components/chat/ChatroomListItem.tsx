@@ -40,10 +40,11 @@ export const ChatroomListItem = ({ room, socket, setCurrentRoomId }: Props) => {
 
   const deleteRoom = (id: number) => {
     console.log('deleteRoom:', id);
-    socket.emit('chat:deleteRoom', {
+    const deleteRoomInfo = {
       id: id,
       userId: user.id,
-    });
+    };
+    socket.emit('chat:deleteRoom', deleteRoomInfo);
   };
 
   const handleClickOpen = () => {

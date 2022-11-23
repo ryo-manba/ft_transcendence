@@ -21,6 +21,9 @@ const Chat = () => {
 
   const { data: user } = useQueryUser();
 
+  console.log('start');
+  console.log('rooms: ', rooms);
+
   useEffect(() => {
     const temp = io('ws://localhost:3001/chat');
     setSocket(temp);
@@ -44,7 +47,7 @@ const Chat = () => {
     return () => {
       socket.off('chat:getJoinedRooms');
     };
-  }, [socket, user]);
+  }, [socket]);
 
   useEffect(() => {
     if (!socket) return;
@@ -87,12 +90,31 @@ const Chat = () => {
     if (!socket) return;
     socket.on('chat:createRoom', (chatroom: Chatroom) => {
       console.log('chat:createRoom -> receive', chatroom.name);
-      // チャットルームの作成に成功したらフロントエンドに反映させる
+      // チャットルームを作成したら表示させる
       setRooms((prev) => [...prev, chatroom]);
     });
 
     return () => {
       socket.off('chat:createRoom');
+    };
+  }, [socket]);
+
+  useEffect(() => {
+    if (!socket || !user) return;
+    socket.on('chat:deleteRoom', (deletedRoom: Chatroom) => {
+      console.log('chat:deleteRoom -> receive', deletedRoom);
+
+      // チャットルームが削除されたら再度入室中のチャットルームを取得する
+      socket.emit('chat:getJoinedRooms', user.id);
+
+      // if (rooms.length > 0) {
+      //   // チャットルームが削除されたら表示から消す
+      //   setRooms(rooms.filter((room) => room.id !== deletedRoom.id));
+      // }
+    });
+
+    return () => {
+      socket.off('chat:deleteRoom');
     };
   }, [socket]);
 
