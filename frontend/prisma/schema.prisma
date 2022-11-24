@@ -7,65 +7,38 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
+model Chatroom {
   id              Int               @id @default(autoincrement())
   createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @default(now()) @updatedAt
-  name            String            @unique
+  updatedAt       DateTime          @default(now())
+  name            String
+  type            ChatroomType      @default(PUBLIC)
+  ownerId         Int
   hashedPassword  String?
-  point           Int               @default(1000)
-  avatarPath      String?
-  chatroomOwners  Chatroom[]
-  chatroomAdmins  ChatroomAdmin[]
-  chatroomMembers ChatroomMembers[]
-  loseGameRecord  GameRecord[]      @relation("Loser")
-  winGameRecord   GameRecord[]      @relation("Winner")
-  messages        Message[]
-}
-
-model Chatroom {
-  id             Int               @id @default(autoincrement())
-  createdAt      DateTime          @default(now())
-  updatedAt      DateTime          @default(now()) @updatedAt
-  name           String
-  type           ChatroomType      @default(PUBLIC)
-  ownerId        Int
-  hashedPassword String?
-  owner          User              @relation(fields: [ownerId], references: [id])
-  admins         ChatroomAdmin[]
-  members        ChatroomMembers[]
-  messages       Message[]
-}
-
-model ChatroomMembers {
-  id         Int      @id @default(autoincrement())
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @default(now()) @updatedAt
-  chatroomId Int
-  userId     Int
-  chatroom   Chatroom @relation(fields: [chatroomId], references: [id], onDelete: Cascade)
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
-
-model Message {
-  id         Int      @id @default(autoincrement())
-  userId     Int
-  message    String
-  chatroomId Int
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @default(now()) @updatedAt
-  chatroom   Chatroom @relation(fields: [chatroomId], references: [id], onDelete: Cascade)
-  user       User     @relation(fields: [userId], references: [id])
+  User            User              @relation(fields: [ownerId], references: [id])
+  ChatroomAdmin   ChatroomAdmin[]
+  ChatroomMembers ChatroomMembers[]
+  Message         Message[]
 }
 
 model ChatroomAdmin {
   id         Int      @id @default(autoincrement())
   createdAt  DateTime @default(now())
-  updatedAt  DateTime @default(now()) @updatedAt
+  updatedAt  DateTime @default(now())
   chatroomId Int
   userId     Int
-  chatroom   Chatroom @relation(fields: [chatroomId], references: [id], onDelete: Cascade)
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  Chatroom   Chatroom @relation(fields: [chatroomId], references: [id], onDelete: Cascade)
+  User       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model ChatroomMembers {
+  id         Int      @id @default(autoincrement())
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @default(now())
+  chatroomId Int
+  userId     Int
+  Chatroom   Chatroom @relation(fields: [chatroomId], references: [id], onDelete: Cascade)
+  User       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model GameRecord {
@@ -77,6 +50,33 @@ model GameRecord {
   winnerId    Int
   loser       User     @relation("Loser", fields: [loserId], references: [id])
   winner      User     @relation("Winner", fields: [winnerId], references: [id])
+}
+
+model Message {
+  id         Int      @id @default(autoincrement())
+  userId     Int
+  message    String
+  chatroomId Int
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @default(now())
+  Chatroom   Chatroom @relation(fields: [chatroomId], references: [id], onDelete: Cascade)
+  User       User     @relation(fields: [userId], references: [id])
+}
+
+model User {
+  id              Int               @id @default(autoincrement())
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @default(now())
+  name            String            @unique
+  hashedPassword  String?
+  point           Int               @default(1000)
+  avatarPath      String?
+  Chatroom        Chatroom[]
+  ChatroomAdmin   ChatroomAdmin[]
+  ChatroomMembers ChatroomMembers[]
+  loseGameRecord  GameRecord[]      @relation("Loser")
+  winGameRecord   GameRecord[]      @relation("Winner")
+  Message         Message[]
 }
 
 enum ChatroomType {
