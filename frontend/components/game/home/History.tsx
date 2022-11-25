@@ -10,8 +10,8 @@ import { useQueryGameRecords } from 'hooks/useQueryGameRecords';
 import { useQueryUser } from 'hooks/useQueryUser';
 
 export const History = () => {
-  const { data: records } = useQueryGameRecords();
   const { data: user } = useQueryUser();
+  const { data: records } = useQueryGameRecords(user?.id);
 
   if (records === undefined || user === undefined) return <></>;
 

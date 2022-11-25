@@ -1,6 +1,5 @@
-import { Controller, Get, Req, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, UseGuards } from '@nestjs/common';
 import { RecordsService } from './records.service';
-import { Request } from 'express';
 import { AuthGuard } from '@nestjs/passport';
 import { GameRecordWithUserName } from './interfaces/records.interface';
 
@@ -9,16 +8,18 @@ import { GameRecordWithUserName } from './interfaces/records.interface';
 export class RecordsController {
   constructor(private readonly recordsService: RecordsService) {}
 
-  @Get()
-  async getRecords(@Req() req: Request): Promise<GameRecordWithUserName[]> {
+  @Get(':id')
+  async getRecordsById(
+    @Param('id') id: number,
+  ): Promise<GameRecordWithUserName[]> {
     return this.recordsService.gameRecords({
       where: {
         OR: [
           {
-            winnerId: req.user.id as number,
+            winnerId: Number(id),
           },
           {
-            loserId: req.user.id as number,
+            loserId: Number(id),
           },
         ],
       },

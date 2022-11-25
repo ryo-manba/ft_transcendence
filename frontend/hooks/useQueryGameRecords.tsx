@@ -3,19 +3,20 @@ import axios, { AxiosError } from 'axios';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { GameRecordWithUserName } from 'types/game';
 
-export const useQueryGameRecords = () => {
+export const useQueryGameRecords = (userId: number | undefined) => {
   const queryClient = useQueryClient();
   const router = useRouter();
   const getGameRecords = async () => {
+    if (userId === undefined) return undefined;
     const { data } = await axios.get<GameRecordWithUserName[]>(
-      `${process.env.NEXT_PUBLIC_API_URL as string}/records`,
+      `${process.env.NEXT_PUBLIC_API_URL as string}/records/${userId}`,
     );
 
     return data;
   };
 
-  return useQuery<GameRecordWithUserName[], AxiosError>({
-    queryKey: ['game'],
+  return useQuery<GameRecordWithUserName[] | undefined, AxiosError>({
+    queryKey: ['game', userId],
     queryFn: getGameRecords,
     onError: (err: AxiosError) => {
       if (
