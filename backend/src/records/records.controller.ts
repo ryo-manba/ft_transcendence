@@ -10,7 +10,7 @@ export class RecordsController {
 
   @Get(':id')
   async getRecordsById(
-    @Param('id') id: number,
+    @Param('id') id: string,
   ): Promise<GameRecordWithUserName[]> {
     return this.recordsService.gameRecords({
       where: {
