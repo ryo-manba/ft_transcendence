@@ -6,6 +6,7 @@ import {
   Typography,
   Avatar,
 } from '@mui/material';
+import { Loading } from 'components/common/Loading';
 import { useQueryGameRecords } from 'hooks/useQueryGameRecords';
 import { useQueryUser } from 'hooks/useQueryUser';
 
@@ -13,7 +14,7 @@ export const History = () => {
   const { data: user } = useQueryUser();
   const { data: records } = useQueryGameRecords(user?.id);
 
-  if (records === undefined || user === undefined) return <></>;
+  if (records === undefined || user === undefined) return <Loading />;
 
   return (
     <>

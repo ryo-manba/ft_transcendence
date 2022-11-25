@@ -3,13 +3,14 @@ import { Button, Grid, Box, Typography } from '@mui/material';
 import { usePlayStateStore, PlayState } from 'store/game/PlayState';
 import { useSocketStore } from 'store/game/ClientSocket';
 import { useQueryUser } from 'hooks/useQueryUser';
+import { Loading } from 'components/common/Loading';
 
 export const Start = () => {
   const { socket } = useSocketStore();
   const updatePlayState = usePlayStateStore((store) => store.updatePlayState);
   const { data: user } = useQueryUser();
 
-  if (user === undefined) return <></>;
+  if (user === undefined) return <Loading />;
 
   const start = () => {
     socket.emit('playStart', user.id);

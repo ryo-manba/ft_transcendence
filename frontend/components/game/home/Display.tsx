@@ -40,6 +40,7 @@ export const Display = () => {
               alignItems="center"
               justifyContent="center"
               direction="column"
+              sx={{ height: '100%' }}
             >
               {playState === PlayState.stateNothing && <Start />}
               {(playState === PlayState.stateWaiting ||

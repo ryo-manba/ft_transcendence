@@ -8,6 +8,7 @@ import { Layout } from '../components/Layout';
 import { useQueryClient } from '@tanstack/react-query';
 import { useQueryUser } from 'hooks/useQueryUser';
 import { signOut, useSession } from 'next-auth/react';
+import { Loading } from 'components/common/Loading';
 
 const Dashboard: NextPage = () => {
   const router = useRouter();
@@ -24,7 +25,7 @@ const Dashboard: NextPage = () => {
 
   console.log(session?.user);
 
-  if (user === undefined) return <></>;
+  if (user === undefined) return <Loading />;
 
   return (
     <div>
