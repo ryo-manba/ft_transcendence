@@ -4,108 +4,96 @@ import {
   ListItemText,
   ListItemAvatar,
   Typography,
+  Avatar,
 } from '@mui/material';
-import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
-import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
-
-type GameHistory = {
-  opponentName: string;
-  opponentScore: number;
-  myScore: number;
-  status: 'WIN' | 'LOSE';
-  color: 'success.main' | 'error.main';
-};
+import { useQueryGameRecords } from 'hooks/useQueryGameRecords';
+import { useQueryUser } from 'hooks/useQueryUser';
 
 export const History = () => {
-  // [TODO] replace with DB data
-  const myName = 'YEAH';
-  const gameHistory: GameHistory[] = [
-    {
-      opponentName: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
-      opponentScore: 3,
-      myScore: 2,
-      status: 'LOSE',
-      color: 'error.main',
-    },
-    {
-      opponentName: 'PLAYER1',
-      opponentScore: 1,
-      myScore: 3,
-      status: 'WIN',
-      color: 'success.main',
-    },
-    {
-      opponentName: 'PLAYER2',
-      opponentScore: 1,
-      myScore: 3,
-      status: 'WIN',
-      color: 'success.main',
-    },
-  ];
+  const { data: user } = useQueryUser();
+  const { data: records } = useQueryGameRecords(user?.id);
+
+  if (records === undefined || user === undefined) return <></>;
 
   return (
     <>
       <Typography variant="h2" align="center" gutterBottom>
         History
       </Typography>
-      <List sx={{ width: '95%', margin: 'auto' }}>
-        {gameHistory?.map((item, index) => (
+      <List
+        sx={{ width: '95%', margin: 'auto', height: '70%', overflow: 'auto' }}
+      >
+        {records.map((item, index) => (
           <ListItem key={index} sx={{ border: '1px solid' }}>
-            <ListItemAvatar>
-              {item.status === 'WIN' ? (
-                <KeyboardArrowUpIcon color="success" />
-              ) : (
-                <KeyboardArrowDownIcon color="error" />
-              )}
-            </ListItemAvatar>
-            {item.status === 'WIN' ? (
-              <ListItemText
-                primaryTypographyProps={{
-                  align: 'left',
-                  color: 'success.main',
-                }}
-                sx={{ width: '6%' }}
-                primary={'WIN'}
-              />
+            <ListItemText
+              primary={user.name}
+              primaryTypographyProps={{
+                variant: 'h6',
+                align: 'center',
+                style: {
+                  overflow: 'hidden',
+                },
+              }}
+              sx={{ width: '30%' }}
+            />
+            {item.winner.name === user.name ? (
+              <>
+                <ListItemAvatar>
+                  <Avatar
+                    sx={{
+                      bgcolor: 'text.primary',
+                      margin: 'auto',
+                    }}
+                    variant="rounded"
+                  >
+                    {item.winnerScore}
+                  </Avatar>
+                </ListItemAvatar>
+                <ListItemAvatar>
+                  <Avatar variant="rounded" sx={{ margin: 'auto' }}>
+                    {item.loserScore}
+                  </Avatar>
+                </ListItemAvatar>
+                <ListItemText
+                  primary={item.loser.name}
+                  primaryTypographyProps={{
+                    variant: 'h6',
+                    align: 'center',
+                    style: {
+                      overflow: 'hidden',
+                    },
+                  }}
+                  sx={{ width: '30%' }}
+                />
+              </>
             ) : (
-              <ListItemText
-                primaryTypographyProps={{
-                  align: 'left',
-                  color: 'error.main',
-                }}
-                sx={{ width: '6%' }}
-                primary={'LOSE'}
-              />
+              <>
+                <ListItemAvatar>
+                  <Avatar variant="rounded" sx={{ margin: 'auto' }}>
+                    {item.loserScore}
+                  </Avatar>
+                </ListItemAvatar>
+                <ListItemAvatar>
+                  <Avatar
+                    sx={{ bgcolor: 'text.primary', margin: 'auto' }}
+                    variant="rounded"
+                  >
+                    {item.winnerScore}
+                  </Avatar>
+                </ListItemAvatar>
+                <ListItemText
+                  primary={item.winner.name}
+                  primaryTypographyProps={{
+                    variant: 'h6',
+                    align: 'center',
+                    style: {
+                      overflow: 'hidden',
+                    },
+                  }}
+                  sx={{ width: '30%' }}
+                />
+              </>
             )}
-            <ListItemText
-              primary={`${myName}`}
-              primaryTypographyProps={{
-                align: 'center',
-                style: {
-                  overflow: 'hidden',
-                },
-              }}
-              sx={{ width: '30%' }}
-            />
-            <ListItemText
-              primary={`${item.myScore} - ${item.opponentScore}`}
-              primaryTypographyProps={{
-                align: 'center',
-                style: {
-                  overflow: 'hidden',
-                },
-              }}
-            />
-            <ListItemText
-              primary={`${item.opponentName}`}
-              primaryTypographyProps={{
-                align: 'center',
-                style: {
-                  overflow: 'hidden',
-                },
-              }}
-              sx={{ width: '30%' }}
-            />
           </ListItem>
         ))}
       </List>
