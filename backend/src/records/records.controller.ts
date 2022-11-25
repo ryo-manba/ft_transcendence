@@ -23,6 +23,9 @@ export class RecordsController {
           },
         ],
       },
+      orderBy: {
+        createdAt: 'desc',
+      },
     });
   }
 }
