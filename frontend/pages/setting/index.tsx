@@ -4,17 +4,29 @@ import { Layout } from 'components/common/Layout';
 import { useMutateName } from 'hooks/useMutationName';
 import { useQueryUser } from 'hooks/useQueryUser';
 import type { NextPage } from 'next';
-import { useForm, SubmitHandler } from 'react-hook-form';
+import { useForm, SubmitHandler, Controller } from 'react-hook-form';
 import { SettingForm } from 'types/setting';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+
+const schema = z.object({
+  username: z.string().min(1, { message: 'Username cannot be empty' }),
+});
 
 const Setting: NextPage = () => {
   const { data: user } = useQueryUser();
   if (user === undefined) return <></>;
-  const { register, handleSubmit } = useForm<SettingForm>({
+  const {
+    control,
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<SettingForm>({
     mode: 'onSubmit',
     defaultValues: {
       username: user.name,
     },
+    resolver: zodResolver(schema),
   });
   const registeredUsername = register('username');
   const { updateNameMutation } = useMutateName();
@@ -55,17 +67,27 @@ const Setting: NextPage = () => {
           sx={{ p: 2 }}
         >
           <Grid item xs={4}>
-            <TextField
-              // [TODO] replace type coercion if possible...
-              onChange={registeredUsername.onChange as unknown as VoidFunction}
-              onBlur={registeredUsername.onBlur as unknown as VoidFunction}
-              name={registeredUsername.name}
-              ref={registeredUsername.ref}
-              fullWidth
-              required
-              id="user-name"
-              label="Username"
-              defaultValue={user.name}
+            <Controller
+              name="username"
+              control={control}
+              render={() => (
+                <TextField
+                  // [TODO] replace type coercion if possible...
+                  onChange={
+                    registeredUsername.onChange as unknown as VoidFunction
+                  }
+                  onBlur={registeredUsername.onBlur as unknown as VoidFunction}
+                  name={registeredUsername.name}
+                  ref={registeredUsername.ref}
+                  fullWidth
+                  required
+                  id="user-name"
+                  label="Username"
+                  defaultValue={user.name}
+                  error={errors.username ? true : false}
+                  helperText={errors.username?.message}
+                />
+              )}
             />
           </Grid>
         </Grid>
