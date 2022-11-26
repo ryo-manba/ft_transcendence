@@ -3,14 +3,13 @@ import MenuIcon from '@mui/icons-material/Menu';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import { useState } from 'react';
-import { useRouter } from 'next/router';
 import { useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import Link from 'next/link';
 import { signOut, useSession } from 'next-auth/react';
+import { useRouter } from 'next/router';
 
 export const MenuButton = () => {
-  const { data: session } = useSession();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -19,16 +18,16 @@ export const MenuButton = () => {
   const handleClose = () => {
     setAnchorEl(null);
   };
-  const router = useRouter();
   const queryClient = useQueryClient();
+  const { data: session } = useSession();
+  const router = useRouter();
+
   const logout = () => {
+    queryClient.removeQueries(['user']);
+    void axios.post(`${process.env.NEXT_PUBLIC_API_URL as string}/auth/logout`);
     if (session) {
       void signOut();
     } else {
-      queryClient.removeQueries(['user']);
-      void axios.post(
-        `${process.env.NEXT_PUBLIC_API_URL as string}/auth/logout`,
-      );
       void router.push('/');
     }
   };
