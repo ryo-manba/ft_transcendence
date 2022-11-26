@@ -59,7 +59,9 @@ export const MenuButton = () => {
         <Link href="/profile">
           <MenuItem>Profile</MenuItem>
         </Link>
-        <MenuItem onClick={handleClose}>Setting</MenuItem>
+        <Link href="/setting">
+          <MenuItem>Setting</MenuItem>
+        </Link>
         <MenuItem onClick={logout}>Logout</MenuItem>
       </Menu>
     </div>

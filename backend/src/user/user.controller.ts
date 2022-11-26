@@ -10,7 +10,7 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import { Request } from 'express';
 import { UserService } from './user.service';
-import { UpdateUserDto } from './dto/update-user.dto';
+import { UpdateNameDto } from './dto/update-name.dto';
 import { User } from '@prisma/client';
 import { UpdatePointDto } from './dto/update-point.dto';
 
@@ -33,17 +33,11 @@ export class UserController {
     return this.userService.updatePoint(Number(id), dto);
   }
 
-  @Patch()
-  updateUser(
-    @Req() req: Request,
-    @Body() dto: UpdateUserDto,
+  @Patch('name/:id')
+  updateName(
+    @Param('id') id: string,
+    @Body() dto: UpdateNameDto,
   ): Promise<Omit<User, 'hashedPassword'>> {
-    // for eslint
-    interface RequestUser {
-      id: number;
-    }
-    const req_user: RequestUser = req.user;
-
-    return this.userService.updateUser(req_user.id, dto);
+    return this.userService.updateName(Number(id), dto);
   }
 }
