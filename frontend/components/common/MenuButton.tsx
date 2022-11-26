@@ -6,7 +6,8 @@ import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import Link from 'next/link';
-import { signOut } from 'next-auth/react';
+import { signOut, useSession } from 'next-auth/react';
+import { useRouter } from 'next/router';
 
 export const MenuButton = () => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -18,12 +19,17 @@ export const MenuButton = () => {
     setAnchorEl(null);
   };
   const queryClient = useQueryClient();
+  const { data: session } = useSession();
+  const router = useRouter();
+
   const logout = () => {
     queryClient.removeQueries(['user']);
     void axios.post(`${process.env.NEXT_PUBLIC_API_URL as string}/auth/logout`);
-    void signOut({
-      callbackUrl: 'http://localhost:3000/',
-    });
+    if (session) {
+      void signOut();
+    } else {
+      void router.push('/');
+    }
   };
 
   return (
