@@ -133,9 +133,10 @@ export class ChatGateway {
   ): Promise<any> {
     this.logger.log(`chat:joinRoom received -> ${dto.userId}`);
 
-    const isSuccess = await this.chatService.joinRoom(dto);
-    // 入室できたかどうかを送り返す
-    client.emit('chat:joinRoom', isSuccess);
+    const joinedRoom = await this.chatService.joinRoom(dto);
+
+    // 入室したルーム or undefinedをクライアントに送信する
+    client.emit('chat:joinRoom', joinedRoom);
   }
 
   /**
@@ -177,7 +178,17 @@ export class ChatGateway {
 
     // adminかownerの場合削除が実行できる
     if (isAdmin || room.ownerId === userId) {
-      await this.chatService.remove(data);
+      const deletedRoom = await this.chatService.remove(data);
+      if (deletedRoom === undefined) return;
+      // 現時点でチャットルームを表示しているユーザーに通知を送る
+      this.server
+        .to(String(deletedRoom.id))
+        .emit('chat:deleteRoom', deletedRoom);
+
+      // 全ユーザーのチャットルームを更新させる
+      // NOTE: 本来削除されたルームに所属しているユーザーだけに送りたいが,
+      //       それを判定するのが難しいためブロードキャストで送信している
+      this.server.emit('chat:updateSideBarRooms');
     }
   }
 

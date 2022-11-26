@@ -45,7 +45,7 @@ export class ChatService {
   async create(dto: CreateChatroomDto): Promise<Chatroom> {
     // Protectedの場合はパスワードをハッシュ化する
     const hashed =
-      dto.type === <ChatroomType>'PROTECTED'
+      dto.type === ChatroomType.PROTECTED
         ? await bcrypt.hash(dto.password, 12)
         : undefined;
 
@@ -147,24 +147,27 @@ export class ChatService {
   /**
    * チャットルームに入室する
    * @param id
-   * @return 入室に成功したかどうかを表すbooleanを返す
+   * @return 入室したチャットルームを返す
    */
-  async joinRoom(dto: JoinChatroomDto): Promise<boolean> {
+  async joinRoom(dto: JoinChatroomDto): Promise<Chatroom> {
     console.log('joinRoom: ', dto);
     // TODO: ブロックされているユーザーは入れないようにする?
+
+    // 入室するチャットルームを取得する
+    const chatroom = await this.prisma.chatroom.findUnique({
+      where: {
+        id: dto.roomId,
+      },
+    });
+    if (!chatroom) return undefined;
+
     if (dto.type === <ChatroomType>'PROTECTED') {
-      const chatroom = await this.prisma.chatroom.findUnique({
-        where: {
-          id: dto.roomId,
-        },
-      });
       // Protectedの場合はパスワードが正しいことを確認する
-      if (!chatroom) return false;
       const isValid = await bcrypt.compare(
         dto.password,
         chatroom.hashedPassword,
       );
-      if (!isValid) return false;
+      if (!isValid) return undefined;
     }
 
     // 入室処理を行う
@@ -177,10 +180,11 @@ export class ChatService {
       });
     } catch (error) {
       // userId or chatroomIdが正しくない場合は失敗する
-      return false;
+      return undefined;
     }
 
-    return true;
+    // 入室したチャットルームを返す
+    return chatroom;
   }
 
   async createAndJoinRoom(dto: CreateChatroomDto): Promise<Chatroom> {

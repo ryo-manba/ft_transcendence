@@ -16,13 +16,11 @@ const Chat = () => {
   const [rooms, setRooms] = useState<Chatroom[]>([]);
   const [text, setText] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
-  const [currentRoomId, setCurrentRoomId] = useState(0);
+  const NOT_JOINED_ROOM = 0;
+  const [currentRoomId, setCurrentRoomId] = useState(NOT_JOINED_ROOM);
   const [socket, setSocket] = useState<Socket>();
 
   const { data: user } = useQueryUser();
-
-  console.log('start');
-  console.log('rooms: ', rooms);
 
   useEffect(() => {
     const temp = io('ws://localhost:3001/chat');
@@ -65,18 +63,21 @@ const Chat = () => {
       setRooms((prev) => [...prev, chatroom]);
     });
 
-    // チャットルームの削除処理が終わったら、反映させる
+    // 現在所属しているチャットルームが削除された場合、表示されているチャット履歴を削除する
     socket.on('chat:deleteRoom', (deletedRoom: Chatroom) => {
       console.log('chat:deleteRoom', deletedRoom);
-
-      // チャットルームが削除されたら再度入室中のチャットルームを取得する
+      // 表示中のチャットを削除する
+      setMessages([]);
+      setCurrentRoomId(NOT_JOINED_ROOM);
+      // socketの退出処理をする
+      socket.emit('chat:leaveRoom');
+      // 所属しているチャットルーム一覧を取得する
       socket.emit('chat:getJoinedRooms', user.id);
+    });
 
-      // TODO: なぜかうまく表示されない
-      // if (rooms.length > 0) {
-      //   // チャットルームが削除されたら表示から消す
-      //   setRooms(rooms.filter((room) => room.id !== deletedRoom.id));
-      // }
+    // サイドバーのチャットルームを更新する
+    socket.on('chat:updateSideBarRooms', () => {
+      socket.emit('chat:getJoinedRooms', user.id);
     });
 
     // setupが終わったら
@@ -90,6 +91,7 @@ const Chat = () => {
       socket.off('chat:sendMessage');
       socket.off('chat:createRoom');
       socket.off('chat:deleteRoom');
+      socket.off('chat:updateSideBarRooms');
     };
   }, [socket, user]);
 

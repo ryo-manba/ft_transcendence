@@ -80,9 +80,9 @@ export const ChatroomJoinDialog = memo(function ChatroomJoinDialog({
   };
 
   useEffect(() => {
-    socket.on('chat:joinRoom', (isSuccess: boolean) => {
+    socket.on('chat:joinRoom', (joinedRoom: Chatroom) => {
       // 入室に成功したらダイアログを閉じる
-      if (isSuccess) {
+      if (joinedRoom) {
         handleClose();
       } else {
         // パスワードが不正だった場合のエラーを想定している(今後変えるかもしれない)
