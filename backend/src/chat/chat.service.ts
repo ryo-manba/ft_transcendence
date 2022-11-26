@@ -45,7 +45,7 @@ export class ChatService {
   async create(dto: CreateChatroomDto): Promise<Chatroom> {
     // Protectedの場合はパスワードをハッシュ化する
     const hashed =
-      dto.type === <ChatroomType>'PROTECTED'
+      dto.type === ChatroomType.PROTECTED
         ? await bcrypt.hash(dto.password, 12)
         : undefined;
 
@@ -152,7 +152,7 @@ export class ChatService {
   async joinRoom(dto: JoinChatroomDto): Promise<boolean> {
     console.log('joinRoom: ', dto);
     // TODO: ブロックされているユーザーは入れないようにする?
-    if (dto.type === <ChatroomType>'PROTECTED') {
+    if (dto.type === ChatroomType.PROTECTED) {
       const chatroom = await this.prisma.chatroom.findUnique({
         where: {
           id: dto.roomId,
