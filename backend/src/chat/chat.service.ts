@@ -1,8 +1,16 @@
 import { Injectable } from '@nestjs/common';
+import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma.service';
-import { Chatroom, ChatroomAdmin, Message, Prisma } from '@prisma/client';
+import {
+  Chatroom,
+  ChatroomAdmin,
+  ChatroomType,
+  Message,
+  Prisma,
+} from '@prisma/client';
 import { CreateChatroomDto } from './dto/create-chatroom.dto';
 import { CreateMessageDto } from './dto/create-message.dto';
+import { JoinChatroomDto } from './dto/join-chatroom.dto';
 
 @Injectable()
 export class ChatService {
@@ -34,15 +42,28 @@ export class ChatService {
     });
   }
 
-  async create(CreateChatroomDto: CreateChatroomDto): Promise<Chatroom> {
-    console.log(CreateChatroomDto);
-    const chatroom = await this.prisma.chatroom.create({
-      data: {
-        ...CreateChatroomDto,
-      },
-    });
+  async create(dto: CreateChatroomDto): Promise<Chatroom> {
+    // Protectedの場合はパスワードをハッシュ化する
+    const hashed =
+      dto.type === ChatroomType.PROTECTED
+        ? await bcrypt.hash(dto.password, 12)
+        : undefined;
 
-    return chatroom;
+    try {
+      const chatroom = await this.prisma.chatroom.create({
+        data: {
+          name: dto.name,
+          type: dto.type,
+          ownerId: dto.ownerId,
+          hashedPassword: hashed,
+        },
+      });
+
+      // 成功したチャットルームの情報を返す
+      return chatroom;
+    } catch (error) {
+      return undefined;
+    }
   }
 
   async update(params: {
@@ -63,9 +84,6 @@ export class ChatService {
     });
   }
 
-  /**
-   * TODO: 引数をDTOにしたい
-   */
   async addMessage(createMessageDto: CreateMessageDto): Promise<Message> {
     console.log(createMessageDto);
 
@@ -88,17 +106,14 @@ export class ChatService {
     const res = await this.prisma.chatroom.findUnique({
       where: chatroomWhereUniqueInput,
       include: {
-        message: true,
+        messages: true,
       },
     });
 
-    return res.message;
+    return res.messages;
   }
 
-  async findAdmins(
-    // chatroomAdminWhereUniquebInput: Prisma.ChatroomAdminWhereUniquebInput,
-    id: number,
-  ): Promise<ChatroomAdmin[] | null> {
+  async findAdmins(id: number): Promise<ChatroomAdmin[] | null> {
     const res = await this.prisma.chatroomAdmin.findMany({
       where: {
         chatroomId: id,
@@ -106,5 +121,84 @@ export class ChatService {
     });
 
     return res;
+  }
+
+  /**
+   * ユーザーが入室しているチャットルームの一覧を返す
+   * @param id
+   */
+  async findJoinedRooms(userId: number): Promise<Chatroom[] | null> {
+    // チャットルームメンバーからuserIdが含まれているものを取得する
+    const joinedRoomInfo = await this.prisma.chatroomMembers.findMany({
+      where: {
+        userId: userId,
+      },
+      include: {
+        chatroom: true,
+      },
+    });
+
+    // ユーザーが所属しているチャットルームのみ返す
+    const joinedRoom = joinedRoomInfo.map((room) => room.chatroom);
+
+    return joinedRoom;
+  }
+
+  /**
+   * チャットルームに入室する
+   * @param id
+   * @return 入室に成功したかどうかを表すbooleanを返す
+   */
+  async joinRoom(dto: JoinChatroomDto): Promise<boolean> {
+    console.log('joinRoom: ', dto);
+    // TODO: ブロックされているユーザーは入れないようにする?
+    if (dto.type === ChatroomType.PROTECTED) {
+      const chatroom = await this.prisma.chatroom.findUnique({
+        where: {
+          id: dto.roomId,
+        },
+      });
+      // Protectedの場合はパスワードが正しいことを確認する
+      if (!chatroom) return false;
+      const isValid = await bcrypt.compare(
+        dto.password,
+        chatroom.hashedPassword,
+      );
+      if (!isValid) return false;
+    }
+
+    // 入室処理を行う
+    try {
+      await this.prisma.chatroomMembers.create({
+        data: {
+          userId: dto.userId,
+          chatroomId: dto.roomId,
+        },
+      });
+    } catch (error) {
+      // userId or chatroomIdが正しくない場合は失敗する
+      return false;
+    }
+
+    return true;
+  }
+
+  async createAndJoinRoom(dto: CreateChatroomDto): Promise<boolean> {
+    // Chatroomを作成する
+    const room = await this.create(dto);
+    if (room === undefined) {
+      return false;
+    }
+
+    // 作成できた場合、チャットルームに入室する
+    const joinDto: JoinChatroomDto = {
+      userId: dto.ownerId,
+      type: dto.type,
+      roomId: room.id,
+      password: dto.password,
+    };
+    const isSuccess = await this.joinRoom(joinDto);
+
+    return isSuccess;
   }
 }
