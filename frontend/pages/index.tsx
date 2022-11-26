@@ -85,10 +85,13 @@ const Home: NextPage = () => {
 
   const oauthLogin = async () => {
     if (process.env.NEXT_PUBLIC_API_URL) {
+      if (session?.user === null) {
+        return;
+      }
       try {
         reset();
-        const url_signup = `${process.env.NEXT_PUBLIC_API_URL}/auth/login`;
-        await axios.post(url_signup, {
+        const url_login = `${process.env.NEXT_PUBLIC_API_URL}/auth/login`;
+        await axios.post(url_login, {
           username: session?.user?.email,
           password: session?.user?.name,
         });
