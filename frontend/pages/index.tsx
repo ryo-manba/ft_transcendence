@@ -85,32 +85,34 @@ const Home: NextPage = () => {
 
   const oauthLogin = async () => {
     if (process.env.NEXT_PUBLIC_API_URL) {
-      if (session?.user === null) {
+      if (!session || session.user === null || session.user === undefined) {
         return;
-      }
-      try {
-        reset();
-        const url_login = `${process.env.NEXT_PUBLIC_API_URL}/auth/login`;
-        await axios.post(url_login, {
-          username: session?.user?.email,
-          password: session?.user?.name,
-        });
-        await router.push('/dashboard');
-      } catch (e) {
+      } else {
         try {
-          const url_signup = `${process.env.NEXT_PUBLIC_API_URL}/auth/signup`;
-          await axios.post(url_signup, {
-            username: session?.user?.email,
-            password: session?.user?.name,
+          reset();
+          const url_login = `${process.env.NEXT_PUBLIC_API_URL}/auth/login`;
+          await axios.post(url_login, {
+            username: session.user.email,
+            password: session.user.name,
           });
           await router.push('/dashboard');
         } catch (e) {
-          console.log('[FAILURE] oauth signup: catch');
-          if (axios.isAxiosError(e) && e.response && e.response.data) {
-            reset();
-            const messages = (e.response.data as AxiosErrorResponse).message;
-            if (Array.isArray(messages)) setError(messages);
-            else setError([messages]);
+          console.log('[OAuth] First Login: catch');
+          try {
+            const url_signup = `${process.env.NEXT_PUBLIC_API_URL}/auth/signup`;
+            await axios.post(url_signup, {
+              username: session.user.email,
+              password: session.user.name,
+            });
+            await router.push('/dashboard');
+          } catch (e) {
+            console.log('[OAuth] signup failure: catch');
+            if (axios.isAxiosError(e) && e.response && e.response.data) {
+              reset();
+              const messages = (e.response.data as AxiosErrorResponse).message;
+              if (Array.isArray(messages)) setError(messages);
+              else setError([messages]);
+            }
           }
         }
       }
@@ -124,7 +126,6 @@ const Home: NextPage = () => {
   if (status === 'authenticated') {
     if (tryLogin == false) {
       setTryLogin(true);
-      console.log('call oauthLogin.');
       void (async () => {
         await oauthLogin();
       })();
