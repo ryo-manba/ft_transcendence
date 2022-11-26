@@ -121,23 +121,27 @@ export const ChatroomJoinDialog = memo(function ChatroomJoinDialog({
       <DialogContent>
         <Box sx={{ width: '100%', maxWidth: 360, bgcolor: 'background.paper' }}>
           <nav aria-label="main mailbox folders">
-            <List sx={{ pt: 0 }}>
-              {rooms.map((room, i) => (
-                <ListItem
-                  onClick={() => handleListItemClick(room)}
-                  key={i}
-                  divider
-                  button
-                >
-                  <ListItemAvatar>
-                    <Avatar sx={{ bgcolor: blue[100], color: blue[600] }}>
-                      {(isProtected(room) && <LockIcon />) || <ChatIcon />}
-                    </Avatar>
-                  </ListItemAvatar>
-                  <ListItemText primary={room.name} />
-                </ListItem>
-              ))}
-            </List>
+            {rooms.length === 0 ? (
+              <div className="pt-4">No rooms are available.</div>
+            ) : (
+              <List sx={{ pt: 0 }}>
+                {rooms.map((room, i) => (
+                  <ListItem
+                    onClick={() => handleListItemClick(room)}
+                    key={i}
+                    divider
+                    button
+                  >
+                    <ListItemAvatar>
+                      <Avatar sx={{ bgcolor: blue[100], color: blue[600] }}>
+                        {(isProtected(room) && <LockIcon />) || <ChatIcon />}
+                      </Avatar>
+                    </ListItemAvatar>
+                    <ListItemText primary={room.name} />
+                  </ListItem>
+                ))}
+              </List>
+            )}
             {isInputPassword && (
               <TextField
                 fullWidth

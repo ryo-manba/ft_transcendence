@@ -38,7 +38,7 @@ export const Watch = () => {
   return (
     <>
       <Typography variant="h2" align="center" gutterBottom>
-        Ongoing battles
+        Ongoing Battles
       </Typography>
       <List sx={{ width: '95%', margin: 'auto' }}>
         {rooms?.map((room) => (
@@ -60,6 +60,7 @@ export const Watch = () => {
                 style: {
                   overflow: 'hidden',
                 },
+                variant: 'h6',
               }}
               sx={{ width: '40%' }}
             />
@@ -67,6 +68,7 @@ export const Watch = () => {
               primary={`vs`}
               primaryTypographyProps={{
                 align: 'center',
+                variant: 'h6',
               }}
             />
             <ListItemText
@@ -76,6 +78,7 @@ export const Watch = () => {
                 style: {
                   overflow: 'hidden',
                 },
+                variant: 'h6',
               }}
               sx={{ width: '40%' }}
             />

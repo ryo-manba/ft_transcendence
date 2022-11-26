@@ -152,7 +152,6 @@ export class ChatService {
   async joinRoom(dto: JoinChatroomDto): Promise<Chatroom> {
     console.log('joinRoom: ', dto);
     // TODO: ブロックされているユーザーは入れないようにする?
-
     // 入室するチャットルームを取得する
     const chatroom = await this.prisma.chatroom.findUnique({
       where: {
@@ -161,7 +160,7 @@ export class ChatService {
     });
     if (!chatroom) return undefined;
 
-    if (dto.type === <ChatroomType>'PROTECTED') {
+    if (dto.type === ChatroomType.PROTECTED) {
       // Protectedの場合はパスワードが正しいことを確認する
       const isValid = await bcrypt.compare(
         dto.password,

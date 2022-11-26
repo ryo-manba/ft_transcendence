@@ -239,13 +239,11 @@ export class ChatGateway {
     const joinedRooms = await this.chatService.findJoinedRooms(userId);
 
     const roomsDiff = this.getChatroomDiff(viewableRooms, joinedRooms);
-    const publicAndNotJoinedRooms = viewableRooms.filter((item) => {
+    const viewableAndNotJoinedRooms = viewableRooms.filter((item) => {
       return roomsDiff.includes(item.id);
     });
 
-    console.log('publicAndNotJoinedRooms: ', publicAndNotJoinedRooms);
-
     // フロントエンドへ送信し返す
-    this.server.emit('chat:getJoinableRooms', publicAndNotJoinedRooms);
+    this.server.emit('chat:getJoinableRooms', viewableAndNotJoinedRooms);
   }
 }
