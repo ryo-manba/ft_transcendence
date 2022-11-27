@@ -1,7 +1,7 @@
 import { Grid, CircularProgress } from '@mui/material';
 
 type Props = {
-  fullHeight: boolean;
+  fullHeight?: boolean;
 };
 
 export const Loading = ({ fullHeight = false }: Props) => {
