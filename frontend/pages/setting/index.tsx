@@ -8,6 +8,8 @@ import { useForm, SubmitHandler, Controller } from 'react-hook-form';
 import { SettingForm } from 'types/setting';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
+import { ChangeEventHandler } from 'react';
+import { useMutateAvatar } from 'hooks/useMutationAvatar';
 
 const schema = z.object({
   username: z.string().min(1, { message: 'Username cannot be empty' }),
@@ -30,9 +32,21 @@ const Setting: NextPage = () => {
   });
   const registeredUsername = register('username');
   const { updateNameMutation } = useMutateName();
+  const { updateAvatarMutation } = useMutateAvatar();
 
   const onSubmit: SubmitHandler<SettingForm> = (data: SettingForm) => {
     updateNameMutation.mutate({ userId: user.id, updatedName: data.username });
+  };
+
+  const onChangeAvatar: ChangeEventHandler<HTMLInputElement> = (event) => {
+    if (event.target.files === null) return;
+    const newAvatarFile = event.target.files[0];
+    const formData = new FormData();
+    formData.append('avatar', newAvatarFile);
+    updateAvatarMutation.mutate({
+      userId: user.id,
+      updatedAvatarFile: formData,
+    });
   };
 
   return (
@@ -54,8 +68,16 @@ const Setting: NextPage = () => {
           </Grid>
           <Grid item>
             <Stack spacing={2} direction="column">
-              <Button variant="contained">Change picture</Button>
-              <Button variant="outlined">Delete picture</Button>
+              <Button variant="contained" component="label">
+                Change avatar
+                <input
+                  hidden
+                  accept="image/*"
+                  type="file"
+                  onChange={onChangeAvatar}
+                />
+              </Button>
+              <Button variant="outlined">Delete avatar</Button>
             </Stack>
           </Grid>
         </Grid>
@@ -100,7 +122,7 @@ const Setting: NextPage = () => {
         >
           <Grid item>
             <Button variant="contained" type="submit">
-              Update
+              Update username
             </Button>
           </Grid>
         </Grid>

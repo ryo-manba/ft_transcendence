@@ -6,8 +6,13 @@ import type { NextPage } from 'next';
 
 const Profile: NextPage = () => {
   const { data: user } = useQueryUser();
-  const userName = user !== undefined ? user.name : 'No name';
-  const point = user !== undefined ? user.point : 0;
+  if (user === undefined) return <></>;
+  const userName = user.name;
+  const point = user.point;
+  const avatarImageUrl =
+    user.avatarPath !== null
+      ? `${process.env.NEXT_PUBLIC_API_URL as string}/user/${user.avatarPath}`
+      : '';
 
   return (
     <Layout title="Profile">
@@ -20,7 +25,7 @@ const Profile: NextPage = () => {
         sx={{ p: 2 }}
       >
         <Grid item>
-          <Avatar sx={{ width: 150, height: 150 }} />
+          <Avatar sx={{ width: 150, height: 150 }} src={avatarImageUrl} />
         </Grid>
         <Grid item>
           <Typography gutterBottom variant="h3" component="div">

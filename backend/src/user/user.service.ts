@@ -3,6 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { UpdateNameDto } from './dto/update-name.dto';
 import { User } from '@prisma/client';
 import { UpdatePointDto } from './dto/update-point.dto';
+import { UpdateAvatarPathDto } from './dto/update-avatar-path.dto';
 
 @Injectable()
 export class UserService {
@@ -39,6 +40,23 @@ export class UserService {
   async updatePoint(
     userId: number,
     dto: UpdatePointDto,
+  ): Promise<Omit<User, 'hashedPassword'>> {
+    const user = await this.prisma.user.update({
+      where: {
+        id: userId,
+      },
+      data: {
+        ...dto,
+      },
+    });
+    delete user.hashedPassword;
+
+    return user;
+  }
+
+  async updateAvatarPath(
+    userId: number,
+    dto: UpdateAvatarPathDto,
   ): Promise<Omit<User, 'hashedPassword'>> {
     const user = await this.prisma.user.update({
       where: {
