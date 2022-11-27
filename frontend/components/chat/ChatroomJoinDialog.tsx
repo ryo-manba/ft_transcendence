@@ -20,6 +20,7 @@ import { Chatroom } from '@prisma/client';
 import { Socket } from 'socket.io-client';
 import { CHATROOM_TYPE, ChatroomType } from 'types/chat';
 import { useQueryUser } from 'hooks/useQueryUser';
+import { Loading } from 'components/common/Loading';
 
 type Props = {
   open: boolean;
@@ -48,7 +49,7 @@ export const ChatroomJoinDialog = memo(function ChatroomJoinDialog({
 
   const { data: user } = useQueryUser();
   if (user === undefined) {
-    return <h1>ユーザーが存在しません</h1>;
+    return <Loading />;
   }
 
   const handleClose = () => {
