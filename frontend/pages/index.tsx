@@ -7,9 +7,9 @@ import * as Yup from 'yup';
 import { IconDatabase } from '@tabler/icons';
 import Image from 'next/image';
 import GppGoodIcon from '@mui/icons-material/GppGood';
+import { Layout } from 'components/common/Layout';
 import { useForm, SubmitHandler, Controller } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { Layout } from '../components/Layout';
 import { AuthForm, AxiosErrorResponse } from '../types';
 import {
   Grid,
@@ -24,8 +24,9 @@ import {
 } from '@mui/material';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
-import { signIn, signOut, useSession } from 'next-auth/react';
+import { signIn, useSession } from 'next-auth/react';
 
+// username, passwordのvalidation
 const schema = Yup.object().shape({
   username: Yup.string().required('No username provided'),
   password: Yup.string()
@@ -36,6 +37,7 @@ const schema = Yup.object().shape({
 const Home: NextPage = () => {
   const router = useRouter();
   const [isRegister, setIsRegister] = useState(false);
+  const [tryLogin, setTryLogin] = useState(false);
   const [error, setError] = useState<string[]>([]);
   const [showPassword, setShowPassword] = useState(false);
 
@@ -53,7 +55,7 @@ const Home: NextPage = () => {
       username: '',
     },
   });
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
 
   const onSubmit: SubmitHandler<AuthForm> = async (data: AuthForm) => {
     try {
@@ -81,57 +83,63 @@ const Home: NextPage = () => {
     }
   };
 
-  // const oauthLogin = async () => {
-  //   try {
-  //     if (process.env.NEXT_PUBLIC_API_URL) {
-  //       try {
-  //         form.reset();
-  //         console.log(session.user?.name);
-  //         console.log(session.user?.email);
-  //         await router.push('/dashboard');
-  //       } catch (e) {
-  //         if (axios.isAxiosError(e) && e.response && e.response.data) {
-  //           setError(e.message);
-  //         }
-  //       }
-  //     }
-  //   } catch (e) {
-  //     if (axios.isAxiosError(e) && e.response && e.response.data) {
-  //       setError(e.message);
-  //     }
-  //   }
-  //   await router.push('/dashboard');
-  // };
+  const oauthLogin = async () => {
+    if (process.env.NEXT_PUBLIC_API_URL) {
+      if (!session || session.user === null || session.user === undefined) {
+        return;
+      } else {
+        try {
+          reset();
+          const url_login = `${process.env.NEXT_PUBLIC_API_URL}/auth/login`;
+          await axios.post(url_login, {
+            username: session.user.email,
+            password: session.user.name,
+          });
+          await router.push('/dashboard');
+        } catch (e) {
+          console.log('[OAuth] First Login: catch');
+          try {
+            const url_signup = `${process.env.NEXT_PUBLIC_API_URL}/auth/signup`;
+            await axios.post(url_signup, {
+              username: session.user.email,
+              password: session.user.name,
+            });
+            await router.push('/dashboard');
+          } catch (e) {
+            console.log('[OAuth] signup failure: catch');
+            if (axios.isAxiosError(e) && e.response && e.response.data) {
+              reset();
+              const messages = (e.response.data as AxiosErrorResponse).message;
+              if (Array.isArray(messages)) setError(messages);
+              else setError([messages]);
+            }
+          }
+        }
+      }
+    }
+  };
 
-  if (session) {
-    // ここのconsoleはブラウザに表示
-    console.log(session.user);
+  if (status === 'loading') {
+    return <p>Loading...</p>;
+  }
 
-    // oauthLogin();
-    if (session.user === undefined) {
-      return <p>session.user is undefined</p>;
+  if (status === 'authenticated') {
+    if (tryLogin == false) {
+      setTryLogin(true);
+      void (async () => {
+        await oauthLogin();
+      })();
     }
 
-    return (
-      <>
-        Signed in as <img src={session.user.image ?? ''} width="50px" />
-        {session.user.name} <br />
-        Mail: {session.user.email} <br />
-        <button
-          onClick={() => {
-            void (async () => {
-              await signOut();
-            })();
-          }}
-        >
-          Sign out
-        </button>
-      </>
-    );
+    return <p>Now Login...</p>;
   }
 
   return (
-    <Layout title="Auth">
+    <Layout
+      title="Auth"
+      divClassName="flex min-h-screen flex-col items-center justify-center"
+      mainClassName="flex w-screen flex-1 flex-col items-center justify-center"
+    >
       <Grid
         container
         justifyContent="center"

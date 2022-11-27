@@ -1,8 +1,8 @@
 import { NextPage } from 'next';
-import { Setting } from 'components/game/play/Setting';
-import { Play } from 'components/game/play/Play';
-import { Result } from 'components/game/play/Result';
-import { Layout } from 'components/game/home/Layout';
+import { Setting } from 'components/game/battle/Setting';
+import { Play } from 'components/game/battle/Play';
+import { Result } from 'components/game/battle/Result';
+import { Layout } from 'components/common/Layout';
 import { usePlayStateStore, PlayState } from 'store/game/PlayState';
 import { GameSetting } from 'types/game';
 import { useState } from 'react';
@@ -12,7 +12,7 @@ const defaultGameSetting: GameSetting = {
   matchPoint: 3,
 };
 
-const Home: NextPage = () => {
+const Battle: NextPage = () => {
   const { playState } = usePlayStateStore();
   const [gameSetting, setGameSetting] = useState(defaultGameSetting);
   console.log(playState);
@@ -33,4 +33,4 @@ const Home: NextPage = () => {
   );
 };
 
-export default Home;
+export default Battle;

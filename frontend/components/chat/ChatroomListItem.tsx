@@ -32,9 +32,9 @@ export const ChatroomListItem = ({ room, socket, setCurrentRoomId }: Props) => {
     return <h1>ユーザーが存在しません</h1>;
   }
 
-  const joinRoom = (id: number) => {
-    console.log('joinRoom:', id);
-    socket.emit('chat:joinRoom', id);
+  const getMessage = (id: number) => {
+    console.log('getMessage:', id);
+    socket.emit('chat:getMessage', id);
     setCurrentRoomId(id);
   };
 
@@ -122,7 +122,7 @@ export const ChatroomListItem = ({ room, socket, setCurrentRoomId }: Props) => {
         <ListItemText
           primary={room.name}
           onClick={() => {
-            joinRoom(room.id);
+            getMessage(room.id);
           }}
           style={{
             overflow: 'hidden',

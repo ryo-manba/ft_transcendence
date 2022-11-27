@@ -28,8 +28,10 @@ function MyApp({
   Component,
   pageProps: { session, ...pageProps },
 }: AppProps<{ session: Session }>) {
-  axios.defaults.withCredentials = true;
+  axios.defaults.withCredentials = true; // Cookieのやりとりする時に必要
   useEffect(() => {
+    // ロードされた時にCsrfトークンを取得するのでここで定義
+    // ヘッダに自動的に付与される
     const getCsrfToken = async () => {
       if (process.env.NEXT_PUBLIC_API_URL) {
         const { data } = await axios.get<Csrf>(

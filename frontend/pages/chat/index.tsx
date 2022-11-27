@@ -6,6 +6,7 @@ import SendIcon from '@mui/icons-material/Send';
 import { Header } from 'components/common/Header';
 import { ChatroomListItem } from 'components/chat/ChatroomListItem';
 import { ChatroomCreateButton } from 'components/chat/ChatroomCreateButton';
+import { ChatroomJoinButton } from 'components/chat/ChatroomJoinButton';
 import { Chatroom, Message } from 'types/chat';
 import { useQueryUser } from 'hooks/useQueryUser';
 
@@ -18,6 +19,8 @@ const Chat = () => {
   const [currentRoomId, setCurrentRoomId] = useState(0);
   const [socket, setSocket] = useState<Socket>();
 
+  const { data: user } = useQueryUser();
+
   useEffect(() => {
     const temp = io('ws://localhost:3001/chat');
     setSocket(temp);
@@ -28,19 +31,19 @@ const Chat = () => {
   }, []);
 
   useEffect(() => {
-    if (!socket) return;
+    if (!socket || !user) return;
 
-    socket.on('chat:getRooms', (data: Chatroom[]) => {
-      console.log('chat:getRooms', data);
+    socket.on('chat:getJoinedRooms', (data: Chatroom[]) => {
+      console.log('chat:getJoinedRooms', data);
       setRooms(data);
     });
-    // chatroom一覧を取得する
-    socket.emit('chat:getRooms');
+    // 一覧を取得する
+    socket.emit('chat:getJoinedRooms', user.id);
 
     return () => {
-      socket.off('chat:getRooms');
+      socket.off('chat:getJoinedRooms');
     };
-  }, [socket]);
+  }, [socket, user]);
 
   useEffect(() => {
     if (!socket) return;
@@ -57,12 +60,12 @@ const Chat = () => {
   // 入室に成功したら、既存のメッセージを受け取る
   useEffect(() => {
     if (!socket) return;
-    socket.on('chat:joinRoom', (data: Message[]) => {
+    socket.on('chat:getMessage', (data: Message[]) => {
       setMessages(data);
     });
 
     return () => {
-      socket.off('chat:joinRoom');
+      socket.off('chat:getMessage');
     };
   });
 
@@ -79,7 +82,6 @@ const Chat = () => {
     };
   }, [socket]);
 
-  const { data: user } = useQueryUser();
   if (user === undefined) {
     return <h1>ユーザーが存在しません</h1>;
   }
@@ -129,15 +131,17 @@ const Chat = () => {
           }}
         >
           <ChatroomCreateButton socket={socket} />
+          <ChatroomJoinButton socket={socket} user={user} />
           <List dense={false}>
-            {rooms.map((room, i) => (
-              <ChatroomListItem
-                key={i}
-                room={room}
-                socket={socket}
-                setCurrentRoomId={setCurrentRoomId}
-              />
-            ))}
+            {rooms &&
+              rooms.map((room, i) => (
+                <ChatroomListItem
+                  key={i}
+                  room={room}
+                  socket={socket}
+                  setCurrentRoomId={setCurrentRoomId}
+                />
+              ))}
           </List>
         </Grid>
         <Grid
@@ -147,7 +151,7 @@ const Chat = () => {
             borderBottom: '1px solid',
           }}
         >
-          <h2>{`Hello: ${user?.name}`}</h2>
+          <h2>{`Hello: ${user.name}`}</h2>
           <div style={{ marginLeft: 5, marginRight: 5 }}>
             <div style={{ display: 'flex', alignItems: 'end' }}>
               <TextField
