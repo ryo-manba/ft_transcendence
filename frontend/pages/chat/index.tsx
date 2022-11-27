@@ -9,6 +9,7 @@ import { ChatroomCreateButton } from 'components/chat/ChatroomCreateButton';
 import { ChatroomJoinButton } from 'components/chat/ChatroomJoinButton';
 import { Chatroom, Message } from 'types/chat';
 import { useQueryUser } from 'hooks/useQueryUser';
+import { Loading } from 'components/common/Loading';
 
 const appBarHeight = '64px';
 
@@ -83,7 +84,7 @@ const Chat = () => {
   }, [socket]);
 
   if (user === undefined) {
-    return <h1>ユーザーが存在しません</h1>;
+    return <Loading fullHeight={true} />;
   }
 
   const showMessage = (list: Message[]) => {

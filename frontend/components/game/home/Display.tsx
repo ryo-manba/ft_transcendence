@@ -35,17 +35,9 @@ export const Display = () => {
         </Grid>
         <Grid item xs={5}>
           <Paper elevation={2} sx={{ height: '100%' }}>
-            <Grid
-              container
-              alignItems="center"
-              justifyContent="center"
-              direction="column"
-              sx={{ height: '100%' }}
-            >
-              {playState === PlayState.stateNothing && <Start />}
-              {(playState === PlayState.stateWaiting ||
-                playState === PlayState.statePlaying) && <Wait />}
-            </Grid>
+            {playState === PlayState.stateNothing && <Start />}
+            {(playState === PlayState.stateWaiting ||
+              playState === PlayState.statePlaying) && <Wait />}
           </Paper>
         </Grid>
         <Grid item xs={5} sx={{ height: '50%' }}>

@@ -22,23 +22,31 @@ export const Start = () => {
       <Typography variant="h2" align="center" gutterBottom>
         New Game!!
       </Typography>
-      <Grid item xs={12}>
-        <Button
-          size="large"
-          variant="contained"
-          color="secondary"
-          onClick={() => {
-            start();
-          }}
-          endIcon={<VideogameAssetSharpIcon />}
-          sx={{
-            mt: 2,
-            mb: 2,
-            boxShadow: 8,
-          }}
-        >
-          <Box fontWeight="fontWeightBold">Play</Box>
-        </Button>
+      <Grid
+        container
+        alignItems="center"
+        justifyContent="center"
+        direction="column"
+        sx={{ height: '100%' }}
+      >
+        <Grid item xs={12}>
+          <Button
+            size="large"
+            variant="contained"
+            color="secondary"
+            onClick={() => {
+              start();
+            }}
+            endIcon={<VideogameAssetSharpIcon />}
+            sx={{
+              mt: 2,
+              mb: 2,
+              boxShadow: 8,
+            }}
+          >
+            <Box fontWeight="fontWeightBold">Play</Box>
+          </Button>
+        </Grid>
       </Grid>
     </>
   );

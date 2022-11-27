@@ -25,6 +25,7 @@ import {
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import { signIn, useSession } from 'next-auth/react';
+import { Loading } from 'components/common/Loading';
 
 // username, passwordのvalidation
 const schema = Yup.object().shape({
@@ -120,7 +121,7 @@ const Home: NextPage = () => {
   };
 
   if (status === 'loading') {
-    return <p>Loading...</p>;
+    return <Loading fullHeight={true} />;
   }
 
   if (status === 'authenticated') {
@@ -131,7 +132,7 @@ const Home: NextPage = () => {
       })();
     }
 
-    return <p>Now Login...</p>;
+    return <Loading fullHeight={true} />;
   }
 
   return (
