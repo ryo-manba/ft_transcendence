@@ -3,7 +3,6 @@
 import '../styles/globals.css';
 import { useEffect } from 'react';
 import type { AppProps } from 'next/app';
-import { MantineProvider } from '@mantine/core';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import axios from 'axios';
@@ -29,8 +28,10 @@ function MyApp({
   Component,
   pageProps: { session, ...pageProps },
 }: AppProps<{ session: Session }>) {
-  axios.defaults.withCredentials = true;
+  axios.defaults.withCredentials = true; // Cookieのやりとりする時に必要
   useEffect(() => {
+    // ロードされた時にCsrfトークンを取得するのでここで定義
+    // ヘッダに自動的に付与される
     const getCsrfToken = async () => {
       if (process.env.NEXT_PUBLIC_API_URL) {
         const { data } = await axios.get<Csrf>(
@@ -44,18 +45,9 @@ function MyApp({
 
   return (
     <QueryClientProvider client={queryClient}>
-      <MantineProvider
-        withGlobalStyles
-        withNormalizeCSS
-        theme={{
-          // colorScheme: 'dark',
-          fontFamily: 'Verdana, sans-serif',
-        }}
-      >
-        <SessionProvider session={session}>
-          <Component {...pageProps} />
-        </SessionProvider>
-      </MantineProvider>
+      <SessionProvider session={session}>
+        <Component {...pageProps} />
+      </SessionProvider>
       <ReactQueryDevtools />
     </QueryClientProvider>
   );

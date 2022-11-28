@@ -3,14 +3,10 @@ import Link from 'next/link';
 import { Stack, Button, Typography } from '@mui/material';
 import { useQueryUser } from 'hooks/useQueryUser';
 import { Header } from 'components/common/Header';
-import { useSession } from 'next-auth/react';
 import { Layout } from 'components/common/Layout';
 
 const Dashboard: NextPage = () => {
   const { data: user } = useQueryUser();
-  const { data: session } = useSession();
-
-  console.log(session?.user);
 
   if (user === undefined) return <></>;
 
