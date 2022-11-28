@@ -1,17 +1,16 @@
 import { Injectable, StreamableFile } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { UpdateNameDto } from './dto/update-name.dto';
-import { User } from '@prisma/client';
+import { Prisma, User } from '@prisma/client';
 import { UpdatePointDto } from './dto/update-point.dto';
 import { UpdateAvatarDto } from './dto/update-avatar.dto';
 import { createReadStream, unlink } from 'node:fs';
 import * as path from 'path';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class UserService {
-  constructor(private prisma: PrismaService) {}
-
-  static avatarImageDir = 'uploads/avatarImages';
+  constructor(private prisma: PrismaService, private config: ConfigService) {}
 
   async findOne(userId: number): Promise<Omit<User, 'hashPassword'> | null> {
     const user = await this.prisma.user.findUnique({
@@ -28,40 +27,54 @@ export class UserService {
     userId: number,
     dto: UpdateNameDto,
   ): Promise<Omit<User, 'hashedPassword'>> {
-    const user = await this.prisma.user.update({
-      where: {
-        id: userId,
-      },
-      data: {
-        ...dto,
-      },
-    });
-    delete user.hashedPassword;
+    try {
+      const user = await this.prisma.user.update({
+        where: {
+          id: userId,
+        },
+        data: {
+          ...dto,
+        },
+      });
+      delete user.hashedPassword;
 
-    return user;
+      return user;
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        if (error.code === 'P2002') {
+          console.log('username is already taken');
+        }
+      }
+      throw error;
+    }
   }
 
   async updatePoint(
     userId: number,
     dto: UpdatePointDto,
   ): Promise<Omit<User, 'hashedPassword'>> {
-    const user = await this.prisma.user.update({
-      where: {
-        id: userId,
-      },
-      data: {
-        ...dto,
-      },
-    });
-    delete user.hashedPassword;
+    try {
+      const user = await this.prisma.user.update({
+        where: {
+          id: userId,
+        },
+        data: {
+          ...dto,
+        },
+      });
+      delete user.hashedPassword;
 
-    return user;
+      return user;
+    } catch (error) {
+      console.log(error);
+      throw error;
+    }
   }
 
   getAvatarImage(imageUrl: string): StreamableFile {
     const filePath = path.join(
       process.cwd(),
-      UserService.avatarImageDir,
+      this.config.get<string>('AVATAR_IMAGE_DIR'),
       imageUrl,
     );
     const file = createReadStream(filePath);
@@ -76,40 +89,50 @@ export class UserService {
   ): Promise<Omit<User, 'hashedPassword'>> {
     const filePath = path.join(
       process.cwd(),
-      UserService.avatarImageDir,
+      this.config.get<string>('AVATAR_IMAGE_DIR'),
       avatarPath,
     );
     unlink(filePath, (err) => {
       if (err) throw err;
       console.log(`${filePath} was deleted`);
     });
-    const user = await this.prisma.user.update({
-      where: {
-        id: userId,
-      },
-      data: {
-        avatarPath: null,
-      },
-    });
-    delete user.hashedPassword;
+    try {
+      const user = await this.prisma.user.update({
+        where: {
+          id: userId,
+        },
+        data: {
+          avatarPath: null,
+        },
+      });
+      delete user.hashedPassword;
 
-    return user;
+      return user;
+    } catch (error) {
+      console.log(error);
+      throw error;
+    }
   }
 
   async updateAvatar(
     userId: number,
     dto: UpdateAvatarDto,
   ): Promise<Omit<User, 'hashedPassword'>> {
-    const user = await this.prisma.user.update({
-      where: {
-        id: userId,
-      },
-      data: {
-        ...dto,
-      },
-    });
-    delete user.hashedPassword;
+    try {
+      const user = await this.prisma.user.update({
+        where: {
+          id: userId,
+        },
+        data: {
+          ...dto,
+        },
+      });
+      delete user.hashedPassword;
 
-    return user;
+      return user;
+    } catch (error) {
+      console.log(error);
+      throw error;
+    }
   }
 }

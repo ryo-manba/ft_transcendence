@@ -54,7 +54,7 @@ const Setting: NextPage = () => {
     }
     const newAvatarFile = event.target.files[0];
     const formData = new FormData();
-    formData.append('avatar', newAvatarFile);
+    formData.append('avatar', newAvatarFile); // この第一引数のnameを使ってバックエンドのFileInterceptorはファイル名を取り出す
     updateAvatarMutation.mutate({
       userId: user.id,
       updatedAvatarFile: formData,
