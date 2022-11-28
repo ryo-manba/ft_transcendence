@@ -1,6 +1,6 @@
 import { IsNotEmpty, IsString } from 'class-validator';
 
-export class UpdateAvatarPathDto {
+export class UpdateAvatarDto {
   @IsString()
   @IsNotEmpty()
   avatarPath: string;

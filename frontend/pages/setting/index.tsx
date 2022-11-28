@@ -17,7 +17,6 @@ const schema = z.object({
 
 const Setting: NextPage = () => {
   const { data: user } = useQueryUser();
-  if (user === undefined) return <></>;
   const {
     control,
     register,
@@ -26,13 +25,20 @@ const Setting: NextPage = () => {
   } = useForm<SettingForm>({
     mode: 'onSubmit',
     defaultValues: {
-      username: user.name,
+      username: user !== undefined ? user.name : '',
     },
     resolver: zodResolver(schema),
   });
-  const registeredUsername = register('username');
   const { updateNameMutation } = useMutateName();
-  const { updateAvatarMutation } = useMutateAvatar();
+  const { updateAvatarMutation, deleteAvatarMutation } = useMutateAvatar();
+
+  if (user === undefined) return <></>;
+  const registeredUsername = register('username');
+
+  const avatarImageUrl =
+    user.avatarPath !== null
+      ? `${process.env.NEXT_PUBLIC_API_URL as string}/user/${user.avatarPath}`
+      : '';
 
   const onSubmit: SubmitHandler<SettingForm> = (data: SettingForm) => {
     updateNameMutation.mutate({ userId: user.id, updatedName: data.username });
@@ -40,6 +46,12 @@ const Setting: NextPage = () => {
 
   const onChangeAvatar: ChangeEventHandler<HTMLInputElement> = (event) => {
     if (event.target.files === null) return;
+    if (user.avatarPath !== null) {
+      deleteAvatarMutation.mutate({
+        userId: user.id,
+        avatarPath: user.avatarPath,
+      });
+    }
     const newAvatarFile = event.target.files[0];
     const formData = new FormData();
     formData.append('avatar', newAvatarFile);
@@ -49,11 +61,20 @@ const Setting: NextPage = () => {
     });
   };
 
+  const onDeleteAvatar = () => {
+    if (user.avatarPath !== null) {
+      deleteAvatarMutation.mutate({
+        userId: user.id,
+        avatarPath: user.avatarPath,
+      });
+    }
+  };
+
   return (
     <Layout title="Setting">
       <Header title="Setting" />
       <form
-        // [TODO] replace type coercion if possible...
+        // [TODO] type coercionをできればなくしたい
         onSubmit={handleSubmit(onSubmit) as VoidFunction}
       >
         <Grid
@@ -64,7 +85,7 @@ const Setting: NextPage = () => {
           spacing={5}
         >
           <Grid item>
-            <Avatar sx={{ width: 150, height: 150 }} />
+            <Avatar sx={{ width: 150, height: 150 }} src={avatarImageUrl} />
           </Grid>
           <Grid item>
             <Stack spacing={2} direction="column">
@@ -77,7 +98,13 @@ const Setting: NextPage = () => {
                   onChange={onChangeAvatar}
                 />
               </Button>
-              <Button variant="outlined">Delete avatar</Button>
+              <Button
+                variant="outlined"
+                component="label"
+                onClick={onDeleteAvatar}
+              >
+                Delete avatar
+              </Button>
             </Stack>
           </Grid>
         </Grid>
@@ -94,7 +121,9 @@ const Setting: NextPage = () => {
               control={control}
               render={() => (
                 <TextField
-                  // [TODO] replace type coercion if possible...
+                  // Props spreadingがeslintで禁止されているために全部書き下している
+                  // Props spreadingができれば{...register('username')}でいける
+                  // [TODO] type coercionをできればなくしたい
                   onChange={
                     registeredUsername.onChange as unknown as VoidFunction
                   }
