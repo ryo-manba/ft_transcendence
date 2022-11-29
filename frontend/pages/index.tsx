@@ -25,6 +25,7 @@ import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import { signIn, useSession } from 'next-auth/react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
+import { Loading } from 'components/common/Loading';
 
 // username, passwordのvalidation
 const schema = z.object({
@@ -118,7 +119,7 @@ const Home: NextPage = () => {
   };
 
   if (status === 'loading') {
-    return <p>Loading...</p>;
+    return <Loading fullHeight={true} />;
   }
 
   if (status === 'authenticated') {
@@ -129,7 +130,7 @@ const Home: NextPage = () => {
       })();
     }
 
-    return <p>Now Login...</p>;
+    return <Loading fullHeight={true} />;
   }
 
   return (

@@ -7,6 +7,7 @@ import { GameHeader } from 'components/game/battle/GameHeader';
 import { GameSetting } from 'types/game';
 import { useMutatePoint } from 'hooks/useMutatePoint';
 import { useQueryUser } from 'hooks/useQueryUser';
+import { Loading } from 'components/common/Loading';
 
 type Props = {
   gameSetting: GameSetting;
@@ -115,7 +116,7 @@ export const Play = ({ gameSetting }: Props) => {
   const [isArrowUpPressed, updateIsArrowUpPressed] = useState(false);
   const { updatePointMutation } = useMutatePoint();
   const { data: user } = useQueryUser();
-  if (user === undefined) return <></>;
+  if (user === undefined) return <Loading fullHeight={true} />;
 
   const drawField = useCallback(
     (

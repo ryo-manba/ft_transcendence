@@ -3,10 +3,11 @@ import { useQueryUser } from 'hooks/useQueryUser';
 import PaidIcon from '@mui/icons-material/Paid';
 import ThumbUpOffAltIcon from '@mui/icons-material/ThumbUpOffAlt';
 import ThumbDownOffAltIcon from '@mui/icons-material/ThumbDownOffAlt';
+import { Loading } from 'components/common/Loading';
 
 export const Profile = () => {
   const { data: user } = useQueryUser();
-  if (user === undefined) return <></>;
+  if (user === undefined) return <Loading />;
   const avatarImageUrl =
     user.avatarPath !== null
       ? `${process.env.NEXT_PUBLIC_API_URL as string}/user/${user.avatarPath}`
