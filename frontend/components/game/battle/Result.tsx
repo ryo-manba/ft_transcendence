@@ -1,9 +1,16 @@
 import Link from 'next/link';
 import { Button, Grid, Typography } from '@mui/material';
 import { PlayState, usePlayStateStore } from 'store/game/PlayState';
+import { useEffect } from 'react';
+import { useSocketStore } from 'store/game/ClientSocket';
 
 export const Result = () => {
   const { playState } = usePlayStateStore();
+  const { socket } = useSocketStore();
+
+  useEffect(() => {
+    if (socket.connected) socket.disconnect();
+  }, []);
 
   return (
     <Grid item>

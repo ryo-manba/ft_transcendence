@@ -3,10 +3,11 @@ import { useQueryUser } from 'hooks/useQueryUser';
 import PaidIcon from '@mui/icons-material/Paid';
 import ThumbUpOffAltIcon from '@mui/icons-material/ThumbUpOffAlt';
 import ThumbDownOffAltIcon from '@mui/icons-material/ThumbDownOffAlt';
+import { Loading } from 'components/common/Loading';
 
 export const Profile = () => {
   const { data: user } = useQueryUser();
-  if (user === undefined) return <></>;
+  if (user === undefined) return <Loading />;
   const avatarPath = user.avatarPath !== null ? user.avatarPath : '';
 
   return (
