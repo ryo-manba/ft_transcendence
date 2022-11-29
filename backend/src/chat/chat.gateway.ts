@@ -74,7 +74,7 @@ export class ChatGateway {
     // ユーザーが入室しているチャットルームを取得する
     const rooms = await this.chatService.findJoinedRooms(userId);
     // フロントエンドへ送り返す
-    this.server.emit('chat:getJoinedRooms', rooms);
+    client.emit('chat:getJoinedRooms', rooms);
   }
 
   /**
@@ -244,6 +244,6 @@ export class ChatGateway {
     });
 
     // フロントエンドへ送信し返す
-    this.server.emit('chat:getJoinableRooms', viewableAndNotJoinedRooms);
+    client.emit('chat:getJoinableRooms', viewableAndNotJoinedRooms);
   }
 }
