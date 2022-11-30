@@ -24,9 +24,6 @@ const Setting: NextPage = () => {
     formState: { errors },
   } = useForm<SettingForm>({
     mode: 'onSubmit',
-    defaultValues: {
-      username: user !== undefined ? user.name : '',
-    },
     resolver: zodResolver(schema),
   });
   const { updateNameMutation } = useMutateName();
