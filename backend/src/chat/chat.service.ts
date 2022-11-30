@@ -147,24 +147,26 @@ export class ChatService {
   /**
    * チャットルームに入室する
    * @param id
-   * @return 入室に成功したかどうかを表すbooleanを返す
+   * @return 入室したチャットルームを返す
    */
-  async joinRoom(dto: JoinChatroomDto): Promise<boolean> {
+  async joinRoom(dto: JoinChatroomDto): Promise<Chatroom> {
     console.log('joinRoom: ', dto);
     // TODO: ブロックされているユーザーは入れないようにする?
+    // 入室するチャットルームを取得する
+    const chatroom = await this.prisma.chatroom.findUnique({
+      where: {
+        id: dto.roomId,
+      },
+    });
+    if (!chatroom) return undefined;
+
     if (dto.type === ChatroomType.PROTECTED) {
-      const chatroom = await this.prisma.chatroom.findUnique({
-        where: {
-          id: dto.roomId,
-        },
-      });
       // Protectedの場合はパスワードが正しいことを確認する
-      if (!chatroom) return false;
       const isValid = await bcrypt.compare(
         dto.password,
         chatroom.hashedPassword,
       );
-      if (!isValid) return false;
+      if (!isValid) return undefined;
     }
 
     // 入室処理を行う
@@ -177,28 +179,30 @@ export class ChatService {
       });
     } catch (error) {
       // userId or chatroomIdが正しくない場合は失敗する
-      return false;
+      return undefined;
     }
 
-    return true;
+    // 入室したチャットルームを返す
+    return chatroom;
   }
 
-  async createAndJoinRoom(dto: CreateChatroomDto): Promise<boolean> {
+  async createAndJoinRoom(dto: CreateChatroomDto): Promise<Chatroom> {
     // Chatroomを作成する
-    const room = await this.create(dto);
-    if (room === undefined) {
-      return false;
+    const createdRoom = await this.create(dto);
+    if (createdRoom === undefined) {
+      return undefined;
     }
 
     // 作成できた場合、チャットルームに入室する
     const joinDto: JoinChatroomDto = {
       userId: dto.ownerId,
       type: dto.type,
-      roomId: room.id,
+      roomId: createdRoom.id,
       password: dto.password,
     };
     const isSuccess = await this.joinRoom(joinDto);
 
-    return isSuccess;
+    // 入室できたら作成したチャットルームの情報を返す
+    return isSuccess ? createdRoom : undefined;
   }
 }

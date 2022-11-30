@@ -59,7 +59,7 @@ export const ChatroomCreateButton = memo(function ChatroomCreateButton({
 
   const createChatroom = useCallback(
     (room: CreateChatroomInfo) => {
-      socket.emit('chat:create', room);
+      socket.emit('chat:createRoom', room);
     },
     [socket],
   );
