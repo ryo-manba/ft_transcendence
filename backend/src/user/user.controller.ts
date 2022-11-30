@@ -24,9 +24,9 @@ import * as path from 'path';
 // FileInterceptorにわたすオプションを設定。
 // destination: ファイルの保存先。フォルダが無い場合には、バックエンドを起動したタイミングでフォルダが生成される
 // filename: 保存されるファイルのファイル名を修正するためのロジックを設定できる。何も設定しないと、拡張子もつかないランダムなファイル名が勝手につけられる
-const storage = (destinationPath: string) => ({
+const storage = {
   storage: diskStorage({
-    destination: destinationPath,
+    destination: process.env.AVATAR_IMAGE_DIR,
     filename: (req, file, cb) => {
       // ファイル名に空白があれば削除して、末尾にuuidを追加したあとに拡張子を付与することで
       // 複数ユーザーからimage.jpgみたいなありがちな名前のファイルがアップロードされた場合
@@ -38,7 +38,7 @@ const storage = (destinationPath: string) => ({
       cb(null, `${filename}${extension}`);
     },
   }),
-});
+};
 
 @UseGuards(AuthGuard('jwt'))
 @Controller('user')
@@ -67,14 +67,11 @@ export class UserController {
     return this.userService.updateName(Number(id), dto);
   }
 
-  // storageの部分は、本当は下記のような形で.envからパスを引っ張ってきたいのだが、thisの使い方をちゃんと理解しきれていないせいで
-  // うまく実装できていないです。これ、どうやったらいいか、どなたかわかれば教えてほしいです。
-  // storage(this.config.get<string>('AVATAR_IMAGE_DIR')),
   @Post('avatar/:id')
   @UseInterceptors(
     FileInterceptor(
       'avatar', // ここの'avatar'はフロントエンドでformData.appendに渡した第一引数のnameと対応
-      storage('./uploads/avatarImages'),
+      storage,
     ),
   )
   uploadAvatar(

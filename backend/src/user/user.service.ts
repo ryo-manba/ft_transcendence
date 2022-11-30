@@ -1,4 +1,4 @@
-import { Injectable, StreamableFile } from '@nestjs/common';
+import { Injectable, StreamableFile, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { UpdateNameDto } from './dto/update-name.dto';
 import { Prisma, User } from '@prisma/client';
@@ -6,11 +6,10 @@ import { UpdatePointDto } from './dto/update-point.dto';
 import { UpdateAvatarDto } from './dto/update-avatar.dto';
 import { createReadStream, unlink } from 'node:fs';
 import * as path from 'path';
-import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class UserService {
-  constructor(private prisma: PrismaService, private config: ConfigService) {}
+  constructor(private prisma: PrismaService) {}
 
   async findOne(userId: number): Promise<Omit<User, 'hashPassword'> | null> {
     const user = await this.prisma.user.findUnique({
@@ -42,7 +41,7 @@ export class UserService {
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         if (error.code === 'P2002') {
-          console.log('username is already taken');
+          throw new ForbiddenException('username is already taken');
         }
       }
       throw error;
@@ -74,7 +73,7 @@ export class UserService {
   getAvatarImage(imageUrl: string): StreamableFile {
     const filePath = path.join(
       process.cwd(),
-      this.config.get<string>('AVATAR_IMAGE_DIR'),
+      process.env.AVATAR_IMAGE_DIR,
       imageUrl,
     );
     const file = createReadStream(filePath);
@@ -89,7 +88,7 @@ export class UserService {
   ): Promise<Omit<User, 'hashedPassword'>> {
     const filePath = path.join(
       process.cwd(),
-      this.config.get<string>('AVATAR_IMAGE_DIR'),
+      process.env.AVATAR_IMAGE_DIR,
       avatarPath,
     );
     unlink(filePath, (err) => {
