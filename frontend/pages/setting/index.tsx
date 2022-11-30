@@ -10,6 +10,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { ChangeEventHandler } from 'react';
 import { useMutateAvatar } from 'hooks/useMutationAvatar';
+import { Loading } from 'components/common/Loading';
 
 const schema = z.object({
   username: z.string().min(1, { message: 'Username cannot be empty' }),
@@ -29,7 +30,7 @@ const Setting: NextPage = () => {
   const { updateNameMutation } = useMutateName();
   const { updateAvatarMutation, deleteAvatarMutation } = useMutateAvatar();
 
-  if (user === undefined) return <></>;
+  if (user === undefined) return <Loading />;
   const registeredUsername = register('username');
 
   const avatarImageUrl =
