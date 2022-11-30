@@ -1,11 +1,9 @@
-import { useRouter } from 'next/router';
 import axios, { AxiosError } from 'axios';
 import { useQueryClient, useMutation } from '@tanstack/react-query';
 import { User } from '@prisma/client';
 
 export const useMutateAvatar = () => {
   const queryClient = useQueryClient();
-  const router = useRouter();
 
   const updateAvatarMutation = useMutation<
     Omit<User, 'hashedPassword'>,
@@ -29,18 +27,9 @@ export const useMutateAvatar = () => {
           queryClient.setQueryData(['user'], res);
         }
       },
-      onError: async (err: AxiosError) => {
+      onError: (err: AxiosError) => {
         console.log(err);
-        if (
-          err.response &&
-          (err.response.status === 401 || err.response.status === 403)
-        ) {
-          queryClient.removeQueries(['user']);
-          await axios.post(
-            `${process.env.NEXT_PUBLIC_API_URL as string}/auth/logout`,
-          );
-          await router.push('/');
-        }
+        throw err;
       },
     },
   );
@@ -69,20 +58,10 @@ export const useMutateAvatar = () => {
           queryClient.setQueryData(['user'], res);
         }
       },
-      onError: async (err: AxiosError) => {
+      onError: (err: AxiosError) => {
         // [TODO] エラーがあった場合に、UI上もなにかアラートを出す
         console.log(err);
-        if (
-          err.response &&
-          (err.response.status === 401 || err.response.status === 403)
-        ) {
-          // [TODO] OAuthでログインした場合のログアウト処理も追加。おそらく他のuseMutation系も同じ
-          queryClient.removeQueries(['user']);
-          await axios.post(
-            `${process.env.NEXT_PUBLIC_API_URL as string}/auth/logout`,
-          );
-          await router.push('/');
-        }
+        throw err;
       },
     },
   );
