@@ -4,6 +4,7 @@ import { blue } from '@mui/material/colors';
 import { Friend } from 'types/friend';
 import { useQueryUser } from 'hooks/useQueryUser';
 import { FriendInfoDialog } from 'components/chat/FriendInfoDialog';
+import { Loading } from 'components/common/Loading';
 
 type Props = {
   friend: Friend;
@@ -13,7 +14,7 @@ export const FriendListItem = ({ friend }: Props) => {
   const [open, setOpen] = useState(false);
   const { data: user } = useQueryUser();
   if (user === undefined) {
-    return null;
+    return <Loading />;
   }
 
   const handleClickOpen = () => {

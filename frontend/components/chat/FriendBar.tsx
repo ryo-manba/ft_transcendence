@@ -3,6 +3,7 @@ import axios from 'axios';
 import { List } from '@mui/material';
 // import { FriendAddButton } from 'components/chat/FriendAddButton';
 import { FriendListItem } from 'components/chat/FriendListItem';
+import { Loading } from 'components/common/Loading';
 import { useQueryUser } from 'hooks/useQueryUser';
 import { Friend } from 'types/friend';
 
@@ -13,7 +14,9 @@ export const FriendBar = () => {
   }/friends/followings`;
 
   const { data: user } = useQueryUser();
-  if (user === undefined) return null;
+  if (user === undefined) {
+    return <Loading />;
+  }
 
   useEffect(() => {
     const fetchData = async () => {
