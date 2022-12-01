@@ -95,22 +95,8 @@ export class UserService {
       if (err) throw err;
       console.log(`${filePath} was deleted`);
     });
-    try {
-      const user = await this.prisma.user.update({
-        where: {
-          id: userId,
-        },
-        data: {
-          avatarPath: null,
-        },
-      });
-      delete user.hashedPassword;
 
-      return user;
-    } catch (error) {
-      console.log(error);
-      throw error;
-    }
+    return this.updateAvatar(userId, { avatarPath: null });
   }
 
   async updateAvatar(
