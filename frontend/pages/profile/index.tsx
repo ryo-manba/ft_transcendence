@@ -1,12 +1,13 @@
 import { Avatar, Grid, Typography } from '@mui/material';
 import { Header } from 'components/common/Header';
 import { Layout } from 'components/common/Layout';
+import { Loading } from 'components/common/Loading';
 import { useQueryUser } from 'hooks/useQueryUser';
 import type { NextPage } from 'next';
 
 const Profile: NextPage = () => {
   const { data: user } = useQueryUser();
-  if (user === undefined) return <></>;
+  if (user === undefined) return <Loading />;
   const userName = user.name;
   const point = user.point;
   const avatarImageUrl =
