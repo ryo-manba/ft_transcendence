@@ -71,7 +71,7 @@ export const Wait = () => {
               <DoneOutlineIcon />
             )}
           </Grid>
-          <Grid item sx={{ mt: 3 }}>
+          <Grid item sx={{ mt: 1 }}>
             <Typography
               variant="h6"
               id="modal-modal-title"

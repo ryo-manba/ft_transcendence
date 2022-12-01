@@ -44,16 +44,21 @@ export class ChatGateway {
    * 作成者はそのまま入室する
    * @param CreateChatroomDto
    */
-  @SubscribeMessage('chat:create')
+  @SubscribeMessage('chat:createRoom')
   async CreateRoom(
     @ConnectedSocket() client: Socket,
     @MessageBody() dto: CreateChatroomDto,
-  ): Promise<boolean> {
-    this.logger.log(`chat:create: ${dto.name}`);
+  ): Promise<any> {
+    this.logger.log(`chat:createRoom: ${dto.name}`);
 
+    // 作成と入室を行う
     const res = await this.chatService.createAndJoinRoom(dto);
+    if (res === undefined) {
+      return;
+    }
 
-    return res;
+    // チャットルームが作成できたら作成者のフロントエンドに反映させる
+    client.emit('chat:createRoom', res);
   }
 
   /**
@@ -69,7 +74,7 @@ export class ChatGateway {
     // ユーザーが入室しているチャットルームを取得する
     const rooms = await this.chatService.findJoinedRooms(userId);
     // フロントエンドへ送り返す
-    this.server.emit('chat:getJoinedRooms', rooms);
+    client.emit('chat:getJoinedRooms', rooms);
   }
 
   /**
@@ -128,9 +133,10 @@ export class ChatGateway {
   ): Promise<any> {
     this.logger.log(`chat:joinRoom received -> ${dto.userId}`);
 
-    const isSuccess = await this.chatService.joinRoom(dto);
-    // 入室できたかどうかを送り返す
-    client.emit('chat:joinRoom', isSuccess);
+    const joinedRoom = await this.chatService.joinRoom(dto);
+
+    // 入室したルーム or undefinedをクライアントに送信する
+    client.emit('chat:joinRoom', joinedRoom);
   }
 
   /**
@@ -172,7 +178,17 @@ export class ChatGateway {
 
     // adminかownerの場合削除が実行できる
     if (isAdmin || room.ownerId === userId) {
-      await this.chatService.remove(data);
+      const deletedRoom = await this.chatService.remove(data);
+      if (deletedRoom === undefined) return;
+      // 現時点でチャットルームを表示しているユーザーに通知を送る
+      this.server
+        .to(String(deletedRoom.id))
+        .emit('chat:deleteRoom', deletedRoom);
+
+      // 全ユーザーのチャットルームを更新させる
+      // NOTE: 本来削除されたルームに所属しているユーザーだけに送りたいが,
+      //       それを判定するのが難しいためブロードキャストで送信している
+      this.server.emit('chat:updateSideBarRooms');
     }
   }
 
@@ -228,6 +244,6 @@ export class ChatGateway {
     });
 
     // フロントエンドへ送信し返す
-    this.server.emit('chat:getJoinableRooms', viewableAndNotJoinedRooms);
+    client.emit('chat:getJoinableRooms', viewableAndNotJoinedRooms);
   }
 }

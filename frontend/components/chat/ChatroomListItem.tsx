@@ -18,6 +18,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import { Chatroom } from 'types/chat';
 import { Socket } from 'socket.io-client';
 import { useQueryUser } from 'hooks/useQueryUser';
+import { Loading } from 'components/common/Loading';
 
 type Props = {
   room: Chatroom;
@@ -29,7 +30,7 @@ export const ChatroomListItem = ({ room, socket, setCurrentRoomId }: Props) => {
   const [open, setOpen] = useState(false);
   const { data: user } = useQueryUser();
   if (user === undefined) {
-    return <h1>ユーザーが存在しません</h1>;
+    return <Loading />;
   }
 
   const getMessage = (id: number) => {
@@ -40,10 +41,11 @@ export const ChatroomListItem = ({ room, socket, setCurrentRoomId }: Props) => {
 
   const deleteRoom = (id: number) => {
     console.log('deleteRoom:', id);
-    socket.emit('chat:deleteRoom', {
+    const deleteRoomInfo = {
       id: id,
       userId: user.id,
-    });
+    };
+    socket.emit('chat:deleteRoom', deleteRoomInfo);
   };
 
   const handleClickOpen = () => {

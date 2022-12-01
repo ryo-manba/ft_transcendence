@@ -20,6 +20,7 @@ import { Chatroom } from '@prisma/client';
 import { Socket } from 'socket.io-client';
 import { CHATROOM_TYPE, ChatroomType } from 'types/chat';
 import { useQueryUser } from 'hooks/useQueryUser';
+import { Loading } from 'components/common/Loading';
 
 type Props = {
   open: boolean;
@@ -48,7 +49,7 @@ export const ChatroomJoinDialog = memo(function ChatroomJoinDialog({
 
   const { data: user } = useQueryUser();
   if (user === undefined) {
-    return <h1>ユーザーが存在しません</h1>;
+    return <Loading />;
   }
 
   const handleClose = () => {
@@ -80,10 +81,12 @@ export const ChatroomJoinDialog = memo(function ChatroomJoinDialog({
   };
 
   useEffect(() => {
-    socket.on('chat:joinRoom', (isSuccess: boolean) => {
+    socket.on('chat:joinRoom', (joinedRoom: Chatroom) => {
       // 入室に成功したらダイアログを閉じる
-      if (isSuccess) {
+      if (joinedRoom) {
         handleClose();
+        // サイドバーを更新する
+        socket.emit('chat:getJoinedRooms', user.id);
       } else {
         // パスワードが不正だった場合のエラーを想定している(今後変えるかもしれない)
         setIsValidPassword(false);

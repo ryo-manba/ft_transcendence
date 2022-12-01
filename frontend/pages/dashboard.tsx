@@ -4,11 +4,12 @@ import { Stack, Button, Typography } from '@mui/material';
 import { useQueryUser } from 'hooks/useQueryUser';
 import { Header } from 'components/common/Header';
 import { Layout } from 'components/common/Layout';
+import { Loading } from 'components/common/Loading';
 
 const Dashboard: NextPage = () => {
   const { data: user } = useQueryUser();
 
-  if (user === undefined) return <></>;
+  if (user === undefined) return <Loading />;
 
   return (
     <Layout title="Dashboard">

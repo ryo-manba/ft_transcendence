@@ -18,16 +18,12 @@ export const ChatroomJoinButton = memo(function ChatroomJoinButton({
   const [open, setOpen] = useState(false);
   const [rooms, setRooms] = useState<Chatroom[]>([]);
 
-  // const getJoinedRooms = useCallback(() => {
-  //   socket.emit('chat:getJoinedRooms', user.id);
-  // }, [socket]);
-
   const getJoinableRooms = useCallback(() => {
     socket.emit('chat:getJoinableRooms', user.id);
   }, [socket]);
 
   const handleOpen = useCallback(() => {
-    // チャットルームを探すボタンを押下したら探す処理を実行する
+    // チャットルームを探すボタンを押下したら公開されているチャットルーム一覧を取得する
     getJoinableRooms();
     setOpen(true);
   }, [open]);

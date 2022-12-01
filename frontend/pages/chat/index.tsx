@@ -10,6 +10,7 @@ import { ChatroomJoinButton } from 'components/chat/ChatroomJoinButton';
 import { FriendBar } from 'components/chat/FriendBar';
 import { Chatroom, Message } from 'types/chat';
 import { useQueryUser } from 'hooks/useQueryUser';
+import { Loading } from 'components/common/Loading';
 
 const appBarHeight = '64px';
 
@@ -17,7 +18,8 @@ const Chat = () => {
   const [rooms, setRooms] = useState<Chatroom[]>([]);
   const [text, setText] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
-  const [currentRoomId, setCurrentRoomId] = useState(0);
+  const NOT_JOINED_ROOM = 0;
+  const [currentRoomId, setCurrentRoomId] = useState(NOT_JOINED_ROOM);
   const [socket, setSocket] = useState<Socket>();
 
   const { data: user } = useQueryUser();
@@ -34,57 +36,73 @@ const Chat = () => {
   useEffect(() => {
     if (!socket || !user) return;
 
+    // 入室しているルーム一覧を受け取る
     socket.on('chat:getJoinedRooms', (data: Chatroom[]) => {
       console.log('chat:getJoinedRooms', data);
       setRooms(data);
     });
-    // 一覧を取得する
-    socket.emit('chat:getJoinedRooms', user.id);
 
-    return () => {
-      socket.off('chat:getJoinedRooms');
-    };
-  }, [socket, user]);
-
-  useEffect(() => {
-    if (!socket) return;
+    // 他ユーザーからのメッセージを受け取る
     socket.on('chat:receiveMessage', (data: Message) => {
-      console.log('chat:receiveMessage -> receive', data.message);
+      console.log('chat:receiveMessage', data.message);
       setMessages((prev) => [...prev, data]);
     });
 
-    return () => {
-      socket.off('chat:receiveMessage');
-    };
-  }, [socket]);
-
-  // 入室に成功したら、既存のメッセージを受け取る
-  useEffect(() => {
-    if (!socket) return;
+    // 入室に成功したら、既存のメッセージを受け取る
     socket.on('chat:getMessage', (data: Message[]) => {
       setMessages(data);
     });
 
-    return () => {
-      socket.off('chat:getMessage');
-    };
-  });
-
-  // receive a message from the server
-  useEffect(() => {
-    if (!socket) return;
+    // メッセージが送信できたら、反映させる
     socket.on('chat:sendMessage', (data: Message) => {
-      console.log('chat:sendMessage -> receive', data.message);
+      console.log('chat:sendMessage', data.message);
       setMessages((prev) => [...prev, data]);
     });
 
+    // チャットルームの作成処理が終わったら、反映させる
+    socket.on('chat:createRoom', (chatroom: Chatroom) => {
+      console.log('chat:createRoom', chatroom.name);
+      setRooms((prev) => [...prev, chatroom]);
+    });
+
+    // 現在所属しているチャットルームが削除された場合、表示されているチャット履歴を削除する
+    socket.on('chat:deleteRoom', (deletedRoom: Chatroom) => {
+      console.log('chat:deleteRoom', deletedRoom);
+      // 表示中のチャットを削除する
+      setMessages([]);
+      setCurrentRoomId(NOT_JOINED_ROOM);
+      // socketの退出処理をする
+      socket.emit('chat:leaveRoom');
+      // 所属しているチャットルーム一覧を取得する
+      socket.emit('chat:getJoinedRooms', user.id);
+    });
+
+    // サイドバーのチャットルームを更新する
+    socket.on('chat:updateSideBarRooms', () => {
+      socket.emit('chat:getJoinedRooms', user.id);
+    });
+
+    // setupが終わったら
+    // 入室中のチャットルーム一覧を取得する
+    socket.emit('chat:getJoinedRooms', user.id);
+
     return () => {
+      socket.off('chat:getJoinedRooms');
+      socket.off('chat:receiveMessage');
+      socket.off('chat:getMessage');
       socket.off('chat:sendMessage');
+      socket.off('chat:createRoom');
+      socket.off('chat:deleteRoom');
+      socket.off('chat:updateSideBarRooms');
     };
-  }, [socket]);
+  }, [socket, user]);
 
   if (user === undefined) {
-    return <h1>ユーザーが存在しません</h1>;
+    return <Loading fullHeight={true} />;
+  }
+
+  if (socket === undefined) {
+    return null;
   }
 
   const showMessage = (list: Message[]) => {
@@ -109,10 +127,6 @@ const Chat = () => {
     socket.emit('chat:sendMessage', message);
     setText('');
   };
-
-  if (socket === undefined) {
-    return null;
-  }
 
   return (
     <>
