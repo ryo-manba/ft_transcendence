@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, memo } from 'react';
 import { ListItem, ListItemText, ListItemAvatar, Avatar } from '@mui/material';
 import { blue } from '@mui/material/colors';
 import { Friend } from 'types/friend';
@@ -10,7 +10,7 @@ type Props = {
   friend: Friend;
 };
 
-export const FriendListItem = ({ friend }: Props) => {
+export const FriendListItem = memo(function FriendListItem({ friend }: Props) {
   const [open, setOpen] = useState(false);
   const { data: user } = useQueryUser();
   if (user === undefined) {
@@ -41,4 +41,4 @@ export const FriendListItem = ({ friend }: Props) => {
       <FriendInfoDialog friend={friend} onClose={handleClose} open={open} />
     </>
   );
-};
+});
