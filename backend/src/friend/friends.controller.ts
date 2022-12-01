@@ -1,4 +1,11 @@
-import { Body, Controller, Get } from '@nestjs/common';
+import {
+  Req,
+  Request,
+  Query,
+  Controller,
+  Get,
+  ParseIntPipe,
+} from '@nestjs/common';
 import { FriendsService } from './friends.service';
 
 type FollowingUser = {
@@ -11,13 +18,16 @@ export class FriendsController {
   constructor(private readonly friendsService: FriendsService) {}
 
   /**
-   * @param userId
+   * @param id (userId)
    * @return 以下の情報をオブジェクトの配列で返す
    * - フォローしているユーザーのID
    * - フォローしているユーザーの名前
    */
   @Get('followings')
-  async findFollowingUsers(@Body() userId: number): Promise<FollowingUser[]> {
-    return await this.friendsService.findFollowingUsers(userId);
+  async findFollowingUsers(
+    @Req() req: Request,
+    @Query('id', ParseIntPipe) id: number,
+  ): Promise<FollowingUser[]> {
+    return await this.friendsService.findFollowingUsers(id);
   }
 }

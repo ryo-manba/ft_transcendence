@@ -58,7 +58,7 @@ export class ChatGateway {
 
   /**
    * 入室しているチャットルーム一覧を返す
-   * @params userId
+   * @param userId
    */
   @SubscribeMessage('chat:getJoinedRooms')
   async onGetRooms(
