@@ -7,11 +7,7 @@ import {
   ParseIntPipe,
 } from '@nestjs/common';
 import { FriendsService } from './friends.service';
-
-type FollowingUser = {
-  id: number;
-  name: string;
-};
+import type { FollowingUser } from './friends.type';
 
 @Controller('friends')
 export class FriendsController {

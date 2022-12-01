@@ -1,10 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-
-type FollowingUser = {
-  id: number;
-  name: string;
-};
+import type { FollowingUser } from './friends.type';
 
 @Injectable()
 export class FriendsService {
