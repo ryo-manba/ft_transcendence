@@ -8,6 +8,7 @@ import { ConfigModule } from '@nestjs/config';
 import { ChatModule } from './chat/chat.module';
 import { GameModule } from './game/game.module';
 import { RecordsModule } from './records/records.module';
+import { FriendsModule } from './friend/friends.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { RecordsModule } from './records/records.module';
     ChatModule,
     GameModule,
     RecordsModule,
+    FriendsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

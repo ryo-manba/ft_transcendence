@@ -121,44 +121,42 @@ export const ChatroomJoinDialog = memo(function ChatroomJoinDialog({
       <DialogTitle sx={{ bgcolor: blue[100] }}>Rooms</DialogTitle>
       <DialogContent>
         <Box sx={{ width: '100%', maxWidth: 360, bgcolor: 'background.paper' }}>
-          <nav aria-label="main mailbox folders">
-            {rooms.length === 0 ? (
-              <div className="pt-4">No rooms are available.</div>
-            ) : (
-              <List sx={{ pt: 0 }}>
-                {rooms.map((room, i) => (
-                  <ListItem
-                    onClick={() => handleListItemClick(room)}
-                    key={i}
-                    divider
-                    button
-                  >
-                    <ListItemAvatar>
-                      <Avatar sx={{ bgcolor: blue[100], color: blue[600] }}>
-                        {(isProtected(room) && <LockIcon />) || <ChatIcon />}
-                      </Avatar>
-                    </ListItemAvatar>
-                    <ListItemText primary={room.name} />
-                  </ListItem>
-                ))}
-              </List>
-            )}
-            {isInputPassword && (
-              <TextField
-                fullWidth
-                margin="dense"
-                id="password"
-                label="Password"
-                type="text"
-                value={password}
-                error={!isValidPassword}
-                helperText="Enter password"
-                onChange={(e) => {
-                  setPassword(e.target.value);
-                }}
-              />
-            )}
-          </nav>
+          {rooms.length === 0 ? (
+            <div className="pt-4">No rooms are available.</div>
+          ) : (
+            <List sx={{ pt: 0 }}>
+              {rooms.map((room, i) => (
+                <ListItem
+                  onClick={() => handleListItemClick(room)}
+                  key={i}
+                  divider
+                  button
+                >
+                  <ListItemAvatar>
+                    <Avatar sx={{ bgcolor: blue[100], color: blue[600] }}>
+                      {(isProtected(room) && <LockIcon />) || <ChatIcon />}
+                    </Avatar>
+                  </ListItemAvatar>
+                  <ListItemText primary={room.name} />
+                </ListItem>
+              ))}
+            </List>
+          )}
+          {isInputPassword && (
+            <TextField
+              fullWidth
+              margin="dense"
+              id="password"
+              label="Password"
+              type="text"
+              value={password}
+              error={!isValidPassword}
+              helperText="Enter password"
+              onChange={(e) => {
+                setPassword(e.target.value);
+              }}
+            />
+          )}
         </Box>
       </DialogContent>
       <DialogActions>

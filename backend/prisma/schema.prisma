@@ -21,6 +21,18 @@ model User {
   loseGameRecord  GameRecord[]      @relation("Loser")
   winGameRecord   GameRecord[]      @relation("Winner")
   messages        Message[]
+  followers       FriendRelation[]  @relation("follower")
+  followings      FriendRelation[]  @relation("following")
+}
+
+model FriendRelation {
+  id          Int      @id @default(autoincrement())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now()) @updatedAt
+  follower    User     @relation("follower", fields: [followerId], references: [id], onDelete: Cascade)
+  followerId  Int
+  following   User     @relation("following", fields: [followingId], references: [id], onDelete: Cascade)
+  followingId Int
 }
 
 // オーナー -> チャットルーム作成者(管理者権限も持つ)
