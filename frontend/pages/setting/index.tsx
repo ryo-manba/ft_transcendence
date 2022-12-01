@@ -94,6 +94,9 @@ const Setting: NextPage = () => {
                   accept="image/*"
                   type="file"
                   onChange={onChangeAvatar}
+                  onClick={(e) => {
+                    (e.target as HTMLInputElement).value = '';
+                  }}
                 />
               </Button>
               <Button
