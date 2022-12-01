@@ -8,7 +8,10 @@ import { Loading } from 'components/common/Loading';
 export const Profile = () => {
   const { data: user } = useQueryUser();
   if (user === undefined) return <Loading />;
-  const avatarPath = user.avatarPath !== null ? user.avatarPath : '';
+  const avatarImageUrl =
+    user.avatarPath !== null
+      ? `${process.env.NEXT_PUBLIC_API_URL as string}/user/${user.avatarPath}`
+      : '';
 
   return (
     <>
@@ -26,7 +29,7 @@ export const Profile = () => {
         >
           <Grid item>
             <Avatar
-              src={avatarPath} // Avatar can show a default avatar image when the provided path is invalid
+              src={avatarImageUrl} // Avatar can show a default avatar image when the provided path is invalid
               sx={{ width: 100, height: 100 }}
             />
           </Grid>

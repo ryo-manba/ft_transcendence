@@ -4,15 +4,41 @@ import {
   Get,
   Param,
   Patch,
+  Post,
   Req,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { Request } from 'express';
 import { UserService } from './user.service';
-import { UpdateUserDto } from './dto/update-user.dto';
+import { UpdateNameDto } from './dto/update-name.dto';
 import { User } from '@prisma/client';
 import { UpdatePointDto } from './dto/update-point.dto';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import { v4 as uuidv4 } from 'uuid';
+import * as path from 'path';
+
+// FileInterceptorにわたすオプションを設定。
+// destination: ファイルの保存先。フォルダが無い場合には、バックエンドを起動したタイミングでフォルダが生成される
+// filename: 保存されるファイルのファイル名を修正するためのロジックを設定できる。何も設定しないと、拡張子もつかないランダムなファイル名が勝手につけられる
+const storage = {
+  storage: diskStorage({
+    destination: process.env.AVATAR_IMAGE_DIR,
+    filename: (req, file, cb) => {
+      // ファイル名に空白があれば削除して、末尾にuuidを追加したあとに拡張子を付与することで
+      // 複数ユーザーからimage.jpgみたいなありがちな名前のファイルがアップロードされた場合
+      // にもファイルが上書き保存されないようにしている
+      const filename: string =
+        path.parse(file.originalname).name.replace(/\s/g, '') + uuidv4();
+      const extension: string = path.parse(file.originalname).ext;
+      // cbはコールバックの頭文字っぽい。第一引数はエラー、第二引数はファイル名を設定
+      cb(null, `${filename}${extension}`);
+    },
+  }),
+};
 
 @UseGuards(AuthGuard('jwt'))
 @Controller('user')
@@ -33,17 +59,40 @@ export class UserController {
     return this.userService.updatePoint(Number(id), dto);
   }
 
-  @Patch()
-  updateUser(
-    @Req() req: Request,
-    @Body() dto: UpdateUserDto,
+  @Patch('name/:id')
+  updateName(
+    @Param('id') id: string,
+    @Body() dto: UpdateNameDto,
   ): Promise<Omit<User, 'hashedPassword'>> {
-    // for eslint
-    interface RequestUser {
-      id: number;
-    }
-    const req_user: RequestUser = req.user;
+    return this.userService.updateName(Number(id), dto);
+  }
 
-    return this.userService.updateUser(req_user.id, dto);
+  @Post('avatar/:id')
+  @UseInterceptors(
+    FileInterceptor(
+      'avatar', // ここの'avatar'はフロントエンドでformData.appendに渡した第一引数のnameと対応
+      storage,
+    ),
+  )
+  uploadAvatar(
+    @UploadedFile() file: Express.Multer.File,
+    @Param('id') id: string,
+  ) {
+    return this.userService.updateAvatar(Number(id), {
+      avatarPath: file.filename,
+    });
+  }
+
+  @Get(':imageUrl')
+  getAvatarImage(@Param('imageUrl') imageUrl: string) {
+    return this.userService.getAvatarImage(imageUrl);
+  }
+
+  @Patch('avatar/:id/:avatarPath')
+  deleteAvatar(
+    @Param('id') id: string,
+    @Param('avatarPath') avatarPath: string,
+  ) {
+    return this.userService.deleteAvatar(Number(id), avatarPath);
   }
 }

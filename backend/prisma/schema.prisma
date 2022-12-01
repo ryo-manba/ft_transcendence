@@ -14,7 +14,7 @@ model User {
   name            String            @unique
   hashedPassword  String?
   point           Int               @default(1000)
-  avatarPath     String?
+  avatarPath      String?
   chatroomOwners  Chatroom[]
   chatroomAdmins  ChatroomAdmin[]
   chatroomMembers ChatroomMembers[]

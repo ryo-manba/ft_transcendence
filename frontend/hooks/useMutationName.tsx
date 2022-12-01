@@ -2,18 +2,18 @@ import axios, { AxiosError } from 'axios';
 import { useQueryClient, useMutation } from '@tanstack/react-query';
 import { User } from '@prisma/client';
 
-export const useMutatePoint = () => {
+export const useMutateName = () => {
   const queryClient = useQueryClient();
 
-  const updatePointMutation = useMutation<
+  const updateNameMutation = useMutation<
     Omit<User, 'hashedPassword'>,
     AxiosError,
-    { userId: number; updatedPoint: number }
+    { userId: number; updatedName: string }
   >(
-    async ({ userId, updatedPoint }) => {
+    async ({ userId, updatedName }) => {
       const { data } = await axios.patch<Omit<User, 'hashedPassword'>>(
-        `${process.env.NEXT_PUBLIC_API_URL as string}/user/point/${userId}`,
-        { point: updatedPoint },
+        `${process.env.NEXT_PUBLIC_API_URL as string}/user/name/${userId}`,
+        { name: updatedName },
       );
 
       return data;
@@ -28,11 +28,12 @@ export const useMutatePoint = () => {
         }
       },
       onError: (err: AxiosError) => {
+        // [TODO] エラーがあった場合に、UI上もなにかアラートを出す
         console.log(err);
         throw err;
       },
     },
   );
 
-  return { updatePointMutation };
+  return { updateNameMutation };
 };
