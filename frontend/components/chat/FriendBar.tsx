@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import { List } from '@mui/material';
-// import { FriendAddButton } from 'components/chat/FriendAddButton';
+import { FriendAddButton } from 'components/chat/FriendAddButton';
 import { FriendListItem } from 'components/chat/FriendListItem';
 import { Loading } from 'components/common/Loading';
 import { useQueryUser } from 'hooks/useQueryUser';
 import { Friend } from 'types/friend';
-import { fetchFollowingUser } from 'api/friend/fetchFollowingUser';
+import { fetchFollowingUsers } from 'api/friend/fetchFollowingUsers';
 
 export const FriendBar = () => {
   const [friends, setFriends] = useState<Friend[]>([]); // fetchする
@@ -16,7 +16,7 @@ export const FriendBar = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      const res = await fetchFollowingUser({ userId: user.id });
+      const res = await fetchFollowingUsers({ userId: user.id });
 
       setFriends(res);
     };
@@ -32,7 +32,7 @@ export const FriendBar = () => {
 
   return (
     <>
-      {/* <FriendAddButton /> */}
+      <FriendAddButton />
       <List dense={false}>
         {friends &&
           friends.map((friend) => (

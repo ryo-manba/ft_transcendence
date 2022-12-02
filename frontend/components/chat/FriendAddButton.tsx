@@ -1,48 +1,45 @@
 import { memo, useState, useCallback, useEffect } from 'react';
-import { Socket } from 'socket.io-client';
 import { Button } from '@mui/material';
 import AddCircleOutlineRounded from '@mui/icons-material/AddCircleOutlineRounded';
-import { User } from '@prisma/client';
+import { useQueryUser } from 'hooks/useQueryUser';
 import { FriendAddDialog } from 'components/chat/FriendAddDialog';
+import { Loading } from 'components/common/Loading';
+import { fetchUnFollowingUsers } from 'api/friend/fetchUnFollowingUsers';
+import { Friend } from 'types/friend';
 
-type SafetyUser = Omit<User, 'hashedPassword'>;
-
-type Props = {
-  socket: Socket;
-  user: SafetyUser;
-};
-
-export const FriendAddButton = memo(function FriendAddButton({
-  user,
-  socket,
-}: Props) {
+export const FriendAddButton = memo(function FriendAddButton() {
   const [open, setOpen] = useState(false);
-  const [unAddedUsers, setUnAddedUsers] = useState<SafetyUser[]>([]);
+  const [friends, setFriends] = useState<Friend[]>([]);
+  const { data: user } = useQueryUser();
+  if (user === undefined) {
+    return <Loading />;
+  }
 
-  const getUnAddedUsers = useCallback(() => {
-    socket.emit('chat:getUnAddedUsers', user.id);
-  }, [socket]);
+  useEffect(() => {
+    const fetchData = async () => {
+      const res = await fetchUnFollowingUsers({ userId: user.id });
+      console.log('res: ', res);
+
+      setFriends(res);
+    };
+
+    fetchData()
+      .then((res) => {
+        console.log(res);
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  }, []);
 
   const handleOpen = useCallback(() => {
     // チャットルームを探すボタンを押下したら探す処理を実行する
-    getUnAddedUsers();
     setOpen(true);
   }, [open]);
 
   const handleClose = useCallback(() => {
     setOpen(false);
   }, [open]);
-
-  useEffect(() => {
-    socket.on('chat:getUnAddedUsers', (unAddedUsers: User[]) => {
-      console.log('chat:getUnAddedUsers -> receive', unAddedUsers);
-      setUnAddedUsers(unAddedUsers);
-    });
-
-    return () => {
-      socket.off('chat:getJoinableRooms');
-    };
-  }, [socket]);
 
   return (
     <>
@@ -58,12 +55,7 @@ export const FriendAddButton = memo(function FriendAddButton({
       >
         フレンドを追加する
       </Button>
-      <FriendAddDialog
-        users={unAddedUsers}
-        open={open}
-        onClose={handleClose}
-        socket={socket}
-      />
+      <FriendAddDialog users={friends} open={open} onClose={handleClose} />
     </>
   );
 });

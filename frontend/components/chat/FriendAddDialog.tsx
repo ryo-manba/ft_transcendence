@@ -1,4 +1,4 @@
-import { memo, useState, useEffect } from 'react';
+import { memo, useState } from 'react';
 import {
   Avatar,
   Box,
@@ -14,31 +14,26 @@ import {
 } from '@mui/material';
 import { blue } from '@mui/material/colors';
 import ChatIcon from '@mui/icons-material/Chat';
-import { User } from '@prisma/client';
-import { Socket } from 'socket.io-client';
 import { useQueryUser } from 'hooks/useQueryUser';
-//import { addFriend } from 'api/friend/addFriend';
-
-type SafetyUser = Omit<User, 'hashedPassword'>;
+import { Loading } from 'components/common/Loading';
+import { Friend } from 'types/friend';
 
 type Props = {
   open: boolean;
-  users: SafetyUser[];
-  socket: Socket;
+  users: Friend[];
   onClose: () => void;
 };
 
 export const FriendAddDialog = memo(function FriendAddDialog({
   onClose,
-  socket,
   users,
   open,
 }: Props) {
-  const [selectedUser, setSelectedUser] = useState<SafetyUser | null>(null);
+  const [selectedUser, setSelectedUser] = useState<Friend | null>(null);
 
   const { data: user } = useQueryUser();
   if (user === undefined) {
-    return <h1>ユーザーが存在しません</h1>;
+    return <Loading />;
   }
 
   const handleClose = () => {
@@ -46,36 +41,19 @@ export const FriendAddDialog = memo(function FriendAddDialog({
     onClose();
   };
 
-  const handleListItemClick = (user: SafetyUser) => {
-    // 現在選択しているチャットルームの場合は何もしない
+  const handleListItemClick = (user: Friend) => {
+    // 現在選択しているユーザーの場合は何もしない
     if (selectedUser === user) return;
 
     setSelectedUser(user);
   };
 
-  useEffect(() => {
-    socket.on('chat:addFriend', (isSuccess: boolean) => {
-      // 入室に成功したらダイアログを閉じる
-      if (isSuccess) {
-        handleClose();
-      } else {
-      }
-    });
-
-    return () => {
-      socket.off('chat:addFriend');
-    };
-  }, []);
+  // 入室に成功したらダイアログを閉じる
+  // handleClose();
 
   const addFriend = () => {
-    // addFriend({ followerId: 1, followingId: 2 });
     if (selectedUser === null) return;
-
-    // const addFriendInfo: AddFriendInfo = {
-    //   userId: user.id,
-    //   addFriendId: selectedUser.id,
-    // };
-    // socket.emit('chat:addFriend', addFriendInfo);
+    console.log(selectedUser);
   };
 
   return (
