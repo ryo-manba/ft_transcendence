@@ -26,4 +26,18 @@ export class FriendsController {
   ): Promise<FollowingUser[]> {
     return await this.friendsService.findFollowingUsers(id);
   }
+
+  /**
+   * @param id (userId)
+   * @return 以下の情報をオブジェクトの配列で返す
+   * - フォローしていないユーザーのID
+   * - フォローしていないユーザーの名前
+   */
+  @Get('unfollowings')
+  async findUnFollowingUsers(
+    @Req() req: Request,
+    @Query('id', ParseIntPipe) id: number,
+  ): Promise<FollowingUser[]> {
+    return await this.friendsService.findUnFollowingUsers(id);
+  }
 }
