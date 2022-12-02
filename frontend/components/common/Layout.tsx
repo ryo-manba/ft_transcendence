@@ -17,6 +17,7 @@ export const Layout: FC<Props> = ({
   divClassName = '',
   mainClassName = '',
 }) => {
+  // ログインしてなければLoadingを表示
   const router = useRouter();
   if (router.pathname !== '/') {
     const { isSuccess } = useQueryUser();
