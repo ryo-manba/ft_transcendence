@@ -7,6 +7,7 @@ import { Header } from 'components/common/Header';
 import { ChatroomListItem } from 'components/chat/ChatroomListItem';
 import { ChatroomCreateButton } from 'components/chat/ChatroomCreateButton';
 import { ChatroomJoinButton } from 'components/chat/ChatroomJoinButton';
+import { FriendBar } from 'components/chat/FriendBar';
 import { Chatroom, Message } from 'types/chat';
 import { useQueryUser } from 'hooks/useQueryUser';
 import { Loading } from 'components/common/Loading';
@@ -207,7 +208,7 @@ const Chat = () => {
             borderBottom: '1px solid',
           }}
         >
-          <h2>フレンドスペース</h2>
+          <FriendBar />
         </Grid>
       </Grid>
     </>

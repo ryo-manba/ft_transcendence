@@ -3,13 +3,11 @@ import type { NextPage } from 'next';
 import { useState } from 'react';
 import { useRouter } from 'next/router';
 import axios from 'axios';
-import * as Yup from 'yup';
 import { IconDatabase } from '@tabler/icons';
 import Image from 'next/image';
 import GppGoodIcon from '@mui/icons-material/GppGood';
 import { Layout } from 'components/common/Layout';
 import { useForm, SubmitHandler, Controller } from 'react-hook-form';
-import { yupResolver } from '@hookform/resolvers/yup';
 import { AuthForm, AxiosErrorResponse } from '../types';
 import {
   Grid,
@@ -25,14 +23,14 @@ import {
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import { signIn, useSession } from 'next-auth/react';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
 import { Loading } from 'components/common/Loading';
 
 // username, passwordのvalidation
-const schema = Yup.object().shape({
-  username: Yup.string().required('No username provided'),
-  password: Yup.string()
-    .required('No password provided')
-    .min(5, 'Password should be min 5 chars'),
+const schema = z.object({
+  username: z.string().min(1, { message: 'No username provided' }),
+  password: z.string().min(5, { message: 'Password should be min 5 chars' }),
 });
 
 const Home: NextPage = () => {
@@ -50,7 +48,7 @@ const Home: NextPage = () => {
     reset,
   } = useForm<AuthForm>({
     mode: 'onSubmit',
-    resolver: yupResolver(schema),
+    resolver: zodResolver(schema),
     defaultValues: {
       password: '',
       username: '',
