@@ -7,9 +7,9 @@ type Props = {
 
 const endpoint = `${
   process.env.NEXT_PUBLIC_API_URL as string
-}/friends/followings`;
+}/friends/unfollowings`;
 
-export const fetchFollowingUser = async ({ userId }: Props) => {
+export const fetchUnFollowingUsers = async ({ userId }: Props) => {
   try {
     const response = await axios.get<Friend[]>(endpoint, {
       params: { id: userId },
