@@ -118,6 +118,8 @@ export const Play = ({ updateFinishedGameInfo }: Props) => {
   const [isArrowUpPressed, updateIsArrowUpPressed] = useState(false);
   const { updatePointMutation } = useMutatePoint();
   const { data: user } = useQueryUser();
+  const FPS = 60;
+  const waitMillSec = 1000 / FPS;
 
   const drawField = useCallback(
     (
@@ -228,27 +230,28 @@ export const Play = ({ updateFinishedGameInfo }: Props) => {
       updateGameInfo(rescaledGameInfo);
     });
 
-    const id =
+    const barMove = () => {
+      let move = 0;
+      if (countDown === 0) {
+        if (isArrowDownPressed || isArrowUpPressed) {
+          if (isArrowDownPressed) {
+            move = 1;
+          } else if (isArrowUpPressed) {
+            move = -1;
+          }
+        }
+        socket.emit('barMove', move);
+      }
+    };
+    const intervalId =
       user !== undefined &&
       (user.name === playerNames[0] || user.name === playerNames[1])
-        ? setInterval(() => {
-            let move = 0;
-            if (countDown === 0) {
-              if (isArrowDownPressed || isArrowUpPressed) {
-                if (isArrowDownPressed) {
-                  move = 1;
-                } else if (isArrowUpPressed) {
-                  move = -1;
-                }
-              }
-              socket.emit('barMove', move);
-            }
-          }, 17)
+        ? setInterval(barMove, waitMillSec)
         : undefined;
 
     return () => {
       window.cancelAnimationFrame(animationFrameId);
-      if (id !== undefined) clearInterval(id);
+      if (intervalId !== undefined) clearInterval(intervalId);
       socket.off('updateGameInfo');
       document.removeEventListener('keydown', onKeyDown);
       document.removeEventListener('keyup', onKeyUp);
