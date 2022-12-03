@@ -1,5 +1,6 @@
 import { memo, useState } from 'react';
 import {
+  Alert,
   Avatar,
   Box,
   Button,
@@ -13,15 +14,20 @@ import {
   DialogContent,
 } from '@mui/material';
 import { blue } from '@mui/material/colors';
-import ChatIcon from '@mui/icons-material/Chat';
 import { useQueryUser } from 'hooks/useQueryUser';
 import { Loading } from 'components/common/Loading';
-import { Friend } from 'types/friend';
+import { followUser } from 'api/friend/followUser';
+import type { Friend } from 'types/friend';
 
 type Props = {
   open: boolean;
   users: Friend[];
   onClose: () => void;
+};
+
+type FollowProps = {
+  followerId: number;
+  followingId: number;
 };
 
 export const FriendAddDialog = memo(function FriendAddDialog({
@@ -30,11 +36,21 @@ export const FriendAddDialog = memo(function FriendAddDialog({
   open,
 }: Props) {
   const [selectedUser, setSelectedUser] = useState<Friend | null>(null);
+  const [error, setError] = useState('');
 
   const { data: user } = useQueryUser();
   if (user === undefined) {
     return <Loading />;
   }
+
+  const addFriend = async (props: FollowProps) => {
+    const res = await followUser(props);
+
+    // 友達を追加する処理(フォロー)に失敗したらエラーメッセージをセットする
+    if (res.message !== 'ok') {
+      setError(res.message);
+    }
+  };
 
   const handleClose = () => {
     setSelectedUser(null);
@@ -48,22 +64,33 @@ export const FriendAddDialog = memo(function FriendAddDialog({
     setSelectedUser(user);
   };
 
-  // 入室に成功したらダイアログを閉じる
-  // handleClose();
-
-  const addFriend = () => {
+  const handleSubmit = () => {
     if (selectedUser === null) return;
-    console.log(selectedUser);
+
+    const followProps: FollowProps = {
+      followerId: user.id,
+      followingId: selectedUser.id,
+    };
+
+    addFriend(followProps)
+      .then((res) => {
+        // 成功したら既存のfriendのリストを更新する
+        handleClose();
+        console.log('res:', res);
+      })
+      .catch((err) => {
+        console.log('err:', err);
+      });
   };
 
   return (
     <Dialog onClose={handleClose} open={open}>
-      <DialogTitle sx={{ bgcolor: blue[100] }}>friends</DialogTitle>
+      <DialogTitle sx={{ bgcolor: blue[100] }}>Users</DialogTitle>
       <DialogContent>
         <Box sx={{ width: '100%', maxWidth: 360, bgcolor: 'background.paper' }}>
           <List sx={{ pt: 0 }}>
             {users.length === 0 ? (
-              <div className="pt-4">No friends are available.</div>
+              <div className="pt-4">No users are available.</div>
             ) : (
               users.map((user, i) => (
                 <ListItem
@@ -73,9 +100,7 @@ export const FriendAddDialog = memo(function FriendAddDialog({
                   button
                 >
                   <ListItemAvatar>
-                    <Avatar sx={{ bgcolor: blue[100], color: blue[600] }}>
-                      <ChatIcon />
-                    </Avatar>
+                    <Avatar sx={{ bgcolor: blue[100], color: blue[600] }} />
                   </ListItemAvatar>
                   <ListItemText primary={user.name} />
                 </ListItem>
@@ -84,10 +109,12 @@ export const FriendAddDialog = memo(function FriendAddDialog({
           </List>
         </Box>
       </DialogContent>
+      <p className="flex justify-center">Selected: {selectedUser?.name}</p>
+      {error && <Alert severity="error">{error}</Alert>}
       <DialogActions>
         <Button onClick={handleClose}>Cancel</Button>
         {/* 選択されていなかったらボタンを表示しない */}
-        <Button onClick={addFriend} disabled={!selectedUser}>
+        <Button onClick={handleSubmit} disabled={!selectedUser}>
           Add
         </Button>
       </DialogActions>

@@ -33,7 +33,6 @@ export const FriendAddButton = memo(function FriendAddButton() {
   }, []);
 
   const handleOpen = useCallback(() => {
-    // チャットルームを探すボタンを押下したら探す処理を実行する
     setOpen(true);
   }, [open]);
 
