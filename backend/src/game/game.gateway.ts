@@ -9,6 +9,7 @@ import {
 import { Socket, Server } from 'socket.io';
 import { RecordsService } from '../records/records.service';
 import { UserService } from '../user/user.service';
+import { v4 as uuidv4 } from 'uuid';
 
 type Player = {
   name: string;
@@ -79,7 +80,6 @@ export class GameGateway {
     private readonly user: UserService,
   ) {}
 
-  roomNum = 0;
   gameRooms: RoomInfo[] = [];
   waitingQueue: Player[] = [];
 
@@ -181,8 +181,7 @@ export class GameGateway {
         .catch((error) => {
           this.logger.log(error);
         });
-      const roomName = String(this.roomNum);
-      this.roomNum++;
+      const roomName = uuidv4();
 
       this.logger.log(`${player1.socket.id} joined to room ${roomName}`);
       this.logger.log(`${player2.socket.id} joined to room ${roomName}`);
