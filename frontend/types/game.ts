@@ -25,3 +25,10 @@ export type GameRecordWithUserName = {
   loser: User;
   winner: User;
 };
+
+export type FinishedGameInfo = {
+  winnerName: string;
+  loserName: string;
+  winnerScore: number;
+  loserScore: number;
+};

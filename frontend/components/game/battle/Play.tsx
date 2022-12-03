@@ -4,13 +4,14 @@ import { useSocketStore } from 'store/game/ClientSocket';
 import { usePlayerNamesStore } from 'store/game/PlayerNames';
 import { usePlayStateStore, PlayState } from 'store/game/PlayState';
 import { GameHeader } from 'components/game/battle/GameHeader';
-import { GameSetting } from 'types/game';
+import { FinishedGameInfo } from 'types/game';
 import { useMutatePoint } from 'hooks/useMutatePoint';
 import { useQueryUser } from 'hooks/useQueryUser';
 import { Loading } from 'components/common/Loading';
+import { useGameSettingStore } from 'store/game/GameSetting';
 
 type Props = {
-  gameSetting: GameSetting;
+  updateFinishedGameInfo: (newInfo: FinishedGameInfo) => void;
 };
 
 type Ball = {
@@ -80,7 +81,7 @@ const getGameParameters = (canvasWidth: number) => {
   return gameParameters;
 };
 
-export const Play = ({ gameSetting }: Props) => {
+export const Play = ({ updateFinishedGameInfo }: Props) => {
   // function to get window width
   const getWindowWidth = () => {
     const { innerWidth, innerHeight } = window;
@@ -96,6 +97,7 @@ export const Play = ({ gameSetting }: Props) => {
   const { socket } = useSocketStore();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const { playerNames } = usePlayerNamesStore();
+  const { gameSetting } = useGameSettingStore();
   const [scores, updateScores] = useState<[number, number]>([0, 0]);
   const [gameParameters, setGameParameters] = useState(
     getGameParameters(getWindowWidth()),
@@ -116,7 +118,6 @@ export const Play = ({ gameSetting }: Props) => {
   const [isArrowUpPressed, updateIsArrowUpPressed] = useState(false);
   const { updatePointMutation } = useMutatePoint();
   const { data: user } = useQueryUser();
-  if (user === undefined) return <Loading fullHeight={true} />;
 
   const drawField = useCallback(
     (
@@ -227,28 +228,32 @@ export const Play = ({ gameSetting }: Props) => {
       updateGameInfo(rescaledGameInfo);
     });
 
-    const id = setInterval(() => {
-      let move = 0;
-      if (countDown === 0) {
-        if (isArrowDownPressed || isArrowUpPressed) {
-          if (isArrowDownPressed) {
-            move = 1;
-          } else if (isArrowUpPressed) {
-            move = -1;
-          }
-        }
-        socket.emit('barMove', move);
-      }
-    }, 17);
+    const id =
+      user !== undefined &&
+      (user.name === playerNames[0] || user.name === playerNames[1])
+        ? setInterval(() => {
+            let move = 0;
+            if (countDown === 0) {
+              if (isArrowDownPressed || isArrowUpPressed) {
+                if (isArrowDownPressed) {
+                  move = 1;
+                } else if (isArrowUpPressed) {
+                  move = -1;
+                }
+              }
+              socket.emit('barMove', move);
+            }
+          }, 17)
+        : undefined;
 
     return () => {
       window.cancelAnimationFrame(animationFrameId);
-      clearInterval(id);
+      if (id !== undefined) clearInterval(id);
       socket.off('updateGameInfo');
       document.removeEventListener('keydown', onKeyDown);
       document.removeEventListener('keyup', onKeyUp);
     };
-  }, [drawField, countDown, gameInfo, gameParameters]);
+  }, [drawField, countDown, gameInfo, gameParameters, socket]);
 
   useEffect(() => {
     socket.on('updateScores', (newScores: [number, number]) => {
@@ -258,24 +263,24 @@ export const Play = ({ gameSetting }: Props) => {
     return () => {
       socket.off('updateScores');
     };
-  }, [scores]);
+  }, [socket]);
 
   useEffect(() => {
-    socket.on('win', (updatedPoint: number) => {
-      updatePointMutation.mutate({ userId: user.id, updatedPoint });
-      updatePlayState(PlayState.stateWinner);
-    });
-    socket.on('lose', (updatedPoint: number) => {
-      updatePointMutation.mutate({ userId: user.id, updatedPoint });
-      updatePlayState(PlayState.stateLoser);
-    });
+    socket.on(
+      'finishGame',
+      (updatedPoint: number | null, finishedGameInfo: FinishedGameInfo) => {
+        if (user !== undefined && updatedPoint !== null)
+          updatePointMutation.mutate({ userId: user.id, updatedPoint });
+        updateFinishedGameInfo(finishedGameInfo);
+        updatePlayState(PlayState.stateFinished);
+      },
+    );
     socket.on('error', () => {
       updatePlayState(PlayState.stateNothing);
     });
 
     return () => {
-      socket.off('win');
-      socket.off('lose');
+      socket.off('finishGame');
       socket.off('error');
     };
   }, [socket]);
@@ -304,24 +309,27 @@ export const Play = ({ gameSetting }: Props) => {
     }
   }, [countDown]);
 
+  if (user === undefined) return <Loading fullHeight={true} />;
+
   return (
     <>
-      {countDown !== 0 && (
-        <Grid
-          sx={{
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-          }}
-        >
-          <Zoom in={changeCount}>
-            <Typography variant="h1" fontFamily="sans-serif">
-              {countDown}
-            </Typography>
-          </Zoom>
-        </Grid>
-      )}
+      {countDown !== 0 &&
+        (user.name === playerNames[0] || user.name === playerNames[1]) && (
+          <Grid
+            sx={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+            }}
+          >
+            <Zoom in={changeCount}>
+              <Typography variant="h1" fontFamily="sans-serif">
+                {countDown}
+              </Typography>
+            </Zoom>
+          </Grid>
+        )}
       <div>
         <GameHeader
           maxWidth={gameParameters.canvasWidth}

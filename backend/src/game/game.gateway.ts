@@ -31,16 +31,27 @@ type BallVec = {
   speed: number;
 };
 
+type DifficultyLevel = 'Easy' | 'Normal' | 'Hard';
+
+type GameSetting = {
+  difficulty: DifficultyLevel;
+  matchPoint: number;
+};
+
+type GameState = 'Setting' | 'Playing';
+
 type RoomInfo = {
   roomName: string;
   player1: Player;
   player2: Player;
+  supporters: Socket[];
   ball: Ball;
   ballVec: BallVec;
   isPlayer1Turn: boolean;
-  matchPoint: number;
+  gameSetting: GameSetting;
   barSpeed: number;
   rewards: number;
+  gameState: GameState;
 };
 
 type GameInfo = {
@@ -49,11 +60,11 @@ type GameInfo = {
   ball: Ball;
 };
 
-type DifficultyLevel = 'Easy' | 'Normal' | 'Hard';
-
-type GameSetting = {
-  difficulty: DifficultyLevel;
-  matchPoint: number;
+type FinishedGameInfo = {
+  winnerName: string;
+  loserName: string;
+  winnerScore: number;
+  loserScore: number;
 };
 
 @WebSocketGateway({
@@ -84,7 +95,11 @@ export class GameGateway {
   static leftEnd = 40;
   static rightEnd = 960;
   static barLength = 100;
-  static matchPoint = 3;
+  static defaultSetting: GameSetting = {
+    difficulty: 'Easy',
+    matchPoint: 3,
+  };
+
   static boardWidth = 1000;
   static barSpeed = 10;
 
@@ -132,7 +147,7 @@ export class GameGateway {
     @ConnectedSocket() socket: Socket,
     @MessageBody() data: number,
   ) {
-    if (this.waitingQueue.length == 0) {
+    if (this.waitingQueue.length === 0) {
       await this.user
         .findOne(data)
         .then((user) => {
@@ -191,18 +206,39 @@ export class GameGateway {
         roomName: roomName,
         player1: player1,
         player2: player2,
+        supporters: [],
         ball: ball,
         ballVec: ballVec,
         isPlayer1Turn: true,
-        matchPoint: GameGateway.matchPoint,
+        gameSetting: GameGateway.defaultSetting,
         barSpeed: GameGateway.barSpeed,
         rewards: 0,
+        gameState: 'Setting',
       };
 
       this.gameRooms.push(newRoom);
 
       this.updatePlayerStatus(player1, player2);
     }
+  }
+
+  @SubscribeMessage('watchGame')
+  async watchGame(
+    @ConnectedSocket() socket: Socket,
+    @MessageBody() data: string,
+  ) {
+    const roomName = data;
+    const room = this.gameRooms.find((r) => r.roomName === roomName);
+    if (!room) {
+      socket.emit('error');
+
+      return;
+    }
+    room.supporters.push(socket);
+    this.logger.log(`${socket.id} joined to room ${roomName}`);
+    await socket.join(data);
+    const gameSetting = room.gameState === 'Setting' ? null : room.gameSetting;
+    socket.emit('joinGameRoom', room.gameState, gameSetting);
   }
 
   @SubscribeMessage('completeSetting')
@@ -217,8 +253,8 @@ export class GameGateway {
     if (!room) {
       socket.emit('error');
     } else {
-      room.matchPoint = data.matchPoint;
-      room.rewards = 10 * room.matchPoint;
+      room.gameSetting = data;
+      room.rewards = 10 * data.matchPoint;
       switch (data.difficulty) {
         case 'Normal':
           room.barSpeed = 20;
@@ -233,21 +269,40 @@ export class GameGateway {
           room.rewards *= 0.5;
           break;
       }
+      room.gameState = 'Playing';
       this.server.to(room.roomName).emit('playStarted', data);
     }
   }
 
   async finishGame(currentRoom: RoomInfo, winner: Player, loser: Player) {
-    winner.socket.emit('win', winner.point + currentRoom.rewards);
-    loser.socket.emit('lose', Math.max(loser.point - currentRoom.rewards, 0));
+    const finishedGameInfo: FinishedGameInfo = {
+      winnerName: winner.name,
+      loserName: loser.name,
+      winnerScore: winner.score,
+      loserScore: loser.score,
+    };
+    currentRoom.supporters.map((supporter) => {
+      supporter.emit('finishGame', null, finishedGameInfo);
+      supporter.disconnect(true);
+    });
+    winner.socket.emit(
+      'finishGame',
+      winner.point + currentRoom.rewards,
+      finishedGameInfo,
+    );
+    loser.socket.emit(
+      'finishGame',
+      Math.max(loser.point - currentRoom.rewards, 0),
+      finishedGameInfo,
+    );
+    winner.socket.disconnect(true);
+    loser.socket.disconnect(true);
     await this.records.createGameRecord({
       winnerId: winner.id,
       loserId: loser.id,
       winnerScore: winner.score,
       loserScore: loser.score,
     });
-    winner.socket.disconnect(true);
-    loser.socket.disconnect(true);
     this.gameRooms = this.gameRooms.filter(
       (room) => room.roomName !== currentRoom.roomName,
     );
@@ -270,10 +325,20 @@ export class GameGateway {
     // Identify a corresponding room, player, ball, and ballVec based on socket
     const room = this.gameRooms.find(
       (r) =>
-        r.player1.socket.id === socket.id || r.player2.socket.id === socket.id,
+        r.player1.socket.id === socket.id ||
+        r.player2.socket.id === socket.id ||
+        r.supporters.find((s) => s.id === socket.id) !== undefined,
     );
     if (!room) {
       socket.emit('error');
+
+      return;
+    }
+    if (
+      room.player1.socket.id !== socket.id &&
+      room.player2.socket.id !== socket.id
+    ) {
+      this.sendGameInfo(room);
 
       return;
     }
@@ -342,9 +407,9 @@ export class GameGateway {
       ballVec.xVec = room.isPlayer1Turn ? 1 : -1;
       ballVec.yVec = this.setBallYVec();
       room.isPlayer1Turn = !room.isPlayer1Turn;
-      if (room.matchPoint === room.player1.score) {
+      if (room.gameSetting.matchPoint === room.player1.score) {
         await this.finishGame(room, room.player1, room.player2);
-      } else if (room.matchPoint === room.player2.score) {
+      } else if (room.gameSetting.matchPoint === room.player2.score) {
         await this.finishGame(room, room.player2, room.player1);
       } else {
         this.server
@@ -352,18 +417,16 @@ export class GameGateway {
           .emit('updateScores', [room.player1.score, room.player2.score]);
       }
     }
-    this.sendGameInfo();
+    this.sendGameInfo(room);
   }
 
-  sendGameInfo() {
-    for (const room of this.gameRooms) {
-      const gameInfo: GameInfo = {
-        height1: room.player1.height,
-        height2: room.player2.height,
-        ball: room.ball,
-      };
-      this.server.to(room.roomName).emit('updateGameInfo', gameInfo);
-    }
+  sendGameInfo(room: RoomInfo) {
+    const gameInfo: GameInfo = {
+      height1: room.player1.height,
+      height2: room.player2.height,
+      ball: room.ball,
+    };
+    this.server.to(room.roomName).emit('updateGameInfo', gameInfo);
   }
 
   @SubscribeMessage('watchList')
