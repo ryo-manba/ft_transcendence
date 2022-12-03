@@ -8,7 +8,7 @@ import { Friend } from 'types/friend';
 import { fetchFollowingUsers } from 'api/friend/fetchFollowingUsers';
 
 export const FriendBar = () => {
-  const [friends, setFriends] = useState<Friend[]>([]); // fetchする
+  const [friends, setFriends] = useState<Friend[]>([]);
   const { data: user } = useQueryUser();
   if (user === undefined) {
     return <Loading />;
@@ -32,7 +32,8 @@ export const FriendBar = () => {
 
   return (
     <>
-      <FriendAddButton />
+      {/* フレンド追加したら、リストを更新する */}
+      <FriendAddButton setFriends={setFriends} />
       <List dense={false}>
         {friends &&
           friends.map((friend) => (

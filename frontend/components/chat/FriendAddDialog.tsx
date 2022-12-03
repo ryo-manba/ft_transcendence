@@ -1,4 +1,4 @@
-import { memo, useState } from 'react';
+import { memo, useState, Dispatch, SetStateAction } from 'react';
 import {
   Alert,
   Avatar,
@@ -22,6 +22,7 @@ import type { Friend } from 'types/friend';
 type Props = {
   open: boolean;
   users: Friend[];
+  setFriends: Dispatch<SetStateAction<Friend[]>>;
   onClose: () => void;
 };
 
@@ -31,9 +32,10 @@ type FollowProps = {
 };
 
 export const FriendAddDialog = memo(function FriendAddDialog({
-  onClose,
-  users,
   open,
+  users,
+  setFriends,
+  onClose,
 }: Props) {
   const [selectedUser, setSelectedUser] = useState<Friend | null>(null);
   const [error, setError] = useState('');
@@ -75,6 +77,7 @@ export const FriendAddDialog = memo(function FriendAddDialog({
     addFriend(followProps)
       .then((res) => {
         // 成功したら既存のfriendのリストを更新する
+        setFriends((prev) => [...prev, selectedUser]);
         handleClose();
         console.log('res:', res);
       })
@@ -109,11 +112,12 @@ export const FriendAddDialog = memo(function FriendAddDialog({
           </List>
         </Box>
       </DialogContent>
-      <p className="flex justify-center">Selected: {selectedUser?.name}</p>
+      {users.length !== 0 && (
+        <p className="flex justify-center">Selected: {selectedUser?.name}</p>
+      )}
       {error && <Alert severity="error">{error}</Alert>}
       <DialogActions>
         <Button onClick={handleClose}>Cancel</Button>
-        {/* 選択されていなかったらボタンを表示しない */}
         <Button onClick={handleSubmit} disabled={!selectedUser}>
           Add
         </Button>
