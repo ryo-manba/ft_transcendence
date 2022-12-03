@@ -4,6 +4,7 @@ import { Layout } from 'components/common/Layout';
 import { Loading } from 'components/common/Loading';
 import { useQueryUser } from 'hooks/useQueryUser';
 import type { NextPage } from 'next';
+import { useQueryGameRecords } from 'hooks/useQueryGameRecords';
 
 const Profile: NextPage = () => {
   const { data: user } = useQueryUser();
@@ -14,6 +15,15 @@ const Profile: NextPage = () => {
     user.avatarPath !== null
       ? `${process.env.NEXT_PUBLIC_API_URL as string}/user/${user.avatarPath}`
       : '';
+  const { data: records } = useQueryGameRecords(user.id);
+  const numOfWins =
+    records !== undefined
+      ? records.filter((r) => r.winner.name === user.name).length
+      : 0;
+  const numOfLosses =
+    records !== undefined
+      ? records.filter((r) => r.loser.name === user.name).length
+      : 0;
 
   return (
     <Layout title="Profile">
@@ -57,7 +67,7 @@ const Profile: NextPage = () => {
               </Grid>
               <Grid item>
                 <Typography gutterBottom variant="h5" component="div">
-                  {point}
+                  {numOfWins}
                 </Typography>
               </Grid>
             </Grid>
@@ -66,12 +76,12 @@ const Profile: NextPage = () => {
             <Grid container direction="column" alignItems="center">
               <Grid item>
                 <Typography gutterBottom variant="subtitle1" component="div">
-                  Loses
+                  Losses
                 </Typography>
               </Grid>
               <Grid item>
                 <Typography gutterBottom variant="h5" component="div">
-                  {point}
+                  {numOfLosses}
                 </Typography>
               </Grid>
             </Grid>
