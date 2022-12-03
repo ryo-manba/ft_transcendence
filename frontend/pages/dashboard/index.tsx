@@ -1,6 +1,6 @@
 import type { NextPage } from 'next';
 import Link from 'next/link';
-import { Stack, Typography, Paper, Grid } from '@mui/material';
+import { Stack, Typography, Paper, Grid, Button } from '@mui/material';
 import { useQueryUser } from 'hooks/useQueryUser';
 import { Header } from 'components/common/Header';
 import { Layout } from 'components/common/Layout';
@@ -12,7 +12,7 @@ import { useState } from 'react';
 
 const Dashboard: NextPage = () => {
   const { data: user } = useQueryUser();
-  const overElavation = 5;
+  const overElavation = 7;
   const outElevation = 2;
   const [chatShadow, setChatShadow] = useState(outElevation);
   const [gameShadow, setGameShadow] = useState(outElevation);
@@ -34,102 +34,114 @@ const Dashboard: NextPage = () => {
         sx={{ height: '100%', mt: '50px' }}
       >
         <Link href="/chat">
-          <Paper
-            sx={{
-              width: '200px',
-              height: '200px',
-            }}
-            elevation={chatShadow}
-            onMouseOver={() => {
-              setChatShadow(overElavation);
-            }}
-            onMouseOut={() => {
-              setChatShadow(outElevation);
-            }}
-          >
-            <Grid
-              container
-              spacing={1}
-              alignItems="center"
-              justifyContent="center"
+          <Button>
+            <Paper
               sx={{
-                height: '100%',
+                width: '200px',
+                height: '200px',
+                bgcolor: 'primary.main',
+                color: 'white',
+              }}
+              elevation={chatShadow}
+              onMouseOver={() => {
+                setChatShadow(overElavation);
+              }}
+              onMouseOut={() => {
+                setChatShadow(outElevation);
               }}
             >
-              <Grid item>
-                <Typography fontWeight="fontWeightBold" variant="h5">
-                  Chat
-                </Typography>
+              <Grid
+                container
+                spacing={1}
+                alignItems="center"
+                justifyContent="center"
+                sx={{
+                  height: '100%',
+                }}
+              >
+                <Grid item>
+                  <Typography fontWeight="fontWeightBold" variant="h5">
+                    Chat
+                  </Typography>
+                </Grid>
+                <Grid item>
+                  <ChatIcon />
+                </Grid>
               </Grid>
-              <Grid item>
-                <ChatIcon />
-              </Grid>
-            </Grid>
-          </Paper>
+            </Paper>
+          </Button>
         </Link>
         <Link href="/game/home">
-          <Paper
-            sx={{
-              width: '200px',
-              height: '200px',
-            }}
-            elevation={gameShadow}
-            onMouseOver={() => {
-              setGameShadow(overElavation);
-            }}
-            onMouseOut={() => {
-              setGameShadow(outElevation);
-            }}
-          >
-            <Grid
-              container
-              spacing={1}
-              alignItems="center"
-              justifyContent="center"
-              sx={{ height: '100%' }}
+          <Button>
+            <Paper
+              sx={{
+                width: '200px',
+                height: '200px',
+                bgcolor: 'primary.main',
+                color: 'white',
+              }}
+              elevation={gameShadow}
+              onMouseOver={() => {
+                setGameShadow(overElavation);
+              }}
+              onMouseOut={() => {
+                setGameShadow(outElevation);
+              }}
             >
-              <Grid item>
-                <Typography fontWeight="fontWeightBold" variant="h5">
-                  Game
-                </Typography>
+              <Grid
+                container
+                spacing={1}
+                alignItems="center"
+                justifyContent="center"
+                sx={{ height: '100%' }}
+              >
+                <Grid item>
+                  <Typography fontWeight="fontWeightBold" variant="h5">
+                    Game
+                  </Typography>
+                </Grid>
+                <Grid item>
+                  <VideogameAssetIcon />
+                </Grid>
               </Grid>
-              <Grid item>
-                <VideogameAssetIcon />
-              </Grid>
-            </Grid>
-          </Paper>
+            </Paper>
+          </Button>
         </Link>
         <Link href="/friend">
-          <Paper
-            sx={{
-              width: '200px',
-              height: '200px',
-            }}
-            elevation={friendShadow}
-            onMouseOver={() => {
-              setFriendShadow(overElavation);
-            }}
-            onMouseOut={() => {
-              setFriendShadow(outElevation);
-            }}
-          >
-            <Grid
-              container
-              spacing={1}
-              alignItems="center"
-              justifyContent="center"
-              sx={{ height: '100%' }}
+          <Button>
+            <Paper
+              sx={{
+                width: '200px',
+                height: '200px',
+                bgcolor: 'primary.main',
+                color: 'white',
+              }}
+              elevation={friendShadow}
+              onMouseOver={() => {
+                setFriendShadow(overElavation);
+              }}
+              onMouseOut={() => {
+                setFriendShadow(outElevation);
+              }}
             >
-              <Grid item>
-                <Typography fontWeight="fontWeightBold" variant="h5">
-                  Friend
-                </Typography>
+              <Grid
+                container
+                spacing={1}
+                alignItems="center"
+                justifyContent="center"
+                sx={{ height: '100%' }}
+              >
+                <Grid item>
+                  <Typography fontWeight="fontWeightBold" variant="h5">
+                    Friend
+                  </Typography>
+                </Grid>
+                <Grid item>
+                  <Diversity3Icon />
+                </Grid>
               </Grid>
-              <Grid item>
-                <Diversity3Icon />
-              </Grid>
-            </Grid>
-          </Paper>
+            </Paper>
+          </Button>
         </Link>
       </Stack>
     </Layout>
