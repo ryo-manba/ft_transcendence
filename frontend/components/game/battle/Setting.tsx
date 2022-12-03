@@ -11,16 +11,16 @@ import {
 } from '@mui/material';
 import { useEffect, useState } from 'react';
 import { useSocketStore } from 'store/game/ClientSocket';
+import { useGameSettingStore } from 'store/game/GameSetting';
 import { PlayState, usePlayStateStore } from 'store/game/PlayState';
 import { DifficultyLevel, isDifficultyLevel, GameSetting } from 'types/game';
 
-type Props = {
-  updateSetting: (newSetting: GameSetting) => void;
-};
-
-export const Setting = ({ updateSetting }: Props) => {
+export const Setting = () => {
   const { playState } = usePlayStateStore();
   const updatePlayState = usePlayStateStore((store) => store.updatePlayState);
+  const updateGameSetting = useGameSettingStore(
+    (store) => store.updateGameSetting,
+  );
   const { socket } = useSocketStore();
   const [difficulty, setDifficulty] = useState<DifficultyLevel>('Easy');
   const [matchPoint, setMatchPoint] = useState(3);
@@ -38,7 +38,7 @@ export const Setting = ({ updateSetting }: Props) => {
 
   useEffect(() => {
     socket.on('playStarted', (newSetting: GameSetting) => {
-      updateSetting(newSetting);
+      updateGameSetting(newSetting);
       updatePlayState(PlayState.statePlaying);
     });
 

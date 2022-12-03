@@ -7,8 +7,13 @@ import {
   Tooltip,
   IconButton,
 } from '@mui/material';
+import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { useSocketStore } from 'store/game/ClientSocket';
+import { useGameSettingStore } from 'store/game/GameSetting';
+import { usePlayerNamesStore } from 'store/game/PlayerNames';
+import { PlayState, usePlayStateStore } from 'store/game/PlayState';
+import { GameSetting } from 'types/game';
 
 type WatchInfo = {
   roomName: string;
@@ -16,9 +21,19 @@ type WatchInfo = {
   name2: string;
 };
 
+type GameState = 'Setting' | 'Playing';
+
 export const Watch = () => {
   const { socket } = useSocketStore();
   const [rooms, setRooms] = useState<WatchInfo[]>([]);
+  const updatePlayState = usePlayStateStore((store) => store.updatePlayState);
+  const updatePlayerNames = usePlayerNamesStore(
+    (store) => store.updatePlayerNames,
+  );
+  const updateGameSetting = useGameSettingStore(
+    (store) => store.updateGameSetting,
+  );
+  const router = useRouter();
 
   useEffect(() => {
     socket.emit('watchList');
@@ -29,11 +44,32 @@ export const Watch = () => {
       socket.emit('watchList');
     }, 2000);
 
+    socket.on(
+      'joinGameRoom',
+      (gameState: GameState, gameSetting: GameSetting) => {
+        console.log('joinGameRoom');
+        if (gameState === 'Setting') {
+          updatePlayState(PlayState.stateStandingBy);
+        } else {
+          updatePlayState(PlayState.statePlaying);
+          updateGameSetting(gameSetting);
+        }
+        void router.push('/game/battle');
+      },
+    );
+
     return () => {
       clearInterval(id);
-      socket.off('watchList');
+      socket.off('watchListed');
+      socket.off('joinGameRoom');
     };
   }, [socket]);
+
+  const watchGame = (room: WatchInfo) => {
+    const playerNames: [string, string] = [room.name1, room.name2];
+    socket.emit('watchGame', room.roomName);
+    updatePlayerNames(playerNames);
+  };
 
   return (
     <>
@@ -47,7 +83,11 @@ export const Watch = () => {
             sx={{ border: '1px solid' }}
             secondaryAction={
               <Tooltip title="Watch !">
-                <IconButton href="https://github.com/ryo-manba/ft_transcendence">
+                <IconButton
+                  onClick={() => {
+                    watchGame(room);
+                  }}
+                >
                   <VisibilityIcon />
                 </IconButton>
               </Tooltip>

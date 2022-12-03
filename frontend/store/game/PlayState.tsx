@@ -6,8 +6,7 @@ enum PlayState {
   stateSelecting,
   stateStandingBy,
   statePlaying,
-  stateWinner,
-  stateLoser,
+  stateFinished,
 }
 
 type State = {

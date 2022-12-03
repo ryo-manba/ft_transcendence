@@ -3,8 +3,13 @@ import { Button, Grid, Typography } from '@mui/material';
 import { PlayState, usePlayStateStore } from 'store/game/PlayState';
 import { useEffect } from 'react';
 import { useSocketStore } from 'store/game/ClientSocket';
+import { FinishedGameInfo } from 'types/game';
 
-export const Result = () => {
+type Props = {
+  finishedGameInfo: FinishedGameInfo;
+};
+
+export const Result = ({ finishedGameInfo }: Props) => {
   const { playState } = usePlayStateStore();
   const { socket } = useSocketStore();
 
@@ -13,34 +18,108 @@ export const Result = () => {
   }, []);
 
   return (
-    <Grid item>
-      <Grid
-        container
-        justifyContent="center"
-        alignItems="center"
-        direction="column"
-        sx={{
-          position: 'absolute',
-          top: '40%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          bgcolor: 'background.paper',
-          width: '25%',
-          height: '25%',
-        }}
-      >
+    <Grid
+      container
+      justifyContent="center"
+      alignItems="center"
+      direction="column"
+      sx={{
+        position: 'absolute',
+        top: '40%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        bgcolor: 'background.paper',
+        width: '25%',
+        height: '25%',
+      }}
+    >
+      {playState === PlayState.stateNothing && (
         <Grid item sx={{ mt: 3 }}>
           <Typography align="center" gutterBottom variant="h4" component="h4">
-            {playState === PlayState.stateWinner && 'You Win!'}
-            {playState === PlayState.stateLoser && 'You Lose...'}
-            {playState === PlayState.stateNothing && 'Something went wrong...'}
+            Something went wrong...
           </Typography>
         </Grid>
-        <Grid item>
-          <Link href="/game/home">
-            <Button variant="contained">Back to Home</Button>
-          </Link>
+      )}
+      {playState === PlayState.stateFinished && (
+        <Grid container justifyContent="space-around">
+          <Grid item>
+            <Typography align="center" gutterBottom variant="h3" component="h3">
+              Result
+            </Typography>
+          </Grid>
+          <Grid container>
+            <Grid item xs={6}>
+              <Typography
+                align="center"
+                gutterBottom
+                variant="h4"
+                component="h4"
+              >
+                Winner
+              </Typography>
+            </Grid>
+            <Grid item xs={6}>
+              <Typography
+                align="center"
+                gutterBottom
+                variant="h4"
+                component="h4"
+              >
+                Loser
+              </Typography>
+            </Grid>
+          </Grid>
+          <Grid container>
+            <Grid item xs={6}>
+              <Typography
+                align="center"
+                gutterBottom
+                variant="h5"
+                component="h5"
+              >
+                {finishedGameInfo.winnerName}
+              </Typography>
+            </Grid>
+            <Grid item xs={6}>
+              <Typography
+                align="center"
+                gutterBottom
+                variant="h5"
+                component="h5"
+              >
+                {finishedGameInfo.loserName}
+              </Typography>
+            </Grid>
+          </Grid>
+          <Grid container>
+            <Grid item xs={6}>
+              <Typography
+                align="center"
+                gutterBottom
+                variant="h5"
+                component="h5"
+              >
+                {finishedGameInfo.winnerScore}
+              </Typography>
+            </Grid>
+            <Grid item xs={6}>
+              <Typography
+                align="center"
+                gutterBottom
+                variant="h5"
+                component="h5"
+              >
+                {finishedGameInfo.loserScore}
+              </Typography>
+            </Grid>
+          </Grid>
         </Grid>
+      )}
+      <br />
+      <Grid item>
+        <Link href="/game/home">
+          <Button variant="contained">Back to Home</Button>
+        </Link>
       </Grid>
     </Grid>
   );
