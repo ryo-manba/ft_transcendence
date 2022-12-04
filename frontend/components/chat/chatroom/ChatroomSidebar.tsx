@@ -1,23 +1,23 @@
-import { memo, useState, useEffect } from 'react';
+import { memo, useState, useEffect, Dispatch, SetStateAction } from 'react';
 import { Socket } from 'socket.io-client';
 import { List } from '@mui/material';
 import { ChatroomListItem } from 'components/chat/chatroom/ChatroomListItem';
 import { ChatroomCreateButton } from 'components/chat/chatroom/ChatroomCreateButton';
 import { ChatroomJoinButton } from 'components/chat/chatroom/ChatroomJoinButton';
-import { Chatroom, Message } from 'types/chat';
+import { Chatroom } from 'types/chat';
 import { useQueryUser } from 'hooks/useQueryUser';
 import { Loading } from 'components/common/Loading';
 
 type Props = {
   socket: Socket;
-  setCurrentRoomId: (id: number) => void;
-  setMessages: (message: Message[]) => void;
+  setCurrentRoomId: Dispatch<SetStateAction<number>>;
+  clearMessages: () => void;
 };
 
 export const ChatroomSidebar = memo(function ChatroomSidebar({
   socket,
   setCurrentRoomId,
-  setMessages,
+  clearMessages,
 }: Props) {
   const { data: user } = useQueryUser();
   const [rooms, setRooms] = useState<Chatroom[]>([]);
@@ -42,8 +42,8 @@ export const ChatroomSidebar = memo(function ChatroomSidebar({
     // 現在所属しているチャットルームが削除された場合、表示されているチャット履歴を削除する
     socket.on('chat:deleteRoom', (deletedRoom: Chatroom) => {
       console.log('chat:deleteRoom', deletedRoom);
-      // 表示中のチャットを削除する
-      setMessages([]);
+      // 表示中のメッセージを削除する
+      clearMessages();
       setCurrentRoomId(0);
       // socketの退出処理をする
       socket.emit('chat:leaveRoom');

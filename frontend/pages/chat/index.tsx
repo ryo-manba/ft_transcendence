@@ -89,8 +89,6 @@ const Chat = () => {
 
   // send a message to the server
   const sendMessage = () => {
-    if (!socket) return;
-
     const message = {
       userId: user.id,
       chatroomId: currentRoomId,
@@ -99,6 +97,11 @@ const Chat = () => {
 
     socket.emit('chat:sendMessage', message);
     setText('');
+  };
+
+  // 表示中のチャットルームが削除されたときに実行する
+  const clearMessages = () => {
+    setMessages([]);
   };
 
   return (
@@ -121,7 +124,7 @@ const Chat = () => {
           <ChatroomSidebar
             socket={socket}
             setCurrentRoomId={setCurrentRoomId}
-            setMessages={setMessages}
+            clearMessages={clearMessages}
           />
         </Grid>
         <Grid
