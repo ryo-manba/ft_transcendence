@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react';
 import { List } from '@mui/material';
-import { FriendAddButton } from 'components/chat/FriendAddButton';
-import { FriendListItem } from 'components/chat/FriendListItem';
+import { FriendAddButton } from 'components/chat/friend/FriendAddButton';
+import { FriendListItem } from 'components/chat/friend/FriendListItem';
 import { Loading } from 'components/common/Loading';
 import { useQueryUser } from 'hooks/useQueryUser';
 import { Friend } from 'types/friend';
 import { fetchFollowingUsers } from 'api/friend/fetchFollowingUsers';
 
-export const FriendBar = () => {
+export const FriendSidebar = () => {
   const [friends, setFriends] = useState<Friend[]>([]);
   const { data: user } = useQueryUser();
   if (user === undefined) {

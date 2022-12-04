@@ -3,7 +3,7 @@ import { ListItem, ListItemText, ListItemAvatar, Avatar } from '@mui/material';
 import { blue } from '@mui/material/colors';
 import { Friend } from 'types/friend';
 import { useQueryUser } from 'hooks/useQueryUser';
-import { FriendInfoDialog } from 'components/chat/FriendInfoDialog';
+import { FriendInfoDialog } from 'components/chat/friend/FriendInfoDialog';
 import { Loading } from 'components/common/Loading';
 
 type Props = {
