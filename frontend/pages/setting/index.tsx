@@ -35,7 +35,7 @@ const Setting: NextPage = () => {
 
   const avatarImageUrl =
     user.avatarPath !== null
-      ? `${process.env.NEXT_PUBLIC_API_URL as string}/user/${user.avatarPath}`
+      ? `${process.env.NEXT_PUBLIC_API_URL as string}/user/avatar/${user.id}`
       : '';
 
   const onSubmit: SubmitHandler<SettingForm> = (data: SettingForm) => {

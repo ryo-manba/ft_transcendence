@@ -2,20 +2,25 @@ import { Avatar, Grid, Typography } from '@mui/material';
 import { Header } from 'components/common/Header';
 import { Layout } from 'components/common/Layout';
 import { Loading } from 'components/common/Loading';
-import { useQueryUser } from 'hooks/useQueryUser';
 import type { NextPage } from 'next';
 import { useQueryGameRecords } from 'hooks/useQueryGameRecords';
+import { History } from 'components/game/home/History';
+import { useQueryUserById } from 'hooks/useQueryUserById';
+import { useRouter } from 'next/router';
 
 const Profile: NextPage = () => {
-  const { data: user } = useQueryUser();
-  if (user === undefined) return <Loading fullHeight />;
+  const router = useRouter();
+  const userId = Number(router.query.userId);
+  const { data: user } = useQueryUserById(userId);
+  const { data: records } = useQueryGameRecords(user?.id);
+  if (user === undefined || records === undefined)
+    return <Loading fullHeight />;
   const userName = user.name;
   const point = user.point;
   const avatarImageUrl =
     user.avatarPath !== null
-      ? `${process.env.NEXT_PUBLIC_API_URL as string}/user/${user.avatarPath}`
+      ? `${process.env.NEXT_PUBLIC_API_URL as string}/user/avatar/${user.id}`
       : '';
-  const { data: records } = useQueryGameRecords(user.id);
   const numOfWins =
     records !== undefined
       ? records.filter((r) => r.winner.name === user.name).length
@@ -39,7 +44,7 @@ const Profile: NextPage = () => {
           <Avatar sx={{ width: 150, height: 150 }} src={avatarImageUrl} />
         </Grid>
         <Grid item>
-          <Typography gutterBottom variant="h3" component="div">
+          <Typography gutterBottom variant="h1" component="div">
             {userName}
           </Typography>
         </Grid>
@@ -47,12 +52,12 @@ const Profile: NextPage = () => {
           <Grid item>
             <Grid container direction="column" alignItems="center">
               <Grid item>
-                <Typography gutterBottom variant="subtitle1" component="div">
+                <Typography gutterBottom variant="h5" component="div">
                   Point
                 </Typography>
               </Grid>
               <Grid item>
-                <Typography gutterBottom variant="h5" component="div">
+                <Typography gutterBottom variant="h4" component="div">
                   {point}
                 </Typography>
               </Grid>
@@ -61,12 +66,12 @@ const Profile: NextPage = () => {
           <Grid item>
             <Grid container direction="column" alignItems="center">
               <Grid item>
-                <Typography gutterBottom variant="subtitle1" component="div">
+                <Typography gutterBottom variant="h5" component="div">
                   Wins
                 </Typography>
               </Grid>
               <Grid item>
-                <Typography gutterBottom variant="h5" component="div">
+                <Typography gutterBottom variant="h4" component="div">
                   {numOfWins}
                 </Typography>
               </Grid>
@@ -75,16 +80,21 @@ const Profile: NextPage = () => {
           <Grid item>
             <Grid container direction="column" alignItems="center">
               <Grid item>
-                <Typography gutterBottom variant="subtitle1" component="div">
+                <Typography gutterBottom variant="h5" component="div">
                   Losses
                 </Typography>
               </Grid>
               <Grid item>
-                <Typography gutterBottom variant="h5" component="div">
+                <Typography gutterBottom variant="h4" component="div">
                   {numOfLosses}
                 </Typography>
               </Grid>
             </Grid>
+          </Grid>
+        </Grid>
+        <Grid container direction="row" justifyContent="center" spacing={5}>
+          <Grid item xs={8}>
+            <History userId={user.id} />
           </Grid>
         </Grid>
       </Grid>

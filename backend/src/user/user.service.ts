@@ -1,4 +1,9 @@
-import { Injectable, StreamableFile, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  StreamableFile,
+  ForbiddenException,
+  Logger,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { UpdateNameDto } from './dto/update-name.dto';
 import { Prisma, User } from '@prisma/client';
@@ -11,15 +16,23 @@ import * as path from 'path';
 export class UserService {
   constructor(private prisma: PrismaService) {}
 
-  async findOne(userId: number): Promise<Omit<User, 'hashPassword'> | null> {
-    const user = await this.prisma.user.findUnique({
-      where: {
-        id: userId,
-      },
-    });
-    delete user.hashedPassword;
+  private logger: Logger = new Logger('UserService');
 
-    return user;
+  async findOne(userId: number): Promise<Omit<User, 'hashedPassword'> | null> {
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: {
+          id: userId,
+        },
+      });
+      delete user.hashedPassword;
+
+      return user;
+    } catch (error) {
+      this.logger.log(error);
+
+      return null;
+    }
   }
 
   /**
@@ -92,7 +105,9 @@ export class UserService {
     }
   }
 
-  getAvatarImage(imageUrl: string): StreamableFile {
+  async getAvatarImage(id: number): Promise<StreamableFile> {
+    const user = await this.findOne(id);
+    const imageUrl = user !== null ? user.avatarPath : '';
     const filePath = path.join(
       process.cwd(),
       process.env.AVATAR_IMAGE_DIR,

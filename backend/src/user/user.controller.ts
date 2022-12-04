@@ -3,6 +3,7 @@ import {
   Controller,
   Get,
   Param,
+  ParseIntPipe,
   Patch,
   Post,
   Req,
@@ -51,6 +52,13 @@ export class UserController {
     return req.user;
   }
 
+  @Get(':id')
+  getUserById(
+    @Param('id', ParseIntPipe) id: number,
+  ): Promise<Omit<User, 'hashedPassword'> | null> {
+    return this.userService.findOne(id);
+  }
+
   @Patch('point/:id')
   updatePoint(
     @Param('id') id: string,
@@ -83,9 +91,9 @@ export class UserController {
     });
   }
 
-  @Get(':imageUrl')
-  getAvatarImage(@Param('imageUrl') imageUrl: string) {
-    return this.userService.getAvatarImage(imageUrl);
+  @Get('avatar/:id')
+  getAvatarImage(@Param('id', ParseIntPipe) id: number) {
+    return this.userService.getAvatarImage(id);
   }
 
   @Patch('avatar/:id/:avatarPath')

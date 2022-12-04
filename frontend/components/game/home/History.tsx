@@ -8,10 +8,14 @@ import {
 } from '@mui/material';
 import { Loading } from 'components/common/Loading';
 import { useQueryGameRecords } from 'hooks/useQueryGameRecords';
-import { useQueryUser } from 'hooks/useQueryUser';
+import { useQueryUserById } from 'hooks/useQueryUserById';
 
-export const History = () => {
-  const { data: user } = useQueryUser();
+type Props = {
+  userId: number;
+};
+
+export const History = ({ userId }: Props) => {
+  const { data: user } = useQueryUserById(userId);
   const { data: records } = useQueryGameRecords(user?.id);
 
   if (records === undefined || user === undefined) return <Loading />;

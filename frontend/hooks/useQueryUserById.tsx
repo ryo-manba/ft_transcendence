@@ -1,23 +1,23 @@
 import { useRouter } from 'next/router';
 import axios, { AxiosError } from 'axios';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { GameRecordWithUserName } from 'types/game';
+import { User } from '@prisma/client';
 
-export const useQueryGameRecords = (userId: number | undefined) => {
+export const useQueryUserById = (userId: number | undefined) => {
   const queryClient = useQueryClient();
   const router = useRouter();
-  const getGameRecords = async () => {
+  const getUserById = async () => {
     if (userId === undefined) return undefined;
-    const { data } = await axios.get<GameRecordWithUserName[]>(
-      `${process.env.NEXT_PUBLIC_API_URL as string}/records/${userId}`,
+    const { data } = await axios.get<Omit<User, 'hashedPassword'>>(
+      `${process.env.NEXT_PUBLIC_API_URL as string}/user/${userId}`,
     );
 
     return data;
   };
 
-  return useQuery<GameRecordWithUserName[] | undefined, AxiosError>({
-    queryKey: ['game', userId],
-    queryFn: getGameRecords,
+  return useQuery<Omit<User, 'hashedPassword'> | undefined, AxiosError>({
+    queryKey: ['user', userId],
+    queryFn: getUserById,
     onError: (err: AxiosError) => {
       if (
         err.response &&
