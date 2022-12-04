@@ -2,7 +2,7 @@ import { memo, useState, useCallback, Dispatch, SetStateAction } from 'react';
 import { Button } from '@mui/material';
 import AddCircleOutlineRounded from '@mui/icons-material/AddCircleOutlineRounded';
 import { useQueryUser } from 'hooks/useQueryUser';
-import { FriendAddDialog } from 'components/chat/FriendAddDialog';
+import { FriendAddDialog } from 'components/chat/friend/FriendAddDialog';
 import { Loading } from 'components/common/Loading';
 import { fetchUnFollowingUsers } from 'api/friend/fetchUnFollowingUsers';
 import { Friend } from 'types/friend';
