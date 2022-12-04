@@ -105,31 +105,14 @@ export class FriendsService {
    * Friendリレーションを作成することでUserのフォロー処理を行う
    */
   async follow(dto: CreateFriendDto): Promise<Msg> {
-    // すでにフォローしているかチェック
-    const followingStatus = await this.prisma.friendRelation.findMany({
-      where: {
-        followerId: dto.followerId,
-        followingId: dto.followingId,
-      },
-    });
-
-    // すでにフォローしている場合は何もせず返す
-    if (followingStatus.length > 0) {
-      console.log(followingStatus);
-
-      return { message: 'Error: user already followed' };
-    }
-
     // TODO: ブロックされてたら友達追加できないようにする?
 
     // フォロー処理を行う
     const res = await this.create(dto);
     if (res) {
-      // フォローに成功した
       return { message: 'ok' };
     }
 
-    // フォローに失敗した
     return { message: 'Error: can not followed' };
   }
 }

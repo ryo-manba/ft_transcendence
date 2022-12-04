@@ -45,17 +45,9 @@ export const FriendAddDialog = memo(function FriendAddDialog({
     return <Loading />;
   }
 
-  const addFriend = async (props: FollowProps) => {
-    const res = await followUser(props);
-
-    // 友達を追加する処理(フォロー)に失敗したらエラーメッセージをセットする
-    if (res.message !== 'ok') {
-      setError(res.message);
-    }
-  };
-
   const handleClose = () => {
     setSelectedUser(null);
+    setError('');
     onClose();
   };
 
@@ -66,24 +58,31 @@ export const FriendAddDialog = memo(function FriendAddDialog({
     setSelectedUser(user);
   };
 
+  /**
+   * onClickで直接非同期関数を呼べないのでwrapしてる
+   * [参考] https://github.com/typescript-eslint/typescript-eslint/issues/4619
+   */
   const handleSubmit = () => {
-    if (selectedUser === null) return;
+    const addFriend = async () => {
+      if (selectedUser === null) return;
 
-    const followProps: FollowProps = {
-      followerId: user.id,
-      followingId: selectedUser.id,
-    };
+      const followProps: FollowProps = {
+        followerId: user.id,
+        followingId: selectedUser.id,
+      };
 
-    addFriend(followProps)
-      .then((res) => {
-        // 成功したら既存のfriendのリストを更新する
+      const res = await followUser(followProps);
+      // 成功したら既存のfriendのリストを更新する
+      if (res.message === 'ok') {
         setFriends((prev) => [...prev, selectedUser]);
         handleClose();
-        console.log('res:', res);
-      })
-      .catch((err) => {
-        console.log('err:', err);
-      });
+      } else {
+        // 友達を追加する処理(フォロー)に失敗したらエラーメッセージをセットする
+        setError(res.message);
+      }
+    };
+
+    void addFriend();
   };
 
   return (
