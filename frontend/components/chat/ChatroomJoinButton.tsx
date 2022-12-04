@@ -55,7 +55,7 @@ export const ChatroomJoinButton = memo(function ChatroomJoinButton({
         style={{ justifyContent: 'flex-start' }}
         onClick={handleOpen}
       >
-        チャットルームを探す
+        Search Room
       </Button>
       <ChatroomJoinDialog
         rooms={rooms}
