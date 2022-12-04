@@ -7,15 +7,19 @@ import {
   Dialog,
   DialogActions,
   DialogContent,
-  DialogContentText,
+  InputLabel,
+  Select,
+  SelectChangeEvent,
+  MenuItem,
+  FormControl,
   DialogTitle,
   Alert,
   Box,
   Collapse,
 } from '@mui/material';
-import DeleteIcon from '@mui/icons-material/Delete';
+import SettingsIcon from '@mui/icons-material/Settings';
 import CloseIcon from '@mui/icons-material/Close';
-import { Chatroom } from 'types/chat';
+import { Chatroom, ChatroomSettings, CHATROOM_SETTINGS } from 'types/chat';
 import { Socket } from 'socket.io-client';
 import { useQueryUser } from 'hooks/useQueryUser';
 import { Loading } from 'components/common/Loading';
@@ -29,6 +33,10 @@ type Props = {
 export const ChatroomListItem = ({ room, socket, setCurrentRoomId }: Props) => {
   const [open, setOpen] = useState(false);
   const { data: user } = useQueryUser();
+  const [settingType, setSettingType] = useState<ChatroomSettings>(
+    CHATROOM_SETTINGS.SET_ADMIN,
+  );
+
   if (user === undefined) {
     return <Loading />;
   }
@@ -54,6 +62,10 @@ export const ChatroomListItem = ({ room, socket, setCurrentRoomId }: Props) => {
 
   const handleClose = () => {
     setOpen(false);
+  };
+
+  const handleChangeSetting = (event: SelectChangeEvent) => {
+    setSettingType(event.target.value as ChatroomSettings);
   };
 
   const [warning, setWarning] = useState(false);
@@ -95,24 +107,49 @@ export const ChatroomListItem = ({ room, socket, setCurrentRoomId }: Props) => {
       </Box>
       <ListItem
         secondaryAction={
-          <IconButton edge="end" aria-label="delete" onClick={handleClickOpen}>
-            <DeleteIcon />
+          <IconButton
+            edge="end"
+            aria-label="settings"
+            onClick={handleClickOpen}
+          >
+            <SettingsIcon />
           </IconButton>
         }
         divider
         button
       >
-        <Dialog
-          open={open}
-          onClose={handleClose}
-          aria-labelledby="alert-dialog-title"
-          aria-describedby="alert-dialog-description"
-        >
-          <DialogTitle id="alert-dialog-title">Delete Room?</DialogTitle>
+        <Dialog open={open} onClose={handleClose}>
+          <DialogTitle>Room Settings</DialogTitle>
           <DialogContent>
-            <DialogContentText id="alert-dialog-description">
-              {`Do you really want to delete the Room '${room.name}'?`}
-            </DialogContentText>
+            <FormControl sx={{ m: 1, minWidth: 120 }}>
+              <InputLabel id="room-setting-select-label">Setting</InputLabel>
+              <Select
+                labelId="room-setting-select-label"
+                id="room-setting"
+                value={settingType}
+                label="setting"
+                onChange={handleChangeSetting}
+              >
+                <MenuItem value={CHATROOM_SETTINGS.DELETE_ROOM}>
+                  {CHATROOM_SETTINGS.DELETE_ROOM}
+                </MenuItem>
+                <MenuItem value={CHATROOM_SETTINGS.SET_ADMIN}>
+                  {CHATROOM_SETTINGS.SET_ADMIN}
+                </MenuItem>
+                <MenuItem value={CHATROOM_SETTINGS.MUTE_USER}>
+                  {CHATROOM_SETTINGS.MUTE_USER}
+                </MenuItem>
+                <MenuItem value={CHATROOM_SETTINGS.BAN_USER}>
+                  {CHATROOM_SETTINGS.BAN_USER}
+                </MenuItem>
+                <MenuItem value={CHATROOM_SETTINGS.ADD_FRIEND}>
+                  {CHATROOM_SETTINGS.ADD_FRIEND}
+                </MenuItem>
+                <MenuItem value={CHATROOM_SETTINGS.CHANGE_PASSWORD}>
+                  {CHATROOM_SETTINGS.CHANGE_PASSWORD}
+                </MenuItem>
+              </Select>
+            </FormControl>
           </DialogContent>
           <DialogActions>
             <Button onClick={handleClose}>Disagree</Button>
