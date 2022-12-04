@@ -30,7 +30,7 @@ const Setting: NextPage = () => {
   const { updateNameMutation } = useMutateName();
   const { updateAvatarMutation, deleteAvatarMutation } = useMutateAvatar();
 
-  if (user === undefined) return <Loading />;
+  if (user === undefined) return <Loading fullHeight />;
   const registeredUsername = register('username');
 
   const avatarImageUrl =
