@@ -7,6 +7,7 @@ import { useQueryGameRecords } from 'hooks/useQueryGameRecords';
 import { History } from 'components/game/home/History';
 import { useQueryUserById } from 'hooks/useQueryUserById';
 import { useRouter } from 'next/router';
+import { getAvatarImageUrl } from 'api/user/getAvatarImageUrl';
 
 const Profile: NextPage = () => {
   const router = useRouter();
@@ -17,10 +18,7 @@ const Profile: NextPage = () => {
     return <Loading fullHeight />;
   const userName = user.name;
   const point = user.point;
-  const avatarImageUrl =
-    user.avatarPath !== null
-      ? `${process.env.NEXT_PUBLIC_API_URL as string}/user/avatar/${user.id}`
-      : '';
+  const avatarImageUrl = getAvatarImageUrl(user);
   const numOfWins =
     records !== undefined
       ? records.filter((r) => r.winner.name === user.name).length
