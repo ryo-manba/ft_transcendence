@@ -4,7 +4,7 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma/prisma.service';
-import { AuthDto } from './dto/auth.dto';
+import { AuthDto, OauthDto } from './dto/auth.dto';
 import { Msg, Jwt } from './interfaces/auth.interface';
 
 @Injectable()
@@ -68,5 +68,68 @@ export class AuthService {
     return {
       accessToken: token,
     };
+  }
+
+  async oauthlogin(dto: OauthDto): Promise<Jwt> {
+    let user = await this.prisma.user.findUnique({
+      where: {
+        oauthid: dto.oauthid,
+      },
+    });
+
+    if (!user) {
+      // 初めてOAuth認証した時はユーザー登録する
+      let sameUsername = await this.prisma.user.findUnique({
+        where: { name: dto.oauthid },
+      });
+      let username = '';
+      if (sameUsername) {
+        // usernameが使われてたら、一致しないものを生成する
+        while (sameUsername) {
+          username =
+            dto.oauthid + '_' + Math.floor(Math.random() * 100000).toString();
+          sameUsername = await this.prisma.user.findUnique({
+            where: { name: username },
+          });
+        }
+      } else {
+        username = dto.oauthid;
+      }
+      //パスワードは
+      const password = Math.random().toString(36).slice(-16);
+      const hashed = await bcrypt.hash(password, 12);
+      try {
+        // DBへ新規追加
+        await this.prisma.user.create({
+          data: {
+            oauthid: dto.oauthid,
+            name: username,
+            hashedPassword: hashed,
+            avatarPath: dto.imagepath,
+          },
+        });
+      } catch (error) {
+        if (error instanceof PrismaClientKnownRequestError) {
+          // Prismaが新規作成時に発行するエラー。
+          if (error.code === 'P2002') {
+            throw new ForbiddenException('username is already taken');
+          }
+        }
+        throw error;
+      }
+      user = await this.prisma.user.findUnique({
+        where: {
+          oauthid: dto.oauthid,
+        },
+      });
+      if (!user) throw new ForbiddenException('username or password incorrect');
+    }
+    // if (user.has2FA) {
+    //   UserManager.instance.twoFAlist.push(new TwoFAUser(user.id));
+
+    //   return user.toResponseUser(false, true);
+    // }
+
+    return this.generateJwt(user.id, user.name);
   }
 }

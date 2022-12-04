@@ -23,6 +23,8 @@ model User {
   messages        Message[]
   followers       FriendRelation[]  @relation("follower")
   followings      FriendRelation[]  @relation("following")
+  oauthid         String?           @unique
+  has2FA          Boolean           @default(false)
 }
 
 model FriendRelation {
