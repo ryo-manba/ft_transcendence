@@ -4,31 +4,34 @@ import { Play } from 'components/game/battle/Play';
 import { Result } from 'components/game/battle/Result';
 import { Layout } from 'components/common/Layout';
 import { usePlayStateStore, PlayState } from 'store/game/PlayState';
-import { GameSetting } from 'types/game';
+import { FinishedGameInfo } from 'types/game';
 import { useState } from 'react';
 
-const defaultGameSetting: GameSetting = {
-  difficulty: 'Easy',
-  matchPoint: 3,
+const defaultFinishedGameInfo: FinishedGameInfo = {
+  winnerName: '',
+  loserName: '',
+  winnerScore: 0,
+  loserScore: 0,
 };
 
 const Battle: NextPage = () => {
   const { playState } = usePlayStateStore();
-  const [gameSetting, setGameSetting] = useState(defaultGameSetting);
+  const [finishedGameInfo, setFinishedGameInfo] = useState(
+    defaultFinishedGameInfo,
+  );
   console.log(playState);
 
   return (
     <Layout title="Play">
       {(playState === PlayState.stateSelecting ||
-        playState === PlayState.stateStandingBy) && (
-        <Setting updateSetting={setGameSetting} />
-      )}
+        playState === PlayState.stateStandingBy) && <Setting />}
       {playState === PlayState.statePlaying && (
-        <Play gameSetting={gameSetting} />
+        <Play updateFinishedGameInfo={setFinishedGameInfo} />
       )}
-      {(playState === PlayState.stateWinner ||
-        playState === PlayState.stateLoser ||
-        playState === PlayState.stateNothing) && <Result />}
+      {(playState === PlayState.stateFinished ||
+        playState === PlayState.stateNothing) && (
+        <Result finishedGameInfo={finishedGameInfo} />
+      )}
     </Layout>
   );
 };

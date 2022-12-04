@@ -42,13 +42,15 @@ model ChatroomMembers {
 }
 
 model FriendRelation {
-  id          Int      @id @default(autoincrement())
   createdAt   DateTime @default(now())
   updatedAt   DateTime @default(now())
-  follower    User     @relation("follower", fields: [followerId], references: [id], onDelete: Cascade)
   followerId  Int
-  following   User     @relation("following", fields: [followingId], references: [id], onDelete: Cascade)
   followingId Int
+  follower    User     @relation("follower", fields: [followerId], references: [id], onDelete: Cascade)
+  following   User     @relation("following", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@id([followingId, followerId])
+  @@unique([followingId, followerId])
 }
 
 model GameRecord {

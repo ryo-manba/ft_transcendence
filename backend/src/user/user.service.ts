@@ -22,6 +22,28 @@ export class UserService {
     return user;
   }
 
+  /**
+   * @param params(userを探す条件)
+   * @returns 条件を満たすユーザー一覧を返す
+   */
+  async findAll(params: {
+    skip?: number;
+    take?: number;
+    cursor?: Prisma.ChatroomWhereUniqueInput;
+    where?: Prisma.ChatroomWhereInput;
+    orderBy?: Prisma.ChatroomOrderByWithRelationInput;
+  }): Promise<User[]> {
+    const { skip, take, cursor, where, orderBy } = params;
+
+    return this.prisma.user.findMany({
+      skip,
+      take,
+      cursor,
+      where,
+      orderBy,
+    });
+  }
+
   async updateName(
     userId: number,
     dto: UpdateNameDto,
