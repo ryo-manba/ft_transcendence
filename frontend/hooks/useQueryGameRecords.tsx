@@ -23,7 +23,7 @@ export const useQueryGameRecords = (userId: number | undefined) => {
         err.response &&
         (err.response.status === 401 || err.response.status === 403)
       ) {
-        queryClient.removeQueries(['user', userId]);
+        queryClient.removeQueries(['user']);
         void axios.post(
           `${process.env.NEXT_PUBLIC_API_URL as string}/auth/logout`,
         );
