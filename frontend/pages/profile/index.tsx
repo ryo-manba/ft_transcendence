@@ -14,7 +14,7 @@ const Profile: NextPage = () => {
   const userId = Number(router.query.userId);
   const { data: user } = useQueryUserById(userId);
   const { data: records } = useQueryGameRecords(user?.id);
-  if (user === undefined || records === undefined)
+  if (router.isReady === false || user === undefined || records === undefined)
     return <Loading fullHeight />;
   const userName = user.name;
   const point = user.point;
