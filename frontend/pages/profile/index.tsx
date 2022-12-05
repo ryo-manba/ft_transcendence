@@ -18,7 +18,7 @@ const Profile: NextPage = () => {
     return <Loading fullHeight />;
   const userName = user.name;
   const point = user.point;
-  const avatarImageUrl = getAvatarImageUrl(user);
+  const avatarImageUrl = getAvatarImageUrl(user.id);
   const numOfWins =
     records !== undefined
       ? records.filter((r) => r.winner.name === user.name).length

@@ -34,7 +34,7 @@ const Setting: NextPage = () => {
   if (user === undefined) return <Loading fullHeight />;
   const registeredUsername = register('username');
 
-  const avatarImageUrl = getAvatarImageUrl(user);
+  const avatarImageUrl = getAvatarImageUrl(user.id);
 
   const onSubmit: SubmitHandler<SettingForm> = (data: SettingForm) => {
     updateNameMutation.mutate({ userId: user.id, updatedName: data.username });
