@@ -55,7 +55,7 @@ export const FriendAddButton = memo(function FriendAddButton({
         style={{ justifyContent: 'flex-start' }}
         onClick={handleOpen}
       >
-        フレンドを追加する
+        Add Friend
       </Button>
       <FriendAddDialog
         users={unfollowingUsers}
