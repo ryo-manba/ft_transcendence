@@ -46,7 +46,7 @@ export const History = ({ userId }: Props) => {
                 <ListItemAvatar>
                   <Avatar
                     sx={{
-                      bgcolor: 'text.primary',
+                      bgcolor: 'success.main',
                       margin: 'auto',
                     }}
                     variant="rounded"
@@ -55,7 +55,10 @@ export const History = ({ userId }: Props) => {
                   </Avatar>
                 </ListItemAvatar>
                 <ListItemAvatar>
-                  <Avatar variant="rounded" sx={{ margin: 'auto' }}>
+                  <Avatar
+                    variant="rounded"
+                    sx={{ bgcolor: 'error.main', margin: 'auto' }}
+                  >
                     {item.loserScore}
                   </Avatar>
                 </ListItemAvatar>
@@ -74,13 +77,16 @@ export const History = ({ userId }: Props) => {
             ) : (
               <>
                 <ListItemAvatar>
-                  <Avatar variant="rounded" sx={{ margin: 'auto' }}>
+                  <Avatar
+                    variant="rounded"
+                    sx={{ bgcolor: 'error.main', margin: 'auto' }}
+                  >
                     {item.loserScore}
                   </Avatar>
                 </ListItemAvatar>
                 <ListItemAvatar>
                   <Avatar
-                    sx={{ bgcolor: 'text.primary', margin: 'auto' }}
+                    sx={{ bgcolor: 'success.main', margin: 'auto' }}
                     variant="rounded"
                   >
                     {item.winnerScore}
