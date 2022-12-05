@@ -65,7 +65,7 @@ const Profile: NextPage = () => {
             <Grid container direction="column" alignItems="center">
               <Grid item>
                 <Typography gutterBottom variant="h5" component="div">
-                  Wins
+                  Win
                 </Typography>
               </Grid>
               <Grid item>
@@ -79,7 +79,7 @@ const Profile: NextPage = () => {
             <Grid container direction="column" alignItems="center">
               <Grid item>
                 <Typography gutterBottom variant="h5" component="div">
-                  Losses
+                  Lose
                 </Typography>
               </Grid>
               <Grid item>

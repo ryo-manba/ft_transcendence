@@ -77,7 +77,7 @@ export const Profile = () => {
               </Grid>
               <Grid item>
                 <Typography variant="h5" gutterBottom>
-                  {`Wins: ${numOfWins}`}
+                  {`Win: ${numOfWins}`}
                 </Typography>
               </Grid>
             </Grid>
@@ -92,7 +92,7 @@ export const Profile = () => {
               </Grid>
               <Grid item>
                 <Typography variant="h5" gutterBottom>
-                  {`Losses: ${numOfLosses}`}
+                  {`Lose: ${numOfLosses}`}
                 </Typography>
               </Grid>
             </Grid>
