@@ -101,6 +101,35 @@ export class FriendsService {
 
   /**
    * @param userId
+   * @param roomId
+   * @return フォローしている かつ チャットルームに入室していないユーザー一覧を返す
+   */
+  async findJoinableFriends(userId: number, roomId: number): Promise<Friend[]> {
+    const followingUsers = await this.findFollowingUsers(userId);
+
+    // chatroomに所属してるUserIdを取得する
+    const joinedUsers = await this.prisma.chatroomMembers.findMany({
+      where: {
+        chatroomId: roomId,
+      },
+      select: {
+        userId: true,
+      },
+    });
+
+    // idの配列に変更する
+    const joinedUserIds = joinedUsers.map((user) => user.userId);
+
+    // すでに入室しているユーザーを除去する
+    const joinableFriends = followingUsers.filter(
+      (user) => !joinedUserIds.includes(user.id),
+    );
+
+    return joinableFriends;
+  }
+
+  /**
+   * @param userId
    * @return boolean
    * Friendリレーションを作成することでUserのフォロー処理を行う
    */
