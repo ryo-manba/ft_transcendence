@@ -19,20 +19,14 @@ export class UserService {
   private logger: Logger = new Logger('UserService');
 
   async findOne(userId: number): Promise<Omit<User, 'hashedPassword'> | null> {
-    try {
-      const user = await this.prisma.user.findUnique({
-        where: {
-          id: userId,
-        },
-      });
-      delete user.hashedPassword;
+    const user = await this.prisma.user.findUnique({
+      where: {
+        id: userId,
+      },
+    });
+    delete user.hashedPassword;
 
-      return user;
-    } catch (error) {
-      this.logger.log(error);
-
-      return null;
-    }
+    return user;
   }
 
   /**
