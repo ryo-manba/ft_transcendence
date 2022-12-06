@@ -45,7 +45,6 @@ const Setting: NextPage = () => {
   const { updateAvatarMutation, deleteAvatarMutation } = useMutateAvatar();
 
   if (user === undefined) return <Loading fullHeight />;
-  const registeredUsername = register('username');
 
   const avatarImageUrl =
     user.avatarPath !== null
@@ -119,10 +118,7 @@ const Setting: NextPage = () => {
   return (
     <Layout title="Setting">
       <Header title="Setting" />
-      <form
-        // [TODO] type coercionをできればなくしたい
-        onSubmit={handleSubmit(onSubmit) as VoidFunction}
-      >
+      <form onSubmit={handleSubmit(onSubmit) as VoidFunction}>
         <Grid
           container
           alignItems="center"
@@ -193,15 +189,8 @@ const Setting: NextPage = () => {
               control={control}
               render={() => (
                 <TextField
-                  // Props spreadingがeslintで禁止されているために全部書き下している
-                  // Props spreadingができれば{...register('username')}でいける
-                  // [TODO] type coercionをできればなくしたい
-                  onChange={
-                    registeredUsername.onChange as unknown as VoidFunction
-                  }
-                  onBlur={registeredUsername.onBlur as unknown as VoidFunction}
-                  name={registeredUsername.name}
-                  ref={registeredUsername.ref}
+                  // eslint-disable-next-line react/jsx-props-no-spreading
+                  {...register('username')}
                   fullWidth
                   required
                   id="user-name"
