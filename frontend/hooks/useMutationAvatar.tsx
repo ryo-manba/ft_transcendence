@@ -59,7 +59,6 @@ export const useMutateAvatar = () => {
         }
       },
       onError: (err: AxiosError) => {
-        // [TODO] エラーがあった場合に、UI上もなにかアラートを出す
         console.log(err);
         throw err;
       },
