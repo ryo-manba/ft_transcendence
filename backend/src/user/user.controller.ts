@@ -7,6 +7,7 @@ import {
   Patch,
   Post,
   Req,
+  StreamableFile,
   UploadedFile,
   UseGuards,
   UseInterceptors,
@@ -85,14 +86,18 @@ export class UserController {
   uploadAvatar(
     @UploadedFile() file: Express.Multer.File,
     @Param('id') id: string,
-  ) {
+  ): Promise<Omit<User, 'hashedPassword'>> {
     return this.userService.updateAvatar(Number(id), {
       avatarPath: file.filename,
     });
   }
 
-  @Get('avatar/:id')
-  getAvatarImage(@Param('id', ParseIntPipe) id: number) {
+  // uniqueSuffixは実際には使わないが、Settingの画面でアバターを更新した際にコンポーネント
+  // が更新されるようにするために追加している
+  @Get('avatar/:id/:uniqueSuffix')
+  getAvatarImage(
+    @Param('id', ParseIntPipe) id: number,
+  ): Promise<StreamableFile | undefined> {
     return this.userService.getAvatarImage(id);
   }
 
@@ -100,7 +105,7 @@ export class UserController {
   deleteAvatar(
     @Param('id') id: string,
     @Param('avatarPath') avatarPath: string,
-  ) {
+  ): Promise<Omit<User, 'hashedPassword'>> {
     return this.userService.deleteAvatar(Number(id), avatarPath);
   }
 }

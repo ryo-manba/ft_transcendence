@@ -105,13 +105,13 @@ export class UserService {
     }
   }
 
-  async getAvatarImage(id: number): Promise<StreamableFile> {
+  async getAvatarImage(id: number): Promise<StreamableFile | undefined> {
     const user = await this.findOne(id);
-    const imageUrl = user !== null ? user.avatarPath : '';
+    if (user === null || user.avatarPath === null) return undefined;
     const filePath = path.join(
       process.cwd(),
       process.env.AVATAR_IMAGE_DIR,
-      imageUrl,
+      user.avatarPath,
     );
     const file = createReadStream(filePath);
 
