@@ -13,6 +13,13 @@ export type CreateChatroomInfo = {
   password?: string;
 };
 
+export type JoinChatroomInfo = {
+  userId: number;
+  roomId: number;
+  type: ChatroomType;
+  password?: string;
+};
+
 export type Message = {
   ChatroomId: number;
   userId: number;
