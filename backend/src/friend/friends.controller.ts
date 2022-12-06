@@ -55,9 +55,6 @@ export class FriendsController {
     @Query('userId', ParseIntPipe) userId: number,
     @Query('roomId', ParseIntPipe) roomId: number,
   ): Promise<Friend[]> {
-    console.log('joinable-friends userId:', userId);
-    console.log('joinable-friends roomId:', roomId);
-
     return await this.friendsService.findJoinableFriends(userId, roomId);
   }
 

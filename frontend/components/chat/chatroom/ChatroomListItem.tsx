@@ -70,6 +70,7 @@ export const ChatroomListItem = ({ room, socket, setCurrentRoomId }: Props) => {
     };
 
     // friendをチャットルームに追加する
+    // TODO:フレンドを入室させたあとのgatewayからのレスポンス対応は今後行う
     socket.emit('chat:joinRoom', joinRoomInfo);
   };
 
