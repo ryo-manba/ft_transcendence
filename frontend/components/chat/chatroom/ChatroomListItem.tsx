@@ -33,9 +33,8 @@ type Props = {
 export const ChatroomListItem = ({ room, socket, setCurrentRoomId }: Props) => {
   const [open, setOpen] = useState(false);
   const { data: user } = useQueryUser();
-  const [settingType, setSettingType] = useState<ChatroomSettings>(
-    CHATROOM_SETTINGS.SET_ADMIN,
-  );
+  const [selectedRoomSetting, setSelectedRoomSetting] =
+    useState<ChatroomSettings>(CHATROOM_SETTINGS.DELETE_ROOM);
 
   if (user === undefined) {
     return <Loading />;
@@ -47,38 +46,63 @@ export const ChatroomListItem = ({ room, socket, setCurrentRoomId }: Props) => {
     setCurrentRoomId(id);
   };
 
-  const deleteRoom = (id: number) => {
-    console.log('deleteRoom:', id);
-    const deleteRoomInfo = {
-      id: id,
-      userId: user.id,
-    };
-    socket.emit('chat:deleteRoom', deleteRoomInfo);
-  };
-
   const handleClickOpen = () => {
     setOpen(true);
   };
 
+  const initDialog = () => {
+    setSelectedRoomSetting(CHATROOM_SETTINGS.DELETE_ROOM);
+  };
+
   const handleClose = () => {
+    initDialog();
     setOpen(false);
   };
 
   const handleChangeSetting = (event: SelectChangeEvent) => {
-    setSettingType(event.target.value as ChatroomSettings);
+    setSelectedRoomSetting(event.target.value as ChatroomSettings);
   };
 
   const [warning, setWarning] = useState(false);
-  const handleDelete = () => {
-    handleClose();
+  const deleteRoom = () => {
+    console.log('deleteRoom:', room.id);
 
     // TODO: adminのハンドリングもチェックする
     // TODO: そもそも削除ボタンを表示しない
     if (user.id !== room.ownerId) {
       setWarning(true);
     } else {
-      deleteRoom(room.id);
+      const deleteRoomInfo = {
+        id: room.id,
+        userId: user.id,
+      };
+      socket.emit('chat:deleteRoom', deleteRoomInfo);
     }
+  };
+
+  const handleAction = () => {
+    switch (selectedRoomSetting) {
+      case CHATROOM_SETTINGS.DELETE_ROOM:
+        deleteRoom();
+        console.log(selectedRoomSetting);
+        break;
+      case CHATROOM_SETTINGS.ADD_FRIEND:
+        console.log(selectedRoomSetting);
+        break;
+      case CHATROOM_SETTINGS.CHANGE_PASSWORD:
+        console.log(selectedRoomSetting);
+        break;
+      case CHATROOM_SETTINGS.SET_ADMIN:
+        console.log(selectedRoomSetting);
+        break;
+      case CHATROOM_SETTINGS.MUTE_USER:
+        console.log(selectedRoomSetting);
+        break;
+      case CHATROOM_SETTINGS.BAN_USER:
+        console.log(selectedRoomSetting);
+        break;
+    }
+    handleClose();
   };
 
   return (
@@ -126,7 +150,7 @@ export const ChatroomListItem = ({ room, socket, setCurrentRoomId }: Props) => {
               <Select
                 labelId="room-setting-select-label"
                 id="room-setting"
-                value={settingType}
+                value={selectedRoomSetting}
                 label="setting"
                 onChange={handleChangeSetting}
               >
@@ -152,9 +176,9 @@ export const ChatroomListItem = ({ room, socket, setCurrentRoomId }: Props) => {
             </FormControl>
           </DialogContent>
           <DialogActions>
-            <Button onClick={handleClose}>Disagree</Button>
-            <Button onClick={handleDelete} autoFocus>
-              Agree
+            <Button onClick={handleClose}>Cancel</Button>
+            <Button onClick={handleAction} autoFocus>
+              OK
             </Button>
           </DialogActions>
         </Dialog>
