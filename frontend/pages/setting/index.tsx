@@ -10,7 +10,7 @@ import {
 } from '@mui/material';
 import { Header } from 'components/common/Header';
 import { Layout } from 'components/common/Layout';
-import { useMutateName } from 'hooks/useMutationName';
+import { useMutationName } from 'hooks/useMutationName';
 import { useQueryUser } from 'hooks/useQueryUser';
 import type { NextPage } from 'next';
 import { useForm, SubmitHandler, Controller } from 'react-hook-form';
@@ -18,7 +18,7 @@ import { SettingForm } from 'types/setting';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { ChangeEventHandler, useState } from 'react';
-import { useMutateAvatar } from 'hooks/useMutationAvatar';
+import { useMutationAvatar } from 'hooks/useMutationAvatar';
 import { Loading } from 'components/common/Loading';
 import { AxiosError } from 'axios';
 import { AxiosErrorResponse } from 'types';
@@ -41,8 +41,8 @@ const Setting: NextPage = () => {
     mode: 'onSubmit',
     resolver: zodResolver(schema),
   });
-  const { updateNameMutation } = useMutateName();
-  const { updateAvatarMutation, deleteAvatarMutation } = useMutateAvatar();
+  const { updateNameMutation } = useMutationName();
+  const { updateAvatarMutation, deleteAvatarMutation } = useMutationAvatar();
 
   if (user === undefined) return <Loading fullHeight />;
 
@@ -199,10 +199,6 @@ const Setting: NextPage = () => {
                   error={errors.username ? true : false}
                   helperText={errors.username?.message}
                   sx={{ my: 2 }}
-                  onClick={() => {
-                    clearErrors();
-                    setError([]);
-                  }}
                 />
               )}
             />
@@ -216,7 +212,14 @@ const Setting: NextPage = () => {
           sx={{ p: 2 }}
         >
           <Grid item>
-            <Button variant="contained" type="submit">
+            <Button
+              variant="contained"
+              type="submit"
+              onClick={() => {
+                clearErrors();
+                setError([]);
+              }}
+            >
               Update username
             </Button>
           </Grid>

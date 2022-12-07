@@ -2,7 +2,7 @@ import axios, { AxiosError } from 'axios';
 import { useQueryClient, useMutation } from '@tanstack/react-query';
 import { User } from '@prisma/client';
 
-export const useMutateName = () => {
+export const useMutationName = () => {
   const queryClient = useQueryClient();
 
   const updateNameMutation = useMutation<
@@ -29,7 +29,6 @@ export const useMutateName = () => {
       },
       onError: (err: AxiosError) => {
         console.log(err);
-        throw err;
       },
     },
   );
