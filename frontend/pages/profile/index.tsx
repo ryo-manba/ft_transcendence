@@ -1,4 +1,4 @@
-import { Avatar, Grid, Typography } from '@mui/material';
+import { Avatar, Grid, Typography, Alert, AlertTitle } from '@mui/material';
 import { Header } from 'components/common/Header';
 import { Layout } from 'components/common/Layout';
 import { Loading } from 'components/common/Loading';
@@ -12,10 +12,27 @@ import { getAvatarImageUrl } from 'api/user/getAvatarImageUrl';
 const Profile: NextPage = () => {
   const router = useRouter();
   const userId = Number(router.query.userId);
-  const { data: user } = useQueryUserById(userId);
+  const { data: user, error: userQueryError } = useQueryUserById(userId);
   const { data: records } = useQueryGameRecords(user?.id);
-  if (router.isReady === false || user === undefined || records === undefined)
+
+  if (router.isReady && userQueryError) {
+    return (
+      <Layout title="Profile">
+        <Header title="Profile" />
+        <Alert severity="error">
+          <AlertTitle>Error</AlertTitle>
+          {userQueryError && userQueryError.message}
+        </Alert>
+      </Layout>
+    );
+  } else if (
+    router.isReady === false ||
+    user === undefined ||
+    records === undefined
+  ) {
     return <Loading fullHeight />;
+  }
+
   const userName = user.name;
   const point = user.point;
   const avatarImageUrl = getAvatarImageUrl(user.id);

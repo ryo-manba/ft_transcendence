@@ -24,7 +24,9 @@ export class UserService {
         id: userId,
       },
     });
-    delete user.hashedPassword;
+
+    // userがnullのときにhashedPasswordにアクセスしようとするとエラーになる
+    if (user !== null) delete user.hashedPassword;
 
     return user;
   }

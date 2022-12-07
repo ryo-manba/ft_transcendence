@@ -1,34 +1,28 @@
-import { useRouter } from 'next/router';
-import axios, { AxiosError } from 'axios';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import axios from 'axios';
+import { useQuery } from '@tanstack/react-query';
 import { User } from '@prisma/client';
 
 export const useQueryUserById = (userId: number | undefined) => {
-  const queryClient = useQueryClient();
-  const router = useRouter();
   const getUserById = async () => {
-    if (userId === undefined) return undefined;
+    if (userId === undefined || Number.isNaN(userId))
+      throw new Error('User ID is invalid');
+
     const { data } = await axios.get<Omit<User, 'hashedPassword'>>(
       `${process.env.NEXT_PUBLIC_API_URL as string}/user/${userId}`,
     );
 
+    // findUniqueの戻り値がnullの場合、dataはnullではなく''になるため
+    // data === nullだとエラー判定ができないことからこのようなif文にしている
+    if (Object.keys(data).length === 0) throw new Error('User not found');
+
     return data;
   };
 
-  return useQuery<Omit<User, 'hashedPassword'> | undefined, AxiosError>({
+  return useQuery<Omit<User, 'hashedPassword'> | undefined, Error>({
     queryKey: ['user', userId],
     queryFn: getUserById,
-    onError: (err: AxiosError) => {
-      if (
-        err.response &&
-        (err.response.status === 401 || err.response.status === 403)
-      ) {
-        queryClient.removeQueries(['user']);
-        void axios.post(
-          `${process.env.NEXT_PUBLIC_API_URL as string}/auth/logout`,
-        );
-        void router.push('/');
-      }
+    onError: (err: Error) => {
+      console.error(err);
     },
   });
 };

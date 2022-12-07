@@ -5,6 +5,8 @@ import {
   ListItemAvatar,
   Typography,
   Avatar,
+  Alert,
+  AlertTitle,
 } from '@mui/material';
 import { Loading } from 'components/common/Loading';
 import { useQueryGameRecords } from 'hooks/useQueryGameRecords';
@@ -15,8 +17,17 @@ type Props = {
 };
 
 export const History = ({ userId }: Props) => {
-  const { data: user } = useQueryUserById(userId);
+  const { data: user, error: userQueryError } = useQueryUserById(userId);
   const { data: records } = useQueryGameRecords(user?.id);
+
+  if (userQueryError) {
+    return (
+      <Alert severity="error">
+        <AlertTitle>Error</AlertTitle>
+        {userQueryError && userQueryError.message}
+      </Alert>
+    );
+  }
 
   if (records === undefined || user === undefined) return <Loading />;
 
