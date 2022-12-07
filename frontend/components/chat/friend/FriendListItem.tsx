@@ -1,10 +1,10 @@
 import { useState, memo } from 'react';
 import { ListItem, ListItemText, ListItemAvatar, Avatar } from '@mui/material';
-import { blue } from '@mui/material/colors';
 import { Friend } from 'types/friend';
 import { useQueryUser } from 'hooks/useQueryUser';
 import { FriendInfoDialog } from 'components/chat/friend/FriendInfoDialog';
 import { Loading } from 'components/common/Loading';
+import { getAvatarImageUrl } from 'api/user/getAvatarImageUrl';
 
 type Props = {
   friend: Friend;
@@ -29,7 +29,7 @@ export const FriendListItem = memo(function FriendListItem({ friend }: Props) {
     <>
       <ListItem divider button onClick={handleClickOpen}>
         <ListItemAvatar>
-          <Avatar sx={{ bgcolor: blue[100], color: blue[600] }} />
+          <Avatar src={getAvatarImageUrl(friend.id)} />
         </ListItemAvatar>
         <ListItemText
           primary={friend.name}
