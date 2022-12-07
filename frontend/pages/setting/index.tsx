@@ -11,6 +11,7 @@ import * as z from 'zod';
 import { ChangeEventHandler } from 'react';
 import { useMutateAvatar } from 'hooks/useMutationAvatar';
 import { Loading } from 'components/common/Loading';
+import { getAvatarImageUrl } from 'api/user/getAvatarImageUrl';
 
 const schema = z.object({
   username: z.string().min(1, { message: 'Username cannot be empty' }),
@@ -33,10 +34,7 @@ const Setting: NextPage = () => {
   if (user === undefined) return <Loading fullHeight />;
   const registeredUsername = register('username');
 
-  const avatarImageUrl =
-    user.avatarPath !== null
-      ? `${process.env.NEXT_PUBLIC_API_URL as string}/user/${user.avatarPath}`
-      : '';
+  const avatarImageUrl = getAvatarImageUrl(user.id);
 
   const onSubmit: SubmitHandler<SettingForm> = (data: SettingForm) => {
     updateNameMutation.mutate({ userId: user.id, updatedName: data.username });

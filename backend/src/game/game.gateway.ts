@@ -148,39 +148,28 @@ export class GameGateway {
     @MessageBody() data: number,
   ) {
     if (this.waitingQueue.length === 0) {
-      await this.user
-        .findOne(data)
-        .then((user) => {
-          this.waitingQueue.push({
-            name: user.name,
-            id: data,
-            point: user.point,
-            socket: socket,
-            height: GameGateway.initialHeight,
-            score: 0,
-          });
-        })
-        .catch((error) => {
-          this.logger.log(error);
-        });
+      const user = await this.user.findOne(data);
+      if (user === null) return;
+      this.waitingQueue.push({
+        name: user.name,
+        id: data,
+        point: user.point,
+        socket: socket,
+        height: GameGateway.initialHeight,
+        score: 0,
+      });
     } else {
+      const user = await this.user.findOne(data);
+      if (user === null) return;
       const player1 = this.waitingQueue.pop();
-      let player2: Player;
-      await this.user
-        .findOne(data)
-        .then((user) => {
-          player2 = {
-            name: user.name,
-            id: data,
-            point: user.point,
-            socket: socket,
-            height: GameGateway.initialHeight,
-            score: 0,
-          };
-        })
-        .catch((error) => {
-          this.logger.log(error);
-        });
+      const player2 = {
+        name: user.name,
+        id: data,
+        point: user.point,
+        socket: socket,
+        height: GameGateway.initialHeight,
+        score: 0,
+      };
       const roomName = uuidv4();
 
       this.logger.log(`${player1.socket.id} joined to room ${roomName}`);
