@@ -13,15 +13,19 @@ const Profile: NextPage = () => {
   const router = useRouter();
   const userId = Number(router.query.userId);
   const { data: user, error: userQueryError } = useQueryUserById(userId);
-  const { data: records } = useQueryGameRecords(user?.id);
+  const { data: records, error: recordQueryError } = useQueryGameRecords(
+    user?.id,
+  );
 
-  if (router.isReady && userQueryError) {
+  if (router.isReady && (userQueryError || recordQueryError)) {
     return (
       <Layout title="Profile">
         <Header title="Profile" />
         <Alert severity="error">
           <AlertTitle>Error</AlertTitle>
-          {userQueryError && userQueryError.message}
+          {userQueryError && `User fetching error: ${userQueryError.message}`}
+          {recordQueryError &&
+            `Game record fetching error: ${recordQueryError.message}`}
         </Alert>
       </Layout>
     );

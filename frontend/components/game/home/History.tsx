@@ -18,13 +18,17 @@ type Props = {
 
 export const History = ({ userId }: Props) => {
   const { data: user, error: userQueryError } = useQueryUserById(userId);
-  const { data: records } = useQueryGameRecords(user?.id);
+  const { data: records, error: recordQueryError } = useQueryGameRecords(
+    user?.id,
+  );
 
-  if (userQueryError) {
+  if (userQueryError || recordQueryError) {
     return (
       <Alert severity="error">
         <AlertTitle>Error</AlertTitle>
-        {userQueryError && userQueryError.message}
+        {userQueryError && `User fetching error: ${userQueryError.message}`}
+        {recordQueryError &&
+          `Game record fetching error: ${recordQueryError.message}`}
       </Alert>
     );
   }
