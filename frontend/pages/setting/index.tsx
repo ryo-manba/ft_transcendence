@@ -22,6 +22,7 @@ import { useMutationAvatar } from 'hooks/useMutationAvatar';
 import { Loading } from 'components/common/Loading';
 import { AxiosError } from 'axios';
 import { AxiosErrorResponse } from 'types';
+import { getAvatarImageUrl } from 'api/user/getAvatarImageUrl';
 
 const schema = z.object({
   username: z.string().min(1, { message: 'Username cannot be empty' }),
@@ -46,13 +47,9 @@ const Setting: NextPage = () => {
 
   if (user === undefined) return <Loading fullHeight />;
 
-  const avatarImageUrl =
-    user.avatarPath !== null
-      ? `${process.env.NEXT_PUBLIC_API_URL as string}/user/${user.avatarPath}`
-      : '';
+  const avatarImageUrl = getAvatarImageUrl(user.id);
 
   const onNameMutationError = (error: AxiosError) => {
-    console.log(error);
     if (error.response && error.response.data) {
       reset();
       const messages = (error.response.data as AxiosErrorResponse).message;
@@ -61,8 +58,7 @@ const Setting: NextPage = () => {
     }
   };
 
-  const onAvatarMutationError = (error: AxiosError) => {
-    console.log(error);
+  const onAvatarMutationError = () => {
     setError([
       'Unable to upload avatar',
       'Please try again, or try with a different image',

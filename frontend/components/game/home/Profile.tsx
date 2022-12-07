@@ -4,6 +4,7 @@ import PaidIcon from '@mui/icons-material/Paid';
 import ThumbUpOffAltIcon from '@mui/icons-material/ThumbUpOffAlt';
 import ThumbDownOffAltIcon from '@mui/icons-material/ThumbDownOffAlt';
 import { Loading } from 'components/common/Loading';
+import { useQueryGameRecords } from 'hooks/useQueryGameRecords';
 
 export const Profile = () => {
   const { data: user } = useQueryUser();
@@ -12,6 +13,15 @@ export const Profile = () => {
     user.avatarPath !== null
       ? `${process.env.NEXT_PUBLIC_API_URL as string}/user/${user.avatarPath}`
       : '';
+  const { data: records } = useQueryGameRecords(user.id);
+  const numOfWins =
+    records !== undefined
+      ? records.filter((r) => r.winner.name === user.name).length
+      : 0;
+  const numOfLosses =
+    records !== undefined
+      ? records.filter((r) => r.loser.name === user.name).length
+      : 0;
 
   return (
     <>
@@ -68,8 +78,7 @@ export const Profile = () => {
               </Grid>
               <Grid item>
                 <Typography variant="h5" gutterBottom>
-                  {/* TODO: update with the number of wins */}
-                  {`Wins: ${user.point}`}
+                  {`Win: ${numOfWins}`}
                 </Typography>
               </Grid>
             </Grid>
@@ -84,8 +93,7 @@ export const Profile = () => {
               </Grid>
               <Grid item>
                 <Typography variant="h5" gutterBottom>
-                  {/* TODO: update with the number of loses */}
-                  {`Loses: ${user.point}`}
+                  {`Lose: ${numOfLosses}`}
                 </Typography>
               </Grid>
             </Grid>

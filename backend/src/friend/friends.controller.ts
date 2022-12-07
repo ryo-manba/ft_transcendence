@@ -45,6 +45,20 @@ export class FriendsController {
   }
 
   /**
+   * @param userId
+   * @param roomId
+   * @return フォローしている かつ そのチャットルームに所属していないユーザーを返す
+   */
+  @Get('joinable')
+  async joinableFriends(
+    @Req() req: Request,
+    @Query('userId', ParseIntPipe) userId: number,
+    @Query('roomId', ParseIntPipe) roomId: number,
+  ): Promise<Friend[]> {
+    return await this.friendsService.findJoinableFriends(userId, roomId);
+  }
+
+  /**
    * @param CreateFriendDto
    * @return 実行結果をmessageで返す
    */

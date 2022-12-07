@@ -62,13 +62,15 @@ enum ChatroomType {
 }
 
 model ChatroomMembers {
-  id         Int      @id @default(autoincrement())
   createdAt  DateTime @default(now())
   updatedAt  DateTime @default(now()) @updatedAt
   chatroom   Chatroom @relation(fields: [chatroomId], references: [id], onDelete: Cascade)
   chatroomId Int
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId     Int
+
+  @@id([chatroomId, userId])
+  @@unique([chatroomId, userId])
 }
 
 model Message {
@@ -83,13 +85,15 @@ model Message {
 }
 
 model ChatroomAdmin {
-  id         Int      @id @default(autoincrement())
   createdAt  DateTime @default(now())
   updatedAt  DateTime @default(now()) @updatedAt
   chatroom   Chatroom @relation(fields: [chatroomId], references: [id], onDelete: Cascade) // Roomが消されたらメッセージも削除される
   chatroomId Int
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId     Int
+
+  @@id([chatroomId, userId])
+  @@unique([chatroomId, userId])
 }
 
 model GameRecord {
