@@ -273,7 +273,14 @@ export const Play = ({ updateFinishedGameInfo }: Props) => {
       'finishGame',
       (updatedPoint: number | null, finishedGameInfo: FinishedGameInfo) => {
         if (user !== undefined && updatedPoint !== null)
-          updatePointMutation.mutate({ userId: user.id, updatedPoint });
+          updatePointMutation.mutate(
+            { userId: user.id, updatedPoint },
+            {
+              onError: () => {
+                updatePlayState(PlayState.stateNothing);
+              },
+            },
+          );
         updateFinishedGameInfo(finishedGameInfo);
         updatePlayState(PlayState.stateFinished);
       },

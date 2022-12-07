@@ -1,4 +1,4 @@
-import axios, { AxiosError } from 'axios';
+import axios from 'axios';
 import { useQueryClient, useMutation } from '@tanstack/react-query';
 import { User } from '@prisma/client';
 
@@ -7,14 +7,18 @@ export const useMutationPoint = () => {
 
   const updatePointMutation = useMutation<
     Omit<User, 'hashedPassword'>,
-    AxiosError,
+    Error,
     { userId: number; updatedPoint: number }
   >(
     async ({ userId, updatedPoint }) => {
+      if (Number.isNaN(userId) || Number.isNaN(updatedPoint)) throw new Error();
+
       const { data } = await axios.patch<Omit<User, 'hashedPassword'>>(
         `${process.env.NEXT_PUBLIC_API_URL as string}/user/point/${userId}`,
         { point: updatedPoint },
       );
+
+      if (Object.keys(data).length === 0) throw new Error();
 
       return data;
     },
@@ -27,7 +31,7 @@ export const useMutationPoint = () => {
           queryClient.setQueryData(['user'], res);
         }
       },
-      onError: (err: AxiosError) => {
+      onError: (err: Error) => {
         console.log(err);
       },
     },
