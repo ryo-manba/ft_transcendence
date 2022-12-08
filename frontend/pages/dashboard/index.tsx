@@ -7,7 +7,6 @@ import { Layout } from 'components/common/Layout';
 import { Loading } from 'components/common/Loading';
 import ChatIcon from '@mui/icons-material/Chat';
 import VideogameAssetIcon from '@mui/icons-material/VideogameAsset';
-import Diversity3Icon from '@mui/icons-material/Diversity3';
 
 const Dashboard: NextPage = () => {
   const { data: user } = useQueryUser();
@@ -81,34 +80,6 @@ const Dashboard: NextPage = () => {
               </Grid>
               <Grid item>
                 <VideogameAssetIcon />
-              </Grid>
-            </Grid>
-          </Button>
-        </Link>
-        <Link href="/friend">
-          <Button
-            variant="contained"
-            color="primary"
-            sx={{
-              width: '200px',
-              height: '200px',
-              color: 'white',
-            }}
-          >
-            <Grid
-              container
-              spacing={1}
-              alignItems="center"
-              justifyContent="center"
-              sx={{ height: '100%' }}
-            >
-              <Grid item>
-                <Typography fontWeight="fontWeightBold" variant="h5">
-                  Friend
-                </Typography>
-              </Grid>
-              <Grid item>
-                <Diversity3Icon />
               </Grid>
             </Grid>
           </Button>
