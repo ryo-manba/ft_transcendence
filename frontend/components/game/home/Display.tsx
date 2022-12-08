@@ -11,12 +11,13 @@ import { useQueryUser } from 'hooks/useQueryUser';
 import { useInvitedFriendStateStore } from 'store/game/InvitedFriendState';
 import { Host } from './Host';
 import { Invitee } from './Invitee';
+import { Loading } from 'components/common/Loading';
 
 export const Display = () => {
+  const { data: user } = useQueryUser();
   const { socket } = useSocketStore();
   const { playState } = usePlayStateStore();
   const updatePlayState = usePlayStateStore((store) => store.updatePlayState);
-  const { data: user } = useQueryUser();
   const { invitedFriendState } = useInvitedFriendStateStore();
 
   useEffect(() => {
@@ -28,6 +29,8 @@ export const Display = () => {
   useEffect(() => {
     updatePlayState(PlayState.stateNothing);
   }, []);
+
+  if (user === undefined) return <Loading />;
 
   return (
     <>
@@ -55,7 +58,7 @@ export const Display = () => {
         </Grid>
         <Grid item xs={5} sx={{ height: '50%' }}>
           <Paper elevation={2} sx={{ height: '100%' }}>
-            <History />
+            <History userId={user.id} />
           </Paper>
         </Grid>
         <Grid item xs={5} sx={{ height: '50%' }}>

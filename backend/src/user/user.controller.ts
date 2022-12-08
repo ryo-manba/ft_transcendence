@@ -3,9 +3,11 @@ import {
   Controller,
   Get,
   Param,
+  ParseIntPipe,
   Patch,
   Post,
   Req,
+  StreamableFile,
   UploadedFile,
   UseGuards,
   UseInterceptors,
@@ -51,6 +53,13 @@ export class UserController {
     return req.user;
   }
 
+  @Get(':id')
+  getUserById(
+    @Param('id', ParseIntPipe) id: number,
+  ): Promise<Omit<User, 'hashedPassword'> | null> {
+    return this.userService.findOne(id);
+  }
+
   @Patch('point/:id')
   updatePoint(
     @Param('id') id: string,
@@ -77,22 +86,26 @@ export class UserController {
   uploadAvatar(
     @UploadedFile() file: Express.Multer.File,
     @Param('id') id: string,
-  ) {
+  ): Promise<Omit<User, 'hashedPassword'>> {
     return this.userService.updateAvatar(Number(id), {
       avatarPath: file.filename,
     });
   }
 
-  @Get(':imageUrl')
-  getAvatarImage(@Param('imageUrl') imageUrl: string) {
-    return this.userService.getAvatarImage(imageUrl);
+  // uniqueSuffixは実際には使わないが、Settingの画面でアバターを更新した際にコンポーネント
+  // が更新されるようにするために追加している
+  @Get('avatar/:id/:uniqueSuffix')
+  getAvatarImage(
+    @Param('id', ParseIntPipe) id: number,
+  ): Promise<StreamableFile | undefined> {
+    return this.userService.getAvatarImage(id);
   }
 
   @Patch('avatar/:id/:avatarPath')
   deleteAvatar(
     @Param('id') id: string,
     @Param('avatarPath') avatarPath: string,
-  ) {
+  ): Promise<Omit<User, 'hashedPassword'>> {
     return this.userService.deleteAvatar(Number(id), avatarPath);
   }
 }

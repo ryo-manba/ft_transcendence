@@ -5,14 +5,33 @@ import {
   ListItemAvatar,
   Typography,
   Avatar,
+  Alert,
+  AlertTitle,
 } from '@mui/material';
 import { Loading } from 'components/common/Loading';
 import { useQueryGameRecords } from 'hooks/useQueryGameRecords';
-import { useQueryUser } from 'hooks/useQueryUser';
+import { useQueryUserById } from 'hooks/useQueryUserById';
 
-export const History = () => {
-  const { data: user } = useQueryUser();
-  const { data: records } = useQueryGameRecords(user?.id);
+type Props = {
+  userId: number;
+};
+
+export const History = ({ userId }: Props) => {
+  const { data: user, error: userQueryError } = useQueryUserById(userId);
+  const { data: records, error: recordQueryError } = useQueryGameRecords(
+    user?.id,
+  );
+
+  if (userQueryError || recordQueryError) {
+    return (
+      <Alert severity="error">
+        <AlertTitle>Error</AlertTitle>
+        {userQueryError && `User fetching error: ${userQueryError.message}`}
+        {recordQueryError &&
+          `Game record fetching error: ${recordQueryError.message}`}
+      </Alert>
+    );
+  }
 
   if (records === undefined || user === undefined) return <Loading />;
 
@@ -42,7 +61,7 @@ export const History = () => {
                 <ListItemAvatar>
                   <Avatar
                     sx={{
-                      bgcolor: 'text.primary',
+                      bgcolor: 'success.main',
                       margin: 'auto',
                     }}
                     variant="rounded"
@@ -51,7 +70,10 @@ export const History = () => {
                   </Avatar>
                 </ListItemAvatar>
                 <ListItemAvatar>
-                  <Avatar variant="rounded" sx={{ margin: 'auto' }}>
+                  <Avatar
+                    variant="rounded"
+                    sx={{ bgcolor: 'error.main', margin: 'auto' }}
+                  >
                     {item.loserScore}
                   </Avatar>
                 </ListItemAvatar>
@@ -70,13 +92,16 @@ export const History = () => {
             ) : (
               <>
                 <ListItemAvatar>
-                  <Avatar variant="rounded" sx={{ margin: 'auto' }}>
+                  <Avatar
+                    variant="rounded"
+                    sx={{ bgcolor: 'error.main', margin: 'auto' }}
+                  >
                     {item.loserScore}
                   </Avatar>
                 </ListItemAvatar>
                 <ListItemAvatar>
                   <Avatar
-                    sx={{ bgcolor: 'text.primary', margin: 'auto' }}
+                    sx={{ bgcolor: 'success.main', margin: 'auto' }}
                     variant="rounded"
                   >
                     {item.winnerScore}

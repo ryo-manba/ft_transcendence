@@ -1,4 +1,9 @@
-import { Injectable, StreamableFile, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  StreamableFile,
+  ForbiddenException,
+  Logger,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { UpdateNameDto } from './dto/update-name.dto';
 import { Prisma, User } from '@prisma/client';
@@ -11,13 +16,17 @@ import * as path from 'path';
 export class UserService {
   constructor(private prisma: PrismaService) {}
 
-  async findOne(userId: number): Promise<Omit<User, 'hashPassword'> | null> {
+  private logger: Logger = new Logger('UserService');
+
+  async findOne(userId: number): Promise<Omit<User, 'hashedPassword'> | null> {
     const user = await this.prisma.user.findUnique({
       where: {
         id: userId,
       },
     });
-    delete user.hashedPassword;
+
+    // userがnullのときにhashedPasswordにアクセスしようとするとエラーになる
+    if (user !== null) delete user.hashedPassword;
 
     return user;
   }
@@ -92,11 +101,13 @@ export class UserService {
     }
   }
 
-  getAvatarImage(imageUrl: string): StreamableFile {
+  async getAvatarImage(id: number): Promise<StreamableFile | undefined> {
+    const user = await this.findOne(id);
+    if (user === null || user.avatarPath === null) return undefined;
     const filePath = path.join(
       process.cwd(),
       process.env.AVATAR_IMAGE_DIR,
-      imageUrl,
+      user.avatarPath,
     );
     const file = createReadStream(filePath);
 
