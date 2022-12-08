@@ -22,10 +22,16 @@ export const useQueryUser = () => {
         err.response &&
         (err.response.status === 401 || err.response.status === 403)
       ) {
-        queryClient.removeQueries(['user']);
-        void axios.post(
-          `${process.env.NEXT_PUBLIC_API_URL as string}/auth/logout`,
-        );
+        const user: User | undefined = queryClient.getQueryData(['user']);
+        if (user !== undefined) {
+          void axios.post(
+            `${process.env.NEXT_PUBLIC_API_URL as string}/auth/logout`,
+            {
+              id: user.id,
+            },
+          );
+          queryClient.removeQueries(['user']);
+        }
         void router.push('/');
       }
     },

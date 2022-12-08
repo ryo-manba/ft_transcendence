@@ -14,6 +14,7 @@ export const Start = () => {
 
   const start = () => {
     socket.emit('playStart', user.id);
+    user.status = 'PLAYING';
     updatePlayState(PlayState.stateWaiting);
   };
 
