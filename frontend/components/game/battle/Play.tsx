@@ -5,7 +5,7 @@ import { usePlayerNamesStore } from 'store/game/PlayerNames';
 import { usePlayStateStore, PlayState } from 'store/game/PlayState';
 import { GameHeader } from 'components/game/battle/GameHeader';
 import { FinishedGameInfo } from 'types/game';
-import { useMutatePoint } from 'hooks/useMutatePoint';
+import { useMutationPoint } from 'hooks/useMutationPoint';
 import { useQueryUser } from 'hooks/useQueryUser';
 import { Loading } from 'components/common/Loading';
 import { useGameSettingStore } from 'store/game/GameSetting';
@@ -116,7 +116,7 @@ export const Play = ({ updateFinishedGameInfo }: Props) => {
   const [changeCount, updateChangeCount] = useState(true);
   const [isArrowDownPressed, updateIsArrowDownPressed] = useState(false);
   const [isArrowUpPressed, updateIsArrowUpPressed] = useState(false);
-  const { updatePointMutation } = useMutatePoint();
+  const { updatePointMutation } = useMutationPoint();
   const { data: user } = useQueryUser();
   const FPS = 60;
   const waitMillSec = 1000 / FPS;
@@ -273,7 +273,14 @@ export const Play = ({ updateFinishedGameInfo }: Props) => {
       'finishGame',
       (updatedPoint: number | null, finishedGameInfo: FinishedGameInfo) => {
         if (user !== undefined && updatedPoint !== null)
-          updatePointMutation.mutate({ userId: user.id, updatedPoint });
+          updatePointMutation.mutate(
+            { userId: user.id, updatedPoint },
+            {
+              onError: () => {
+                updatePlayState(PlayState.stateNothing);
+              },
+            },
+          );
         updateFinishedGameInfo(finishedGameInfo);
         updatePlayState(PlayState.stateFinished);
       },

@@ -1,13 +1,15 @@
 import create from 'zustand';
 
-enum PlayState {
-  stateNothing,
-  stateWaiting,
-  stateSelecting,
-  stateStandingBy,
-  statePlaying,
-  stateFinished,
-}
+export const PlayState = {
+  stateNothing: 0,
+  stateWaiting: 1,
+  stateSelecting: 2,
+  stateStandingBy: 3,
+  statePlaying: 4,
+  stateFinished: 5,
+} as const;
+
+export type PlayState = typeof PlayState[keyof typeof PlayState];
 
 type State = {
   playState: PlayState;
@@ -21,5 +23,3 @@ export const usePlayStateStore = create<State>((set) => ({
       playState: payload,
     }),
 }));
-
-export { PlayState };

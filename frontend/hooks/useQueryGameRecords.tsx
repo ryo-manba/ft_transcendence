@@ -10,11 +10,6 @@ export const useQueryGameRecords = (userId: number | undefined) => {
       `${process.env.NEXT_PUBLIC_API_URL as string}/records/${userId}`,
     );
 
-    // findUniqueの戻り値がnullの場合、dataはnullではなく''になるため
-    // data === nullだとエラー判定ができないことからこのようなif文にしている
-    if (Object.keys(data).length === 0)
-      throw new Error('User records not found');
-
     return data;
   };
 
