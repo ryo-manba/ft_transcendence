@@ -13,6 +13,7 @@ import { CreateChatroomDto } from './dto/create-chatroom.dto';
 import { DeleteChatroomDto } from './dto/delete-chatroom.dto';
 import { JoinChatroomDto } from './dto/join-chatroom.dto';
 import { CreateMessageDto } from './dto/create-message.dto';
+import { CreateAdminDto } from './dto/create-admin.dto';
 import { Chatroom, ChatroomType } from '@prisma/client';
 
 @WebSocketGateway({
@@ -245,5 +246,24 @@ export class ChatGateway {
 
     // フロントエンドへ送信し返す
     client.emit('chat:getJoinableRooms', viewableAndNotJoinedRooms);
+  }
+
+  /**
+   * ユーザーをAdminに追加する
+   * @param userId
+   * @param roomId
+   */
+  @SubscribeMessage('chat:addAdmin')
+  async addAdmin(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() dto: CreateAdminDto,
+  ): Promise<boolean> {
+    this.logger.log(
+      `chat:getJoinableRooms received -> roomId: ${dto.chatroomId}`,
+    );
+
+    const res = await this.chatService.createAdmin(dto);
+
+    return res !== undefined;
   }
 }

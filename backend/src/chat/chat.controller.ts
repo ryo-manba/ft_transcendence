@@ -7,7 +7,6 @@ export class ChatController {
   constructor(private readonly chatService: ChatService) {}
 
   /**
-   * @param userId
    * @param roomId
    * @return 以下の情報をオブジェクトの配列で返す
    * - adminではないユーザーのID
@@ -17,8 +16,6 @@ export class ChatController {
   async findNotAdminUsers(
     @Query('roomId', ParseIntPipe) roomId: number,
   ): Promise<ChatUser[]> {
-    console.log('non-admin:', roomId);
-
     return await this.chatService.findNotAdminUsers(roomId);
   }
 }

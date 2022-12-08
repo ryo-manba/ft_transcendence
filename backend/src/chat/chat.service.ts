@@ -10,6 +10,7 @@ import {
 } from '@prisma/client';
 import { CreateChatroomDto } from './dto/create-chatroom.dto';
 import { CreateMessageDto } from './dto/create-message.dto';
+import { CreateAdminDto } from './dto/create-admin.dto';
 import { JoinChatroomDto } from './dto/join-chatroom.dto';
 import type { ChatUser } from './types/chat';
 
@@ -247,8 +248,25 @@ export class ChatService {
         name: info.user.name,
       };
     });
-    console.log(notAdminUsers);
 
     return notAdminUsers;
+  }
+
+  /**
+   * チャットルームのadminを作成する
+   * @param CreateAdminDto
+   */
+  async createAdmin(dto: CreateAdminDto): Promise<ChatroomAdmin> {
+    try {
+      const admin = await this.prisma.chatroomAdmin.create({
+        data: {
+          ...dto,
+        },
+      });
+
+      return admin;
+    } catch (error) {
+      return undefined;
+    }
   }
 }

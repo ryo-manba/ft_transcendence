@@ -76,9 +76,15 @@ export const ChatroomListItem = ({ room, socket, setCurrentRoomId }: Props) => {
     } else {
       const setAdminInfo = {
         userId: userId,
-        roomId: room.id,
+        chatroomId: room.id,
       };
-      socket.emit('chat:addAdmin', setAdminInfo);
+
+      // callbackを受け取ることで判断する
+      socket.emit('chat:addAdmin', setAdminInfo, (res: boolean) => {
+        if (!res) {
+          setWarning(true);
+        }
+      });
     }
   };
 
@@ -102,7 +108,7 @@ export const ChatroomListItem = ({ room, socket, setCurrentRoomId }: Props) => {
             }
             sx={{ mb: 2 }}
           >
-            {room.name} could not be deleted.
+            {room.name} failed to process.
           </Alert>
         </Collapse>
       </Box>
