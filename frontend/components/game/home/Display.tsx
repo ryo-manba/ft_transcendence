@@ -7,19 +7,32 @@ import { Wait } from './Wait';
 import { Watch } from './Watch';
 import { History } from './History';
 import { Profile } from './Profile';
+import { useQueryUser } from 'hooks/useQueryUser';
+import { useInvitedFriendStateStore } from 'store/game/InvitedFriendState';
+import { Host } from './Host';
+import { Invitee } from './Invitee';
 
 export const Display = () => {
   const { socket } = useSocketStore();
   const { playState } = usePlayStateStore();
   const updatePlayState = usePlayStateStore((store) => store.updatePlayState);
+  const { data: user } = useQueryUser();
+  const { invitedFriendState } = useInvitedFriendStateStore();
 
   useEffect(() => {
-    if (socket.disconnected) socket.connect();
+    if (socket.connected || user === undefined) return;
+    socket.auth = { userId: user.id };
+    socket.connect();
+  }, [user]);
+
+  useEffect(() => {
     updatePlayState(PlayState.stateNothing);
   }, []);
 
   return (
     <>
+      {invitedFriendState.invitedFriend && <Host />}
+      <Invitee />
       <Grid
         container
         justifyContent="center"

@@ -6,16 +6,17 @@ import {
   MessageBody,
   WebSocketServer,
 } from '@nestjs/websockets';
-import { Socket, Server } from 'socket.io';
+import { Socket, Server, RemoteSocket } from 'socket.io';
 import { RecordsService } from '../records/records.service';
 import { UserService } from '../user/user.service';
 import { v4 as uuidv4 } from 'uuid';
+import { DefaultEventsMap } from 'socket.io/dist/typed-events';
 
 type Player = {
   name: string;
   id: number;
   point: number;
-  socket: Socket;
+  socket: Socket | RemoteSocket<DefaultEventsMap, undefined>;
   height: number;
   score: number;
 };
@@ -68,6 +69,16 @@ type FinishedGameInfo = {
   loserScore: number;
 };
 
+type Friend = {
+  id: number;
+  name: string;
+};
+
+type MatchPair = {
+  host: Friend;
+  invitee: Friend;
+};
+
 @WebSocketGateway({
   cors: {
     origin: '*',
@@ -108,12 +119,17 @@ export class GameGateway {
 
   private logger: Logger = new Logger('GameGateway');
 
-  handleConnection(socket: Socket) {
+  async handleConnection(socket: Socket) {
     this.logger.log(`Connected: ${socket.id}`);
+    const id = (socket.handshake.auth as { userId: string }).userId;
+    if (!!id) await socket.join(`userId:${id}`);
+    this.logger.log(`JOINED TO ${id}`);
   }
 
-  handleDisconnect(socket: Socket) {
+  async handleDisconnect(socket: Socket) {
     this.logger.log(`Disconnected: ${socket.id}`);
+    const id = (socket.handshake.auth as { userId: string }).userId;
+    if (id !== null) await socket.leave(`userId:${id}`);
 
     this.gameRooms = this.gameRooms.filter(
       (room) =>
@@ -140,6 +156,100 @@ export class GameGateway {
       player1.socket.emit('standBy', playerNames);
       player2.socket.emit('select', playerNames);
     }
+  }
+
+  @SubscribeMessage('inviteFriend')
+  inviteFriend(@MessageBody() data: MatchPair) {
+    this.server.to(`userId:${data.invitee.id}`).emit('inviteGame', data.host);
+  }
+
+  @SubscribeMessage('cancelInvitation')
+  cancelInvitation(@MessageBody() data: MatchPair) {
+    this.server
+      .to(`userId:${data.invitee.id}`)
+      .emit('cancelInvitation', data.host);
+  }
+
+  @SubscribeMessage('acceptInvitation')
+  async beginFriendMatch(
+    @ConnectedSocket() socket: Socket,
+    @MessageBody() data: MatchPair,
+  ) {
+    const id2 = data.invitee.id;
+
+    let player1: Player;
+    let player2: Player;
+    const socket1 = await this.server
+      .in(`userId:${data.host.id}`)
+      .fetchSockets();
+
+    console.log(socket1);
+    await this.user
+      .findOne(data.host.id)
+      .then((user1) => {
+        player1 = {
+          name: user1.name,
+          id: user1.id,
+          point: user1.point,
+          socket: socket1[0],
+          height: GameGateway.initialHeight,
+          score: 0,
+        };
+      })
+      .catch((error) => {
+        this.logger.log(error);
+      });
+    await this.user
+      .findOne(id2)
+      .then((user2) => {
+        player2 = {
+          name: user2.name,
+          id: user2.id,
+          point: user2.point,
+          socket: socket,
+          height: GameGateway.initialHeight,
+          score: 0,
+        };
+      })
+      .catch((error) => {
+        this.logger.log(error);
+      });
+
+    const roomName = uuidv4();
+    this.logger.log(`${player1.name} joined to room ${roomName}`);
+    this.logger.log(`${player2.name} joined to room ${roomName}`);
+
+    await player1.socket.join(roomName);
+    await player2.socket.join(roomName);
+
+    const ball: Ball = {
+      x: GameGateway.ballInitialX,
+      y: GameGateway.ballInitialY,
+      radius: GameGateway.ballRadius,
+    };
+
+    const ballVec: BallVec = {
+      xVec: GameGateway.ballInitialXVec,
+      yVec: this.setBallYVec(),
+      speed: GameGateway.ballSpeed,
+    };
+
+    const newRoom: RoomInfo = {
+      roomName: roomName,
+      player1: player1,
+      player2: player2,
+      supporters: [],
+      ball: ball,
+      ballVec: ballVec,
+      isPlayer1Turn: true,
+      gameSetting: GameGateway.defaultSetting,
+      barSpeed: GameGateway.barSpeed,
+      rewards: 0,
+      gameState: 'Setting',
+    };
+
+    this.gameRooms.push(newRoom);
+    this.updatePlayerStatus(player1, player2);
   }
 
   @SubscribeMessage('playStart')

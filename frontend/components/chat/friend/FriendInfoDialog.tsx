@@ -12,6 +12,8 @@ import {
   FormControl,
 } from '@mui/material';
 import { Friend } from 'types/friend';
+import { useRouter } from 'next/router';
+import { useInvitedFriendStateStore } from 'store/game/InvitedFriendState';
 
 type Props = {
   friend: Friend;
@@ -32,6 +34,10 @@ export const FriendInfoDialog = memo(function FriendInfoDialog({
   onClose,
 }: Props) {
   const [actionType, setActionType] = useState('Profile');
+  const updateInvitedFriendState = useInvitedFriendStateStore(
+    (store) => store.updateInvitedFriendState,
+  );
+  const router = useRouter();
 
   const initDialog = useCallback(() => {
     setActionType('Profile');
@@ -42,6 +48,16 @@ export const FriendInfoDialog = memo(function FriendInfoDialog({
   };
 
   const handleClose = () => {
+    onClose();
+    initDialog();
+  };
+
+  const handleSubmit = (friend: Friend) => {
+    switch (actionType) {
+      case 'Invite Game':
+        updateInvitedFriendState({ friend: friend, invitedFriend: true });
+        void router.push('game/home');
+    }
     onClose();
     initDialog();
   };
@@ -67,7 +83,13 @@ export const FriendInfoDialog = memo(function FriendInfoDialog({
       </DialogContent>
       <DialogActions>
         <Button onClick={handleClose}>Cancel</Button>
-        <Button onClick={handleClose}>Submit</Button>
+        <Button
+          onClick={() => {
+            handleSubmit(friend);
+          }}
+        >
+          Submit
+        </Button>
       </DialogActions>
     </Dialog>
   );
