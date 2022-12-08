@@ -31,6 +31,7 @@ export const Profile = () => {
       <Grid container spacing={2}>
         <Grid
           container
+          item
           direction="column"
           xs={6}
           justifyContent="center"
