@@ -43,7 +43,7 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
 }: Props) {
   const { data: user } = useQueryUser();
   const [selectedRoomSetting, setSelectedRoomSetting] =
-    useState<ChatroomSettings>(CHATROOM_SETTINGS.DELETE_ROOM);
+    useState<ChatroomSettings>(CHATROOM_SETTINGS.MUTE_USER);
   const [selectedUserId, setSelectedUserId] = useState('');
   const [notAdminUsers, setNotAdminUsers] = useState<ChatUser[]>([]);
   const [friends, setFriends] = useState<Friend[]>([]);

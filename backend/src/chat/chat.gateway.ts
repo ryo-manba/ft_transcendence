@@ -258,12 +258,29 @@ export class ChatGateway {
     @ConnectedSocket() client: Socket,
     @MessageBody() dto: CreateAdminDto,
   ): Promise<boolean> {
-    this.logger.log(
-      `chat:getJoinableRooms received -> roomId: ${dto.chatroomId}`,
-    );
+    this.logger.log(`chat:addAdmin received -> roomId: ${dto.chatroomId}`);
 
     const res = await this.chatService.createAdmin(dto);
 
     return res !== undefined;
+  }
+
+  /**
+   * チャットルームのadminId一覧を返す
+   * @param roomId
+   */
+  @SubscribeMessage('chat:getAdminIds')
+  async getAdmins(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() roomId: number,
+  ): Promise<number[]> {
+    this.logger.log(`chat:getAdmins received -> roomId: ${roomId}`);
+
+    const admins = await this.chatService.findAdmins(roomId);
+    const res = admins.map((admin) => {
+      return admin.userId;
+    });
+
+    return res;
   }
 }

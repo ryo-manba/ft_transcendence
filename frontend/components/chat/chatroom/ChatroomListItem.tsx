@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   ListItem,
   IconButton,
@@ -23,7 +23,22 @@ type Props = {
 
 export const ChatroomListItem = ({ room, socket, setCurrentRoomId }: Props) => {
   const [open, setOpen] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const { data: user } = useQueryUser();
+
+  useEffect(() => {
+    if (!user) return;
+
+    // adminかどうかを判定する
+    socket.emit('chat:getAdminIds', room.id, (adminIds: number[]) => {
+      console.log('adminIds', adminIds);
+      adminIds.map((id) => {
+        if (id === user.id) {
+          setIsAdmin(true);
+        }
+      });
+    });
+  }, [user]);
 
   if (user === undefined) {
     return <Loading />;
@@ -112,8 +127,7 @@ export const ChatroomListItem = ({ room, socket, setCurrentRoomId }: Props) => {
           </Alert>
         </Collapse>
       </Box>
-      {/* TODO: 一旦ルーム作成者のみに設定ボタンが表示されるようにしている */}
-      {user.id === room.ownerId ? (
+      {user.id === room.ownerId || isAdmin ? (
         <ListItem
           secondaryAction={
             <IconButton
