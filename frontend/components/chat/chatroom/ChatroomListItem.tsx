@@ -45,10 +45,7 @@ export const ChatroomListItem = ({ room, socket, setCurrentRoomId }: Props) => {
 
   const [warning, setWarning] = useState(false);
   const deleteRoom = () => {
-    console.log('deleteRoom:', room.id);
-
-    // TODO: adminのハンドリングもチェックする
-    // TODO: そもそも削除ボタンを表示しない
+    // 削除できるのはチャットルームオーナーだけ
     if (user.id !== room.ownerId) {
       setWarning(true);
     } else {
@@ -60,18 +57,29 @@ export const ChatroomListItem = ({ room, socket, setCurrentRoomId }: Props) => {
     }
   };
 
+  // friendをチャットルームに追加する
   const addFriend = (friendId: number) => {
-    console.log();
-    // フレンドを選択する
     const joinRoomInfo: JoinChatroomInfo = {
       userId: friendId,
       roomId: room.id,
       type: room.type as ChatroomType,
     };
 
-    // friendをチャットルームに追加する
     // TODO:フレンドを入室させたあとのgatewayからのレスポンス対応は今後行う
     socket.emit('chat:joinRoom', joinRoomInfo);
+  };
+
+  const addAdmin = (userId: number) => {
+    // Adminを設定できるのはチャットルームオーナーだけ
+    if (user.id !== room.ownerId) {
+      setWarning(true);
+    } else {
+      const setAdminInfo = {
+        userId: userId,
+        roomId: room.id,
+      };
+      socket.emit('chat:addAdmin', setAdminInfo);
+    }
   };
 
   return (
@@ -119,6 +127,7 @@ export const ChatroomListItem = ({ room, socket, setCurrentRoomId }: Props) => {
             onClose={handleClose}
             deleteRoom={deleteRoom}
             addFriend={addFriend}
+            addAdmin={addAdmin}
           />
           <ListItemText
             primary={room.name}
