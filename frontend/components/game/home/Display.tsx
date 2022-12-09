@@ -21,9 +21,13 @@ export const Display = () => {
   const { invitedFriendState } = useInvitedFriendStateStore();
 
   useEffect(() => {
-    if (socket.connected || user === undefined) return;
-    socket.auth = { userId: user.id };
-    socket.connect();
+    if (socket.disconnected && user !== undefined) {
+      // this is one way to link room and userid but this was unreliable. (sometimes send undefined)
+      socket.auth = { userId: user.id };
+      socket.connect();
+      socket.emit('subscribe', user.id);
+    }
+    console.log(socket.disconnected);
   }, [user]);
 
   useEffect(() => {

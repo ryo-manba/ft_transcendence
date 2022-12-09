@@ -93,6 +93,8 @@ export class GameGateway {
 
   gameRooms: RoomInfo[] = [];
   waitingQueue: Player[] = [];
+  // key: guest, value hosts
+  invitationList: Map<number, Set<number>> = new Map();
 
   // Game parameters
   static initialHeight = 250;
@@ -119,17 +121,26 @@ export class GameGateway {
 
   private logger: Logger = new Logger('GameGateway');
 
-  async handleConnection(socket: Socket) {
+  handleConnection(socket: Socket) {
     this.logger.log(`Connected: ${socket.id}`);
-    const id = (socket.handshake.auth as { userId: string }).userId;
-    if (!!id) await socket.join(`userId:${id}`);
-    this.logger.log(`JOINED TO ${id}`);
   }
 
   async handleDisconnect(socket: Socket) {
     this.logger.log(`Disconnected: ${socket.id}`);
-    const id = (socket.handshake.auth as { userId: string }).userId;
-    if (id !== null) await socket.leave(`userId:${id}`);
+    const id = (socket.handshake.auth as { userId: number }).userId;
+    if (id !== null) {
+      await socket.leave(`userId:${id}`);
+      for (const [key, value] of this.invitationList) {
+        if (value.has(id)) {
+          // cancel invitation because host were disconnected
+          this.server.to(`userId:${key}`).emit('cancelInvitation', key);
+          value.delete(id);
+          this.logger.log(`${key}: ${id}`);
+        }
+      }
+    } else {
+      this.logger.log('MMMM...');
+    }
 
     this.gameRooms = this.gameRooms.filter(
       (room) =>
@@ -158,16 +169,56 @@ export class GameGateway {
     }
   }
 
+  @SubscribeMessage('subscribe')
+  async getInvitedList(
+    @ConnectedSocket() socket: Socket,
+    @MessageBody() data: number,
+  ) {
+    // Link userId and Room
+    await socket.join(`userId:${data}`);
+    this.logger.log(`JOINED TO ${data}`);
+
+    // Send list of hosts that invited user to game.
+    const hostIds = this.invitationList.get(data);
+    if (hostIds === undefined) socket.emit('giveInvitedList', []);
+    else {
+      const hosts = await this.user.findAll({
+        where: {
+          id: {
+            in: Array.from(hostIds),
+          },
+        },
+      });
+      socket.emit(
+        'giveInvitedList',
+        hosts.map((item) => {
+          return { name: item.name, id: item.id } as Friend;
+        }),
+      );
+    }
+  }
+
   @SubscribeMessage('inviteFriend')
   inviteFriend(@MessageBody() data: MatchPair) {
+    const hostIds = this.invitationList.get(data.invitee.id);
+    if (hostIds === undefined)
+      this.invitationList.set(data.invitee.id, new Set([data.host.id]));
+    else if (hostIds.has(data.invitee.id)) {
+      this.logger.log(
+        `${data.host.name} ALREADY SEND INVITATION TO ${data.invitee.name}`,
+      );
+    } else hostIds.add(data.host.id);
+
     this.server.to(`userId:${data.invitee.id}`).emit('inviteGame', data.host);
   }
 
   @SubscribeMessage('cancelInvitation')
   cancelInvitation(@MessageBody() data: MatchPair) {
+    const hostIds = this.invitationList.get(data.invitee.id);
+    if (hostIds !== undefined) hostIds.delete(data.host.id);
     this.server
       .to(`userId:${data.invitee.id}`)
-      .emit('cancelInvitation', data.host);
+      .emit('cancelInvitation', data.host.id);
   }
 
   @SubscribeMessage('acceptInvitation')
@@ -175,6 +226,14 @@ export class GameGateway {
     @ConnectedSocket() socket: Socket,
     @MessageBody() data: MatchPair,
   ) {
+    const hostIds = this.invitationList.get(data.invitee.id);
+    if (hostIds === undefined || !hostIds.has(data.host.id)) {
+      this.logger.log('WHAT??');
+
+      return;
+    }
+
+    hostIds.delete(data.host.id);
     const id2 = data.invitee.id;
 
     let player1: Player;

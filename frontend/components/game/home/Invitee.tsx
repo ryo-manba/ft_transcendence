@@ -58,8 +58,8 @@ export const Invitee = () => {
       setInviters([...inviters.filter((elem) => elem.id !== data.id), data]);
       setOpenInvitation(true);
     });
-    socket.on('cancelInvitation', (data: Friend) => {
-      setInviters(inviters.filter((elem) => elem.id !== data.id));
+    socket.on('cancelInvitation', (data: number) => {
+      setInviters(inviters.filter((elem) => elem.id !== data));
       if (inviters.length === 0) setOpenSelecter(false);
       setOpenInvitation(false);
     });
@@ -86,6 +86,17 @@ export const Invitee = () => {
       socket.off('standBy');
     };
   }, [socket]);
+  useEffect(() => {
+    socket.on('giveInvitedList', (hosts: Friend[]) => {
+      setInviters([...inviters, ...hosts]);
+      // inviters.length === 0: true Why??
+      if (hosts.length !== 0) setOpenInvitation(true);
+    });
+
+    return () => {
+      socket.off('giveInvitedList');
+    };
+  }, [user]);
 
   return (
     <>
