@@ -24,6 +24,7 @@ type Props = {
 export const ChatroomListItem = ({ room, socket, setCurrentRoomId }: Props) => {
   const [open, setOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [changeSuccess, setChangeSuccess] = useState(false);
   const { data: user } = useQueryUser();
 
   useEffect(() => {
@@ -103,6 +104,31 @@ export const ChatroomListItem = ({ room, socket, setCurrentRoomId }: Props) => {
     }
   };
 
+  const changePassword = (
+    oldPassword: string,
+    newPassword: string,
+    checkPassword: string,
+  ) => {
+    if (newPassword !== checkPassword) {
+      // 新しいパスワードとチェック用パスワードが違う
+      setWarning(true);
+
+      return;
+    }
+    const changePasswordInfo = {
+      chatroomId: room.id,
+      oldPassword: oldPassword,
+      newPassword: newPassword,
+    };
+    socket.emit('chat:updatePassword', changePasswordInfo, (res: boolean) => {
+      if (res) {
+        setChangeSuccess(true);
+      } else {
+        setWarning(true);
+      }
+    });
+  };
+
   return (
     <>
       <Box sx={{ width: '100%' }}>
@@ -127,6 +153,28 @@ export const ChatroomListItem = ({ room, socket, setCurrentRoomId }: Props) => {
           </Alert>
         </Collapse>
       </Box>
+      <Box sx={{ width: '100%' }}>
+        <Collapse in={changeSuccess}>
+          <Alert
+            severity="success"
+            action={
+              <IconButton
+                aria-label="close"
+                color="inherit"
+                size="small"
+                onClick={() => {
+                  setChangeSuccess(false);
+                }}
+              >
+                <CloseIcon fontSize="inherit" />
+              </IconButton>
+            }
+            sx={{ mb: 2 }}
+          >
+            {room.name} password changed.
+          </Alert>
+        </Collapse>
+      </Box>
       {user.id === room.ownerId || isAdmin ? (
         <ListItem
           secondaryAction={
@@ -148,6 +196,7 @@ export const ChatroomListItem = ({ room, socket, setCurrentRoomId }: Props) => {
             deleteRoom={deleteRoom}
             addFriend={addFriend}
             addAdmin={addAdmin}
+            changePassword={changePassword}
           />
           <ListItemText
             primary={room.name}

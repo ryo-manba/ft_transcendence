@@ -14,6 +14,7 @@ import { DeleteChatroomDto } from './dto/delete-chatroom.dto';
 import { JoinChatroomDto } from './dto/join-chatroom.dto';
 import { CreateMessageDto } from './dto/create-message.dto';
 import { CreateAdminDto } from './dto/create-admin.dto';
+import { updatePasswordDto } from './dto/update-password.dto';
 import { Chatroom, ChatroomType } from '@prisma/client';
 
 @WebSocketGateway({
@@ -270,7 +271,7 @@ export class ChatGateway {
    * @param roomId
    */
   @SubscribeMessage('chat:getAdminIds')
-  async getAdmins(
+  async getAdminsIds(
     @ConnectedSocket() client: Socket,
     @MessageBody() roomId: number,
   ): Promise<number[]> {
@@ -282,5 +283,23 @@ export class ChatGateway {
     });
 
     return res;
+  }
+
+  /**
+   * チャットルームのパスワードを更新する
+   * @param updatePasswordDto
+   */
+  @SubscribeMessage('chat:updatePassword')
+  async updatePassword(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() dto: updatePasswordDto,
+  ): Promise<boolean> {
+    this.logger.log(
+      `chat:updatePassword received -> roomId: ${dto.chatroomId}`,
+    );
+
+    console.log('dto:', dto);
+
+    return await this.chatService.updatePassword(dto);
   }
 }

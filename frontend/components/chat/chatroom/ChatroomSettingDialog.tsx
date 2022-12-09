@@ -10,6 +10,7 @@ import {
   MenuItem,
   FormControl,
   DialogTitle,
+  TextField,
 } from '@mui/material';
 import {
   Chatroom,
@@ -31,6 +32,11 @@ type Props = {
   deleteRoom: () => void;
   addFriend: (friendId: number) => void;
   addAdmin: (userId: number) => void;
+  changePassword: (
+    oldPassword: string,
+    newPassword: string,
+    checkPassword: string,
+  ) => void;
 };
 
 export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
@@ -40,6 +46,7 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
   deleteRoom,
   addFriend,
   addAdmin,
+  changePassword,
 }: Props) {
   const { data: user } = useQueryUser();
   const [selectedRoomSetting, setSelectedRoomSetting] =
@@ -47,6 +54,10 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
   const [selectedUserId, setSelectedUserId] = useState('');
   const [notAdminUsers, setNotAdminUsers] = useState<ChatUser[]>([]);
   const [friends, setFriends] = useState<Friend[]>([]);
+
+  const [oldPassword, setOldPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [checkPassword, setCheckPassword] = useState('');
 
   useEffect(() => {
     if (user === undefined) return;
@@ -76,13 +87,10 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
       const notAdminUsers = await fetchNotAdminUsers({
         roomId: room.id,
       });
-      console.log(notAdminUsers);
-      console.log(user.id);
       // オーナーを弾く
       const expectOwner = notAdminUsers.filter(
         (notAdmin) => notAdmin.id !== user.id,
       );
-      console.log(expectOwner);
       setNotAdminUsers(expectOwner);
     };
 
@@ -121,7 +129,7 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
         addFriend(Number(selectedUserId));
         break;
       case CHATROOM_SETTINGS.CHANGE_PASSWORD:
-        console.log(selectedRoomSetting);
+        changePassword(oldPassword, newPassword, checkPassword);
         break;
       case CHATROOM_SETTINGS.SET_ADMIN:
         addAdmin(Number(selectedUserId));
@@ -162,7 +170,8 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
                   {CHATROOM_SETTINGS.SET_ADMIN}
                 </MenuItem>
               )}
-              {isOwner && (
+              {/* パスワードで保護されたルームのみ選択可能 */}
+              {isOwner && room.type === CHATROOM_TYPE.PROTECTED && (
                 <MenuItem value={CHATROOM_SETTINGS.CHANGE_PASSWORD}>
                   {CHATROOM_SETTINGS.CHANGE_PASSWORD}
                 </MenuItem>
@@ -243,6 +252,55 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
                 </FormControl>
               </DialogContent>
             )}
+          </>
+        )}
+        {selectedRoomSetting === CHATROOM_SETTINGS.CHANGE_PASSWORD && (
+          <>
+            <DialogContent>
+              <TextField
+                autoFocus
+                margin="dense"
+                id="old-password"
+                label="Old Password"
+                type="text"
+                value={oldPassword}
+                onChange={(e) => {
+                  setOldPassword(e.target.value);
+                }}
+                fullWidth
+                variant="standard"
+              />
+            </DialogContent>
+            <DialogContent>
+              <TextField
+                autoFocus
+                margin="dense"
+                id="new-password"
+                label="New Password"
+                type="text"
+                value={newPassword}
+                onChange={(e) => {
+                  setNewPassword(e.target.value);
+                }}
+                fullWidth
+                variant="standard"
+              />
+            </DialogContent>
+            <DialogContent>
+              <TextField
+                autoFocus
+                margin="dense"
+                id="check-password"
+                label="Check Password"
+                type="text"
+                value={checkPassword}
+                onChange={(e) => {
+                  setCheckPassword(e.target.value);
+                }}
+                fullWidth
+                variant="standard"
+              />
+            </DialogContent>
           </>
         )}
         <DialogActions>
