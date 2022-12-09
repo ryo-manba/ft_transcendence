@@ -95,7 +95,8 @@ const Home: NextPage = () => {
             await axios.post(url_oauth, {
               oauthid: session.user.email,
               // oauthid: session.user.oauthid,
-              imagepath: session.user.image,
+              imagepath: '',
+              //session.user.image,
             });
           }
           await router.push('/dashboard');
