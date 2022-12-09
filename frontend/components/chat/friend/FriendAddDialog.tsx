@@ -18,6 +18,7 @@ import { useQueryUser } from 'hooks/useQueryUser';
 import { Loading } from 'components/common/Loading';
 import { followUser } from 'api/friend/followUser';
 import type { Friend } from 'types/friend';
+import { getAvatarImageUrl } from 'api/user/getAvatarImageUrl';
 
 type Props = {
   open: boolean;
@@ -102,7 +103,7 @@ export const FriendAddDialog = memo(function FriendAddDialog({
                   button
                 >
                   <ListItemAvatar>
-                    <Avatar sx={{ bgcolor: blue[100], color: blue[600] }} />
+                    <Avatar src={getAvatarImageUrl(user.id)} />
                   </ListItemAvatar>
                   <ListItemText primary={user.name} />
                 </ListItem>

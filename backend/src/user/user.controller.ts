@@ -11,12 +11,13 @@ import {
   UploadedFile,
   UseGuards,
   UseInterceptors,
+  Query,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { Request } from 'express';
 import { UserService } from './user.service';
 import { UpdateNameDto } from './dto/update-name.dto';
-import { User } from '@prisma/client';
+import { User, UserStatus } from '@prisma/client';
 import { UpdatePointDto } from './dto/update-point.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
@@ -51,6 +52,14 @@ export class UserController {
   getLoginUser(@Req() req: Request): Omit<User, 'hashedPassword'> {
     // custom.d.ts で型変換してる
     return req.user;
+  }
+
+  @Get('status')
+  async getStatus(
+    @Req() req: Request,
+    @Query('id', ParseIntPipe) id: number,
+  ): Promise<UserStatus | undefined> {
+    return await this.userService.getStatus(id);
   }
 
   @Get(':id')
