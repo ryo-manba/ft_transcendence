@@ -25,6 +25,7 @@ model User {
   followings      FriendRelation[]  @relation("following")
   oauthid         String?           @unique
   has2FA          Boolean           @default(false)
+  twoFASecret     String            @default("")
 }
 
 model FriendRelation {
