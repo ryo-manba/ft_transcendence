@@ -7,10 +7,12 @@ import {
   Res,
   Req,
   Get,
+  Param,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { AuthService } from './auth.service';
 import { AuthDto, OauthDto } from './dto/auth.dto';
+import { SecretCodeDto } from './dto/twofactorauth.dto';
 import { Csrf, Msg } from './interfaces/auth.interface';
 
 @Controller('auth')
@@ -78,5 +80,36 @@ export class AuthController {
     return {
       message: 'ok',
     };
+  }
+
+  //
+  // API for 2Factor Auth
+  //
+  @Get('qr2fa/:id')
+  generateQrCode(@Param('id') id: string) {
+    return this.authService.generateQrCode(Number(id));
+  }
+
+  @Post('send2facode')
+  send2FACode(
+    @Param('id') id: string,
+    @Body() dto: SecretCodeDto,
+  ): Promise<string> {
+    return this.authService.send2FACode(Number(id), dto);
+  }
+
+  @Get('has2fa')
+  has2fa(@Param('id') id: string) {
+    return this.authService.has2fa(Number(id));
+  }
+
+  @Post('validate2fa')
+  validate2FA(@Body() data: SecretCodeDto) {
+    return this.authService.validate2FA(data);
+  }
+
+  @Post('disable2fa')
+  disable2FA(@Body() data: SecretCodeDto) {
+    return this.authService.disable2FA(data);
   }
 }

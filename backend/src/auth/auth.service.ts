@@ -1,11 +1,19 @@
-import { Injectable, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  ForbiddenException,
+  HttpException,
+  HttpStatus,
+} from '@nestjs/common';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuthDto, OauthDto } from './dto/auth.dto';
+import { SecretCodeDto } from './dto/twofactorauth.dto';
 import { Msg, Jwt } from './interfaces/auth.interface';
+import * as qrcode from 'qrcode';
+import * as speakeasy from 'speakeasy';
 
 @Injectable()
 export class AuthService {
@@ -131,5 +139,135 @@ export class AuthService {
     // }
 
     return this.generateJwt(user.id, user.name);
+  }
+
+  async generateQrCode(userId: number): Promise<string> {
+    try {
+      if (Number.isNaN(userId)) throw new Error('UserId is invalid');
+      const user = await this.prisma.user.findUnique({
+        where: {
+          id: userId,
+        },
+      });
+      if (!user)
+        throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+
+      const secret = speakeasy.generateSecret();
+      const url = speakeasy.otpauthURL({
+        secret: secret.base32,
+        label: user.name,
+        issuer: 'ft_transcendence',
+      });
+      const qr_code = qrcode.toDataURL(url);
+
+      return qr_code;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async send2FACode(userId: number, dto: SecretCodeDto): Promise<string> {
+    console.log(dto);
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: {
+          id: userId,
+        },
+      });
+      console.log(user.has2FA);
+      const valid = speakeasy.totp.verify({
+        secret: 'user.twoFASecret', // TODO: DBからもらった値を使わないと！
+        token: dto.code,
+      });
+      if (!valid) {
+        throw new Error('hoge');
+      }
+
+      const user_db = await this.prisma.user.update({
+        where: {
+          id: userId,
+        },
+        data: {
+          has2FA: true,
+          // twoFASecret: user_db.twoFASecret, あとでDBに追加しないと
+        },
+      });
+    } catch (error) {
+      throw error;
+    }
+
+    return 'ok';
+  }
+
+  public async has2fa(userId: number): Promise<string> {
+    try {
+      const user_db = await this.prisma.user.findUnique({
+        where: {
+          id: userId,
+        },
+      });
+
+      return 'user_db.has2FA';
+      // return { enabled: user_db.has2FA };
+    } catch (error) {
+      console.log(error);
+      throw error;
+    }
+
+    // return { enabled: false };
+  }
+
+  async validate2FA(data: SecretCodeDto): Promise<string> {
+    try {
+      const user_db = await this.prisma.user.findUnique({
+        where: {
+          id: Number(data.userId),
+        },
+      });
+    } catch (error) {
+      console.log(error);
+      throw error;
+    }
+
+    const valid = speakeasy.totp.verify({
+      secret: 'user.twoFASecret', // TODO: DBからもらった値を使わないと！
+      token: data.code,
+    });
+    if (!valid) {
+      throw new Error('hoge');
+    }
+
+    return 'loginと同じくユーザー情報を返したい';
+  }
+
+  async disable2FA(data: SecretCodeDto): Promise<string> {
+    try {
+      const user_db = await this.prisma.user.findUnique({
+        where: {
+          id: Number(data.userId),
+        },
+      });
+    } catch (error) {
+      console.log(error);
+      throw error;
+    }
+
+    try {
+      const user_db = await this.prisma.user.update({
+        where: {
+          id: Number(data.userId),
+        },
+        data: {
+          has2FA: false,
+          // twoFASecret: '', あとでDBに追加しないと
+        },
+      });
+    } catch (error) {
+      console.log(error);
+      throw error;
+    }
+
+    // return { disabled: true };
+    return 'disabled: true';
   }
 }
