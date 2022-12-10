@@ -13,6 +13,7 @@ import { CreateChatroomDto } from './dto/create-chatroom.dto';
 import { DeleteChatroomDto } from './dto/delete-chatroom.dto';
 import { JoinChatroomDto } from './dto/join-chatroom.dto';
 import { CreateMessageDto } from './dto/create-message.dto';
+import { CreateAdminDto } from './dto/create-admin.dto';
 import { Chatroom, ChatroomType } from '@prisma/client';
 
 @WebSocketGateway({
@@ -245,5 +246,41 @@ export class ChatGateway {
 
     // フロントエンドへ送信し返す
     client.emit('chat:getJoinableRooms', viewableAndNotJoinedRooms);
+  }
+
+  /**
+   * ユーザーをAdminに追加する
+   * @param userId
+   * @param roomId
+   */
+  @SubscribeMessage('chat:addAdmin')
+  async addAdmin(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() dto: CreateAdminDto,
+  ): Promise<boolean> {
+    this.logger.log(`chat:addAdmin received -> roomId: ${dto.chatroomId}`);
+
+    const res = await this.chatService.createAdmin(dto);
+
+    return res !== undefined;
+  }
+
+  /**
+   * チャットルームのadminId一覧を返す
+   * @param roomId
+   */
+  @SubscribeMessage('chat:getAdminIds')
+  async getAdmins(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() roomId: number,
+  ): Promise<number[]> {
+    this.logger.log(`chat:getAdmins received -> roomId: ${roomId}`);
+
+    const admins = await this.chatService.findAdmins(roomId);
+    const res = admins.map((admin) => {
+      return admin.userId;
+    });
+
+    return res;
   }
 }
