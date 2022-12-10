@@ -62,6 +62,14 @@ export class UserController {
     return await this.userService.getStatus(id);
   }
 
+  @Patch('status/:id/:newStatus')
+  updateStatus(
+    @Param('id', ParseIntPipe) id: number,
+    @Param('newStatus') status: UserStatus,
+  ): Promise<boolean> {
+    return this.userService.updateStatus(id, status);
+  }
+
   @Get(':id')
   getUserById(
     @Param('id', ParseIntPipe) id: number,

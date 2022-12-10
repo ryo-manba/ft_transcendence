@@ -4,6 +4,7 @@ import { usePlayStateStore, PlayState } from 'store/game/PlayState';
 import { useSocketStore } from 'store/game/ClientSocket';
 import { useQueryUser } from 'hooks/useQueryUser';
 import { Loading } from 'components/common/Loading';
+import { updateUserStatusById } from 'api/user/updateUserStatusById';
 
 export const Start = () => {
   const { socket } = useSocketStore();
@@ -13,8 +14,17 @@ export const Start = () => {
   if (user === undefined) return <Loading />;
 
   const start = () => {
-    socket.emit('playStart', user.id);
-    updatePlayState(PlayState.stateWaiting);
+    const startGame = async () => {
+      const res = await updateUserStatusById({
+        userId: user.id,
+        status: 'PLAYING',
+      });
+      if (!res) return;
+      socket.emit('playStart', user.id);
+      updatePlayState(PlayState.stateWaiting);
+    };
+
+    void startGame();
   };
 
   return (

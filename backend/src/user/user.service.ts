@@ -160,4 +160,23 @@ export class UserService {
 
     return user.status;
   }
+
+  async updateStatus(userId: number, status: UserStatus): Promise<boolean> {
+    try {
+      await this.prisma.user.update({
+        where: {
+          id: userId,
+        },
+        data: {
+          status: status,
+        },
+      });
+
+      return true;
+    } catch (error) {
+      console.error(error);
+
+      return false;
+    }
+  }
 }
