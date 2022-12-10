@@ -88,10 +88,10 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
         roomId: room.id,
       });
       // オーナーを弾く
-      const expectOwner = notAdminUsers.filter(
+      const exceptOwner = notAdminUsers.filter(
         (notAdmin) => notAdmin.id !== user.id,
       );
-      setNotAdminUsers(expectOwner);
+      setNotAdminUsers(exceptOwner);
     };
 
     void fetchCanSetAdminUsers();
