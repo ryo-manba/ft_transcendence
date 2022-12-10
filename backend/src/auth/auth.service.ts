@@ -6,6 +6,7 @@ import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuthDto } from './dto/auth.dto';
 import { Msg, Jwt } from './interfaces/auth.interface';
+import { LogoutDto } from './dto/logout.dto';
 
 @Injectable()
 export class AuthService {
@@ -52,7 +53,27 @@ export class AuthService {
     if (!isValid)
       throw new ForbiddenException('username or password incorrect');
 
+    await this.prisma.user.update({
+      where: {
+        id: user.id,
+      },
+      data: {
+        status: 'ONLINE',
+      },
+    });
+
     return this.generateJwt(user.id, user.name);
+  }
+
+  async logout(dto: LogoutDto) {
+    await this.prisma.user.update({
+      where: {
+        id: dto.id,
+      },
+      data: {
+        status: 'OFFLINE',
+      },
+    });
   }
 
   async generateJwt(userId: number, username: string): Promise<Jwt> {

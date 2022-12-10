@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { UpdateNameDto } from './dto/update-name.dto';
-import { Prisma, User } from '@prisma/client';
+import { Prisma, User, UserStatus } from '@prisma/client';
 import { UpdatePointDto } from './dto/update-point.dto';
 import { UpdateAvatarDto } from './dto/update-avatar.dto';
 import { createReadStream, unlink } from 'node:fs';
@@ -152,5 +152,12 @@ export class UserService {
       console.log(error);
       throw error;
     }
+  }
+
+  async getStatus(id: number): Promise<UserStatus | undefined> {
+    const user = await this.findOne(id);
+    if (user === null) return undefined;
+
+    return user.status;
   }
 }

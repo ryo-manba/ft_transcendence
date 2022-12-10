@@ -25,17 +25,22 @@ export const MenuButton = () => {
   const router = useRouter();
   const { data: user } = useQueryUser();
 
+  if (user === undefined) return <Loading />;
+
   const logout = () => {
+    void axios.post(
+      `${process.env.NEXT_PUBLIC_API_URL as string}/auth/logout`,
+      {
+        id: user.id,
+      },
+    );
     queryClient.removeQueries(['user']);
-    void axios.post(`${process.env.NEXT_PUBLIC_API_URL as string}/auth/logout`);
     if (session) {
       void signOut();
     } else {
       void router.push('/');
     }
   };
-
-  if (user === undefined) return <Loading />;
 
   return (
     <div>

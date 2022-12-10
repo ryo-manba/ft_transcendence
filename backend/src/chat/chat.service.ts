@@ -10,7 +10,9 @@ import {
 } from '@prisma/client';
 import { CreateChatroomDto } from './dto/create-chatroom.dto';
 import { CreateMessageDto } from './dto/create-message.dto';
+import { CreateAdminDto } from './dto/create-admin.dto';
 import { JoinChatroomDto } from './dto/join-chatroom.dto';
+import type { ChatUser } from './types/chat';
 
 @Injectable()
 export class ChatService {
@@ -204,5 +206,67 @@ export class ChatService {
 
     // 入室できたら作成したチャットルームの情報を返す
     return isSuccess ? createdRoom : undefined;
+  }
+
+  /**
+   * 所属している かつ adminではないユーザ一覧を返す
+   * @param userId
+   * @param roomId
+   */
+  async findNotAdminUsers(roomId: number): Promise<ChatUser[]> {
+    // ルームに所属しているユーザー一覧を取得する
+    const joinedUsersInfo = await this.prisma.chatroomMembers.findMany({
+      where: {
+        chatroomId: roomId,
+      },
+      include: {
+        user: true,
+      },
+    });
+
+    // ルームのadmin一覧を取得する
+    const adminUsers = await this.prisma.chatroomAdmin.findMany({
+      where: {
+        chatroomId: roomId,
+      },
+    });
+
+    // idの配列にする
+    const adminUserIds = adminUsers.map((admin) => {
+      return admin.userId;
+    });
+
+    // adminのユーザー除去する
+    const notAdminUsersInfo = joinedUsersInfo.filter(
+      (info) => !adminUserIds.includes(info.user.id),
+    );
+
+    // idと名前の配列にする
+    const notAdminUsers: ChatUser[] = notAdminUsersInfo.map((info) => {
+      return {
+        id: info.user.id,
+        name: info.user.name,
+      };
+    });
+
+    return notAdminUsers;
+  }
+
+  /**
+   * チャットルームのadminを作成する
+   * @param CreateAdminDto
+   */
+  async createAdmin(dto: CreateAdminDto): Promise<ChatroomAdmin> {
+    try {
+      const admin = await this.prisma.chatroomAdmin.create({
+        data: {
+          ...dto,
+        },
+      });
+
+      return admin;
+    } catch (error) {
+      return undefined;
+    }
   }
 }

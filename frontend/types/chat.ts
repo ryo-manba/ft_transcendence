@@ -45,3 +45,8 @@ export const CHATROOM_SETTINGS = {
 
 export type ChatroomSettings =
   typeof CHATROOM_SETTINGS[keyof typeof CHATROOM_SETTINGS];
+
+export type ChatUser = {
+  id: number;
+  name: string;
+};

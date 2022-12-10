@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   ListItem,
   IconButton,
@@ -23,7 +23,22 @@ type Props = {
 
 export const ChatroomListItem = ({ room, socket, setCurrentRoomId }: Props) => {
   const [open, setOpen] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const { data: user } = useQueryUser();
+
+  useEffect(() => {
+    if (!user) return;
+
+    // adminかどうかを判定する
+    socket.emit('chat:getAdminIds', room.id, (adminIds: number[]) => {
+      console.log('adminIds', adminIds);
+      adminIds.map((id) => {
+        if (id === user.id) {
+          setIsAdmin(true);
+        }
+      });
+    });
+  }, [user]);
 
   if (user === undefined) {
     return <Loading />;
@@ -45,10 +60,7 @@ export const ChatroomListItem = ({ room, socket, setCurrentRoomId }: Props) => {
 
   const [warning, setWarning] = useState(false);
   const deleteRoom = () => {
-    console.log('deleteRoom:', room.id);
-
-    // TODO: adminのハンドリングもチェックする
-    // TODO: そもそも削除ボタンを表示しない
+    // 削除できるのはチャットルームオーナーだけ
     if (user.id !== room.ownerId) {
       setWarning(true);
     } else {
@@ -60,18 +72,35 @@ export const ChatroomListItem = ({ room, socket, setCurrentRoomId }: Props) => {
     }
   };
 
+  // friendをチャットルームに追加する
   const addFriend = (friendId: number) => {
-    console.log();
-    // フレンドを選択する
     const joinRoomInfo: JoinChatroomInfo = {
       userId: friendId,
       roomId: room.id,
       type: room.type as ChatroomType,
     };
 
-    // friendをチャットルームに追加する
     // TODO:フレンドを入室させたあとのgatewayからのレスポンス対応は今後行う
     socket.emit('chat:joinRoom', joinRoomInfo);
+  };
+
+  const addAdmin = (userId: number) => {
+    // Adminを設定できるのはチャットルームオーナーだけ
+    if (user.id !== room.ownerId) {
+      setWarning(true);
+    } else {
+      const setAdminInfo = {
+        userId: userId,
+        chatroomId: room.id,
+      };
+
+      // callbackを受け取ることで判断する
+      socket.emit('chat:addAdmin', setAdminInfo, (res: boolean) => {
+        if (!res) {
+          setWarning(true);
+        }
+      });
+    }
   };
 
   return (
@@ -94,12 +123,11 @@ export const ChatroomListItem = ({ room, socket, setCurrentRoomId }: Props) => {
             }
             sx={{ mb: 2 }}
           >
-            {room.name} could not be deleted.
+            {room.name} failed to process.
           </Alert>
         </Collapse>
       </Box>
-      {/* TODO: 一旦ルーム作成者のみに設定ボタンが表示されるようにしている */}
-      {user.id === room.ownerId ? (
+      {user.id === room.ownerId || isAdmin ? (
         <ListItem
           secondaryAction={
             <IconButton
@@ -119,6 +147,7 @@ export const ChatroomListItem = ({ room, socket, setCurrentRoomId }: Props) => {
             onClose={handleClose}
             deleteRoom={deleteRoom}
             addFriend={addFriend}
+            addAdmin={addAdmin}
           />
           <ListItemText
             primary={room.name}

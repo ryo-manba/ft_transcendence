@@ -14,6 +14,7 @@ import {
 import { Friend } from 'types/friend';
 import { useRouter } from 'next/router';
 import { useInvitedFriendStateStore } from 'store/game/InvitedFriendState';
+import Link from 'next/link';
 
 type Props = {
   friend: Friend;
@@ -75,7 +76,9 @@ export const FriendInfoDialog = memo(function FriendInfoDialog({
             label="Action"
             onChange={handleChangeType}
           >
-            <MenuItem value="Profile">Profile</MenuItem>
+            <Link href={{ pathname: '/profile', query: { userId: friend.id } }}>
+              <MenuItem value="Profile">Profile</MenuItem>
+            </Link>
             <MenuItem value="Invite Game">Invite Game</MenuItem>
             <MenuItem value="Direct Message">Direct Message</MenuItem>
           </Select>
