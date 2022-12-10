@@ -95,6 +95,7 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
       }),
     ),
   });
+  // TODO: 余裕あったら以下を使えるようにする
   // チェック用と新規のパスワードと同じこと
   // .superRefine(({ newPassword, checkPassword }, ctx) => {
   //   if (newPassword !== checkPassword) {
@@ -331,7 +332,6 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
                 control={control}
                 render={({ field }) => (
                   <TextField
-                    autoFocus
                     margin="dense"
                     label="Old Password"
                     type={showPassword ? 'text' : 'password'}
@@ -377,7 +377,6 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
                 control={control}
                 render={({ field }) => (
                   <TextField
-                    autoFocus
                     margin="dense"
                     label="New Password"
                     type={showPassword ? 'text' : 'password'}
@@ -423,7 +422,6 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
                 control={control}
                 render={({ field }) => (
                   <TextField
-                    autoFocus
                     margin="dense"
                     label="Check Password"
                     type={showPassword ? 'text' : 'password'}

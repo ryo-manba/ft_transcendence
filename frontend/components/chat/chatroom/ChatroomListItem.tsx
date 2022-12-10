@@ -59,11 +59,11 @@ export const ChatroomListItem = ({ room, socket, setCurrentRoomId }: Props) => {
     setOpen(false);
   };
 
-  const [warning, setWarning] = useState(false);
+  const [error, setError] = useState('');
   const deleteRoom = () => {
     // 削除できるのはチャットルームオーナーだけ
     if (user.id !== room.ownerId) {
-      setWarning(true);
+      setError('Only the owner can delete chat rooms');
     } else {
       const deleteRoomInfo = {
         id: room.id,
@@ -88,7 +88,7 @@ export const ChatroomListItem = ({ room, socket, setCurrentRoomId }: Props) => {
   const addAdmin = (userId: number) => {
     // Adminを設定できるのはチャットルームオーナーだけ
     if (user.id !== room.ownerId) {
-      setWarning(true);
+      setError('Only the owner can set admin');
     } else {
       const setAdminInfo = {
         userId: userId,
@@ -98,7 +98,7 @@ export const ChatroomListItem = ({ room, socket, setCurrentRoomId }: Props) => {
       // callbackを受け取ることで判断する
       socket.emit('chat:addAdmin', setAdminInfo, (res: boolean) => {
         if (!res) {
-          setWarning(true);
+          setError('Failed to add admin');
         }
       });
     }
@@ -110,8 +110,7 @@ export const ChatroomListItem = ({ room, socket, setCurrentRoomId }: Props) => {
     checkPassword: string,
   ) => {
     if (newPassword !== checkPassword) {
-      // 新しいパスワードとチェック用パスワードが違う
-      setWarning(true);
+      setError('Check passwords did not match');
 
       return;
     }
@@ -124,7 +123,7 @@ export const ChatroomListItem = ({ room, socket, setCurrentRoomId }: Props) => {
       if (res) {
         setChangeSuccess(true);
       } else {
-        setWarning(true);
+        setError('Failed to change password');
       }
     });
   };
@@ -132,7 +131,7 @@ export const ChatroomListItem = ({ room, socket, setCurrentRoomId }: Props) => {
   return (
     <>
       <Box sx={{ width: '100%' }}>
-        <Collapse in={warning}>
+        <Collapse in={error !== ''}>
           <Alert
             severity="error"
             action={
@@ -141,7 +140,7 @@ export const ChatroomListItem = ({ room, socket, setCurrentRoomId }: Props) => {
                 color="inherit"
                 size="small"
                 onClick={() => {
-                  setWarning(false);
+                  setError('');
                 }}
               >
                 <CloseIcon fontSize="inherit" />
@@ -149,7 +148,7 @@ export const ChatroomListItem = ({ room, socket, setCurrentRoomId }: Props) => {
             }
             sx={{ mb: 2 }}
           >
-            {room.name} failed to process.
+            {`${room.name}: ${error}`}
           </Alert>
         </Collapse>
       </Box>
