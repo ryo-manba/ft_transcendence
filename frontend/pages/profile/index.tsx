@@ -1,4 +1,11 @@
-import { Avatar, Grid, Typography, Alert, AlertTitle } from '@mui/material';
+import {
+  Avatar,
+  Grid,
+  Typography,
+  Alert,
+  AlertTitle,
+  Badge,
+} from '@mui/material';
 import { Header } from 'components/common/Header';
 import { Layout } from 'components/common/Layout';
 import { Loading } from 'components/common/Loading';
@@ -60,7 +67,20 @@ const Profile: NextPage = () => {
         sx={{ p: 2 }}
       >
         <Grid item>
-          <Avatar sx={{ width: 150, height: 150 }} src={avatarImageUrl} />
+          <Badge
+            overlap="circular"
+            anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+            badgeContent=""
+            color={
+              user.status === 'ONLINE'
+                ? 'success'
+                : user.status === 'PLAYING'
+                ? 'error'
+                : 'default'
+            }
+          >
+            <Avatar sx={{ width: 150, height: 150 }} src={avatarImageUrl} />
+          </Badge>
         </Grid>
         <Grid item>
           <Typography gutterBottom variant="h1" component="div">

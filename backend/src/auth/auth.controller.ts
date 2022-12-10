@@ -11,6 +11,7 @@ import {
 import { Request, Response } from 'express';
 import { AuthService } from './auth.service';
 import { AuthDto } from './dto/auth.dto';
+import { LogoutDto } from './dto/logout.dto';
 import { Csrf, Msg } from './interfaces/auth.interface';
 
 @Controller('auth')
@@ -48,7 +49,13 @@ export class AuthController {
 
   @HttpCode(HttpStatus.OK)
   @Post('logout')
-  logout(@Req() req: Request, @Res({ passthrough: true }) res: Response): Msg {
+  async logout(
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+    @Body() dto: LogoutDto,
+  ): Promise<Msg> {
+    await this.authService.logout(dto);
+
     res.cookie('access_token', '', {
       httpOnly: true,
       secure: true, //Postmanからアクセスするときはfalse

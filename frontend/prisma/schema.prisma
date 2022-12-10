@@ -87,6 +87,7 @@ model User {
   hashedPassword  String?
   point           Int               @default(1000)
   avatarPath      String?
+  status          UserStatus        @default(OFFLINE)
   Chatroom        Chatroom[]
   ChatroomAdmin   ChatroomAdmin[]
   ChatroomMembers ChatroomMembers[]
@@ -101,4 +102,10 @@ enum ChatroomType {
   PUBLIC
   PRIVATE
   PROTECTED
+}
+
+enum UserStatus {
+  ONLINE
+  PLAYING
+  OFFLINE
 }
