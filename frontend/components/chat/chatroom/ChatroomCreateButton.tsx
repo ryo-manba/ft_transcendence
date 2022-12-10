@@ -8,39 +8,72 @@ import {
   DialogContent,
   DialogTitle,
   InputLabel,
+  IconButton,
+  InputAdornment,
   Select,
   SelectChangeEvent,
   MenuItem,
   FormControl,
 } from '@mui/material';
+import Visibility from '@mui/icons-material/Visibility';
+import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import AddCircleOutlineRounded from '@mui/icons-material/AddCircleOutlineRounded';
 import { CreateChatroomInfo, ChatroomType, CHATROOM_TYPE } from 'types/chat';
 import { useQueryUser } from 'hooks/useQueryUser';
 import { Loading } from 'components/common/Loading';
+import { useForm, SubmitHandler, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
 
 type Props = {
   socket: Socket;
 };
 
+export type ChatroomForm = {
+  roomName: string;
+  password: string;
+};
+
 export const ChatroomCreateButton = memo(function ChatroomCreateButton({
   socket,
 }: Props) {
-  const [name, setName] = useState('');
   const [open, setOpen] = useState(false);
-  const [password, setPassword] = useState('');
   const [roomType, setRoomType] = useState<ChatroomType>(CHATROOM_TYPE.PUBLIC);
+  const [showPassword, setShowPassword] = useState(false);
+
   const { data: user } = useQueryUser();
   if (user === undefined) {
     return <Loading />;
   }
 
-  const initDialog = useCallback(() => {
-    setName('');
-    setPassword('');
-    setRoomType(CHATROOM_TYPE.PUBLIC);
-  }, [name, password, roomType]);
+  const schema = z.object({
+    roomName: z.string().min(1, { message: 'Room Name field is required' }),
+    password: z.string().refine(
+      (value: string) =>
+        roomType !== CHATROOM_TYPE.PROTECTED || value.length >= 5,
+      () => ({
+        message: 'Password passwords must be at least 5 characters',
+      }),
+    ),
+  });
+
+  const {
+    control,
+    formState: { errors },
+    handleSubmit,
+    clearErrors,
+    reset,
+  } = useForm<ChatroomForm>({
+    mode: 'onSubmit',
+    resolver: zodResolver(schema),
+    defaultValues: {
+      roomName: '',
+      password: '',
+    },
+  });
 
   const handleChangeType = (event: SelectChangeEvent) => {
+    reset();
     setRoomType(event.target.value as ChatroomType);
   };
 
@@ -50,7 +83,9 @@ export const ChatroomCreateButton = memo(function ChatroomCreateButton({
 
   const handleClose = useCallback(() => {
     setOpen(false);
-    initDialog();
+    setRoomType(CHATROOM_TYPE.PUBLIC);
+    reset();
+    clearErrors();
   }, [open]);
 
   const getJoinedRooms = useCallback(() => {
@@ -64,27 +99,25 @@ export const ChatroomCreateButton = memo(function ChatroomCreateButton({
     [socket],
   );
 
-  const handleSubmit = useCallback(() => {
-    if (
-      name.length === 0 ||
-      (roomType === CHATROOM_TYPE.PROTECTED && password.length === 0)
-    ) {
+  const onSubmit: SubmitHandler<ChatroomForm> = (data: ChatroomForm) => {
+    if (roomType === CHATROOM_TYPE.PROTECTED && data.password.length === 0) {
       handleClose();
 
       return;
     }
 
     const room: CreateChatroomInfo = {
-      name: name,
+      name: data.roomName,
       type: roomType,
       ownerId: user.id,
-      password: roomType === CHATROOM_TYPE.PROTECTED ? password : undefined,
+      password:
+        roomType === CHATROOM_TYPE.PROTECTED ? data.password : undefined,
     };
-    console.log('room: %o', room);
+    console.log('create chatroom: %o', room);
     createChatroom(room);
     getJoinedRooms();
     handleClose();
-  }, [name, roomType, password]);
+  };
 
   return (
     <>
@@ -101,36 +134,72 @@ export const ChatroomCreateButton = memo(function ChatroomCreateButton({
         Create Room
       </Button>
       <Dialog open={open} onClose={handleClose}>
-        <DialogTitle>Subscribe</DialogTitle>
-        <DialogContent>
-          <TextField
-            autoFocus
-            margin="dense"
-            id="name"
-            label="Room name"
-            type="text"
-            value={name}
-            onChange={(e) => {
-              setName(e.target.value);
-            }}
-            fullWidth
-            variant="standard"
+        <DialogTitle>Create Room</DialogTitle>
+        <DialogContent sx={{ minWidth: 360 }}>
+          <Controller
+            name="roomName"
+            control={control}
+            render={({ field }) => (
+              <TextField
+                fullWidth
+                autoFocus
+                margin="dense"
+                variant="standard"
+                size="small"
+                label="RoomName"
+                error={errors.roomName ? true : false}
+                helperText={errors.roomName?.message}
+                // eslint-disable-next-line react/jsx-props-no-spreading
+                {...field}
+              />
+            )}
           />
         </DialogContent>
         {roomType === CHATROOM_TYPE.PROTECTED && (
           <DialogContent>
-            <TextField
-              autoFocus
-              margin="dense"
-              id="password"
-              label="Password"
-              type="text"
-              value={password}
-              onChange={(e) => {
-                setPassword(e.target.value);
-              }}
-              fullWidth
-              variant="standard"
+            <Controller
+              name="password"
+              control={control}
+              render={({ field }) => (
+                <TextField
+                  autoFocus
+                  margin="dense"
+                  label="Password"
+                  type={showPassword ? 'text' : 'password'}
+                  error={errors.password ? true : false}
+                  helperText={
+                    errors.password
+                      ? errors.password?.message
+                      : 'Must be min 5 characters'
+                  }
+                  InputProps={{
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IconButton
+                          aria-label="toggle password visibility"
+                          onClick={() => {
+                            setShowPassword(!showPassword);
+                          }}
+                          onMouseDown={(event) => {
+                            event.preventDefault();
+                          }}
+                          edge="end"
+                        >
+                          {showPassword ? (
+                            <VisibilityOffIcon />
+                          ) : (
+                            <Visibility />
+                          )}
+                        </IconButton>
+                      </InputAdornment>
+                    ),
+                  }}
+                  fullWidth
+                  variant="standard"
+                  // eslint-disable-next-line react/jsx-props-no-spreading
+                  {...field}
+                />
+              )}
             />
           </DialogContent>
         )}
@@ -151,8 +220,15 @@ export const ChatroomCreateButton = memo(function ChatroomCreateButton({
           </FormControl>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleClose}>Cancel</Button>
-          <Button onClick={handleSubmit}>Submit</Button>
+          <Button onClick={handleClose} variant="outlined">
+            Cancel
+          </Button>
+          <Button
+            onClick={handleSubmit(onSubmit) as VoidFunction}
+            variant="contained"
+          >
+            Submit
+          </Button>
         </DialogActions>
       </Dialog>
     </>
