@@ -19,7 +19,6 @@ const Battle: NextPage = () => {
   const [finishedGameInfo, setFinishedGameInfo] = useState(
     defaultFinishedGameInfo,
   );
-  console.log(playState);
 
   return (
     <Layout title="Play">

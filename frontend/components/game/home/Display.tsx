@@ -7,8 +7,11 @@ import { Wait } from './Wait';
 import { Watch } from './Watch';
 import { History } from './History';
 import { Profile } from './Profile';
+import { useQueryUser } from 'hooks/useQueryUser';
+import { Loading } from 'components/common/Loading';
 
 export const Display = () => {
+  const { data: user } = useQueryUser();
   const { socket } = useSocketStore();
   const { playState } = usePlayStateStore();
   const updatePlayState = usePlayStateStore((store) => store.updatePlayState);
@@ -17,6 +20,8 @@ export const Display = () => {
     if (socket.disconnected) socket.connect();
     updatePlayState(PlayState.stateNothing);
   }, []);
+
+  if (user === undefined) return <Loading />;
 
   return (
     <>
@@ -42,7 +47,7 @@ export const Display = () => {
         </Grid>
         <Grid item xs={5} sx={{ height: '50%' }}>
           <Paper elevation={2} sx={{ height: '100%' }}>
-            <History />
+            <History userId={user.id} />
           </Paper>
         </Grid>
         <Grid item xs={5} sx={{ height: '50%' }}>

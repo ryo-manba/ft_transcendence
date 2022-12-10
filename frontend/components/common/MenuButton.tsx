@@ -8,6 +8,8 @@ import axios from 'axios';
 import Link from 'next/link';
 import { signOut, useSession } from 'next-auth/react';
 import { useRouter } from 'next/router';
+import { useQueryUser } from 'hooks/useQueryUser';
+import { Loading } from './Loading';
 
 export const MenuButton = () => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -21,10 +23,18 @@ export const MenuButton = () => {
   const queryClient = useQueryClient();
   const { data: session } = useSession();
   const router = useRouter();
+  const { data: user } = useQueryUser();
+
+  if (user === undefined) return <Loading />;
 
   const logout = () => {
+    void axios.post(
+      `${process.env.NEXT_PUBLIC_API_URL as string}/auth/logout`,
+      {
+        id: user.id,
+      },
+    );
     queryClient.removeQueries(['user']);
-    void axios.post(`${process.env.NEXT_PUBLIC_API_URL as string}/auth/logout`);
     if (session) {
       void signOut();
     } else {
@@ -55,7 +65,7 @@ export const MenuButton = () => {
         <Link href="/dashboard">
           <MenuItem>Home</MenuItem>
         </Link>
-        <Link href="/profile">
+        <Link href={{ pathname: '/profile', query: { userId: user.id } }}>
           <MenuItem>Profile</MenuItem>
         </Link>
         <Link href="/setting">

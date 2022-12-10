@@ -3,18 +3,21 @@ import {
   Controller,
   Get,
   Param,
+  ParseIntPipe,
   Patch,
   Post,
   Req,
+  StreamableFile,
   UploadedFile,
   UseGuards,
   UseInterceptors,
+  Query,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { Request } from 'express';
 import { UserService } from './user.service';
 import { UpdateNameDto } from './dto/update-name.dto';
-import { User } from '@prisma/client';
+import { User, UserStatus } from '@prisma/client';
 import { UpdatePointDto } from './dto/update-point.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
@@ -51,6 +54,21 @@ export class UserController {
     return req.user;
   }
 
+  @Get('status')
+  async getStatus(
+    @Req() req: Request,
+    @Query('id', ParseIntPipe) id: number,
+  ): Promise<UserStatus | undefined> {
+    return await this.userService.getStatus(id);
+  }
+
+  @Get(':id')
+  getUserById(
+    @Param('id', ParseIntPipe) id: number,
+  ): Promise<Omit<User, 'hashedPassword'> | null> {
+    return this.userService.findOne(id);
+  }
+
   @Patch('point/:id')
   updatePoint(
     @Param('id') id: string,
@@ -77,22 +95,26 @@ export class UserController {
   uploadAvatar(
     @UploadedFile() file: Express.Multer.File,
     @Param('id') id: string,
-  ) {
+  ): Promise<Omit<User, 'hashedPassword'>> {
     return this.userService.updateAvatar(Number(id), {
       avatarPath: file.filename,
     });
   }
 
-  @Get(':imageUrl')
-  getAvatarImage(@Param('imageUrl') imageUrl: string) {
-    return this.userService.getAvatarImage(imageUrl);
+  // uniqueSuffixは実際には使わないが、Settingの画面でアバターを更新した際にコンポーネント
+  // が更新されるようにするために追加している
+  @Get('avatar/:id/:uniqueSuffix')
+  getAvatarImage(
+    @Param('id', ParseIntPipe) id: number,
+  ): Promise<StreamableFile | undefined> {
+    return this.userService.getAvatarImage(id);
   }
 
   @Patch('avatar/:id/:avatarPath')
   deleteAvatar(
     @Param('id') id: string,
     @Param('avatarPath') avatarPath: string,
-  ) {
+  ): Promise<Omit<User, 'hashedPassword'>> {
     return this.userService.deleteAvatar(Number(id), avatarPath);
   }
 }

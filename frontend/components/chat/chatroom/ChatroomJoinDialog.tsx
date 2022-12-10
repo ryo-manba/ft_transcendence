@@ -18,7 +18,7 @@ import ChatIcon from '@mui/icons-material/Chat';
 import LockIcon from '@mui/icons-material/Lock';
 import { Chatroom } from '@prisma/client';
 import { Socket } from 'socket.io-client';
-import { CHATROOM_TYPE, ChatroomType } from 'types/chat';
+import { CHATROOM_TYPE, JoinChatroomInfo } from 'types/chat';
 import { useQueryUser } from 'hooks/useQueryUser';
 import { Loading } from 'components/common/Loading';
 
@@ -27,13 +27,6 @@ type Props = {
   rooms: Chatroom[];
   socket: Socket;
   onClose: () => void;
-};
-
-type JoinRoomInfo = {
-  userId: number;
-  roomId: number;
-  type: ChatroomType;
-  password?: string;
 };
 
 export const ChatroomJoinDialog = memo(function ChatroomJoinDialog({
@@ -106,7 +99,7 @@ export const ChatroomJoinDialog = memo(function ChatroomJoinDialog({
 
       return;
     }
-    const joinRoomInfo: JoinRoomInfo = {
+    const joinRoomInfo: JoinChatroomInfo = {
       userId: user.id,
       roomId: selectedRoom.id,
       type: selectedRoom.type,

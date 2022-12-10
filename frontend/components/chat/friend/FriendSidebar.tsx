@@ -1,14 +1,14 @@
 import { useState, useEffect } from 'react';
 import { List } from '@mui/material';
-// import { FriendAddButton } from 'components/chat/FriendAddButton';
-import { FriendListItem } from 'components/chat/FriendListItem';
+import { FriendAddButton } from 'components/chat/friend/FriendAddButton';
+import { FriendListItem } from 'components/chat/friend/FriendListItem';
 import { Loading } from 'components/common/Loading';
 import { useQueryUser } from 'hooks/useQueryUser';
 import { Friend } from 'types/friend';
-import { fetchFollowingUser } from 'api/friend/fetchFollowingUser';
+import { fetchFollowingUsers } from 'api/friend/fetchFollowingUsers';
 
-export const FriendBar = () => {
-  const [friends, setFriends] = useState<Friend[]>([]); // fetchする
+export const FriendSidebar = () => {
+  const [friends, setFriends] = useState<Friend[]>([]);
   const { data: user } = useQueryUser();
   if (user === undefined) {
     return <Loading />;
@@ -16,7 +16,7 @@ export const FriendBar = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      const res = await fetchFollowingUser({ userId: user.id });
+      const res = await fetchFollowingUsers({ userId: user.id });
 
       setFriends(res);
     };
@@ -32,7 +32,8 @@ export const FriendBar = () => {
 
   return (
     <>
-      {/* <FriendAddButton /> */}
+      {/* フレンド追加したら、リストを更新する */}
+      <FriendAddButton setFriends={setFriends} />
       <List dense={false}>
         {friends &&
           friends.map((friend) => (

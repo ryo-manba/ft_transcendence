@@ -98,7 +98,7 @@ export const ChatroomCreateButton = memo(function ChatroomCreateButton({
         style={{ justifyContent: 'flex-start' }}
         onClick={handleOpen}
       >
-        チャットルーム作成
+        Create Room
       </Button>
       <Dialog open={open} onClose={handleClose}>
         <DialogTitle>Subscribe</DialogTitle>

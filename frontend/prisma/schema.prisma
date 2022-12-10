@@ -22,33 +22,39 @@ model Chatroom {
 }
 
 model ChatroomAdmin {
-  id         Int      @id @default(autoincrement())
   createdAt  DateTime @default(now())
   updatedAt  DateTime @default(now())
   chatroomId Int
   userId     Int
   Chatroom   Chatroom @relation(fields: [chatroomId], references: [id], onDelete: Cascade)
   User       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([chatroomId, userId])
+  @@unique([chatroomId, userId])
 }
 
 model ChatroomMembers {
-  id         Int      @id @default(autoincrement())
   createdAt  DateTime @default(now())
   updatedAt  DateTime @default(now())
   chatroomId Int
   userId     Int
   Chatroom   Chatroom @relation(fields: [chatroomId], references: [id], onDelete: Cascade)
   User       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([chatroomId, userId])
+  @@unique([chatroomId, userId])
 }
 
 model FriendRelation {
-  id          Int      @id @default(autoincrement())
   createdAt   DateTime @default(now())
   updatedAt   DateTime @default(now())
   followerId  Int
   followingId Int
   follower    User     @relation("follower", fields: [followerId], references: [id], onDelete: Cascade)
   following   User     @relation("following", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@id([followingId, followerId])
+  @@unique([followingId, followerId])
 }
 
 model GameRecord {
@@ -83,6 +89,7 @@ model User {
   avatarPath      String?
   has2FA          Boolean           @default(false)
   oauthid         String?           @unique
+  status          UserStatus        @default(OFFLINE)
   Chatroom        Chatroom[]
   ChatroomAdmin   ChatroomAdmin[]
   ChatroomMembers ChatroomMembers[]
@@ -97,4 +104,10 @@ enum ChatroomType {
   PUBLIC
   PRIVATE
   PROTECTED
+}
+
+enum UserStatus {
+  ONLINE
+  PLAYING
+  OFFLINE
 }

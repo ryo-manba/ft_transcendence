@@ -15,6 +15,7 @@ model User {
   hashedPassword  String?
   point           Int               @default(1000)
   avatarPath      String?
+  status          UserStatus        @default(OFFLINE)
   chatroomOwners  Chatroom[]
   chatroomAdmins  ChatroomAdmin[]
   chatroomMembers ChatroomMembers[]
@@ -27,14 +28,24 @@ model User {
   has2FA          Boolean           @default(false)
 }
 
+enum UserStatus {
+  ONLINE
+  PLAYING
+  OFFLINE
+}
+
 model FriendRelation {
-  id          Int      @id @default(autoincrement())
   createdAt   DateTime @default(now())
   updatedAt   DateTime @default(now()) @updatedAt
   follower    User     @relation("follower", fields: [followerId], references: [id], onDelete: Cascade)
   followerId  Int
   following   User     @relation("following", fields: [followingId], references: [id], onDelete: Cascade)
   followingId Int
+
+  // findするときに、followingIdとfollowerIdの組み合わせで検索することができる
+  @@id([followingId, followerId])
+  // 2つのカラムの組み合わせに対してUnique制約を設定する
+  @@unique([followingId, followerId])
 }
 
 // オーナー -> チャットルーム作成者(管理者権限も持つ)
@@ -60,13 +71,15 @@ enum ChatroomType {
 }
 
 model ChatroomMembers {
-  id         Int      @id @default(autoincrement())
   createdAt  DateTime @default(now())
   updatedAt  DateTime @default(now()) @updatedAt
   chatroom   Chatroom @relation(fields: [chatroomId], references: [id], onDelete: Cascade)
   chatroomId Int
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId     Int
+
+  @@id([chatroomId, userId])
+  @@unique([chatroomId, userId])
 }
 
 model Message {
@@ -81,13 +94,15 @@ model Message {
 }
 
 model ChatroomAdmin {
-  id         Int      @id @default(autoincrement())
   createdAt  DateTime @default(now())
   updatedAt  DateTime @default(now()) @updatedAt
   chatroom   Chatroom @relation(fields: [chatroomId], references: [id], onDelete: Cascade) // Roomが消されたらメッセージも削除される
   chatroomId Int
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId     Int
+
+  @@id([chatroomId, userId])
+  @@unique([chatroomId, userId])
 }
 
 model GameRecord {

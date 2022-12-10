@@ -2,7 +2,7 @@ import axios, { AxiosError } from 'axios';
 import { useQueryClient, useMutation } from '@tanstack/react-query';
 import { User } from '@prisma/client';
 
-export const useMutateAvatar = () => {
+export const useMutationAvatar = () => {
   const queryClient = useQueryClient();
 
   const updateAvatarMutation = useMutation<
@@ -59,9 +59,7 @@ export const useMutateAvatar = () => {
         }
       },
       onError: (err: AxiosError) => {
-        // [TODO] エラーがあった場合に、UI上もなにかアラートを出す
         console.log(err);
-        throw err;
       },
     },
   );
