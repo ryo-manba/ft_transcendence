@@ -52,7 +52,7 @@ export const ChatroomCreateButton = memo(function ChatroomCreateButton({
       (value: string) =>
         roomType !== CHATROOM_TYPE.PROTECTED || value.length >= 5,
       () => ({
-        message: 'Password passwords must be at least 5 characters',
+        message: 'Passwords must be at least 5 characters',
       }),
     ),
   });
@@ -100,12 +100,6 @@ export const ChatroomCreateButton = memo(function ChatroomCreateButton({
   );
 
   const onSubmit: SubmitHandler<ChatroomForm> = (data: ChatroomForm) => {
-    if (roomType === CHATROOM_TYPE.PROTECTED && data.password.length === 0) {
-      handleClose();
-
-      return;
-    }
-
     const room: CreateChatroomInfo = {
       name: data.roomName,
       type: roomType,
