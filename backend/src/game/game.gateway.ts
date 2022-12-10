@@ -126,8 +126,8 @@ export class GameGateway {
   }
 
   async handleDisconnect(socket: Socket) {
-    this.logger.log(`Disconnected: ${socket.id}`);
     const id = (socket.handshake.auth as { userId: number }).userId;
+    this.logger.log(`Disconnected: ${socket.id} ${id}`);
     if (id !== null) {
       await socket.leave(`userId:${id}`);
       for (const [key, value] of this.invitationList) {
@@ -135,7 +135,6 @@ export class GameGateway {
           // cancel invitation because host were disconnected
           this.server.to(`userId:${key}`).emit('cancelInvitation', key);
           value.delete(id);
-          this.logger.log(`${key}: ${id}`);
         }
       }
     } else {
@@ -201,15 +200,17 @@ export class GameGateway {
   @SubscribeMessage('inviteFriend')
   inviteFriend(@MessageBody() data: MatchPair) {
     const hostIds = this.invitationList.get(data.invitee.id);
+
+    console.log(hostIds);
     if (hostIds === undefined)
       this.invitationList.set(data.invitee.id, new Set([data.host.id]));
-    else if (hostIds.has(data.invitee.id)) {
-      this.logger.log(
-        `${data.host.name} ALREADY SEND INVITATION TO ${data.invitee.name}`,
-      );
+    else if (hostIds.has(data.host.id)) {
+      return false;
     } else hostIds.add(data.host.id);
 
     this.server.to(`userId:${data.invitee.id}`).emit('inviteGame', data.host);
+
+    return true;
   }
 
   @SubscribeMessage('cancelInvitation')
@@ -242,7 +243,6 @@ export class GameGateway {
       .in(`userId:${data.host.id}`)
       .fetchSockets();
 
-    console.log(socket1);
     await this.user
       .findOne(data.host.id)
       .then((user1) => {

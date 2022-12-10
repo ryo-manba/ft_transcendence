@@ -21,13 +21,11 @@ export const Display = () => {
   const { invitedFriendState } = useInvitedFriendStateStore();
 
   useEffect(() => {
-    if (socket.disconnected && user !== undefined) {
-      // this is one way to link room and userid but this was unreliable. (sometimes send undefined)
-      socket.auth = { userId: user.id };
-      socket.connect();
+    // chatに接続しているとdisconnectedがfalseになる。
+    // 同じブラウザで別のタブを開くと二個目以降はauthがundefinedになる。。。
+    if (user !== undefined) {
       socket.emit('subscribe', user.id);
     }
-    console.log(socket.disconnected);
   }, [user]);
 
   useEffect(() => {

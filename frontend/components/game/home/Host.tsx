@@ -17,9 +17,6 @@ import { useQueryUser } from 'hooks/useQueryUser';
 
 export const Host = () => {
   const [open, setOpen] = useState(true);
-  //   const [state, setState] = useState<'waiting' | 'accepted' | 'denied'>(
-  //     'waiting',
-  //   );
   const updatePlayState = usePlayStateStore((store) => store.updatePlayState);
   const updatePlayerNames = usePlayerNamesStore(
     (store) => store.updatePlayerNames,
@@ -30,19 +27,6 @@ export const Host = () => {
   const { socket } = useSocketStore();
   const { invitedFriendState, updateInvitedFriendState } =
     useInvitedFriendStateStore();
-
-  useEffect(() => {
-    if (user !== undefined) {
-      const match: MatchPair = {
-        invitee: invitedFriendState.friend,
-        host: {
-          name: user.name,
-          id: user.id,
-        },
-      };
-      socket.emit('inviteFriend', match);
-    }
-  }, [user]);
 
   useEffect(() => {
     socket.on('select', (playerNames: [string, string]) => {
