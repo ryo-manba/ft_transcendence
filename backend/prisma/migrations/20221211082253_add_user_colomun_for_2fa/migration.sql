@@ -10,7 +10,8 @@ DROP INDEX "User_oauthid_key";
 
 -- AlterTable
 ALTER TABLE "User" DROP COLUMN "oauthid",
-ADD COLUMN     "oAuthId" TEXT;
+ADD COLUMN     "oAuthId" TEXT,
+ADD COLUMN     "secret2FA" TEXT NOT NULL DEFAULT '';
 
 -- CreateIndex
 CREATE UNIQUE INDEX "User_oAuthId_key" ON "User"("oAuthId");
