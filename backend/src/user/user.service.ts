@@ -161,9 +161,12 @@ export class UserService {
     return user.status;
   }
 
-  async updateStatus(userId: number, status: UserStatus): Promise<boolean> {
+  async updateStatus(
+    userId: number,
+    status: UserStatus,
+  ): Promise<Omit<User, 'hashedPassword'>> {
     try {
-      await this.prisma.user.update({
+      const user = await this.prisma.user.update({
         where: {
           id: userId,
         },
@@ -171,12 +174,13 @@ export class UserService {
           status: status,
         },
       });
+      delete user.hashedPassword;
 
-      return true;
+      return user;
     } catch (error) {
       console.error(error);
 
-      return false;
+      throw error;
     }
   }
 }

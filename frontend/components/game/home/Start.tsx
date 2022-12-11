@@ -4,27 +4,27 @@ import { usePlayStateStore, PlayState } from 'store/game/PlayState';
 import { useSocketStore } from 'store/game/ClientSocket';
 import { useQueryUser } from 'hooks/useQueryUser';
 import { Loading } from 'components/common/Loading';
-import { updateUserStatusById } from 'api/user/updateUserStatusById';
+import { useMutationStatus } from 'hooks/useMutationStatus';
 
 export const Start = () => {
   const { socket } = useSocketStore();
   const updatePlayState = usePlayStateStore((store) => store.updatePlayState);
   const { data: user } = useQueryUser();
+  const { updateStatusMutation } = useMutationStatus();
 
   if (user === undefined) return <Loading />;
 
   const start = () => {
-    const startGame = async () => {
-      const res = await updateUserStatusById({
+    try {
+      updateStatusMutation.mutate({
         userId: user.id,
         status: 'PLAYING',
       });
-      if (!res) return;
-      socket.emit('playStart', user.id);
-      updatePlayState(PlayState.stateWaiting);
-    };
-
-    void startGame();
+    } catch (error) {
+      return;
+    }
+    socket.emit('playStart', user.id);
+    updatePlayState(PlayState.stateWaiting);
   };
 
   return (

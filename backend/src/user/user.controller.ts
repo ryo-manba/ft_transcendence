@@ -66,7 +66,7 @@ export class UserController {
   updateStatus(
     @Param('id', ParseIntPipe) id: number,
     @Param('newStatus') status: UserStatus,
-  ): Promise<boolean> {
+  ): Promise<Omit<User, 'hashedPassword'>> {
     return this.userService.updateStatus(id, status);
   }
 
