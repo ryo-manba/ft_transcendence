@@ -2,7 +2,6 @@ import { memo, useState, useCallback, useEffect } from 'react';
 import { Socket } from 'socket.io-client';
 import { Button } from '@mui/material';
 import AddCircleOutlineRounded from '@mui/icons-material/AddCircleOutlineRounded';
-import { CHATROOM_TYPE } from 'types/chat';
 import { User, Chatroom } from '@prisma/client';
 import { ChatroomJoinDialog } from 'components/chat/chatroom/ChatroomJoinDialog';
 

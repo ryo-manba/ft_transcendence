@@ -14,6 +14,7 @@ import { Chatroom, ChatroomType, JoinChatroomInfo } from 'types/chat';
 import { useQueryUser } from 'hooks/useQueryUser';
 import { Loading } from 'components/common/Loading';
 import { ChatroomSettingDialog } from 'components/chat/chatroom/ChatroomSettingDialog';
+import { ChatErrorAlert } from 'components/chat/utils/ChatErrorAlert';
 
 type Props = {
   room: Chatroom;
@@ -132,24 +133,10 @@ export const ChatroomListItem = ({ room, socket, setCurrentRoomId }: Props) => {
     <>
       <Box sx={{ width: '100%' }}>
         <Collapse in={error !== ''}>
-          <Alert
-            severity="error"
-            action={
-              <IconButton
-                aria-label="close"
-                color="inherit"
-                size="small"
-                onClick={() => {
-                  setError('');
-                }}
-              >
-                <CloseIcon fontSize="inherit" />
-              </IconButton>
-            }
-            sx={{ mb: 2 }}
-          >
-            {`${room.name}: ${error}`}
-          </Alert>
+          <ChatErrorAlert
+            error={`${room.name}: ${error}`}
+            setError={setError}
+          />
         </Collapse>
       </Box>
       <Box sx={{ width: '100%' }}>
