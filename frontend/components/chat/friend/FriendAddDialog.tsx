@@ -1,9 +1,9 @@
 import { memo, useState, Dispatch, SetStateAction } from 'react';
 import {
-  Alert,
   Avatar,
   Box,
   Button,
+  Collapse,
   List,
   ListItem,
   ListItemAvatar,
@@ -19,6 +19,7 @@ import { Loading } from 'components/common/Loading';
 import { followUser } from 'api/friend/followUser';
 import type { Friend } from 'types/friend';
 import { getAvatarImageUrl } from 'api/user/getAvatarImageUrl';
+import { ChatErrorAlert } from 'components/chat/utils/ChatErrorAlert';
 
 type Props = {
   open: boolean;
@@ -115,7 +116,11 @@ export const FriendAddDialog = memo(function FriendAddDialog({
       {users.length !== 0 && (
         <p className="flex justify-center">Selected: {selectedUser?.name}</p>
       )}
-      {error && <Alert severity="error">{error}</Alert>}
+      <Box sx={{ width: '100%' }}>
+        <Collapse in={error !== ''}>
+          <ChatErrorAlert error={error} setError={setError} />
+        </Collapse>
+      </Box>
       <DialogActions>
         <Button onClick={handleClose}>Cancel</Button>
         <Button onClick={handleSubmit} disabled={!selectedUser}>
