@@ -149,16 +149,14 @@ export class AuthService {
   }
 
   async generateQrCode(userId: number): Promise<string> {
+    if (Number.isNaN(userId)) throw new Error('UserId is invalid');
+    const user = await this.prisma.user.findUnique({
+      where: {
+        id: userId,
+      },
+    });
+    if (!user) throw new HttpException('User not found', HttpStatus.NOT_FOUND);
     try {
-      if (Number.isNaN(userId)) throw new Error('UserId is invalid');
-      const user = await this.prisma.user.findUnique({
-        where: {
-          id: userId,
-        },
-      });
-      if (!user)
-        throw new HttpException('User not found', HttpStatus.NOT_FOUND);
-
       const secret = speakeasy.generateSecret();
       const url = speakeasy.otpauthURL({
         secret: secret.base32,
@@ -166,6 +164,15 @@ export class AuthService {
         issuer: 'ft_transcendence',
       });
       const qr_code = qrcode.toDataURL(url);
+      //取得したSecretをDBに保存。まだこのユーザーは2FA機能オン状態ではない。
+      const user_db = await this.prisma.user.update({
+        where: {
+          id: userId,
+        },
+        data: {
+          twoFASecret: secret.base32,
+        },
+      });
 
       return qr_code;
     } catch (error) {
@@ -175,28 +182,28 @@ export class AuthService {
 
   async send2FACode(userId: number, dto: SecretCodeDto): Promise<string> {
     console.log(dto);
-    try {
-      const user = await this.prisma.user.findUnique({
-        where: {
-          id: userId,
-        },
-      });
-      console.log(user.has2FA);
-      const valid = speakeasy.totp.verify({
-        secret: 'user.twoFASecret', // TODO: DBからもらった値を使わないと！
-        token: dto.code,
-      });
-      if (!valid) {
-        throw new Error('hoge');
-      }
+    const user = await this.prisma.user.findUnique({
+      where: {
+        id: userId,
+      },
+    });
+    console.log(user.has2FA);
+    const valid = speakeasy.totp.verify({
+      secret: user.twoFASecret,
+      token: dto.code,
+    });
+    if (!valid) {
+      throw new Error('hoge');
+    }
 
+    try {
+      //2FAの登録が完了したら、このユーザーは2FA機能をオンにする
       const user_db = await this.prisma.user.update({
         where: {
           id: userId,
         },
         data: {
           has2FA: true,
-          // twoFASecret: user_db.twoFASecret, あとでDBに追加しないと
         },
       });
     } catch (error) {
@@ -208,43 +215,38 @@ export class AuthService {
 
   public async has2FA(userId: number): Promise<string> {
     try {
-      const user_db = await this.prisma.user.findUnique({
+      const user = await this.prisma.user.findUnique({
         where: {
           id: userId,
         },
       });
-
-      return 'user_db.has2FA';
-      // return { enabled: user_db.has2FA };
+      // TODO: 戻り値がstringで良いか、frontendの実装時に再検討予定
+      if (user.has2FA) {
+        return 'enabled: true';
+      } else {
+        return 'enabled: false';
+      }
     } catch (error) {
       console.log(error);
       throw error;
     }
-
-    // return { enabled: false };
   }
 
-  async validate2FA(data: SecretCodeDto): Promise<string> {
-    try {
-      const user_db = await this.prisma.user.findUnique({
-        where: {
-          id: Number(data.userId),
-        },
-      });
-    } catch (error) {
-      console.log(error);
-      throw error;
-    }
-
+  async validate2FA(data: SecretCodeDto): Promise<Jwt> {
+    const user = await this.prisma.user.findUnique({
+      where: {
+        id: Number(data.userId),
+      },
+    });
     const valid = speakeasy.totp.verify({
-      secret: 'user.twoFASecret', // TODO: DBからもらった値を使わないと！
+      secret: user.twoFASecret,
       token: data.code,
     });
     if (!valid) {
-      throw new Error('hoge');
+      throw new Error('Invalid Speakeasy verify.');
     }
 
-    return 'loginと同じくユーザー情報を返したい';
+    return this.generateJwt(user.id, user.name);
   }
 
   async disable2FA(data: SecretCodeDto): Promise<string> {
@@ -255,7 +257,7 @@ export class AuthService {
         },
         data: {
           has2FA: false,
-          // twoFASecret: '', あとでDBに追加しないと
+          twoFASecret: '',
         },
       });
     } catch (error) {
@@ -263,7 +265,7 @@ export class AuthService {
       throw error;
     }
 
-    // return { disabled: true };
+    // TODO: 戻り値がstringで良いか、frontendの実装時に再検討予定
     return 'disabled: true';
   }
 }
