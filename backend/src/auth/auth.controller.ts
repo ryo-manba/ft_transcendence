@@ -71,8 +71,8 @@ export class AuthController {
   }
 
   @HttpCode(HttpStatus.OK)
-  @Post('oauthlogin')
-  async oauthlogin(
+  @Post('oauth-login')
+  async oAuthLogin(
     @Body() dto: OauthDto,
     @Res({ passthrough: true }) res: Response,
   ): Promise<Msg> {

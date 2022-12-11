@@ -90,7 +90,7 @@ const Home: NextPage = () => {
         try {
           reset();
           // console.log(session.user);
-          const url_oauth = `${process.env.NEXT_PUBLIC_API_URL}/auth/oauthlogin`;
+          const url_oauth = `${process.env.NEXT_PUBLIC_API_URL}/auth/oauth-login`;
           if (session.user) {
             await axios.post(url_oauth, {
               oAuthId: session.user.email,
