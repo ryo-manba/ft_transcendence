@@ -124,16 +124,12 @@ export class AuthService {
       } else {
         username = dto.oauthid;
       }
-      //パスワードは
-      const password = Math.random().toString(36).slice(-16);
-      const hashed = await bcrypt.hash(password, 12);
       try {
         // DBへ新規追加
         await this.prisma.user.create({
           data: {
             oauthid: dto.oauthid,
             name: username,
-            hashedPassword: hashed,
             avatarPath: dto.imagepath,
           },
         });
