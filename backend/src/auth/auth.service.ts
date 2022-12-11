@@ -170,7 +170,7 @@ export class AuthService {
           id: userId,
         },
         data: {
-          twoFASecret: secret.base32,
+          secret2FA: secret.base32,
         },
       });
 
@@ -189,7 +189,7 @@ export class AuthService {
     });
     console.log(user.has2FA);
     const valid = speakeasy.totp.verify({
-      secret: user.twoFASecret,
+      secret: user.secret2FA,
       token: dto.code,
     });
     if (!valid) {
@@ -239,7 +239,7 @@ export class AuthService {
       },
     });
     const valid = speakeasy.totp.verify({
-      secret: user.twoFASecret,
+      secret: user.secret2FA,
       token: data.code,
     });
     if (!valid) {
@@ -257,7 +257,7 @@ export class AuthService {
         },
         data: {
           has2FA: false,
-          twoFASecret: '',
+          secret2FA: '',
         },
       });
     } catch (error) {
