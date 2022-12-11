@@ -106,8 +106,8 @@ export class AuthController {
   }
 
   @Get('has2fa')
-  has2fa(@Param('id') id: string) {
-    return this.authService.has2fa(Number(id));
+  has2FA(@Param('id') id: string) {
+    return this.authService.has2FA(Number(id));
   }
 
   @Post('validate2fa')
