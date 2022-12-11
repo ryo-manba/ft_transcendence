@@ -13,6 +13,10 @@ import { CreateMessageDto } from './dto/create-message.dto';
 import { CreateAdminDto } from './dto/create-admin.dto';
 import { JoinChatroomDto } from './dto/join-chatroom.dto';
 import type { ChatUser } from './types/chat';
+import { updatePasswordDto } from './dto/update-password.dto';
+
+// 2の12乗回の演算が必要という意味
+const saltRounds = 12;
 
 @Injectable()
 export class ChatService {
@@ -48,7 +52,7 @@ export class ChatService {
     // Protectedの場合はパスワードをハッシュ化する
     const hashed =
       dto.type === ChatroomType.PROTECTED
-        ? await bcrypt.hash(dto.password, 12)
+        ? await bcrypt.hash(dto.password, saltRounds)
         : undefined;
 
     try {
@@ -160,7 +164,9 @@ export class ChatService {
         id: dto.roomId,
       },
     });
-    if (!chatroom) return undefined;
+    if (!chatroom) {
+      return undefined;
+    }
 
     if (dto.type === ChatroomType.PROTECTED) {
       // Protectedの場合はパスワードが正しいことを確認する
@@ -168,7 +174,9 @@ export class ChatService {
         dto.password,
         chatroom.hashedPassword,
       );
-      if (!isValid) return undefined;
+      if (!isValid) {
+        return undefined;
+      }
     }
 
     // 入室処理を行う
@@ -267,6 +275,45 @@ export class ChatService {
       return admin;
     } catch (error) {
       return undefined;
+    }
+  }
+
+  /**
+   * チャットルームのパスワードを更新する
+   * @param updatePasswordDto
+   */
+  async updatePassword(dto: updatePasswordDto): Promise<boolean> {
+    const targetRoom = await this.findOne({
+      id: dto.chatroomId,
+    });
+    if (!targetRoom) {
+      return false;
+    }
+
+    // Oldパスワードが正しいことを確認する
+    const isValid = await bcrypt.compare(
+      dto.oldPassword,
+      targetRoom.hashedPassword,
+    );
+    if (!isValid) {
+      return false;
+    }
+
+    const hashed = await bcrypt.hash(dto.newPassword, saltRounds);
+
+    try {
+      await this.update({
+        data: {
+          hashedPassword: hashed,
+        },
+        where: {
+          id: dto.chatroomId,
+        },
+      });
+
+      return true;
+    } catch (err) {
+      return false;
     }
   }
 }
