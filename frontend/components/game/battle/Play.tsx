@@ -9,6 +9,7 @@ import { useMutationPoint } from 'hooks/useMutationPoint';
 import { useQueryUser } from 'hooks/useQueryUser';
 import { Loading } from 'components/common/Loading';
 import { useGameSettingStore } from 'store/game/GameSetting';
+import { useMutationStatus } from 'hooks/useMutationStatus';
 
 type Props = {
   updateFinishedGameInfo: (newInfo: FinishedGameInfo) => void;
@@ -117,6 +118,7 @@ export const Play = ({ updateFinishedGameInfo }: Props) => {
   const [isArrowDownPressed, updateIsArrowDownPressed] = useState(false);
   const [isArrowUpPressed, updateIsArrowUpPressed] = useState(false);
   const { updatePointMutation } = useMutationPoint();
+  const { updateStatusMutation } = useMutationStatus();
   const { data: user } = useQueryUser();
   const FPS = 60;
   const waitMillSec = 1000 / FPS;
@@ -272,7 +274,7 @@ export const Play = ({ updateFinishedGameInfo }: Props) => {
     socket.on(
       'finishGame',
       (updatedPoint: number | null, finishedGameInfo: FinishedGameInfo) => {
-        if (user !== undefined && updatedPoint !== null)
+        if (user !== undefined && updatedPoint !== null) {
           updatePointMutation.mutate(
             { userId: user.id, updatedPoint },
             {
@@ -281,11 +283,33 @@ export const Play = ({ updateFinishedGameInfo }: Props) => {
               },
             },
           );
+          updateStatusMutation.mutate(
+            {
+              userId: user.id,
+              status: 'ONLINE',
+            },
+            {
+              onError: () => {
+                updatePlayState(PlayState.stateNothing);
+              },
+            },
+          );
+        }
         updateFinishedGameInfo(finishedGameInfo);
         updatePlayState(PlayState.stateFinished);
       },
     );
     socket.on('error', () => {
+      try {
+        if (user !== undefined) {
+          updateStatusMutation.mutate({
+            userId: user?.id,
+            status: 'ONLINE',
+          });
+        }
+      } catch (error) {
+        console.error(error);
+      }
       updatePlayState(PlayState.stateNothing);
     });
 

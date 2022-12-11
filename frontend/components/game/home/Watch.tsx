@@ -7,6 +7,8 @@ import {
   Tooltip,
   IconButton,
 } from '@mui/material';
+import { useMutationStatus } from 'hooks/useMutationStatus';
+import { useQueryUser } from 'hooks/useQueryUser';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { useSocketStore } from 'store/game/ClientSocket';
@@ -34,13 +36,15 @@ export const Watch = () => {
     (store) => store.updateGameSetting,
   );
   const router = useRouter();
+  const { data: user } = useQueryUser();
+  const { updateStatusMutation } = useMutationStatus();
 
   useEffect(() => {
     socket.emit('watchList');
     socket.on('watchListed', (data: WatchInfo[]) => {
       setRooms(data);
     });
-    const id = setInterval(() => {
+    const intervalId = setInterval(() => {
       socket.emit('watchList');
     }, 2000);
 
@@ -48,6 +52,17 @@ export const Watch = () => {
       'joinGameRoom',
       (gameState: GameState, gameSetting: GameSetting) => {
         console.log('joinGameRoom');
+        if (user === undefined) {
+          return;
+        }
+        try {
+          updateStatusMutation.mutate({
+            userId: user.id,
+            status: 'PLAYING',
+          });
+        } catch (error) {
+          return;
+        }
         if (gameState === 'Setting') {
           updatePlayState(PlayState.stateStandingBy);
         } else {
@@ -59,7 +74,7 @@ export const Watch = () => {
     );
 
     return () => {
-      clearInterval(id);
+      clearInterval(intervalId);
       socket.off('watchListed');
       socket.off('joinGameRoom');
     };
