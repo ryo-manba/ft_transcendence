@@ -4,7 +4,7 @@ import { Button } from '@mui/material';
 import AddCircleOutlineRounded from '@mui/icons-material/AddCircleOutlineRounded';
 import { CHATROOM_TYPE } from 'types/chat';
 import { User, Chatroom } from '@prisma/client';
-import { ChatroomJoinDialog } from 'components/chat/ChatroomJoinDialog';
+import { ChatroomJoinDialog } from 'components/chat/chatroom/ChatroomJoinDialog';
 
 type Props = {
   socket: Socket;
@@ -55,7 +55,7 @@ export const ChatroomJoinButton = memo(function ChatroomJoinButton({
         style={{ justifyContent: 'flex-start' }}
         onClick={handleOpen}
       >
-        チャットルームを探す
+        Search Room
       </Button>
       <ChatroomJoinDialog
         rooms={rooms}

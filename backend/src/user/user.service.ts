@@ -1,7 +1,12 @@
-import { Injectable, StreamableFile, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  StreamableFile,
+  ForbiddenException,
+  Logger,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { UpdateNameDto } from './dto/update-name.dto';
-import { Prisma, User } from '@prisma/client';
+import { Prisma, User, UserStatus } from '@prisma/client';
 import { UpdatePointDto } from './dto/update-point.dto';
 import { UpdateAvatarDto } from './dto/update-avatar.dto';
 import { createReadStream, unlink } from 'node:fs';
@@ -11,15 +16,41 @@ import * as path from 'path';
 export class UserService {
   constructor(private prisma: PrismaService) {}
 
-  async findOne(userId: number): Promise<Omit<User, 'hashPassword'> | null> {
+  private logger: Logger = new Logger('UserService');
+
+  async findOne(userId: number): Promise<Omit<User, 'hashedPassword'> | null> {
     const user = await this.prisma.user.findUnique({
       where: {
         id: userId,
       },
     });
-    delete user.hashedPassword;
+
+    // userがnullのときにhashedPasswordにアクセスしようとするとエラーになる
+    if (user !== null) delete user.hashedPassword;
 
     return user;
+  }
+
+  /**
+   * @param params(userを探す条件)
+   * @returns 条件を満たすユーザー一覧を返す
+   */
+  async findAll(params: {
+    skip?: number;
+    take?: number;
+    cursor?: Prisma.ChatroomWhereUniqueInput;
+    where?: Prisma.ChatroomWhereInput;
+    orderBy?: Prisma.ChatroomOrderByWithRelationInput;
+  }): Promise<User[]> {
+    const { skip, take, cursor, where, orderBy } = params;
+
+    return this.prisma.user.findMany({
+      skip,
+      take,
+      cursor,
+      where,
+      orderBy,
+    });
   }
 
   async updateName(
@@ -70,11 +101,13 @@ export class UserService {
     }
   }
 
-  getAvatarImage(imageUrl: string): StreamableFile {
+  async getAvatarImage(id: number): Promise<StreamableFile | undefined> {
+    const user = await this.findOne(id);
+    if (user === null || user.avatarPath === null) return undefined;
     const filePath = path.join(
       process.cwd(),
       process.env.AVATAR_IMAGE_DIR,
-      imageUrl,
+      user.avatarPath,
     );
     const file = createReadStream(filePath);
 
@@ -119,5 +152,12 @@ export class UserService {
       console.log(error);
       throw error;
     }
+  }
+
+  async getStatus(id: number): Promise<UserStatus | undefined> {
+    const user = await this.findOne(id);
+    if (user === null) return undefined;
+
+    return user.status;
   }
 }

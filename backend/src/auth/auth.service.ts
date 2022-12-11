@@ -14,6 +14,7 @@ import { SecretCodeDto } from './dto/twofactorauth.dto';
 import { Msg, Jwt } from './interfaces/auth.interface';
 import * as qrcode from 'qrcode';
 import * as speakeasy from 'speakeasy';
+import { LogoutDto } from './dto/logout.dto';
 
 @Injectable()
 export class AuthService {
@@ -60,7 +61,27 @@ export class AuthService {
     if (!isValid)
       throw new ForbiddenException('username or password incorrect');
 
+    await this.prisma.user.update({
+      where: {
+        id: user.id,
+      },
+      data: {
+        status: 'ONLINE',
+      },
+    });
+
     return this.generateJwt(user.id, user.name);
+  }
+
+  async logout(dto: LogoutDto) {
+    await this.prisma.user.update({
+      where: {
+        id: dto.id,
+      },
+      data: {
+        status: 'OFFLINE',
+      },
+    });
   }
 
   async generateJwt(userId: number, username: string): Promise<Jwt> {
