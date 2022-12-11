@@ -1,11 +1,5 @@
 import { useState, memo, useEffect } from 'react';
-import {
-  ListItem,
-  ListItemText,
-  ListItemAvatar,
-  Avatar,
-  Badge,
-} from '@mui/material';
+import { ListItem, ListItemText, ListItemAvatar } from '@mui/material';
 import { Friend } from 'types/friend';
 import { useQueryUser } from 'hooks/useQueryUser';
 import { FriendInfoDialog } from 'components/chat/friend/FriendInfoDialog';
@@ -13,6 +7,7 @@ import { Loading } from 'components/common/Loading';
 import { getAvatarImageUrl } from 'api/user/getAvatarImageUrl';
 import { getUserStatusById } from 'api/user/getUserStatusById';
 import { UserStatus } from '@prisma/client';
+import { BadgedAvatar } from 'components/common/BadgedAvatar';
 
 type Props = {
   friend: Friend;
@@ -50,20 +45,10 @@ export const FriendListItem = memo(function FriendListItem({ friend }: Props) {
     <>
       <ListItem divider button onClick={handleClickOpen}>
         <ListItemAvatar>
-          <Badge
-            overlap="circular"
-            anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-            badgeContent=""
-            color={
-              friendStatus === 'ONLINE'
-                ? 'success'
-                : friendStatus === 'PLAYING'
-                ? 'error'
-                : 'default'
-            }
-          >
-            <Avatar src={getAvatarImageUrl(friend.id)} />
-          </Badge>
+          <BadgedAvatar
+            status={friendStatus}
+            src={getAvatarImageUrl(friend.id)}
+          />
         </ListItemAvatar>
         <ListItemText
           primary={friend.name}
