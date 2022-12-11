@@ -120,24 +120,19 @@ export class AuthService {
       } else {
         username = dto.oAuthId;
       }
-      try {
-        // DBへ新規追加
-        await this.prisma.user.create({
-          data: {
-            oAuthId: dto.oAuthId,
-            name: username,
-            avatarPath: dto.imagePath,
-          },
-        });
-      } catch (error) {
-        throw error;
-      }
+      // DBへ新規追加
+      await this.prisma.user.create({
+        data: {
+          oAuthId: dto.oAuthId,
+          name: username,
+          avatarPath: dto.imagePath,
+        },
+      });
       user = await this.prisma.user.findUnique({
         where: {
           oAuthId: dto.oAuthId,
         },
       });
-      if (!user) throw new ForbiddenException('username or password incorrect');
     }
     // if (user.has2FA) {
     //   UserManager.instance.twoFAlist.push(new TwoFAUser(user.id));
