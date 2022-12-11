@@ -151,28 +151,24 @@ export class AuthService {
       },
     });
     if (!user) throw new HttpException('User not found', HttpStatus.NOT_FOUND);
-    try {
-      const secret = speakeasy.generateSecret();
-      const url = speakeasy.otpauthURL({
-        secret: secret.base32,
-        label: user.name,
-        issuer: 'ft_transcendence',
-      });
-      const qr_code = qrcode.toDataURL(url);
-      //取得したSecretをDBに保存。まだこのユーザーは2FA機能オン状態ではない。
-      const user_db = await this.prisma.user.update({
-        where: {
-          id: userId,
-        },
-        data: {
-          secret2FA: secret.base32,
-        },
-      });
+    const secret = speakeasy.generateSecret();
+    const url = speakeasy.otpauthURL({
+      secret: secret.base32,
+      label: user.name,
+      issuer: 'ft_transcendence',
+    });
+    const qr_code = qrcode.toDataURL(url);
+    //取得したSecretをDBに保存。まだこのユーザーは2FA機能オン状態ではない。
+    const user_db = await this.prisma.user.update({
+      where: {
+        id: userId,
+      },
+      data: {
+        secret2FA: secret.base32,
+      },
+    });
 
-      return qr_code;
-    } catch (error) {
-      throw error;
-    }
+    return qr_code;
   }
 
   async send2FACode(userId: number, dto: SecretCodeDto): Promise<string> {
@@ -191,39 +187,30 @@ export class AuthService {
       throw new Error('hoge');
     }
 
-    try {
-      //2FAの登録が完了したら、このユーザーは2FA機能をオンにする
-      const user_db = await this.prisma.user.update({
-        where: {
-          id: userId,
-        },
-        data: {
-          has2FA: true,
-        },
-      });
-    } catch (error) {
-      throw error;
-    }
+    //2FAの登録が完了したら、このユーザーは2FA機能をオンにする
+    const user_db = await this.prisma.user.update({
+      where: {
+        id: userId,
+      },
+      data: {
+        has2FA: true,
+      },
+    });
 
     return 'ok';
   }
 
   public async has2FA(userId: number): Promise<string> {
-    try {
-      const user = await this.prisma.user.findUnique({
-        where: {
-          id: userId,
-        },
-      });
-      // TODO: 戻り値がstringで良いか、frontendの実装時に再検討予定
-      if (user.has2FA) {
-        return 'enabled: true';
-      } else {
-        return 'enabled: false';
-      }
-    } catch (error) {
-      console.log(error);
-      throw error;
+    const user = await this.prisma.user.findUnique({
+      where: {
+        id: userId,
+      },
+    });
+    // TODO: 戻り値がstringで良いか、frontendの実装時に再検討予定
+    if (user.has2FA) {
+      return 'enabled: true';
+    } else {
+      return 'enabled: false';
     }
   }
 
@@ -245,20 +232,15 @@ export class AuthService {
   }
 
   async disable2FA(data: SecretCodeDto): Promise<string> {
-    try {
-      const user_db = await this.prisma.user.update({
-        where: {
-          id: Number(data.userId),
-        },
-        data: {
-          has2FA: false,
-          secret2FA: '',
-        },
-      });
-    } catch (error) {
-      console.log(error);
-      throw error;
-    }
+    const user_db = await this.prisma.user.update({
+      where: {
+        id: Number(data.userId),
+      },
+      data: {
+        has2FA: false,
+        secret2FA: '',
+      },
+    });
 
     // TODO: 戻り値がstringで良いか、frontendの実装時に再検討予定
     return 'disabled: true';
