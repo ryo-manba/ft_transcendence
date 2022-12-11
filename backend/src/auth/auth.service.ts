@@ -130,12 +130,6 @@ export class AuthService {
           },
         });
       } catch (error) {
-        if (error instanceof PrismaClientKnownRequestError) {
-          // Prismaが新規作成時に発行するエラー。
-          if (error.code === 'P2002') {
-            throw new ForbiddenException('username is already taken');
-          }
-        }
         throw error;
       }
       user = await this.prisma.user.findUnique({
