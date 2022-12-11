@@ -108,6 +108,7 @@ export const ChatroomJoinDialog = memo(function ChatroomJoinDialog({
         socket.emit('chat:getJoinedRooms', user.id);
       } else {
         setError('Incorrect password.');
+        reset();
       }
     });
 
