@@ -221,7 +221,7 @@ export const ChatroomCreateButton = memo(function ChatroomCreateButton({
             onClick={handleSubmit(onSubmit) as VoidFunction}
             variant="contained"
           >
-            Submit
+            Create
           </Button>
         </DialogActions>
       </Dialog>
