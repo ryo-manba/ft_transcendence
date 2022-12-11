@@ -93,9 +93,9 @@ const Home: NextPage = () => {
           const url_oauth = `${process.env.NEXT_PUBLIC_API_URL}/auth/oauthlogin`;
           if (session.user) {
             await axios.post(url_oauth, {
-              oauthid: session.user.email,
-              // oauthid: session.user.oauthid,
-              imagepath: '',
+              oAuthId: session.user.email,
+              // oAuthId: session.user.oAuthId,
+              imagePath: '',
               //session.user.image,
             });
           }

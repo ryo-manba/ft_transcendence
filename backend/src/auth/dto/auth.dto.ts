@@ -12,8 +12,8 @@ export class AuthDto {
 export class OauthDto {
   @IsString()
   @IsNotEmpty()
-  oauthid: string;
+  oAuthId: string;
 
   @IsString()
-  imagepath: string;
+  imagePath: string;
 }

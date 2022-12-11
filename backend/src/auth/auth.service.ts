@@ -102,31 +102,31 @@ export class AuthService {
   async oauthlogin(dto: OauthDto): Promise<Jwt> {
     let user = await this.prisma.user.findUnique({
       where: {
-        oauthid: dto.oauthid,
+        oAuthId: dto.oAuthId,
       },
     });
 
     if (!user) {
       // 初めてOAuth認証した時はユーザー登録する
       const sameUsername = await this.prisma.user.findUnique({
-        where: { name: dto.oauthid },
+        where: { name: dto.oAuthId },
       });
       let username = '';
       if (sameUsername) {
         // usernameが使われてたら、一致しないものを生成する
         const uniqueSuffix =
           String(Date.now()) + '-' + String(Math.round(Math.random() * 1e9));
-        username = dto.oauthid + '_' + uniqueSuffix;
+        username = dto.oAuthId + '_' + uniqueSuffix;
       } else {
-        username = dto.oauthid;
+        username = dto.oAuthId;
       }
       try {
         // DBへ新規追加
         await this.prisma.user.create({
           data: {
-            oauthid: dto.oauthid,
+            oAuthId: dto.oAuthId,
             name: username,
-            avatarPath: dto.imagepath,
+            avatarPath: dto.imagePath,
           },
         });
       } catch (error) {
@@ -134,7 +134,7 @@ export class AuthService {
       }
       user = await this.prisma.user.findUnique({
         where: {
-          oauthid: dto.oauthid,
+          oAuthId: dto.oAuthId,
         },
       });
       if (!user) throw new ForbiddenException('username or password incorrect');
