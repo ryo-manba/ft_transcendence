@@ -93,7 +93,7 @@ export class AuthController {
   // API for 2Factor Auth
   //
   @Get('qr2fa/:id')
-  generateQrCode(@Param('id') id: string) {
+  generateQrCode(@Param('id') id: string): Promise<string> {
     return this.authService.generateQrCode(Number(id));
   }
 
@@ -106,17 +106,30 @@ export class AuthController {
   }
 
   @Get('has2fa')
-  has2FA(@Param('id') id: string) {
+  has2FA(@Param('id') id: string): Promise<string> {
     return this.authService.has2FA(Number(id));
   }
 
   @Post('validate2fa')
-  validate2FA(@Body() data: SecretCodeDto) {
-    return this.authService.validate2FA(data);
+  async validate2FA(
+    @Body() dto: SecretCodeDto,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<Msg> {
+    const jwt = await this.authService.validate2FA(dto);
+    res.cookie('access_token', jwt.accessToken, {
+      httpOnly: true,
+      secure: true, //Postmanからアクセスするときはfalse
+      sameSite: 'none',
+      path: '/',
+    });
+
+    return {
+      message: 'ok',
+    };
   }
 
   @Post('disable2fa')
-  disable2FA(@Body() data: SecretCodeDto) {
+  disable2FA(@Body() data: SecretCodeDto): Promise<string> {
     return this.authService.disable2FA(data);
   }
 }
