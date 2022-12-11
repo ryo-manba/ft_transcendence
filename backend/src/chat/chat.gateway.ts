@@ -298,8 +298,6 @@ export class ChatGateway {
       `chat:updatePassword received -> roomId: ${dto.chatroomId}`,
     );
 
-    console.log('dto:', dto);
-
     return await this.chatService.updatePassword(dto);
   }
 }
