@@ -200,7 +200,7 @@ export class AuthService {
     return 'ok';
   }
 
-  public async has2FA(userId: number): Promise<string> {
+  async has2FA(userId: number): Promise<string> {
     const user = await this.prisma.user.findUnique({
       where: {
         id: userId,
