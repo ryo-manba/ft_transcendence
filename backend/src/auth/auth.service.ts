@@ -108,19 +108,15 @@ export class AuthService {
 
     if (!user) {
       // 初めてOAuth認証した時はユーザー登録する
-      let sameUsername = await this.prisma.user.findUnique({
+      const sameUsername = await this.prisma.user.findUnique({
         where: { name: dto.oauthid },
       });
       let username = '';
       if (sameUsername) {
         // usernameが使われてたら、一致しないものを生成する
-        while (sameUsername) {
-          username =
-            dto.oauthid + '_' + Math.floor(Math.random() * 100000).toString();
-          sameUsername = await this.prisma.user.findUnique({
-            where: { name: username },
-          });
-        }
+        const uniqueSuffix =
+          String(Date.now()) + '-' + String(Math.round(Math.random() * 1e9));
+        username = dto.oauthid + '_' + uniqueSuffix;
       } else {
         username = dto.oauthid;
       }
