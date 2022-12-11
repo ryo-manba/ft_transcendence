@@ -1,4 +1,7 @@
 import { memo, useState, useEffect } from 'react';
+import { useForm, SubmitHandler, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
 import {
   Avatar,
   Box,
@@ -11,16 +14,22 @@ import {
   DialogActions,
   DialogTitle,
   DialogContent,
+  InputAdornment,
+  IconButton,
+  Collapse,
   TextField,
 } from '@mui/material';
 import { blue } from '@mui/material/colors';
 import ChatIcon from '@mui/icons-material/Chat';
 import LockIcon from '@mui/icons-material/Lock';
+import Visibility from '@mui/icons-material/Visibility';
+import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import { Chatroom } from '@prisma/client';
 import { Socket } from 'socket.io-client';
 import { CHATROOM_TYPE, JoinChatroomInfo } from 'types/chat';
 import { useQueryUser } from 'hooks/useQueryUser';
 import { Loading } from 'components/common/Loading';
+import { ChatErrorAlert } from 'components/chat/utils/ChatErrorAlert';
 
 type Props = {
   open: boolean;
@@ -29,48 +38,65 @@ type Props = {
   onClose: () => void;
 };
 
+export type ChatroomJoinForm = {
+  password: string;
+};
+
 export const ChatroomJoinDialog = memo(function ChatroomJoinDialog({
   onClose,
   socket,
   rooms,
   open,
 }: Props) {
-  const [isInputPassword, setIsInputPassword] = useState(false);
-  const [isValidPassword, setIsValidPassword] = useState(true);
-  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [selectedRoom, setSelectedRoom] = useState<Chatroom | null>(null);
+  const [error, setError] = useState('');
 
   const { data: user } = useQueryUser();
   if (user === undefined) {
     return <Loading />;
   }
 
+  const schema = z.object({
+    password: z.string().refine(
+      (value: string) =>
+        selectedRoom?.type !== CHATROOM_TYPE.PROTECTED || value.length >= 5,
+      () => ({
+        message: 'Passwords must be at least 5 characters',
+      }),
+    ),
+  });
+
+  const {
+    control,
+    formState: { errors },
+    handleSubmit,
+    clearErrors,
+    reset,
+  } = useForm<ChatroomJoinForm>({
+    mode: 'onSubmit',
+    resolver: zodResolver(schema),
+    defaultValues: {
+      password: '',
+    },
+  });
+
   const handleClose = () => {
     setSelectedRoom(null);
-    setIsValidPassword(true);
-    setIsInputPassword(false);
-    setPassword('');
+    setError('');
+    clearErrors();
+    reset();
     onClose();
   };
 
-  const isProtected = (room: Chatroom) => {
-    return room.type == CHATROOM_TYPE.PROTECTED;
+  const isProtected = (room: Chatroom | null) => {
+    return room?.type == CHATROOM_TYPE.PROTECTED;
   };
 
-  const handleListItemClick = (room: Chatroom) => {
+  const handleClickListItem = (room: Chatroom) => {
     // 現在選択しているチャットルームの場合は何もしない
     if (selectedRoom === room) return;
-
-    setPassword('');
     setSelectedRoom(room);
-
-    if (isProtected(room)) {
-      // Protectedの場合、パスワードを受け付ける
-      setIsInputPassword(true);
-    } else {
-      // Publicの場合、パスワードの表示を消す
-      setIsInputPassword(false);
-    }
   };
 
   useEffect(() => {
@@ -81,8 +107,7 @@ export const ChatroomJoinDialog = memo(function ChatroomJoinDialog({
         // サイドバーを更新する
         socket.emit('chat:getJoinedRooms', user.id);
       } else {
-        // パスワードが不正だった場合のエラーを想定している(今後変えるかもしれない)
-        setIsValidPassword(false);
+        setError('Incorrect password.');
       }
     });
 
@@ -91,14 +116,11 @@ export const ChatroomJoinDialog = memo(function ChatroomJoinDialog({
     };
   }, []);
 
-  const joinRoom = () => {
+  const onSubmit: SubmitHandler<ChatroomJoinForm> = ({
+    password,
+  }: ChatroomJoinForm) => {
     if (selectedRoom === null) return;
 
-    if (isProtected(selectedRoom) && password.length === 0) {
-      setIsValidPassword(false);
-
-      return;
-    }
     const joinRoomInfo: JoinChatroomInfo = {
       userId: user.id,
       roomId: selectedRoom.id,
@@ -112,7 +134,7 @@ export const ChatroomJoinDialog = memo(function ChatroomJoinDialog({
   return (
     <Dialog onClose={handleClose} open={open}>
       <DialogTitle sx={{ bgcolor: blue[100] }}>Rooms</DialogTitle>
-      <DialogContent>
+      <DialogContent sx={{ minWidth: 360, maxHeight: 360 }}>
         <Box sx={{ width: '100%', maxWidth: 360, bgcolor: 'background.paper' }}>
           {rooms.length === 0 ? (
             <div className="pt-4">No rooms are available.</div>
@@ -120,7 +142,7 @@ export const ChatroomJoinDialog = memo(function ChatroomJoinDialog({
             <List sx={{ pt: 0 }}>
               {rooms.map((room, i) => (
                 <ListItem
-                  onClick={() => handleListItemClick(room)}
+                  onClick={() => handleClickListItem(room)}
                   key={i}
                   divider
                   button
@@ -135,27 +157,71 @@ export const ChatroomJoinDialog = memo(function ChatroomJoinDialog({
               ))}
             </List>
           )}
-          {isInputPassword && (
-            <TextField
-              fullWidth
-              margin="dense"
-              id="password"
-              label="Password"
-              type="text"
-              value={password}
-              error={!isValidPassword}
-              helperText="Enter password"
-              onChange={(e) => {
-                setPassword(e.target.value);
-              }}
-            />
+          {isProtected(selectedRoom) && (
+            <>
+              <Box sx={{ width: '100%' }}>
+                <Collapse in={error !== ''}>
+                  <ChatErrorAlert error={error} setError={setError} />
+                </Collapse>
+              </Box>
+              <Controller
+                name="password"
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    autoFocus
+                    margin="dense"
+                    label="Password"
+                    type={showPassword ? 'text' : 'password'}
+                    error={errors.password ? true : false}
+                    helperText={
+                      errors.password
+                        ? errors.password?.message
+                        : 'Must be min 5 characters'
+                    }
+                    InputProps={{
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <IconButton
+                            aria-label="toggle password visibility"
+                            onClick={() => {
+                              setShowPassword(!showPassword);
+                            }}
+                            onMouseDown={(event) => {
+                              event.preventDefault();
+                            }}
+                            edge="end"
+                          >
+                            {showPassword ? (
+                              <VisibilityOffIcon />
+                            ) : (
+                              <Visibility />
+                            )}
+                          </IconButton>
+                        </InputAdornment>
+                      ),
+                    }}
+                    fullWidth
+                    variant="standard"
+                    // eslint-disable-next-line react/jsx-props-no-spreading
+                    {...field}
+                  />
+                )}
+              />
+            </>
           )}
         </Box>
       </DialogContent>
       <DialogActions>
-        <Button onClick={handleClose}>Cancel</Button>
+        <Button onClick={handleClose} variant="outlined">
+          Cancel
+        </Button>
         {/* 選択されていなかったらボタンを表示しない */}
-        <Button onClick={joinRoom} disabled={!selectedRoom}>
+        <Button
+          onClick={handleSubmit(onSubmit) as VoidFunction}
+          disabled={!selectedRoom}
+          variant="contained"
+        >
           Join
         </Button>
       </DialogActions>
