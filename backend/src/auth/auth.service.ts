@@ -249,17 +249,6 @@ export class AuthService {
 
   async disable2FA(data: SecretCodeDto): Promise<string> {
     try {
-      const user_db = await this.prisma.user.findUnique({
-        where: {
-          id: Number(data.userId),
-        },
-      });
-    } catch (error) {
-      console.log(error);
-      throw error;
-    }
-
-    try {
       const user_db = await this.prisma.user.update({
         where: {
           id: Number(data.userId),
