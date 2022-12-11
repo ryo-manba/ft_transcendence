@@ -164,7 +164,9 @@ export class ChatService {
         id: dto.roomId,
       },
     });
-    if (!chatroom) return undefined;
+    if (!chatroom) {
+      return undefined;
+    }
 
     if (dto.type === ChatroomType.PROTECTED) {
       // Protectedの場合はパスワードが正しいことを確認する
@@ -172,7 +174,9 @@ export class ChatService {
         dto.password,
         chatroom.hashedPassword,
       );
-      if (!isValid) return undefined;
+      if (!isValid) {
+        return undefined;
+      }
     }
 
     // 入室処理を行う
@@ -291,19 +295,25 @@ export class ChatService {
       dto.oldPassword,
       targetRoom.hashedPassword,
     );
-    if (!isValid) return false;
+    if (!isValid) {
+      return false;
+    }
 
     const hashed = await bcrypt.hash(dto.newPassword, saltRounds);
 
-    const res = this.update({
-      data: {
-        hashedPassword: hashed,
-      },
-      where: {
-        id: dto.chatroomId,
-      },
-    });
+    try {
+      await this.update({
+        data: {
+          hashedPassword: hashed,
+        },
+        where: {
+          id: dto.chatroomId,
+        },
+      });
 
-    return res !== undefined;
+      return true;
+    } catch (err) {
+      return false;
+    }
   }
 }
