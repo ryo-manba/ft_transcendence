@@ -12,7 +12,7 @@ import { Friend } from 'types/friend';
 import { usePlayStateStore, PlayState } from 'store/game/PlayState';
 import { useRouter } from 'next/router';
 import { usePlayerNamesStore } from 'store/game/PlayerNames';
-import { MatchPair } from 'types/game';
+import { Invitation } from 'types/game';
 import { useQueryUser } from 'hooks/useQueryUser';
 
 export const Host = () => {
@@ -27,7 +27,6 @@ export const Host = () => {
   const { socket } = useSocketStore();
   const { invitedFriendState, updateInvitedFriendState } =
     useInvitedFriendStateStore();
-
   useEffect(() => {
     socket.on('select', (playerNames: [string, string]) => {
       updatePlayerNames(playerNames);
@@ -57,17 +56,35 @@ export const Host = () => {
   }, [socket]);
 
   if (user === undefined) return <></>;
+
+  // window.addEventListener('beforeunload', (e: BeforeUnloadEvent) => {
+  //   e.preventDefault();
+  //   if (window.confirm('Do you stop inviting?')) {
+  //     const match: MatchPair = {
+  //       guest: invitedFriendState.friend,
+  //       host: {
+  //         name: user.name,
+  //         id: user.id,
+  //       },
+  //     };
+
+  //     socket.emit('cancelInvitation', match);
+  //     updateInvitedFriendState({
+  //       friend: {} as Friend,
+  //       invitedFriend: false,
+  //     });
+  //     setOpen(false);
+  //   }
+  // });
+
   const handleClose = () => {
     // [TODO] データを送るのかserver側でデータを保持しておくのか？serverのほうがよさそう。。。
-    const match: MatchPair = {
-      invitee: invitedFriendState.friend,
-      host: {
-        name: user.name,
-        id: user.id,
-      },
+    const invitation: Invitation = {
+      guestId: invitedFriendState.friend.id,
+      hostId: user.id,
     };
 
-    socket.emit('cancelInvitation', match);
+    socket.emit('cancelInvitation', invitation);
     updateInvitedFriendState({ friend: {} as Friend, invitedFriend: false });
     setOpen(false);
   };

@@ -21,7 +21,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import { useSocketStore } from 'store/game/ClientSocket';
 import { useInvitedFriendStateStore } from 'store/game/InvitedFriendState';
 import { useRouter } from 'next/router';
-import { MatchPair } from 'types/game';
+import { Invitation } from 'types/game';
 
 type Props = {
   friend: Friend;
@@ -31,7 +31,7 @@ export const FriendListItem = memo(function FriendListItem({ friend }: Props) {
   const [open, setOpen] = useState(false);
   const [friendStatus, setFriendStatus] = useState<UserStatus>('OFFLINE');
   const { data: user } = useQueryUser();
-  const [warningMessage, setWarningMessage] = useState('');
+  const [error, setError] = useState('');
   const { socket: gameSocket } = useSocketStore();
   const updateInvitedFriendState = useInvitedFriendStateStore(
     (store) => store.updateInvitedFriendState,
@@ -54,21 +54,22 @@ export const FriendListItem = memo(function FriendListItem({ friend }: Props) {
     });
   }, []);
 
+  useEffect(() => {
+    if (gameSocket.disconnected) gameSocket.connect();
+  });
+
   const inviteFriend = (friend: Friend) => {
-    const match: MatchPair = {
-      invitee: friend,
-      host: {
-        name: user.name,
-        id: user.id,
-      },
+    const invitation: Invitation = {
+      guestId: friend.id,
+      hostId: user.id,
     };
-    gameSocket.emit('inviteFriend', match, (res: boolean) => {
-      // [TODO] ここで招待するユーザの正しいステータスを受け取りなおす。
+    gameSocket.emit('inviteFriend', invitation, (res: boolean) => {
+      // [TODO] ここで招待するユーザの正しいステータスを受け取りなおしてエラーをセットする。
       if (res) {
         updateInvitedFriendState({ friend: friend, invitedFriend: true });
         void router.push('game/home');
       } else {
-        setWarningMessage(`You already sent invitation to ${friend.name}`);
+        setError(`You already sent invitation to ${friend.name}`);
       }
     });
   };
@@ -84,7 +85,7 @@ export const FriendListItem = memo(function FriendListItem({ friend }: Props) {
   return (
     <>
       <Box sx={{ width: '100%' }}>
-        <Collapse in={warningMessage !== ''}>
+        <Collapse in={error !== ''}>
           <Alert
             severity="error"
             action={
@@ -93,7 +94,7 @@ export const FriendListItem = memo(function FriendListItem({ friend }: Props) {
                 color="inherit"
                 size="small"
                 onClick={() => {
-                  setWarningMessage('');
+                  setError('');
                 }}
               >
                 <CloseIcon fontSize="inherit" />
@@ -101,7 +102,7 @@ export const FriendListItem = memo(function FriendListItem({ friend }: Props) {
             }
             sx={{ mb: 2 }}
           >
-            {warningMessage}
+            {error}
           </Alert>
         </Collapse>
       </Box>

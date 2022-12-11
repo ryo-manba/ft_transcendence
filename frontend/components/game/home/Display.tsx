@@ -21,11 +21,8 @@ export const Display = () => {
   const { invitedFriendState } = useInvitedFriendStateStore();
 
   useEffect(() => {
-    // chatに接続しているとdisconnectedがfalseになる。
+    if (socket.disconnected) socket.connect();
     // 同じブラウザで別のタブを開くと二個目以降はauthがundefinedになる。。。
-    if (user !== undefined) {
-      socket.emit('subscribe', user.id);
-    }
   }, [user]);
 
   useEffect(() => {

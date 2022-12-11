@@ -1,5 +1,4 @@
 import { User } from '@prisma/client';
-import { Friend } from './friend';
 
 const difficultyLevelArray: readonly string[] = [
   'Easy',
@@ -34,7 +33,7 @@ export type FinishedGameInfo = {
   loserScore: number;
 };
 
-export type MatchPair = {
-  host: Friend;
-  invitee: Friend;
+export type Invitation = {
+  hostId: number;
+  guestId: number;
 };

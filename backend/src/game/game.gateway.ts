@@ -74,10 +74,64 @@ type Friend = {
   name: string;
 };
 
-type MatchPair = {
-  host: Friend;
-  invitee: Friend;
+type Invitation = {
+  guestId: number;
+  hostId: number;
 };
+
+class InvitationList {
+  items: Invitation[] = [];
+  // return true if insert was successful and false otherwise
+  insert = (newItem: Invitation): boolean => {
+    const found = this.items.find(
+      (item) =>
+        item.guestId === newItem.guestId && item.hostId === newItem.hostId,
+    );
+
+    if (found === undefined) {
+      this.items.push(newItem);
+
+      return true;
+    }
+
+    return false;
+  };
+
+  // return true if delete was successful and false otherwise
+  delete = (deleteItem: Invitation): boolean => {
+    const oldLen = this.items.length;
+    this.items = this.items.filter(
+      (item) =>
+        item.guestId !== deleteItem.guestId &&
+        item.hostId !== deleteItem.hostId,
+    );
+
+    return oldLen !== this.items.length;
+  };
+
+  find = (findItem: Invitation): Invitation => {
+    const found = this.items.find(
+      (item) =>
+        item.guestId === findItem.guestId && item.hostId === findItem.hostId,
+    );
+
+    return found;
+  };
+
+  findGuests = (hostId: number): number[] => {
+    const found = this.items.filter((item) => item.hostId === hostId);
+    if (found === undefined) return undefined;
+
+    return found.map((item) => item.guestId);
+  };
+
+  findHosts = (guestId: number): number[] => {
+    const found = this.items.filter((item) => item.guestId === guestId);
+    if (found === undefined) return undefined;
+
+    return found.map((item) => item.hostId);
+  };
+}
 
 @WebSocketGateway({
   cors: {
@@ -94,7 +148,7 @@ export class GameGateway {
   gameRooms: RoomInfo[] = [];
   waitingQueue: Player[] = [];
   // key: guest, value hosts
-  invitationList: Map<number, Set<number>> = new Map();
+  invitationList: InvitationList = new InvitationList();
 
   // Game parameters
   static initialHeight = 250;
@@ -130,15 +184,11 @@ export class GameGateway {
     this.logger.log(`Disconnected: ${socket.id} ${id}`);
     if (id !== null) {
       await socket.leave(`userId:${id}`);
-      for (const [key, value] of this.invitationList) {
-        if (value.has(id)) {
-          // cancel invitation because host were disconnected
-          this.server.to(`userId:${key}`).emit('cancelInvitation', key);
-          value.delete(id);
-        }
-      }
-    } else {
-      this.logger.log('MMMM...');
+      const guestIds = this.invitationList.findGuests(id);
+      guestIds.forEach((guestId) => {
+        this.server.to(`userId:${guestId}`).emit('cancelInvitation', guestId);
+        this.invitationList.delete({ guestId: guestId, hostId: id });
+      });
     }
 
     this.gameRooms = this.gameRooms.filter(
@@ -146,6 +196,7 @@ export class GameGateway {
         room.player1.socket.id !== socket.id &&
         room.player2.socket.id !== socket.id,
     );
+
     this.waitingQueue = this.waitingQueue.filter(
       (player) => player.socket.id !== socket.id,
     );
@@ -172,14 +223,14 @@ export class GameGateway {
   async getInvitedList(
     @ConnectedSocket() socket: Socket,
     @MessageBody() data: number,
-  ) {
+  ): Promise<Friend[]> {
     // Link userId and Room
     await socket.join(`userId:${data}`);
     this.logger.log(`JOINED TO ${data}`);
 
     // Send list of hosts that invited user to game.
-    const hostIds = this.invitationList.get(data);
-    if (hostIds === undefined) socket.emit('giveInvitedList', []);
+    const hostIds = this.invitationList.findHosts(data);
+    if (hostIds === undefined) return [];
     else {
       const hosts = await this.user.findAll({
         where: {
@@ -188,63 +239,57 @@ export class GameGateway {
           },
         },
       });
-      socket.emit(
-        'giveInvitedList',
-        hosts.map((item) => {
-          return { name: item.name, id: item.id } as Friend;
-        }),
-      );
+
+      return hosts.map((item) => {
+        return { name: item.name, id: item.id } as Friend;
+      });
     }
   }
 
   @SubscribeMessage('inviteFriend')
-  inviteFriend(@MessageBody() data: MatchPair) {
-    const hostIds = this.invitationList.get(data.invitee.id);
+  inviteFriend(@MessageBody() data: Invitation): boolean {
+    const res = this.invitationList.insert(data);
 
-    console.log(hostIds);
-    if (hostIds === undefined)
-      this.invitationList.set(data.invitee.id, new Set([data.host.id]));
-    else if (hostIds.has(data.host.id)) {
-      return false;
-    } else hostIds.add(data.host.id);
+    if (res)
+      this.server.to(`userId:${data.guestId}`).emit('inviteGame', data.hostId);
 
-    this.server.to(`userId:${data.invitee.id}`).emit('inviteGame', data.host);
-
-    return true;
+    return res;
   }
 
   @SubscribeMessage('cancelInvitation')
-  cancelInvitation(@MessageBody() data: MatchPair) {
-    const hostIds = this.invitationList.get(data.invitee.id);
-    if (hostIds !== undefined) hostIds.delete(data.host.id);
-    this.server
-      .to(`userId:${data.invitee.id}`)
-      .emit('cancelInvitation', data.host.id);
+  cancelInvitation(@MessageBody() data: Invitation) {
+    const res = this.invitationList.delete(data);
+
+    if (res) {
+      this.server
+        .to(`userId:${data.guestId}`)
+        .emit('cancelInvitation', data.hostId);
+    }
   }
 
   @SubscribeMessage('acceptInvitation')
   async beginFriendMatch(
     @ConnectedSocket() socket: Socket,
-    @MessageBody() data: MatchPair,
+    @MessageBody() data: Invitation,
   ) {
-    const hostIds = this.invitationList.get(data.invitee.id);
-    if (hostIds === undefined || !hostIds.has(data.host.id)) {
+    const invitation = this.invitationList.find(data);
+    if (invitation === undefined) {
       this.logger.log('WHAT??');
 
       return;
     }
 
-    hostIds.delete(data.host.id);
-    const id2 = data.invitee.id;
+    this.invitationList.delete(invitation);
+    const id2 = data.guestId;
 
     let player1: Player;
     let player2: Player;
     const socket1 = await this.server
-      .in(`userId:${data.host.id}`)
+      .in(`userId:${data.hostId}`)
       .fetchSockets();
 
     await this.user
-      .findOne(data.host.id)
+      .findOne(data.hostId)
       .then((user1) => {
         player1 = {
           name: user1.name,

@@ -15,7 +15,7 @@ import { Friend } from 'types/friend';
 import { useRouter } from 'next/router';
 import { usePlayerNamesStore } from 'store/game/PlayerNames';
 import { useQueryUser } from 'hooks/useQueryUser';
-import { MatchPair } from 'types/game';
+import { Invitation } from 'types/game';
 
 export const Invitee = () => {
   const [openInvitation, setOpenInvitation] = useState(false);
@@ -34,18 +34,17 @@ export const Invitee = () => {
     setOpenInvitation(false);
     if (inviters.length !== 0) setOpenInvitation(true);
   };
+
   const handleClose = () => {
     setOpenSelecter(false);
   };
+
   const handleSelectClick = useCallback(
     (friend: Friend) => {
       if (user !== undefined) {
-        const match: MatchPair = {
-          invitee: {
-            name: user.name,
-            id: user.id,
-          },
-          host: friend,
+        const match: Invitation = {
+          guestId: user.id,
+          hostId: friend.id,
         };
         socket.emit('acceptInvitation', match);
       }
@@ -69,6 +68,7 @@ export const Invitee = () => {
       socket.off('cancelInvitation');
     };
   });
+
   useEffect(() => {
     socket.on('select', (playerNames: [string, string]) => {
       updatePlayerNames(playerNames);
@@ -86,12 +86,14 @@ export const Invitee = () => {
       socket.off('standBy');
     };
   }, [socket]);
+
   useEffect(() => {
-    socket.on('giveInvitedList', (hosts: Friend[]) => {
-      setInviters([...inviters, ...hosts]);
-      // inviters.length === 0: true Why??
-      if (hosts.length !== 0) setOpenInvitation(true);
-    });
+    if (user !== undefined) {
+      socket.emit('subscribe', user.id, (hosts: Friend[]) => {
+        setInviters([...inviters, ...hosts]);
+        if (hosts.length !== 0) setOpenInvitation(true);
+      });
+    }
 
     return () => {
       socket.off('giveInvitedList');
