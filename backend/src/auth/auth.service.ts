@@ -9,7 +9,8 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma/prisma.service';
-import { AuthDto, OauthDto } from './dto/auth.dto';
+import { AuthDto } from './dto/auth.dto';
+import { CreateOAuthDto } from './dto/create-oauth.dto';
 import { Validate2FACodeDto } from './dto/validate-2FACode.dto';
 import { Msg, Jwt } from './interfaces/auth.interface';
 import * as qrcode from 'qrcode';
@@ -99,7 +100,7 @@ export class AuthService {
     };
   }
 
-  async oauthlogin(dto: OauthDto): Promise<Jwt> {
+  async oauthlogin(dto: CreateOAuthDto): Promise<Jwt> {
     let user = await this.prisma.user.findUnique({
       where: {
         oAuthId: dto.oAuthId,

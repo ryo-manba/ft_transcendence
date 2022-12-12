@@ -9,11 +9,3 @@ export class AuthDto {
   @IsNotEmpty()
   username: string;
 }
-export class OauthDto {
-  @IsString()
-  @IsNotEmpty()
-  oAuthId: string;
-
-  @IsString()
-  imagePath: string;
-}
