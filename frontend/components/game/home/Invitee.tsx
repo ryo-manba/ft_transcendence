@@ -53,7 +53,7 @@ export const Invitee = () => {
   );
 
   useEffect(() => {
-    socket.on('inviteGame', (data: Friend) => {
+    socket.on('inviteFriend', (data: Friend) => {
       setInviters([...inviters.filter((elem) => elem.id !== data.id), data]);
       setOpenInvitation(true);
     });
@@ -64,7 +64,7 @@ export const Invitee = () => {
     });
 
     return () => {
-      socket.off('inviteGame');
+      socket.off('inviteFriend');
       socket.off('cancelInvitation');
     };
   });

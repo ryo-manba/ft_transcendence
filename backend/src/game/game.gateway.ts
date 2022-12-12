@@ -180,7 +180,7 @@ export class GameGateway {
   }
 
   async handleDisconnect(socket: Socket) {
-    const id = (socket.handshake.auth as { userId: number }).userId;
+    const id = (socket.handshake.auth as { id: number }).id;
     this.logger.log(`Disconnected: ${socket.id} ${id}`);
     if (id !== null) {
       await socket.leave(`userId:${id}`);
@@ -251,7 +251,9 @@ export class GameGateway {
     const res = this.invitationList.insert(data);
 
     if (res)
-      this.server.to(`userId:${data.guestId}`).emit('inviteGame', data.hostId);
+      this.server
+        .to(`userId:${data.guestId}`)
+        .emit('inviteFriend', data.hostId);
 
     return res;
   }
@@ -280,48 +282,69 @@ export class GameGateway {
     }
 
     this.invitationList.delete(invitation);
-    const id2 = data.guestId;
 
-    let player1: Player;
-    let player2: Player;
-    const socket1 = await this.server
+    const hostSockets = await this.server
       .in(`userId:${data.hostId}`)
       .fetchSockets();
+    const user1 = await this.user.findOne(data.hostId);
+    const player1: Player = {
+      name: user1.name,
+      id: user1.id,
+      point: user1.point,
+      socket: hostSockets[0],
+      height: GameGateway.initialHeight,
+      score: 0,
+    };
+    const user2 = await this.user.findOne(data.guestId);
+    const player2: Player = {
+      name: user2.name,
+      id: user2.id,
+      point: user2.point,
+      socket: socket,
+      height: GameGateway.initialHeight,
+      score: 0,
+    };
 
-    await this.user
-      .findOne(data.hostId)
-      .then((user1) => {
-        player1 = {
-          name: user1.name,
-          id: user1.id,
-          point: user1.point,
-          socket: socket1[0],
-          height: GameGateway.initialHeight,
-          score: 0,
-        };
-      })
-      .catch((error) => {
-        this.logger.log(error);
-      });
-    await this.user
-      .findOne(id2)
-      .then((user2) => {
-        player2 = {
-          name: user2.name,
-          id: user2.id,
-          point: user2.point,
-          socket: socket,
-          height: GameGateway.initialHeight,
-          score: 0,
-        };
-      })
-      .catch((error) => {
-        this.logger.log(error);
-      });
+    void this.startGame(player1, player2);
+  }
 
+  @SubscribeMessage('playStart')
+  async joinRoom(
+    @ConnectedSocket() socket: Socket,
+    @MessageBody() data: number,
+  ) {
+    if (this.waitingQueue.length === 0) {
+      const user = await this.user.findOne(data);
+      if (user === null) return;
+      this.waitingQueue.push({
+        name: user.name,
+        id: data,
+        point: user.point,
+        socket: socket,
+        height: GameGateway.initialHeight,
+        score: 0,
+      });
+    } else {
+      const user = await this.user.findOne(data);
+      if (user === null) return;
+      const player1 = this.waitingQueue.pop();
+      const player2 = {
+        name: user.name,
+        id: data,
+        point: user.point,
+        socket: socket,
+        height: GameGateway.initialHeight,
+        score: 0,
+      };
+      void this.startGame(player1, player2);
+    }
+  }
+
+  async startGame(player1: Player, player2: Player) {
     const roomName = uuidv4();
-    this.logger.log(`${player1.name} joined to room ${roomName}`);
-    this.logger.log(`${player2.name} joined to room ${roomName}`);
+
+    this.logger.log(`${player1.socket.id} joined to room ${roomName}`);
+    this.logger.log(`${player2.socket.id} joined to room ${roomName}`);
 
     await player1.socket.join(roomName);
     await player2.socket.join(roomName);
@@ -353,75 +376,8 @@ export class GameGateway {
     };
 
     this.gameRooms.push(newRoom);
+
     this.updatePlayerStatus(player1, player2);
-  }
-
-  @SubscribeMessage('playStart')
-  async joinRoom(
-    @ConnectedSocket() socket: Socket,
-    @MessageBody() data: number,
-  ) {
-    if (this.waitingQueue.length === 0) {
-      const user = await this.user.findOne(data);
-      if (user === null) return;
-      this.waitingQueue.push({
-        name: user.name,
-        id: data,
-        point: user.point,
-        socket: socket,
-        height: GameGateway.initialHeight,
-        score: 0,
-      });
-    } else {
-      const user = await this.user.findOne(data);
-      if (user === null) return;
-      const player1 = this.waitingQueue.pop();
-      const player2 = {
-        name: user.name,
-        id: data,
-        point: user.point,
-        socket: socket,
-        height: GameGateway.initialHeight,
-        score: 0,
-      };
-      const roomName = uuidv4();
-
-      this.logger.log(`${player1.socket.id} joined to room ${roomName}`);
-      this.logger.log(`${player2.socket.id} joined to room ${roomName}`);
-
-      await player1.socket.join(roomName);
-      await player2.socket.join(roomName);
-
-      const ball: Ball = {
-        x: GameGateway.ballInitialX,
-        y: GameGateway.ballInitialY,
-        radius: GameGateway.ballRadius,
-      };
-
-      const ballVec: BallVec = {
-        xVec: GameGateway.ballInitialXVec,
-        yVec: this.setBallYVec(),
-        speed: GameGateway.ballSpeed,
-      };
-
-      const newRoom: RoomInfo = {
-        roomName: roomName,
-        player1: player1,
-        player2: player2,
-        supporters: [],
-        ball: ball,
-        ballVec: ballVec,
-        isPlayer1Turn: true,
-        gameSetting: GameGateway.defaultSetting,
-        barSpeed: GameGateway.barSpeed,
-        rewards: 0,
-        gameState: 'Setting',
-      };
-
-      this.gameRooms.push(newRoom);
-
-      this.updatePlayerStatus(player1, player2);
-    }
   }
 
   @SubscribeMessage('watchGame')

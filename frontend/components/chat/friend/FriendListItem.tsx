@@ -55,8 +55,11 @@ export const FriendListItem = memo(function FriendListItem({ friend }: Props) {
   }, []);
 
   useEffect(() => {
-    if (gameSocket.disconnected) gameSocket.connect();
-  });
+    if (gameSocket.disconnected && user !== undefined) {
+      gameSocket.auth = { id: user.id };
+      gameSocket.connect();
+    }
+  }, []);
 
   const inviteFriend = (friend: Friend) => {
     const invitation: Invitation = {
@@ -66,7 +69,7 @@ export const FriendListItem = memo(function FriendListItem({ friend }: Props) {
     gameSocket.emit('inviteFriend', invitation, (res: boolean) => {
       // [TODO] ここで招待するユーザの正しいステータスを受け取りなおしてエラーをセットする。
       if (res) {
-        updateInvitedFriendState({ friend: friend, invitedFriend: true });
+        updateInvitedFriendState({ friendId: friend.id });
         void router.push('game/home');
       } else {
         setError(`You already sent invitation to ${friend.name}`);

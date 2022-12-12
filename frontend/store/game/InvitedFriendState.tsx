@@ -1,9 +1,7 @@
-import { Friend } from 'types/friend';
 import create from 'zustand';
 
 type InvitedFriendState = {
-  friend: Friend;
-  invitedFriend: boolean;
+  friendId: number | null;
 };
 
 type State = {
@@ -12,7 +10,7 @@ type State = {
 };
 
 export const useInvitedFriendStateStore = create<State>((set) => ({
-  invitedFriendState: { friend: { id: 0, name: '' }, invitedFriend: false },
+  invitedFriendState: { friendId: null },
   updateInvitedFriendState: (payload: InvitedFriendState) => {
     set({ invitedFriendState: payload });
   },

@@ -8,7 +8,6 @@ import {
 import { useEffect, useState } from 'react';
 import { useSocketStore } from 'store/game/ClientSocket';
 import { useInvitedFriendStateStore } from 'store/game/InvitedFriendState';
-import { Friend } from 'types/friend';
 import { usePlayStateStore, PlayState } from 'store/game/PlayState';
 import { useRouter } from 'next/router';
 import { usePlayerNamesStore } from 'store/game/PlayerNames';
@@ -33,8 +32,7 @@ export const Host = () => {
       updatePlayState(PlayState.stateSelecting);
       void router.push('/game/battle');
       updateInvitedFriendState({
-        friend: {} as Friend,
-        invitedFriend: false,
+        friendId: null,
       });
       setOpen(false);
     });
@@ -43,8 +41,7 @@ export const Host = () => {
       updatePlayState(PlayState.stateStandingBy);
       void router.push('/game/battle');
       updateInvitedFriendState({
-        friend: {} as Friend,
-        invitedFriend: false,
+        friendId: null,
       });
       setOpen(false);
     });
@@ -57,36 +54,17 @@ export const Host = () => {
 
   if (user === undefined) return <></>;
 
-  // window.addEventListener('beforeunload', (e: BeforeUnloadEvent) => {
-  //   e.preventDefault();
-  //   if (window.confirm('Do you stop inviting?')) {
-  //     const match: MatchPair = {
-  //       guest: invitedFriendState.friend,
-  //       host: {
-  //         name: user.name,
-  //         id: user.id,
-  //       },
-  //     };
-
-  //     socket.emit('cancelInvitation', match);
-  //     updateInvitedFriendState({
-  //       friend: {} as Friend,
-  //       invitedFriend: false,
-  //     });
-  //     setOpen(false);
-  //   }
-  // });
-
   const handleClose = () => {
-    // [TODO] データを送るのかserver側でデータを保持しておくのか？serverのほうがよさそう。。。
-    const invitation: Invitation = {
-      guestId: invitedFriendState.friend.id,
-      hostId: user.id,
-    };
+    if (invitedFriendState.friendId !== null) {
+      const invitation: Invitation = {
+        guestId: invitedFriendState.friendId,
+        hostId: user.id,
+      };
 
-    socket.emit('cancelInvitation', invitation);
-    updateInvitedFriendState({ friend: {} as Friend, invitedFriend: false });
-    setOpen(false);
+      socket.emit('cancelInvitation', invitation);
+      updateInvitedFriendState({ friendId: null });
+      setOpen(false);
+    }
   };
 
   return (

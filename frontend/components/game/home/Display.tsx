@@ -21,8 +21,10 @@ export const Display = () => {
   const { invitedFriendState } = useInvitedFriendStateStore();
 
   useEffect(() => {
-    if (socket.disconnected) socket.connect();
-    // 同じブラウザで別のタブを開くと二個目以降はauthがundefinedになる。。。
+    if (socket.disconnected && user !== undefined) {
+      socket.auth = { id: user.id };
+      socket.connect();
+    }
   }, [user]);
 
   useEffect(() => {
@@ -33,7 +35,7 @@ export const Display = () => {
 
   return (
     <>
-      {invitedFriendState.invitedFriend && <Host />}
+      {invitedFriendState.friendId !== null && <Host />}
       <Invitee />
       <Grid
         container
