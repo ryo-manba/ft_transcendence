@@ -12,7 +12,7 @@ import {
 import { Request, Response } from 'express';
 import { AuthService } from './auth.service';
 import { AuthDto, OauthDto } from './dto/auth.dto';
-import { SecretCodeDto } from './dto/twofactorauth.dto';
+import { Validate2FACodeDto } from './dto/validate-2FACode.dto';
 import { LogoutDto } from './dto/logout.dto';
 import { Csrf, Msg } from './interfaces/auth.interface';
 
@@ -100,7 +100,7 @@ export class AuthController {
   @Post('send2facode')
   send2FACode(
     @Param('id') id: string,
-    @Body() dto: SecretCodeDto,
+    @Body() dto: Validate2FACodeDto,
   ): Promise<string> {
     return this.authService.send2FACode(Number(id), dto);
   }
@@ -112,7 +112,7 @@ export class AuthController {
 
   @Post('validate2fa')
   async validate2FA(
-    @Body() dto: SecretCodeDto,
+    @Body() dto: Validate2FACodeDto,
     @Res({ passthrough: true }) res: Response,
   ): Promise<Msg> {
     const jwt = await this.authService.validate2FA(dto);
@@ -129,7 +129,7 @@ export class AuthController {
   }
 
   @Post('disable2fa')
-  disable2FA(@Body() data: SecretCodeDto): Promise<string> {
+  disable2FA(@Body() data: Validate2FACodeDto): Promise<string> {
     return this.authService.disable2FA(data);
   }
 }

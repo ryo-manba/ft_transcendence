@@ -1,6 +1,6 @@
 import { IsNotEmpty, IsString, IsUUID, IsNumberString } from 'class-validator';
 
-export class SecretCodeDto {
+export class Validate2FACodeDto {
   @IsString()
   @IsNotEmpty()
   @IsUUID()

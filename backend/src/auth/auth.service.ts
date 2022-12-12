@@ -10,7 +10,7 @@ import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuthDto, OauthDto } from './dto/auth.dto';
-import { SecretCodeDto } from './dto/twofactorauth.dto';
+import { Validate2FACodeDto } from './dto/validate-2FACode.dto';
 import { Msg, Jwt } from './interfaces/auth.interface';
 import * as qrcode from 'qrcode';
 import * as speakeasy from 'speakeasy';
@@ -171,7 +171,7 @@ export class AuthService {
     return qr_code;
   }
 
-  async send2FACode(userId: number, dto: SecretCodeDto): Promise<string> {
+  async send2FACode(userId: number, dto: Validate2FACodeDto): Promise<string> {
     console.log(dto);
     const user = await this.prisma.user.findUnique({
       where: {
@@ -214,7 +214,7 @@ export class AuthService {
     }
   }
 
-  async validate2FA(data: SecretCodeDto): Promise<Jwt> {
+  async validate2FA(data: Validate2FACodeDto): Promise<Jwt> {
     const user = await this.prisma.user.findUnique({
       where: {
         id: Number(data.userId),
@@ -231,7 +231,7 @@ export class AuthService {
     return this.generateJwt(user.id, user.name);
   }
 
-  async disable2FA(data: SecretCodeDto): Promise<string> {
+  async disable2FA(data: Validate2FACodeDto): Promise<string> {
     const user_db = await this.prisma.user.update({
       where: {
         id: Number(data.userId),
