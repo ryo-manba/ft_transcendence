@@ -1,4 +1,4 @@
-import { useState, memo, useCallback } from 'react';
+import React, { useState, memo, useCallback } from 'react';
 import {
   Button,
   Dialog,
@@ -12,7 +12,7 @@ import {
   FormControl,
 } from '@mui/material';
 import { Friend } from 'types/friend';
-import Link from 'next/link';
+import { useRouter } from 'next/router';
 
 type Props = {
   friend: Friend;
@@ -33,6 +33,7 @@ export const FriendInfoDialog = memo(function FriendInfoDialog({
   onClose,
 }: Props) {
   const [actionType, setActionType] = useState('Profile');
+  const router = useRouter();
 
   const initDialog = useCallback(() => {
     setActionType('Profile');
@@ -47,12 +48,38 @@ export const FriendInfoDialog = memo(function FriendInfoDialog({
     initDialog();
   };
 
+  const handleSubmit = () => {
+    const handleAction = async () => {
+      handleClose();
+      switch (actionType) {
+        case 'Profile':
+          if (router.isReady) {
+            await router.push({
+              pathname: '/profile',
+              query: { userId: friend.id },
+            });
+          }
+          break;
+        case 'Invite Game':
+          console.log(actionType);
+          break;
+        case 'Direct Message':
+          console.log(actionType);
+          break;
+        default:
+          break;
+      }
+    };
+
+    void handleAction();
+  };
+
   return (
     <Dialog open={open} onClose={handleClose}>
       <DialogTitle>{friend.name}</DialogTitle>
       <DialogContent>
         <FormControl sx={{ m: 1, minWidth: 120 }}>
-          <InputLabel id="action-type-select-label">Type</InputLabel>
+          <InputLabel id="action-type-select-label">Action</InputLabel>
           <Select
             labelId="action-type-select-label"
             id="action-type"
@@ -60,9 +87,7 @@ export const FriendInfoDialog = memo(function FriendInfoDialog({
             label="Action"
             onChange={handleChangeType}
           >
-            <Link href={{ pathname: '/profile', query: { userId: friend.id } }}>
-              <MenuItem value="Profile">Profile</MenuItem>
-            </Link>
+            <MenuItem value="Profile">Profile</MenuItem>
             <MenuItem value="Invite Game">Invite Game</MenuItem>
             <MenuItem value="Direct Message">Direct Message</MenuItem>
           </Select>
@@ -70,7 +95,7 @@ export const FriendInfoDialog = memo(function FriendInfoDialog({
       </DialogContent>
       <DialogActions>
         <Button onClick={handleClose}>Cancel</Button>
-        <Button onClick={handleClose}>Submit</Button>
+        <Button onClick={handleSubmit}>Submit</Button>
       </DialogActions>
     </Dialog>
   );
