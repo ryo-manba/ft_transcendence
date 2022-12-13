@@ -296,7 +296,6 @@ export class GameGateway {
     @MessageBody() data: Invitation,
   ) {
     const invitation = this.invitationList.find(data);
-    console.log(invitation);
     if (invitation === undefined) return;
 
     this.invitationList.delete(invitation);
