@@ -69,15 +69,22 @@ enum ChatroomType {
 }
 
 model ChatroomMembers {
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @default(now()) @updatedAt
-  chatroom   Chatroom @relation(fields: [chatroomId], references: [id], onDelete: Cascade)
+  createdAt  DateTime              @default(now())
+  updatedAt  DateTime              @default(now()) @updatedAt
+  chatroom   Chatroom              @relation(fields: [chatroomId], references: [id], onDelete: Cascade)
   chatroomId Int
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user       User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId     Int
+  status     ChatroomMembersStatus @default(NORMAL)
 
   @@id([chatroomId, userId])
   @@unique([chatroomId, userId])
+}
+
+enum ChatroomMembersStatus {
+  NORMAL
+  BAN
+  MUTE
 }
 
 model Message {
@@ -85,7 +92,7 @@ model Message {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @default(now()) @updatedAt
   message    String
-  chatroom   Chatroom @relation(fields: [chatroomId], references: [id], onDelete: Cascade) // Roomが消されたらメッセージも削除される
+  chatroom   Chatroom @relation(fields: [chatroomId], references: [id], onDelete: Cascade)
   chatroomId Int
   user       User     @relation(fields: [userId], references: [id])
   userId     Int
@@ -94,7 +101,7 @@ model Message {
 model ChatroomAdmin {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @default(now()) @updatedAt
-  chatroom   Chatroom @relation(fields: [chatroomId], references: [id], onDelete: Cascade) // Roomが消されたらメッセージも削除される
+  chatroom   Chatroom @relation(fields: [chatroomId], references: [id], onDelete: Cascade)
   chatroomId Int
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId     Int

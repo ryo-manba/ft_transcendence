@@ -25,7 +25,7 @@ type Props = {
 export const ChatroomListItem = ({ room, socket, setCurrentRoomId }: Props) => {
   const [open, setOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [changeSuccess, setChangeSuccess] = useState(false);
+  const [success, setSuccess] = useState('');
   const { data: user } = useQueryUser();
 
   useEffect(() => {
@@ -64,7 +64,7 @@ export const ChatroomListItem = ({ room, socket, setCurrentRoomId }: Props) => {
   const deleteRoom = () => {
     // 削除できるのはチャットルームオーナーだけ
     if (user.id !== room.ownerId) {
-      setError('Only the owner can delete chat rooms');
+      setError('Only the owner can delete chat rooms.');
     } else {
       const deleteRoomInfo = {
         id: room.id,
@@ -89,7 +89,7 @@ export const ChatroomListItem = ({ room, socket, setCurrentRoomId }: Props) => {
   const addAdmin = (userId: number) => {
     // Adminを設定できるのはチャットルームオーナーだけ
     if (user.id !== room.ownerId) {
-      setError('Only the owner can set admin');
+      setError('Only the owner can set admin.');
     } else {
       const setAdminInfo = {
         userId: userId,
@@ -99,7 +99,7 @@ export const ChatroomListItem = ({ room, socket, setCurrentRoomId }: Props) => {
       // callbackを受け取ることで判断する
       socket.emit('chat:addAdmin', setAdminInfo, (res: boolean) => {
         if (!res) {
-          setError('Failed to add admin');
+          setError('Failed to add admin.');
         }
       });
     }
@@ -111,7 +111,7 @@ export const ChatroomListItem = ({ room, socket, setCurrentRoomId }: Props) => {
     checkPassword: string,
   ) => {
     if (newPassword !== checkPassword) {
-      setError('Check passwords did not match');
+      setError('Check passwords did not match.');
 
       return;
     }
@@ -122,9 +122,19 @@ export const ChatroomListItem = ({ room, socket, setCurrentRoomId }: Props) => {
     };
     socket.emit('chat:updatePassword', changePasswordInfo, (res: boolean) => {
       if (res) {
-        setChangeSuccess(true);
+        setSuccess(`${room.name} password has been changed successfully.`);
       } else {
-        setError('Failed to change password');
+        setError('Failed to change password.');
+      }
+    });
+  };
+
+  const banUser = (userId: number) => {
+    socket.emit('chat:banUser', userId, (res: boolean) => {
+      if (res) {
+        setSuccess(`${room.name} user has been banned successfully.`);
+      } else {
+        setError('Failed to ban user.');
       }
     });
   };
@@ -140,7 +150,7 @@ export const ChatroomListItem = ({ room, socket, setCurrentRoomId }: Props) => {
         </Collapse>
       </Box>
       <Box sx={{ width: '100%' }}>
-        <Collapse in={changeSuccess}>
+        <Collapse in={success !== ''}>
           <Alert
             severity="success"
             action={
@@ -149,7 +159,7 @@ export const ChatroomListItem = ({ room, socket, setCurrentRoomId }: Props) => {
                 color="inherit"
                 size="small"
                 onClick={() => {
-                  setChangeSuccess(false);
+                  setSuccess('');
                 }}
               >
                 <CloseIcon fontSize="inherit" />
@@ -157,7 +167,7 @@ export const ChatroomListItem = ({ room, socket, setCurrentRoomId }: Props) => {
             }
             sx={{ mb: 2 }}
           >
-            {room.name} password changed.
+            {success}
           </Alert>
         </Collapse>
       </Box>
@@ -183,6 +193,7 @@ export const ChatroomListItem = ({ room, socket, setCurrentRoomId }: Props) => {
             addFriend={addFriend}
             addAdmin={addAdmin}
             changePassword={changePassword}
+            banUser={banUser}
           />
           <ListItemText
             primary={room.name}

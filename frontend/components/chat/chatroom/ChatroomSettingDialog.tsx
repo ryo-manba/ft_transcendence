@@ -24,6 +24,7 @@ import {
 import { Friend } from 'types/friend';
 import { fetchJoinableFriends } from 'api/friend/fetchJoinableFriends';
 import { fetchNotAdminUsers } from 'api/chat/fetchNotAdminUsers';
+import { fetchNotBannedUsers } from 'api/chat/fetchNotBannedUsers';
 import { useQueryUser } from 'hooks/useQueryUser';
 import { Loading } from 'components/common/Loading';
 import Visibility from '@mui/icons-material/Visibility';
@@ -44,6 +45,7 @@ type Props = {
     newPassword: string,
     checkPassword: string,
   ) => void;
+  banUser: (userId: number) => void;
 };
 
 export type PasswordForm = {
@@ -60,12 +62,14 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
   addFriend,
   addAdmin,
   changePassword,
+  banUser,
 }: Props) {
   const { data: user } = useQueryUser();
   const [selectedRoomSetting, setSelectedRoomSetting] =
     useState<ChatroomSettings>(CHATROOM_SETTINGS.MUTE_USER);
   const [selectedUserId, setSelectedUserId] = useState('');
   const [notAdminUsers, setNotAdminUsers] = useState<ChatUser[]>([]);
+  const [notBannedUsers, setNotBannedUsers] = useState<ChatUser[]>([]);
   const [friends, setFriends] = useState<Friend[]>([]);
   const [showPassword, setShowPassword] = useState(false);
 
@@ -144,6 +148,26 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
     void fetchCanSetAdminUsers();
   }, [selectedRoomSetting]);
 
+  useEffect(() => {
+    if (user === undefined) return;
+    // ミュートする項目を選択時に取得する
+    if (selectedRoomSetting !== CHATROOM_SETTINGS.BAN_USER) return;
+
+    const fetchCanBanUsers = async () => {
+      // チャットルーム入室している かつ すでにミュートされていないユーザーを取得する
+      const notBannedUsers = await fetchNotBannedUsers({
+        roomId: room.id,
+      });
+      // オーナーを弾く
+      const exceptOwner = notBannedUsers.filter(
+        (notBannedUser) => notBannedUser.id !== user.id,
+      );
+      setNotBannedUsers(exceptOwner);
+    };
+
+    void fetchCanBanUsers();
+  });
+
   if (user === undefined) {
     return <Loading />;
   }
@@ -208,7 +232,7 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
         console.log(selectedRoomSetting);
         break;
       case CHATROOM_SETTINGS.BAN_USER:
-        console.log(selectedRoomSetting);
+        banUser(room.id);
         break;
     }
     handleClose();
@@ -461,6 +485,37 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
                 )}
               />
             </DialogContent>
+          </>
+        )}
+        {selectedRoomSetting === CHATROOM_SETTINGS.BAN_USER && (
+          <>
+            {notBannedUsers.length === 0 ? (
+              <div
+                className="mb-4 flex justify-center rounded-lg bg-red-100 p-4 text-sm text-red-700 dark:bg-red-200 dark:text-red-800"
+                role="alert"
+              >
+                <span className="font-medium">No users are available.</span>
+              </div>
+            ) : (
+              <DialogContent>
+                <FormControl sx={{ mx: 3, my: 1, minWidth: 200 }}>
+                  <InputLabel id="room-setting-select-label">User</InputLabel>
+                  <Select
+                    labelId="room-setting-select-label"
+                    id="room-setting"
+                    value={selectedUserId}
+                    label="setting"
+                    onChange={handleChangeUserId}
+                  >
+                    {notBannedUsers.map((notBanned) => (
+                      <MenuItem value={String(notBanned.id)} key={notBanned.id}>
+                        {notBanned.name}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </DialogContent>
+            )}
           </>
         )}
         <DialogActions>

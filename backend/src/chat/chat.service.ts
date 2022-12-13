@@ -7,6 +7,7 @@ import {
   ChatroomType,
   Message,
   Prisma,
+  ChatroomMembersStatus,
 } from '@prisma/client';
 import { CreateChatroomDto } from './dto/create-chatroom.dto';
 import { CreateMessageDto } from './dto/create-message.dto';
@@ -218,7 +219,6 @@ export class ChatService {
 
   /**
    * 所属している かつ adminではないユーザ一覧を返す
-   * @param userId
    * @param roomId
    */
   async findNotAdminUsers(roomId: number): Promise<ChatUser[]> {
@@ -258,6 +258,37 @@ export class ChatService {
     });
 
     return notAdminUsers;
+  }
+
+  /**
+   * 所属している かつ BANされていないユーザ一覧を返す
+   * @param roomId
+   */
+  async findNotBannedUsers(roomId: number): Promise<ChatUser[]> {
+    // ルームに所属しているユーザー一覧を取得する
+    const joinedUsersInfo = await this.prisma.chatroomMembers.findMany({
+      where: {
+        chatroomId: roomId,
+      },
+      include: {
+        user: true,
+      },
+    });
+
+    // statusがBANのユーザーを取り除く
+    const notBannedUsersInfo = joinedUsersInfo.filter(
+      (info) => info.status !== ChatroomMembersStatus.BAN,
+    );
+
+    // idと名前の配列にする
+    const notBannedUsers: ChatUser[] = notBannedUsersInfo.map((info) => {
+      return {
+        id: info.user.id,
+        name: info.user.name,
+      };
+    });
+
+    return notBannedUsers;
   }
 
   /**
