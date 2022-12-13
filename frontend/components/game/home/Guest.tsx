@@ -86,12 +86,11 @@ export const Guest = () => {
       socket.off('select');
       socket.off('standBy');
     };
-  }, [socket]);
+  });
 
   useEffect(() => {
     if (user !== undefined) {
       socket.emit('subscribe', user.id, (hosts: Friend[]) => {
-        console.log(hosts);
         setInviters([...inviters, ...hosts]);
         if (hosts.length !== 0) setOpenInvitation(true);
       });

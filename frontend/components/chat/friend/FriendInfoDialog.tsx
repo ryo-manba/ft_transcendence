@@ -13,8 +13,6 @@ import {
 } from '@mui/material';
 import { Friend } from 'types/friend';
 import Link from 'next/link';
-import { useQueryUser } from 'hooks/useQueryUser';
-import { Loading } from 'components/common/Loading';
 
 type Props = {
   friend: Friend;
@@ -37,9 +35,6 @@ export const FriendInfoDialog = memo(function FriendInfoDialog({
   inviteFriend,
 }: Props) {
   const [actionType, setActionType] = useState('Profile');
-  const { data: user } = useQueryUser();
-
-  if (user === undefined) return <Loading />;
 
   const initDialog = useCallback(() => {
     setActionType('Profile');
