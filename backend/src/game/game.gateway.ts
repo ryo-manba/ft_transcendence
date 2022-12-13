@@ -296,22 +296,21 @@ export class GameGateway {
     @MessageBody() data: Invitation,
   ) {
     const invitation = this.invitationList.find(data);
-    if (invitation === undefined) {
-      return;
-    }
+    if (invitation === undefined) return;
 
     this.invitationList.delete(invitation);
-    await socket.leave(`hostId:${data.hostId}`);
 
-    const hostSockets = await this.server
-      .in(`hostId:${data.hostId}`)
-      .fetchSockets();
+    const hostSocket = (
+      await this.server.in(`hostId:${data.hostId}`).fetchSockets()
+    )[0];
+    if (!hostSocket) return;
+    hostSocket.leave(`hostId:${data.hostId}`);
     const user1 = await this.user.findOne(data.hostId);
     const player1: Player = {
       name: user1.name,
       id: user1.id,
       point: user1.point,
-      socket: hostSockets[0],
+      socket: hostSocket,
       height: GameGateway.initialHeight,
       score: 0,
     };
