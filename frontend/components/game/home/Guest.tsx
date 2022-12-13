@@ -54,7 +54,6 @@ export const Guest = () => {
 
   useEffect(() => {
     socket.on('inviteFriend', (data: Friend) => {
-      console.log(data);
       setInviters([...inviters.filter((elem) => elem.id !== data.id), data]);
       setOpenInvitation(true);
     });
