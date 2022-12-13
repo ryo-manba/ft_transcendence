@@ -10,7 +10,7 @@ import { Profile } from './Profile';
 import { useQueryUser } from 'hooks/useQueryUser';
 import { useInvitedFriendStateStore } from 'store/game/InvitedFriendState';
 import { Host } from './Host';
-import { Invitee } from './Invitee';
+import { Guest } from './Guest';
 import { Loading } from 'components/common/Loading';
 
 export const Display = () => {
@@ -36,7 +36,7 @@ export const Display = () => {
   return (
     <>
       {invitedFriendState.friendId !== null && <Host />}
-      <Invitee />
+      <Guest />
       <Grid
         container
         justifyContent="center"

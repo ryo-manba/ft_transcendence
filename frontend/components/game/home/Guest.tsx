@@ -17,7 +17,7 @@ import { usePlayerNamesStore } from 'store/game/PlayerNames';
 import { useQueryUser } from 'hooks/useQueryUser';
 import { Invitation } from 'types/game';
 
-export const Invitee = () => {
+export const Guest = () => {
   const [openInvitation, setOpenInvitation] = useState(false);
   const [openSelecter, setOpenSelecter] = useState(false);
   const { socket } = useSocketStore();
@@ -54,6 +54,7 @@ export const Invitee = () => {
 
   useEffect(() => {
     socket.on('inviteFriend', (data: Friend) => {
+      console.log(data);
       setInviters([...inviters.filter((elem) => elem.id !== data.id), data]);
       setOpenInvitation(true);
     });
@@ -90,6 +91,7 @@ export const Invitee = () => {
   useEffect(() => {
     if (user !== undefined) {
       socket.emit('subscribe', user.id, (hosts: Friend[]) => {
+        console.log(hosts);
         setInviters([...inviters, ...hosts]);
         if (hosts.length !== 0) setOpenInvitation(true);
       });

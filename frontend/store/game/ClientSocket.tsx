@@ -5,9 +5,6 @@ type State = {
   socket: Socket;
 };
 
-// ページ遷移の際にdisconnectしてconnectしなおしてくれない時がある。
 export const useSocketStore = create<State>(() => ({
-  socket: io('ws://localhost:3001/game', {
-    autoConnect: false,
-  }),
+  socket: io('ws://localhost:3001/game', { autoConnect: false }),
 }));
