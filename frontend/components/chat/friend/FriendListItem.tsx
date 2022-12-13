@@ -72,7 +72,7 @@ export const FriendListItem = memo(function FriendListItem({ friend }: Props) {
         updateInvitedFriendState({ friendId: friend.id });
         void router.push('game/home');
       } else {
-        setError(`You already sent invitation to ${friend.name}`);
+        setError(`You have already sent invitation now!`);
       }
     });
   };
