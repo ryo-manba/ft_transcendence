@@ -5,6 +5,7 @@ import {
   WebSocketServer,
   ConnectedSocket,
 } from '@nestjs/websockets';
+import { Chatroom, ChatroomType } from '@prisma/client';
 import { Server, Socket } from 'socket.io';
 import { Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
@@ -15,7 +16,7 @@ import { JoinChatroomDto } from './dto/join-chatroom.dto';
 import { CreateMessageDto } from './dto/create-message.dto';
 import { CreateAdminDto } from './dto/create-admin.dto';
 import { updatePasswordDto } from './dto/update-password.dto';
-import { Chatroom, ChatroomType } from '@prisma/client';
+import { updateMemberStatusDto } from './dto/update-member-status.dto';
 
 @WebSocketGateway({
   cors: {
@@ -299,5 +300,20 @@ export class ChatGateway {
     );
 
     return await this.chatService.updatePassword(dto);
+  }
+
+  /**
+   * @param updateChatMemberStatusDto
+   * @return 以下の情報をオブジェクトの配列で返す
+   */
+  @SubscribeMessage('chat:banUser')
+  async banUser(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() dto: updateMemberStatusDto,
+  ): Promise<boolean> {
+    this.logger.log(`chat:banUser received -> roomId: ${dto.chatroomId}`);
+    const res = await this.chatService.updateMemberStatus(dto);
+
+    return res ? true : false;
   }
 }

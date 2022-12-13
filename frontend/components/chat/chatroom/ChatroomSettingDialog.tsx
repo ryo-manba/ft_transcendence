@@ -76,7 +76,7 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
   const schema = z.object({
     oldPassword: z.string().refine(
       (value: string) =>
-        selectedRoomSetting === CHATROOM_SETTINGS.CHANGE_PASSWORD &&
+        selectedRoomSetting !== CHATROOM_SETTINGS.CHANGE_PASSWORD ||
         value.length >= 5,
       () => ({
         message: 'Passwords must be at least 5 characters',
@@ -84,7 +84,7 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
     ),
     newPassword: z.string().refine(
       (value: string) =>
-        selectedRoomSetting === CHATROOM_SETTINGS.CHANGE_PASSWORD &&
+        selectedRoomSetting !== CHATROOM_SETTINGS.CHANGE_PASSWORD ||
         value.length >= 5,
       () => ({
         message: 'Passwords must be at least 5 characters',
@@ -92,7 +92,7 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
     ),
     checkPassword: z.string().refine(
       (value: string) =>
-        selectedRoomSetting === CHATROOM_SETTINGS.CHANGE_PASSWORD &&
+        selectedRoomSetting !== CHATROOM_SETTINGS.CHANGE_PASSWORD ||
         value.length >= 5,
       () => ({
         message: 'Passwords must be at least 5 characters',
@@ -232,7 +232,8 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
         console.log(selectedRoomSetting);
         break;
       case CHATROOM_SETTINGS.BAN_USER:
-        banUser(room.id);
+        console.log('BAN_USER');
+        banUser(Number(selectedUserId));
         break;
     }
     handleClose();

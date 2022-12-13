@@ -5,6 +5,7 @@ import {
   Chatroom,
   ChatroomAdmin,
   ChatroomType,
+  ChatroomMembers,
   Message,
   Prisma,
   ChatroomMembersStatus,
@@ -15,6 +16,7 @@ import { CreateAdminDto } from './dto/create-admin.dto';
 import { JoinChatroomDto } from './dto/join-chatroom.dto';
 import type { ChatUser } from './types/chat';
 import { updatePasswordDto } from './dto/update-password.dto';
+import { updateMemberStatusDto } from './dto/update-member-status.dto';
 
 // 2の12乗回の演算が必要という意味
 const saltRounds = 12;
@@ -345,6 +347,32 @@ export class ChatService {
       return true;
     } catch (err) {
       return false;
+    }
+  }
+
+  /**
+   * チャットルームに所属するユーザーのステータスを更新する
+   * @param updateMemberStatusDto
+   */
+  async updateMemberStatus(
+    dto: updateMemberStatusDto,
+  ): Promise<ChatroomMembers> {
+    try {
+      const res = await this.prisma.chatroomMembers.update({
+        data: {
+          status: dto.status,
+        },
+        where: {
+          chatroomId_userId: {
+            chatroomId: dto.chatroomId,
+            userId: dto.userId,
+          },
+        },
+      });
+
+      return res;
+    } catch (err) {
+      return undefined;
     }
   }
 }

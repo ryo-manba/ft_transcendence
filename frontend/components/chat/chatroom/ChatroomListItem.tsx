@@ -15,6 +15,7 @@ import { useQueryUser } from 'hooks/useQueryUser';
 import { Loading } from 'components/common/Loading';
 import { ChatroomSettingDialog } from 'components/chat/chatroom/ChatroomSettingDialog';
 import { ChatErrorAlert } from 'components/chat/utils/ChatErrorAlert';
+import { ChatroomMembersStatus } from '@prisma/client';
 
 type Props = {
   room: Chatroom;
@@ -130,7 +131,14 @@ export const ChatroomListItem = ({ room, socket, setCurrentRoomId }: Props) => {
   };
 
   const banUser = (userId: number) => {
-    socket.emit('chat:banUser', userId, (res: boolean) => {
+    console.log('ban:', ChatroomMembersStatus.BAN);
+    const banUserInfo = {
+      chatroomId: room.id,
+      userId: userId,
+      status: ChatroomMembersStatus.BAN,
+    };
+
+    socket.emit('chat:banUser', banUserInfo, (res: boolean) => {
       if (res) {
         setSuccess(`${room.name} user has been banned successfully.`);
       } else {
