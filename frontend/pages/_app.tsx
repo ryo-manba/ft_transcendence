@@ -46,15 +46,15 @@ function MyApp({
     void getCsrfToken();
 
     // ウィンドウを閉じた際に自動的にログアウトするためにEventListenerを設定
-    const handleTabClose = (event: BeforeUnloadEvent) => {
+    const handleTabClose = (event: Event) => {
       event.preventDefault();
       logout(queryClient, router, session);
     };
 
-    window.addEventListener('beforeunload', handleTabClose);
+    window.addEventListener('unload', handleTabClose);
 
     return () => {
-      window.removeEventListener('beforeunload', handleTabClose);
+      window.removeEventListener('unload', handleTabClose);
     };
   }, []);
 
