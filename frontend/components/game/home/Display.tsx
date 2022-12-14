@@ -1,5 +1,5 @@
 import { Grid, Paper } from '@mui/material';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { usePlayStateStore, PlayState } from 'store/game/PlayState';
 import { useSocketStore } from 'store/game/ClientSocket';
 import { Start } from './Start';
@@ -12,6 +12,7 @@ import { useInvitedFriendStateStore } from 'store/game/InvitedFriendState';
 import { Host } from './Host';
 import { Guest } from './Guest';
 import { Loading } from 'components/common/Loading';
+import { Friend } from 'types/friend';
 
 export const Display = () => {
   const { data: user } = useQueryUser();
@@ -19,6 +20,7 @@ export const Display = () => {
   const { playState } = usePlayStateStore();
   const updatePlayState = usePlayStateStore((store) => store.updatePlayState);
   const { invitedFriendState } = useInvitedFriendStateStore();
+  const [hosts, setHosts] = useState<Friend[]>([]);
 
   useEffect(() => {
     if (socket.disconnected && user !== undefined) {
@@ -31,12 +33,34 @@ export const Display = () => {
     updatePlayState(PlayState.stateNothing);
   }, []);
 
+  useEffect(() => {
+    if (user !== undefined) {
+      socket.emit('subscribe', user.id, (newHosts: Friend[]) => {
+        setHosts([...hosts, ...newHosts]);
+      });
+    }
+  }, [user]);
+
+  useEffect(() => {
+    socket.on('inviteFriend', (data: Friend) => {
+      setHosts([...hosts.filter((elem) => elem.id !== data.id), data]);
+    });
+    socket.on('cancelInvitation', (data: number) => {
+      setHosts(hosts.filter((elem) => elem.id !== data));
+    });
+
+    return () => {
+      socket.off('inviteFriend');
+      socket.off('cancelInvitation');
+    };
+  });
+
   if (user === undefined) return <Loading />;
 
   return (
     <>
       {invitedFriendState.friendId !== null && <Host />}
-      <Guest />
+      {hosts.length !== 0 && <Guest hosts={hosts} />}
       <Grid
         container
         justifyContent="center"

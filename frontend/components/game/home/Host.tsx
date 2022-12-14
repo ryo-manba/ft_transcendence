@@ -5,7 +5,7 @@ import {
   Typography,
   Button,
 } from '@mui/material';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useSocketStore } from 'store/game/ClientSocket';
 import { useInvitedFriendStateStore } from 'store/game/InvitedFriendState';
 import { usePlayStateStore, PlayState } from 'store/game/PlayState';
@@ -20,41 +20,44 @@ export const Host = () => {
   const updatePlayerNames = usePlayerNamesStore(
     (store) => store.updatePlayerNames,
   );
+
   const router = useRouter();
   const { data: user } = useQueryUser();
-
   const { socket } = useSocketStore();
   const { invitedFriendState, updateInvitedFriendState } =
     useInvitedFriendStateStore();
+
   useEffect(() => {
     socket.on('select', (playerNames: [string, string]) => {
       updatePlayerNames(playerNames);
       updatePlayState(PlayState.stateSelecting);
-      void router.push('/game/battle');
       updateInvitedFriendState({
         friendId: null,
       });
       setOpen(false);
+
+      void router.push('/game/battle');
     });
     socket.on('standBy', (playerNames: [string, string]) => {
       updatePlayerNames(playerNames);
       updatePlayState(PlayState.stateStandingBy);
-      void router.push('/game/battle');
       updateInvitedFriendState({
         friendId: null,
       });
       setOpen(false);
+
+      void router.push('/game/battle');
     });
 
     return () => {
       socket.off('select');
       socket.off('standBy');
     };
-  }, [socket]);
+  });
 
   if (user === undefined) return <></>;
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     if (invitedFriendState.friendId !== null) {
       const invitation: Invitation = {
         guestId: invitedFriendState.friendId,
@@ -65,7 +68,7 @@ export const Host = () => {
       updateInvitedFriendState({ friendId: null });
       setOpen(false);
     }
-  };
+  }, []);
 
   return (
     <Modal open={open} aria-labelledby="modal-modal-title">

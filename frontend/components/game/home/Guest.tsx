@@ -17,11 +17,14 @@ import { usePlayerNamesStore } from 'store/game/PlayerNames';
 import { useQueryUser } from 'hooks/useQueryUser';
 import { Invitation } from 'types/game';
 
-export const Guest = () => {
-  const [openInvitation, setOpenInvitation] = useState(false);
+type Props = {
+  hosts: Friend[];
+};
+
+export const Guest = ({ hosts }: Props) => {
+  // const [openInvitation, setOpenInvitation] = useState(false);
   const [openSelecter, setOpenSelecter] = useState(false);
   const { socket } = useSocketStore();
-  const [inviters, setInviters] = useState<Friend[]>([]);
   const updatePlayState = usePlayStateStore((store) => store.updatePlayState);
   const updatePlayerNames = usePlayerNamesStore(
     (store) => store.updatePlayerNames,
@@ -29,15 +32,13 @@ export const Guest = () => {
   const router = useRouter();
   const { data: user } = useQueryUser();
 
-  const handleClick = () => {
+  const handleClick = useCallback(() => {
     setOpenSelecter(true);
-    setOpenInvitation(false);
-    if (inviters.length !== 0) setOpenInvitation(true);
-  };
+  }, []);
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     setOpenSelecter(false);
-  };
+  }, []);
 
   const handleSelectClick = useCallback(
     (friend: Friend) => {
@@ -51,23 +52,6 @@ export const Guest = () => {
     },
     [user],
   );
-
-  useEffect(() => {
-    socket.on('inviteFriend', (data: Friend) => {
-      setInviters([...inviters.filter((elem) => elem.id !== data.id), data]);
-      setOpenInvitation(true);
-    });
-    socket.on('cancelInvitation', (data: number) => {
-      setInviters(inviters.filter((elem) => elem.id !== data));
-      if (inviters.length === 0) setOpenSelecter(false);
-      setOpenInvitation(false);
-    });
-
-    return () => {
-      socket.off('inviteFriend');
-      socket.off('cancelInvitation');
-    };
-  });
 
   useEffect(() => {
     socket.on('select', (playerNames: [string, string]) => {
@@ -87,23 +71,10 @@ export const Guest = () => {
     };
   });
 
-  useEffect(() => {
-    if (user !== undefined) {
-      socket.emit('subscribe', user.id, (hosts: Friend[]) => {
-        setInviters([...inviters, ...hosts]);
-        if (hosts.length !== 0) setOpenInvitation(true);
-      });
-    }
-
-    return () => {
-      socket.off('giveInvitedList');
-    };
-  }, [user]);
-
   return (
     <>
       <Snackbar
-        open={openInvitation}
+        open={hosts.length !== 0}
         message={`you are invited to game`}
         anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
         key={0}
@@ -112,13 +83,13 @@ export const Guest = () => {
       <Dialog open={openSelecter}>
         <DialogTitle>Friend Match</DialogTitle>
         <List>
-          {inviters.map((inviter) => (
+          {hosts.map((host) => (
             <ListItem
               button
-              key={inviter.id}
-              onClick={() => handleSelectClick(inviter)}
+              key={host.id}
+              onClick={() => handleSelectClick(host)}
             >
-              <ListItemText primary={inviter.name} />
+              <ListItemText primary={host.name} />
             </ListItem>
           ))}
         </List>
