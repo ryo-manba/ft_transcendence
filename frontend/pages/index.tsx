@@ -89,29 +89,24 @@ const Home: NextPage = () => {
       } else {
         try {
           reset();
-          const url_login = `${process.env.NEXT_PUBLIC_API_URL}/auth/login`;
-          await axios.post(url_login, {
-            username: session.user.email,
-            password: session.user.name,
-          });
+          // console.log(session.user);
+          const url_oauth = `${process.env.NEXT_PUBLIC_API_URL}/auth/oauth-login`;
+          if (session.user) {
+            await axios.post(url_oauth, {
+              oAuthId: session.user.email,
+              // oAuthId: session.user.oAuthId,
+              imagePath: '',
+              //session.user.image,
+            });
+          }
           await router.push('/dashboard');
         } catch (e) {
-          console.log('[OAuth] First Login: catch');
-          try {
-            const url_signup = `${process.env.NEXT_PUBLIC_API_URL}/auth/signup`;
-            await axios.post(url_signup, {
-              username: session.user.email,
-              password: session.user.name,
-            });
-            await router.push('/dashboard');
-          } catch (e) {
-            console.log('[OAuth] signup failure: catch');
-            if (axios.isAxiosError(e) && e.response && e.response.data) {
-              reset();
-              const messages = (e.response.data as AxiosErrorResponse).message;
-              if (Array.isArray(messages)) setError(messages);
-              else setError([messages]);
-            }
+          console.log('[OAuth] signup failure: catch');
+          if (axios.isAxiosError(e) && e.response && e.response.data) {
+            reset();
+            const messages = (e.response.data as AxiosErrorResponse).message;
+            if (Array.isArray(messages)) setError(messages);
+            else setError([messages]);
           }
         }
       }

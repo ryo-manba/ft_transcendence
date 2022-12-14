@@ -7,10 +7,13 @@ import {
   Res,
   Req,
   Get,
+  Param,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { AuthService } from './auth.service';
 import { AuthDto } from './dto/auth.dto';
+import { CreateOAuthDto } from './dto/create-oauth.dto';
+import { Validate2FACodeDto } from './dto/validate-2FACode.dto';
 import { LogoutDto } from './dto/logout.dto';
 import { Csrf, Msg } from './interfaces/auth.interface';
 
@@ -66,5 +69,68 @@ export class AuthController {
     return {
       message: 'ok',
     };
+  }
+
+  @HttpCode(HttpStatus.OK)
+  @Post('oauth-login')
+  async oAuthLogin(
+    @Body() dto: CreateOAuthDto,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<Msg> {
+    const jwt = await this.authService.oauthlogin(dto);
+    res.cookie('access_token', jwt.accessToken, {
+      httpOnly: true,
+      secure: true, //Postmanからアクセスするときはfalse
+      sameSite: 'none',
+      path: '/',
+    });
+
+    return {
+      message: 'ok',
+    };
+  }
+
+  //
+  // API for 2Factor Auth
+  //
+  @Get('qr2fa/:id')
+  generateQrCode(@Param('id') id: string): Promise<string> {
+    return this.authService.generateQrCode(Number(id));
+  }
+
+  @Post('send2facode')
+  send2FACode(
+    @Param('id') id: string,
+    @Body() dto: Validate2FACodeDto,
+  ): Promise<string> {
+    return this.authService.send2FACode(Number(id), dto);
+  }
+
+  @Get('has2fa')
+  has2FA(@Param('id') id: string): Promise<string> {
+    return this.authService.has2FA(Number(id));
+  }
+
+  @Post('validate2fa')
+  async validate2FA(
+    @Body() dto: Validate2FACodeDto,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<Msg> {
+    const jwt = await this.authService.validate2FA(dto);
+    res.cookie('access_token', jwt.accessToken, {
+      httpOnly: true,
+      secure: true, //Postmanからアクセスするときはfalse
+      sameSite: 'none',
+      path: '/',
+    });
+
+    return {
+      message: 'ok',
+    };
+  }
+
+  @Post('disable2fa')
+  disable2FA(@Body() data: Validate2FACodeDto): Promise<string> {
+    return this.authService.disable2FA(data);
   }
 }

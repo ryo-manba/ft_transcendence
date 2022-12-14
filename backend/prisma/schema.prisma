@@ -24,6 +24,9 @@ model User {
   messages        Message[]
   followers       FriendRelation[]  @relation("follower")
   followings      FriendRelation[]  @relation("following")
+  oAuthId         String?           @unique
+  has2FA          Boolean           @default(false)
+  secret2FA       String            @default("")
 }
 
 enum UserStatus {
