@@ -51,6 +51,8 @@ function MyApp({
       logout(queryClient, router, session);
     };
 
+    // 'unload'のイベントはウィンドウ閉じたときのみ発火
+    // 'beforeunload'はページを更新したときにも発火
     window.addEventListener('unload', handleTabClose);
 
     return () => {
