@@ -213,7 +213,7 @@ export class GameGateway {
   }
 
   /**
-   * home画面における接続処理
+   * 接続と招待者の通知
    * @param socket
    * @param data
    * @returns Friend[]
