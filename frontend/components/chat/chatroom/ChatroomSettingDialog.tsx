@@ -5,11 +5,14 @@ import {
   DialogActions,
   DialogContent,
   InputLabel,
+  IconButton,
+  InputAdornment,
   Select,
   SelectChangeEvent,
   MenuItem,
   FormControl,
   DialogTitle,
+  TextField,
 } from '@mui/material';
 import {
   Chatroom,
@@ -23,6 +26,11 @@ import { fetchJoinableFriends } from 'api/friend/fetchJoinableFriends';
 import { fetchNotAdminUsers } from 'api/chat/fetchNotAdminUsers';
 import { useQueryUser } from 'hooks/useQueryUser';
 import { Loading } from 'components/common/Loading';
+import Visibility from '@mui/icons-material/Visibility';
+import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
+import { useForm, SubmitHandler, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
 
 type Props = {
   room: Chatroom;
@@ -31,6 +39,17 @@ type Props = {
   deleteRoom: () => void;
   addFriend: (friendId: number) => void;
   addAdmin: (userId: number) => void;
+  changePassword: (
+    oldPassword: string,
+    newPassword: string,
+    checkPassword: string,
+  ) => void;
+};
+
+export type PasswordForm = {
+  oldPassword: string;
+  newPassword: string;
+  checkPassword: string;
 };
 
 export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
@@ -40,6 +59,7 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
   deleteRoom,
   addFriend,
   addAdmin,
+  changePassword,
 }: Props) {
   const { data: user } = useQueryUser();
   const [selectedRoomSetting, setSelectedRoomSetting] =
@@ -47,6 +67,44 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
   const [selectedUserId, setSelectedUserId] = useState('');
   const [notAdminUsers, setNotAdminUsers] = useState<ChatUser[]>([]);
   const [friends, setFriends] = useState<Friend[]>([]);
+  const [showPassword, setShowPassword] = useState(false);
+
+  const schema = z.object({
+    oldPassword: z.string().refine(
+      (value: string) =>
+        selectedRoomSetting === CHATROOM_SETTINGS.CHANGE_PASSWORD &&
+        value.length >= 5,
+      () => ({
+        message: 'Passwords must be at least 5 characters',
+      }),
+    ),
+    newPassword: z.string().refine(
+      (value: string) =>
+        selectedRoomSetting === CHATROOM_SETTINGS.CHANGE_PASSWORD &&
+        value.length >= 5,
+      () => ({
+        message: 'Passwords must be at least 5 characters',
+      }),
+    ),
+    checkPassword: z.string().refine(
+      (value: string) =>
+        selectedRoomSetting === CHATROOM_SETTINGS.CHANGE_PASSWORD &&
+        value.length >= 5,
+      () => ({
+        message: 'Passwords must be at least 5 characters',
+      }),
+    ),
+  });
+  // TODO: 余裕あったら以下を使えるようにする
+  // チェック用と新規のパスワードと同じこと
+  // .superRefine(({ newPassword, checkPassword }, ctx) => {
+  //   if (newPassword !== checkPassword) {
+  //     ctx.addIssue({
+  //       code: 'custom',
+  //       message: 'The passwords did not match',
+  //     });
+  //   }
+  // });
 
   useEffect(() => {
     if (user === undefined) return;
@@ -76,14 +134,11 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
       const notAdminUsers = await fetchNotAdminUsers({
         roomId: room.id,
       });
-      console.log(notAdminUsers);
-      console.log(user.id);
       // オーナーを弾く
-      const expectOwner = notAdminUsers.filter(
+      const exceptOwner = notAdminUsers.filter(
         (notAdmin) => notAdmin.id !== user.id,
       );
-      console.log(expectOwner);
-      setNotAdminUsers(expectOwner);
+      setNotAdminUsers(exceptOwner);
     };
 
     void fetchCanSetAdminUsers();
@@ -93,18 +148,37 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
     return <Loading />;
   }
 
+  const {
+    control,
+    formState: { errors },
+    handleSubmit,
+    clearErrors,
+    reset,
+  } = useForm<PasswordForm>({
+    mode: 'onSubmit',
+    resolver: zodResolver(schema),
+    defaultValues: {
+      oldPassword: '',
+      newPassword: '',
+      checkPassword: '',
+    },
+  });
+
   const initDialog = () => {
-    setSelectedRoomSetting(CHATROOM_SETTINGS.DELETE_ROOM);
     setSelectedUserId('');
+    clearErrors();
+    reset();
   };
 
   const handleClose = () => {
+    setSelectedRoomSetting(CHATROOM_SETTINGS.DELETE_ROOM);
     initDialog();
     onClose();
   };
 
   /// ダイアログで項目を変更したときの処理
   const handleChangeSetting = (event: SelectChangeEvent) => {
+    initDialog();
     setSelectedRoomSetting(event.target.value as ChatroomSettings);
   };
 
@@ -112,7 +186,11 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
     setSelectedUserId(event.target.value);
   };
 
-  const handleAction = () => {
+  const handleAction: SubmitHandler<PasswordForm> = ({
+    oldPassword,
+    newPassword,
+    checkPassword,
+  }: PasswordForm) => {
     switch (selectedRoomSetting) {
       case CHATROOM_SETTINGS.DELETE_ROOM:
         deleteRoom();
@@ -120,11 +198,11 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
       case CHATROOM_SETTINGS.ADD_FRIEND:
         addFriend(Number(selectedUserId));
         break;
-      case CHATROOM_SETTINGS.CHANGE_PASSWORD:
-        console.log(selectedRoomSetting);
-        break;
       case CHATROOM_SETTINGS.SET_ADMIN:
         addAdmin(Number(selectedUserId));
+        break;
+      case CHATROOM_SETTINGS.CHANGE_PASSWORD:
+        changePassword(oldPassword, newPassword, checkPassword);
         break;
       case CHATROOM_SETTINGS.MUTE_USER:
         console.log(selectedRoomSetting);
@@ -162,7 +240,8 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
                   {CHATROOM_SETTINGS.SET_ADMIN}
                 </MenuItem>
               )}
-              {isOwner && (
+              {/* パスワードで保護されたルームのみ選択可能 */}
+              {isOwner && room.type === CHATROOM_TYPE.PROTECTED && (
                 <MenuItem value={CHATROOM_SETTINGS.CHANGE_PASSWORD}>
                   {CHATROOM_SETTINGS.CHANGE_PASSWORD}
                 </MenuItem>
@@ -245,9 +324,153 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
             )}
           </>
         )}
+        {selectedRoomSetting === CHATROOM_SETTINGS.CHANGE_PASSWORD && (
+          <>
+            <DialogContent>
+              <Controller
+                name="oldPassword"
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    margin="dense"
+                    label="Old Password"
+                    type={showPassword ? 'text' : 'password'}
+                    error={errors.oldPassword ? true : false}
+                    helperText={
+                      errors.oldPassword
+                        ? errors.oldPassword?.message
+                        : 'Must be min 5 characters'
+                    }
+                    InputProps={{
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <IconButton
+                            aria-label="toggle password visibility"
+                            onClick={() => {
+                              setShowPassword(!showPassword);
+                            }}
+                            onMouseDown={(event) => {
+                              event.preventDefault();
+                            }}
+                            edge="end"
+                          >
+                            {showPassword ? (
+                              <VisibilityOffIcon />
+                            ) : (
+                              <Visibility />
+                            )}
+                          </IconButton>
+                        </InputAdornment>
+                      ),
+                    }}
+                    fullWidth
+                    variant="standard"
+                    // eslint-disable-next-line react/jsx-props-no-spreading
+                    {...field}
+                  />
+                )}
+              />
+            </DialogContent>
+            <DialogContent>
+              <Controller
+                name="newPassword"
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    margin="dense"
+                    label="New Password"
+                    type={showPassword ? 'text' : 'password'}
+                    error={errors.newPassword ? true : false}
+                    helperText={
+                      errors.newPassword
+                        ? errors.newPassword?.message
+                        : 'Must be min 5 characters'
+                    }
+                    InputProps={{
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <IconButton
+                            aria-label="toggle password visibility"
+                            onClick={() => {
+                              setShowPassword(!showPassword);
+                            }}
+                            onMouseDown={(event) => {
+                              event.preventDefault();
+                            }}
+                            edge="end"
+                          >
+                            {showPassword ? (
+                              <VisibilityOffIcon />
+                            ) : (
+                              <Visibility />
+                            )}
+                          </IconButton>
+                        </InputAdornment>
+                      ),
+                    }}
+                    fullWidth
+                    variant="standard"
+                    // eslint-disable-next-line react/jsx-props-no-spreading
+                    {...field}
+                  />
+                )}
+              />
+            </DialogContent>
+            <DialogContent>
+              <Controller
+                name="checkPassword"
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    margin="dense"
+                    label="Check Password"
+                    type={showPassword ? 'text' : 'password'}
+                    error={errors.checkPassword ? true : false}
+                    helperText={
+                      errors.checkPassword
+                        ? errors.checkPassword?.message
+                        : 'Must be min 5 characters'
+                    }
+                    InputProps={{
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <IconButton
+                            aria-label="toggle password visibility"
+                            onClick={() => {
+                              setShowPassword(!showPassword);
+                            }}
+                            onMouseDown={(event) => {
+                              event.preventDefault();
+                            }}
+                            edge="end"
+                          >
+                            {showPassword ? (
+                              <VisibilityOffIcon />
+                            ) : (
+                              <Visibility />
+                            )}
+                          </IconButton>
+                        </InputAdornment>
+                      ),
+                    }}
+                    fullWidth
+                    variant="standard"
+                    // eslint-disable-next-line react/jsx-props-no-spreading
+                    {...field}
+                  />
+                )}
+              />
+            </DialogContent>
+          </>
+        )}
         <DialogActions>
-          <Button onClick={handleClose}>Cancel</Button>
-          <Button onClick={handleAction} autoFocus>
+          <Button onClick={handleClose} variant="outlined">
+            Cancel
+          </Button>
+          <Button
+            onClick={handleSubmit(handleAction) as VoidFunction}
+            variant="contained"
+          >
             OK
           </Button>
         </DialogActions>

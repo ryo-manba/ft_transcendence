@@ -87,7 +87,10 @@ model User {
   hashedPassword  String?
   point           Int               @default(1000)
   avatarPath      String?
+  has2FA          Boolean           @default(false)
   status          UserStatus        @default(OFFLINE)
+  oAuthId         String?           @unique
+  secret2FA       String            @default("")
   Chatroom        Chatroom[]
   ChatroomAdmin   ChatroomAdmin[]
   ChatroomMembers ChatroomMembers[]
