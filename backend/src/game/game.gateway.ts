@@ -77,6 +77,7 @@ type Friend = {
 type Invitation = {
   guestId: number;
   hostId: number;
+  hostSocketId: string;
 };
 
 // host側は同時に複数招待を送ることはできない
@@ -95,31 +96,17 @@ class InvitationList {
   };
 
   // 消去する要素があればtrueを返す
-  delete = (deleteItem: Invitation): boolean => {
+  delete = (hostId: number): boolean => {
     const oldLen = this.items.length;
-    this.items = this.items.filter(
-      (item) =>
-        item.guestId !== deleteItem.guestId ||
-        item.hostId !== deleteItem.hostId,
-    );
+    this.items = this.items.filter((item) => item.hostId !== hostId);
 
     return oldLen !== this.items.length;
   };
 
-  find = (findItem: Invitation): Invitation => {
-    const found = this.items.find(
-      (item) =>
-        item.guestId === findItem.guestId && item.hostId === findItem.hostId,
-    );
+  find = (hostId: number): Invitation => {
+    const found = this.items.find((item) => item.hostId === hostId);
 
     return found;
-  };
-
-  findGuests = (hostId: number): number[] => {
-    const found = this.items.filter((item) => item.hostId === hostId);
-    if (found === undefined) return undefined;
-
-    return found.map((item) => item.guestId);
   };
 
   findHosts = (guestId: number): number[] => {
@@ -145,6 +132,7 @@ export class GameGateway {
   gameRooms: RoomInfo[] = [];
   waitingQueue: Player[] = [];
   invitationList: InvitationList = new InvitationList();
+  userSocketMap: Map<number, Set<string>> = new Map();
 
   // Game parameters
   static initialHeight = 250;
@@ -175,10 +163,25 @@ export class GameGateway {
     this.logger.log(`Connected: ${socket.id}`);
   }
 
-  async handleDisconnect(socket: Socket) {
-    // [TODO]複数userを別タブで動かすとうまくいかないので他の方法を考える。
+  handleDisconnect(socket: Socket) {
+    this.logger.log(`Disconnected: ${socket.id}`);
+
     const id = (socket.handshake.auth as { id: number }).id;
-    await socket.leave(`guestId:${id}`);
+
+    // ゲーム招待をしていた場合キャンセル
+    const invitation = this.invitationList.find(id);
+    if (invitation !== undefined) {
+      const guestSocketId = this.userSocketMap.get(invitation.guestId);
+      if (guestSocketId !== undefined) {
+        guestSocketId.forEach((socketId) => {
+          this.server.to(socketId).emit('cancelInvitation', invitation.hostId);
+        });
+      }
+      this.invitationList.delete(id);
+    }
+
+    const socketIds = this.userSocketMap.get(id);
+    if (socketIds !== undefined) socketIds.delete(socket.id);
 
     this.gameRooms = this.gameRooms.filter(
       (room) =>
@@ -214,13 +217,16 @@ export class GameGateway {
    * @param data
    * @returns Friend[]
    */
-  @SubscribeMessage('subscribe')
+  @SubscribeMessage('getInvitedLlist')
   async getInvitedList(
     @ConnectedSocket() socket: Socket,
     @MessageBody() data: number,
   ): Promise<Friend[]> {
-    // userIdとroomをつなげる
-    await socket.join(`guestId:${data}`);
+    // userIdとsocketIdをつなげる
+    const socketIds = this.userSocketMap.get(data);
+    if (socketIds === undefined)
+      this.userSocketMap.set(data, new Set([socket.id]));
+    else socketIds.add(socket.id);
 
     // 招待を送ったhostの一覧を返す
     const hostIds = this.invitationList.findHosts(data);
@@ -248,18 +254,27 @@ export class GameGateway {
   @SubscribeMessage('inviteFriend')
   async inviteFriend(
     @ConnectedSocket() socket: Socket,
-    @MessageBody() data: Invitation,
+    @MessageBody() data: Omit<Invitation, 'hostSocketId'>,
   ): Promise<boolean> {
-    const res = this.invitationList.insert(data);
+    const newInvitation: Invitation = {
+      guestId: data.guestId,
+      hostId: data.hostId,
+      hostSocketId: socket.id,
+    };
+    const res = this.invitationList.insert(newInvitation);
 
     if (res) {
       const host = await this.user.findOne(data.hostId);
-      await socket.join(`hostId:${data.hostId}`);
 
-      this.server.to(`guestId:${data.guestId}`).emit('inviteFriend', {
-        name: host.name,
-        id: host.id,
-      } as Friend);
+      const guestSocketIds = this.userSocketMap.get(data.guestId);
+      if (guestSocketIds !== undefined) {
+        guestSocketIds.forEach((socketId) => {
+          this.server.to(socketId).emit('inviteFriend', {
+            name: host.name,
+            id: host.id,
+          } as Friend);
+        });
+      }
     }
 
     return res;
@@ -270,18 +285,17 @@ export class GameGateway {
    * @param data
    */
   @SubscribeMessage('cancelInvitation')
-  async cancelInvitation(
-    @ConnectedSocket() socket: Socket,
-    @MessageBody() data: Invitation,
-  ) {
-    const res = this.invitationList.delete(data);
+  cancelInvitation(@MessageBody() data: Omit<Invitation, 'hostSocketId'>) {
+    const res = this.invitationList.delete(data.hostId);
 
     // guest側にキャンセルを伝える
     if (res) {
-      await socket.leave(`hostId:${data.hostId}`);
-      this.server
-        .to(`guestId:${data.guestId}`)
-        .emit('cancelInvitation', data.hostId);
+      const guestSocketIds = this.userSocketMap.get(data.guestId);
+      if (guestSocketIds !== undefined) {
+        guestSocketIds.forEach((socketId) => {
+          this.server.to(socketId).emit('cancelInvitation', data.hostId);
+        });
+      }
     }
   }
 
@@ -293,19 +307,18 @@ export class GameGateway {
   @SubscribeMessage('acceptInvitation')
   async beginFriendMatch(
     @ConnectedSocket() socket: Socket,
-    @MessageBody() data: Invitation,
+    @MessageBody() data: Omit<Invitation, 'hostSocketId'>,
   ) {
-    const invitation = this.invitationList.find(data);
+    const invitation = this.invitationList.find(data.hostId);
     if (invitation === undefined) return;
 
-    this.invitationList.delete(invitation);
+    this.invitationList.delete(invitation.hostId);
 
     const hostSockets = await this.server
-      .in(`hostId:${data.hostId}`)
+      .in(invitation.hostSocketId)
       .fetchSockets();
     if (hostSockets.length === 0) return;
 
-    hostSockets[0].leave(`hostId:${data.hostId}`);
     const user1 = await this.user.findOne(data.hostId);
     const player1: Player = {
       name: user1.name,
