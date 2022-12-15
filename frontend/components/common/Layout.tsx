@@ -25,22 +25,24 @@ export const Layout: FC<Props> = ({
   const { socket: gameSocket } = useSocketStore();
   const [hosts, setHosts] = useState<Friend[]>([]);
   const { data: user, isSuccess } = useQueryUser();
+  const showGuestPaths = ['/game/home', '/dashboard'];
 
   useEffect(() => {
-    if (
-      user === undefined ||
-      !['/game/home', '/dashboard'].includes(router.pathname)
-    )
-      return;
+    if (user === undefined) return;
 
-    gameSocket.emit('getInvitedLlist', user.id, (newHosts: Friend[]) => {
-      setHosts([...hosts, ...newHosts]);
-    });
-    if (gameSocket.disconnected) gameSocket.connect();
+    if (gameSocket.disconnected) {
+      gameSocket.auth = { id: user.id };
+      gameSocket.connect();
+    }
+    if (showGuestPaths.includes(router.pathname)) {
+      gameSocket.emit('getInvitedLlist', user.id, (newHosts: Friend[]) => {
+        setHosts([...hosts, ...newHosts]);
+      });
+    }
   }, [user]);
 
   useEffect(() => {
-    if (!['/game/home', '/dashboard'].includes(router.pathname)) return;
+    if (!showGuestPaths.includes(router.pathname)) return;
 
     gameSocket.on('inviteFriend', (data: Friend) => {
       setHosts([...hosts.filter((elem) => elem.id !== data.id), data]);

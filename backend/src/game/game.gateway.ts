@@ -171,15 +171,16 @@ export class GameGateway {
     // ゲーム招待をしていた場合キャンセル
     const invitation = this.invitationList.find(id);
     if (invitation !== undefined) {
-      const guestSocketId = this.userSocketMap.get(invitation.guestId);
-      if (guestSocketId !== undefined) {
-        guestSocketId.forEach((socketId) => {
+      const guestSocketIds = this.userSocketMap.get(invitation.guestId);
+      if (guestSocketIds !== undefined) {
+        guestSocketIds.forEach((socketId) => {
           this.server.to(socketId).emit('cancelInvitation', invitation.hostId);
         });
       }
       this.invitationList.delete(id);
     }
 
+    // userIdとsocketIdをのつながりを消す
     const socketIds = this.userSocketMap.get(id);
     if (socketIds !== undefined) socketIds.delete(socket.id);
 
@@ -318,6 +319,15 @@ export class GameGateway {
       .in(invitation.hostSocketId)
       .fetchSockets();
     if (hostSockets.length === 0) return;
+
+    // ゲームを行うタブ以外には招待キャンセルする。
+    const guestSocketIds = this.userSocketMap.get(data.guestId);
+    if (guestSocketIds !== undefined) {
+      guestSocketIds.forEach((socketId) => {
+        if (socketId !== socket.id)
+          this.server.to(socketId).emit('cancelInvitation', data.hostId);
+      });
+    }
 
     const user1 = await this.user.findOne(data.hostId);
     const player1: Player = {
