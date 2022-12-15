@@ -14,19 +14,24 @@ const badgeStyle = {
   },
 };
 
+const getBadgeColor = (status: UserStatus) => {
+  switch (status) {
+    case 'ONLINE':
+      return 'success';
+    case 'PLAYING':
+      return 'error';
+    default:
+      return 'default';
+  }
+};
+
 export const BadgedAvatar = ({ status, width, height, src }: Props) => {
   return (
     <Badge
       overlap="circular"
       anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
       badgeContent=""
-      color={
-        status === 'ONLINE'
-          ? 'success'
-          : status === 'PLAYING'
-          ? 'error'
-          : 'default'
-      }
+      color={getBadgeColor(status)}
       sx={status === 'OFFLINE' ? badgeStyle : undefined}
       title={status}
     >
