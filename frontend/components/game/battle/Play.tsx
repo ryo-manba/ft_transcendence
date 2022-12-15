@@ -274,15 +274,17 @@ export const Play = ({ updateFinishedGameInfo }: Props) => {
     socket.on(
       'finishGame',
       (updatedPoint: number | null, finishedGameInfo: FinishedGameInfo) => {
-        if (user !== undefined && updatedPoint !== null) {
-          updatePointMutation.mutate(
-            { userId: user.id, updatedPoint },
-            {
-              onError: () => {
-                updatePlayState(PlayState.stateNothing);
+        if (user !== undefined) {
+          if (updatedPoint !== null) {
+            updatePointMutation.mutate(
+              { userId: user.id, updatedPoint },
+              {
+                onError: () => {
+                  updatePlayState(PlayState.stateNothing);
+                },
               },
-            },
-          );
+            );
+          }
           updateStatusMutation.mutate(
             {
               userId: user.id,
