@@ -3,6 +3,7 @@ import {
   ForbiddenException,
   HttpException,
   HttpStatus,
+  Logger,
 } from '@nestjs/common';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime';
 import { ConfigService } from '@nestjs/config';
@@ -24,6 +25,8 @@ export class AuthService {
     private readonly jwt: JwtService,
     private readonly config: ConfigService,
   ) {}
+
+  private logger: Logger = new Logger('AuthService');
 
   async singUp(dto: AuthDto): Promise<Msg> {
     // 2の12乗回の演算が必要、という意味の12
@@ -62,6 +65,7 @@ export class AuthService {
     if (!isValid)
       throw new ForbiddenException('username or password incorrect');
 
+    // ここのupdateは上の処理で絶対に存在しているuser.idが入るはずなのでエラー処理不要
     await this.prisma.user.update({
       where: {
         id: user.id,
@@ -75,14 +79,18 @@ export class AuthService {
   }
 
   async logout(dto: LogoutDto) {
-    await this.prisma.user.update({
-      where: {
-        id: dto.id,
-      },
-      data: {
-        status: 'OFFLINE',
-      },
-    });
+    try {
+      await this.prisma.user.update({
+        where: {
+          id: dto.id,
+        },
+        data: {
+          status: 'OFFLINE',
+        },
+      });
+    } catch (error) {
+      this.logger.error(`Failed to update status for User ID ${dto.id}`);
+    }
   }
 
   async generateJwt(userId: number, username: string): Promise<Jwt> {
