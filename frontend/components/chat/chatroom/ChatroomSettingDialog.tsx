@@ -150,11 +150,11 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
 
   useEffect(() => {
     if (user === undefined) return;
-    // ミュートする項目を選択時に取得する
+    // BANする項目を選択時に取得する
     if (selectedRoomSetting !== CHATROOM_SETTINGS.BAN_USER) return;
 
     const fetchCanBanUsers = async () => {
-      // チャットルーム入室している かつ すでにミュートされていないユーザーを取得する
+      // チャットルーム入室している かつ すでにBANされていないユーザーを取得する
       const notBannedUsers = await fetchNotBannedUsers({
         roomId: room.id,
       });
