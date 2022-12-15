@@ -5,7 +5,7 @@ import {
   WebSocketServer,
   ConnectedSocket,
 } from '@nestjs/websockets';
-import { Chatroom, ChatroomType } from '@prisma/client';
+import { Chatroom, ChatroomType, ChatroomMembersStatus } from '@prisma/client';
 import { Server, Socket } from 'socket.io';
 import { Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
@@ -17,6 +17,7 @@ import { CreateMessageDto } from './dto/create-message.dto';
 import { CreateAdminDto } from './dto/create-admin.dto';
 import { updatePasswordDto } from './dto/update-password.dto';
 import { updateMemberStatusDto } from './dto/update-member-status.dto';
+import { CheckBanDto } from './dto/check-ban.dto';
 
 @WebSocketGateway({
   cors: {
@@ -124,6 +125,28 @@ export class ChatGateway {
 
     // 既存のメッセージを送り返す
     return messages;
+  }
+
+  /**
+   * ユーザーがチャットルームからBANされているかをチェックする
+   * @param CheckBanDto
+   * @return BANされていたらtrueを返す
+   */
+  @SubscribeMessage('chat:isBannedUser')
+  async isBannedUser(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() dto: CheckBanDto,
+  ): Promise<boolean> {
+    this.logger.log(`chat:isBannedUser received -> ${dto.userId}`);
+
+    const data = {
+      chatroomId_userId: {
+        ...dto,
+      },
+    };
+    const userInfo = await this.chatService.findJoinedUserInfo(data);
+
+    return userInfo.status === ChatroomMembersStatus.BAN;
   }
 
   /**

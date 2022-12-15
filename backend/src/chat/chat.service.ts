@@ -154,13 +154,27 @@ export class ChatService {
   }
 
   /**
+   * 入室しているユーザーの情報を返す
+   * @param userId
+   */
+  async findJoinedUserInfo(
+    chatroomMembersWhereUniqueInput: Prisma.ChatroomMembersWhereUniqueInput,
+  ): Promise<ChatroomMembers | null> {
+    // チャットルームメンバーからuserIdが含まれているものを取得する
+    const userInfo = await this.prisma.chatroomMembers.findUnique({
+      where: chatroomMembersWhereUniqueInput,
+    });
+
+    return userInfo;
+  }
+
+  /**
    * チャットルームに入室する
    * @param id
    * @return 入室したチャットルームを返す
    */
   async joinRoom(dto: JoinChatroomDto): Promise<Chatroom> {
     console.log('joinRoom: ', dto);
-    // TODO: ブロックされているユーザーは入れないようにする?
     // 入室するチャットルームを取得する
     const chatroom = await this.prisma.chatroom.findUnique({
       where: {

@@ -33,6 +33,7 @@ export const ChatroomListItem = memo(function ChatroomListItem({
   const [open, setOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [success, setSuccess] = useState('');
+  const [error, setError] = useState('');
   const { data: user } = useQueryUser();
 
   useEffect(() => {
@@ -54,13 +55,28 @@ export const ChatroomListItem = memo(function ChatroomListItem({
   }
 
   // ルームをクリックしたときの処理
-  const getMessage = (id: number) => {
-    console.log('getMessage:', id);
-    // 入室に成功したら、既存のメッセージを受け取る
-    socket.emit('chat:changeCurrentRoom', id, (messages: Message[]) => {
-      setMessages(messages);
+  const changeCurrentRoom = (roomId: number) => {
+    console.log('changeCurrentRoom:', roomId);
+
+    const checkBanInfo = {
+      userId: user.id,
+      chatroomId: roomId,
+    };
+    // banされていないかチェックする
+    socket.emit('chat:isBannedUser', checkBanInfo, (isBanned: boolean) => {
+      console.log('chat:isBannedUser', isBanned);
+      if (isBanned) {
+        setError('You were banned.');
+        setCurrentRoomId(0);
+        setMessages([]);
+      } else {
+        // 入室に成功したら、既存のメッセージを受け取る
+        socket.emit('chat:changeCurrentRoom', roomId, (messages: Message[]) => {
+          setMessages(messages);
+        });
+        setCurrentRoomId(roomId);
+      }
     });
-    setCurrentRoomId(id);
   };
 
   const handleClickOpen = () => {
@@ -71,7 +87,6 @@ export const ChatroomListItem = memo(function ChatroomListItem({
     setOpen(false);
   };
 
-  const [error, setError] = useState('');
   const deleteRoom = () => {
     // 削除できるのはチャットルームオーナーだけ
     if (user.id !== room.ownerId) {
@@ -216,7 +231,7 @@ export const ChatroomListItem = memo(function ChatroomListItem({
           <ListItemText
             primary={room.name}
             onClick={() => {
-              getMessage(room.id);
+              changeCurrentRoom(room.id);
             }}
             style={{
               overflow: 'hidden',
@@ -228,7 +243,7 @@ export const ChatroomListItem = memo(function ChatroomListItem({
           <ListItemText
             primary={room.name}
             onClick={() => {
-              getMessage(room.id);
+              changeCurrentRoom(room.id);
             }}
             style={{
               overflow: 'hidden',
