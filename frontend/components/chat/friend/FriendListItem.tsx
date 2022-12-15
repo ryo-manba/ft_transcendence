@@ -54,13 +54,6 @@ export const FriendListItem = memo(function FriendListItem({ friend }: Props) {
     });
   }, []);
 
-  useEffect(() => {
-    if (gameSocket.disconnected && user !== undefined) {
-      gameSocket.auth = { id: user.id };
-      gameSocket.connect();
-    }
-  }, []);
-
   const inviteFriend = (friend: Friend) => {
     const invitation: Invitation = {
       guestId: friend.id,
