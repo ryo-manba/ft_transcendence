@@ -28,6 +28,7 @@ export const BadgedAvatar = ({ status, width, height, src }: Props) => {
           : 'default'
       }
       sx={status === 'OFFLINE' ? badgeStyle : undefined}
+      title={status}
     >
       <Avatar sx={{ width, height }} src={src} />
     </Badge>
