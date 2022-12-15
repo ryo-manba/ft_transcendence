@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { memo, useState, useEffect, Dispatch, SetStateAction } from 'react';
 import {
   ListItem,
   IconButton,
@@ -10,7 +10,7 @@ import {
 import SettingsIcon from '@mui/icons-material/Settings';
 import CloseIcon from '@mui/icons-material/Close';
 import { Socket } from 'socket.io-client';
-import { Chatroom, ChatroomType, JoinChatroomInfo } from 'types/chat';
+import { Chatroom, Message, ChatroomType, JoinChatroomInfo } from 'types/chat';
 import { useQueryUser } from 'hooks/useQueryUser';
 import { Loading } from 'components/common/Loading';
 import { ChatroomSettingDialog } from 'components/chat/chatroom/ChatroomSettingDialog';
@@ -20,10 +20,16 @@ import { ChatroomMembersStatus } from '@prisma/client';
 type Props = {
   room: Chatroom;
   socket: Socket;
-  setCurrentRoomId: (id: number) => void;
+  setCurrentRoomId: Dispatch<SetStateAction<number>>;
+  setMessages: Dispatch<SetStateAction<Message[]>>;
 };
 
-export const ChatroomListItem = ({ room, socket, setCurrentRoomId }: Props) => {
+export const ChatroomListItem = memo(function ChatroomListItem({
+  room,
+  socket,
+  setCurrentRoomId,
+  setMessages,
+}: Props) {
   const [open, setOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [success, setSuccess] = useState('');
@@ -47,9 +53,13 @@ export const ChatroomListItem = ({ room, socket, setCurrentRoomId }: Props) => {
     return <Loading />;
   }
 
+  // ルームをクリックしたときの処理
   const getMessage = (id: number) => {
     console.log('getMessage:', id);
-    socket.emit('chat:getMessage', id);
+    // 入室に成功したら、既存のメッセージを受け取る
+    socket.emit('chat:changeCurrentRoom', id, (messages: Message[]) => {
+      setMessages(messages);
+    });
     setCurrentRoomId(id);
   };
 
@@ -228,4 +238,4 @@ export const ChatroomListItem = ({ room, socket, setCurrentRoomId }: Props) => {
       )}
     </>
   );
-};
+});

@@ -99,15 +99,16 @@ export class ChatGateway {
   }
 
   /**
-   * チャットルームに対応したメッセージを取得して返す
-   * @param RoomID
+   * ソケットを引数で受けとったルームにjoinさせる
+   * @param roomID
+   * @return チャットルームに対応したメッセージを取得して返す
    */
-  @SubscribeMessage('chat:getMessage')
+  @SubscribeMessage('chat:changeCurrentRoom')
   async onGetMessage(
     @ConnectedSocket() client: Socket,
     @MessageBody() roomId: number,
   ): Promise<any> {
-    this.logger.log(`chat:getMessage received -> ${roomId}`);
+    this.logger.log(`chat:changeCurrentRoom received -> ${roomId}`);
 
     // 0番目には、socketのidが入っている
     if (client.rooms.size >= 2) {
@@ -120,8 +121,9 @@ export class ChatGateway {
     // 既存のメッセージを取得する
     // TODO: limitで上限をつける
     const messages = await this.chatService.findMessages({ id: roomId });
+
     // 既存のメッセージを送り返す
-    client.emit('chat:getMessage', messages);
+    return messages;
   }
 
   /**
