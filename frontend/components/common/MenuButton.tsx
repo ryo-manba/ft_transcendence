@@ -4,12 +4,12 @@ import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import axios from 'axios';
 import Link from 'next/link';
-import { signOut, useSession } from 'next-auth/react';
-import { useRouter } from 'next/router';
+import { useSession } from 'next-auth/react';
 import { useQueryUser } from 'hooks/useQueryUser';
 import { Loading } from './Loading';
+import { logout } from 'api/auth/logout';
+import { useRouter } from 'next/router';
 
 export const MenuButton = () => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -26,21 +26,6 @@ export const MenuButton = () => {
   const { data: user } = useQueryUser();
 
   if (user === undefined) return <Loading />;
-
-  const logout = () => {
-    void axios.post(
-      `${process.env.NEXT_PUBLIC_API_URL as string}/auth/logout`,
-      {
-        id: user.id,
-      },
-    );
-    queryClient.removeQueries(['user']);
-    if (session) {
-      void signOut();
-    } else {
-      void router.push('/');
-    }
-  };
 
   return (
     <div>
@@ -71,7 +56,13 @@ export const MenuButton = () => {
         <Link href="/setting">
           <MenuItem>Setting</MenuItem>
         </Link>
-        <MenuItem onClick={logout}>Logout</MenuItem>
+        <MenuItem
+          onClick={() => {
+            logout(queryClient, router, session);
+          }}
+        >
+          Logout
+        </MenuItem>
       </Menu>
     </div>
   );
