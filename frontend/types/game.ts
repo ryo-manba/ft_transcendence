@@ -32,3 +32,8 @@ export type FinishedGameInfo = {
   winnerScore: number;
   loserScore: number;
 };
+
+export type Invitation = {
+  hostId: number;
+  guestId: number;
+};
