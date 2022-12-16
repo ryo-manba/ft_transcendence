@@ -1,11 +1,21 @@
-import { Injectable, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  ForbiddenException,
+  HttpException,
+  HttpStatus,
+  Logger,
+} from '@nestjs/common';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuthDto } from './dto/auth.dto';
+import { CreateOAuthDto } from './dto/create-oauth.dto';
+import { Validate2FACodeDto } from './dto/validate-2FACode.dto';
 import { Msg, Jwt } from './interfaces/auth.interface';
+import * as qrcode from 'qrcode';
+import * as speakeasy from 'speakeasy';
 import { LogoutDto } from './dto/logout.dto';
 
 @Injectable()
@@ -15,6 +25,8 @@ export class AuthService {
     private readonly jwt: JwtService,
     private readonly config: ConfigService,
   ) {}
+
+  private logger: Logger = new Logger('AuthService');
 
   async singUp(dto: AuthDto): Promise<Msg> {
     // 2の12乗回の演算が必要、という意味の12
@@ -53,6 +65,7 @@ export class AuthService {
     if (!isValid)
       throw new ForbiddenException('username or password incorrect');
 
+    // ここのupdateは上の処理で絶対に存在しているuser.idが入るはずなのでエラー処理不要
     await this.prisma.user.update({
       where: {
         id: user.id,
@@ -66,14 +79,18 @@ export class AuthService {
   }
 
   async logout(dto: LogoutDto) {
-    await this.prisma.user.update({
-      where: {
-        id: dto.id,
-      },
-      data: {
-        status: 'OFFLINE',
-      },
-    });
+    try {
+      await this.prisma.user.update({
+        where: {
+          id: dto.id,
+        },
+        data: {
+          status: 'OFFLINE',
+        },
+      });
+    } catch (error) {
+      this.logger.error(`Failed to update status for User ID ${dto.id}`);
+    }
   }
 
   async generateJwt(userId: number, username: string): Promise<Jwt> {
@@ -89,5 +106,152 @@ export class AuthService {
     return {
       accessToken: token,
     };
+  }
+
+  async oauthlogin(dto: CreateOAuthDto): Promise<Jwt> {
+    let user = await this.prisma.user.findUnique({
+      where: {
+        oAuthId: dto.oAuthId,
+      },
+    });
+
+    if (!user) {
+      // 初めてOAuth認証した時はユーザー登録する
+      const sameUsername = await this.prisma.user.findUnique({
+        where: { name: dto.oAuthId },
+      });
+      let username = '';
+      if (sameUsername) {
+        // usernameが使われてたら、一致しないものを生成する
+        const uniqueSuffix =
+          String(Date.now()) + '-' + String(Math.round(Math.random() * 1e9));
+        username = dto.oAuthId + '_' + uniqueSuffix;
+      } else {
+        username = dto.oAuthId;
+      }
+      // DBへ新規追加
+      await this.prisma.user.create({
+        data: {
+          oAuthId: dto.oAuthId,
+          name: username,
+          avatarPath: dto.imagePath,
+        },
+      });
+      user = await this.prisma.user.findUnique({
+        where: {
+          oAuthId: dto.oAuthId,
+        },
+      });
+    }
+    // if (user.has2FA) {
+    //   UserManager.instance.twoFAlist.push(new TwoFAUser(user.id));
+
+    //   return user.toResponseUser(false, true);
+    // }
+
+    return this.generateJwt(user.id, user.name);
+  }
+
+  async generateQrCode(userId: number): Promise<string> {
+    if (Number.isNaN(userId)) throw new Error('UserId is invalid');
+    const user = await this.prisma.user.findUnique({
+      where: {
+        id: userId,
+      },
+    });
+    if (!user) throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+    const secret = speakeasy.generateSecret();
+    const url = speakeasy.otpauthURL({
+      secret: secret.base32,
+      label: user.name,
+      issuer: 'ft_transcendence',
+    });
+    const qr_code = qrcode.toDataURL(url);
+    //取得したSecretをDBに保存。まだこのユーザーは2FA機能オン状態ではない。
+    const user_db = await this.prisma.user.update({
+      where: {
+        id: userId,
+      },
+      data: {
+        secret2FA: secret.base32,
+      },
+    });
+
+    return qr_code;
+  }
+
+  async send2FACode(userId: number, dto: Validate2FACodeDto): Promise<string> {
+    console.log(dto);
+    const user = await this.prisma.user.findUnique({
+      where: {
+        id: userId,
+      },
+    });
+    console.log(user.has2FA);
+    const valid = speakeasy.totp.verify({
+      secret: user.secret2FA,
+      token: dto.code,
+    });
+    if (!valid) {
+      throw new Error('hoge');
+    }
+
+    //2FAの登録が完了したら、このユーザーは2FA機能をオンにする
+    const user_db = await this.prisma.user.update({
+      where: {
+        id: userId,
+      },
+      data: {
+        has2FA: true,
+      },
+    });
+
+    return 'ok';
+  }
+
+  async has2FA(userId: number): Promise<string> {
+    const user = await this.prisma.user.findUnique({
+      where: {
+        id: userId,
+      },
+    });
+    // TODO: 戻り値がstringで良いか、frontendの実装時に再検討予定
+    if (user.has2FA) {
+      return 'enabled: true';
+    } else {
+      return 'enabled: false';
+    }
+  }
+
+  async validate2FA(data: Validate2FACodeDto): Promise<Jwt> {
+    const user = await this.prisma.user.findUnique({
+      where: {
+        id: Number(data.userId),
+      },
+    });
+    const valid = speakeasy.totp.verify({
+      secret: user.secret2FA,
+      token: data.code,
+    });
+    if (!valid) {
+      throw new Error('Invalid Speakeasy verify.');
+    }
+
+    return this.generateJwt(user.id, user.name);
+  }
+
+  async disable2FA(data: Validate2FACodeDto): Promise<string> {
+    const user_db = await this.prisma.user.update({
+      where: {
+        id: Number(data.userId),
+      },
+      data: {
+        has2FA: false,
+        secret2FA: '',
+      },
+    });
+
+    // TODO: 戻り値がstringで良いか、frontendの実装時に再検討予定
+    return 'disabled: true';
   }
 }

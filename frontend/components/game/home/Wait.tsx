@@ -11,14 +11,29 @@ import { useSocketStore } from 'store/game/ClientSocket';
 import { usePlayerNamesStore } from 'store/game/PlayerNames';
 import { useRouter } from 'next/router';
 import DoneOutlineIcon from '@mui/icons-material/DoneOutline';
+import { useMutationStatus } from 'hooks/useMutationStatus';
+import { useQueryUser } from 'hooks/useQueryUser';
 
 export const Wait = () => {
   const updatePlayState = usePlayStateStore((store) => store.updatePlayState);
   const { playState } = usePlayStateStore();
   const [open, setOpen] = useState(true);
   const { socket } = useSocketStore();
+  const { data: user } = useQueryUser();
+  const { updateStatusMutation } = useMutationStatus();
 
   const handleClose = () => {
+    if (user === undefined) {
+      return;
+    }
+    try {
+      updateStatusMutation.mutate({
+        userId: user.id,
+        status: 'ONLINE',
+      });
+    } catch (error) {
+      return;
+    }
     setOpen(false);
     updatePlayState(PlayState.stateNothing);
     socket.emit('playCancel');

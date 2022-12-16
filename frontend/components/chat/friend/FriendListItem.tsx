@@ -3,8 +3,6 @@ import {
   ListItem,
   ListItemText,
   ListItemAvatar,
-  Avatar,
-  Badge,
   Box,
   Collapse,
   IconButton,
@@ -22,6 +20,7 @@ import { useSocketStore } from 'store/game/ClientSocket';
 import { useInvitedFriendStateStore } from 'store/game/InvitedFriendState';
 import { useRouter } from 'next/router';
 import { Invitation } from 'types/game';
+import { BadgedAvatar } from 'components/common/BadgedAvatar';
 
 type Props = {
   friend: Friend;
@@ -104,20 +103,10 @@ export const FriendListItem = memo(function FriendListItem({ friend }: Props) {
       </Box>
       <ListItem divider button onClick={handleClickOpen}>
         <ListItemAvatar>
-          <Badge
-            overlap="circular"
-            anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-            badgeContent=""
-            color={
-              friendStatus === 'ONLINE'
-                ? 'success'
-                : friendStatus === 'PLAYING'
-                ? 'error'
-                : 'default'
-            }
-          >
-            <Avatar src={getAvatarImageUrl(friend.id)} />
-          </Badge>
+          <BadgedAvatar
+            status={friendStatus}
+            src={getAvatarImageUrl(friend.id)}
+          />
         </ListItemAvatar>
         <ListItemText
           primary={friend.name}

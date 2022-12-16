@@ -1,11 +1,4 @@
-import {
-  Avatar,
-  Grid,
-  Typography,
-  Alert,
-  AlertTitle,
-  Badge,
-} from '@mui/material';
+import { Grid, Typography, Alert, AlertTitle } from '@mui/material';
 import { Header } from 'components/common/Header';
 import { Layout } from 'components/common/Layout';
 import { Loading } from 'components/common/Loading';
@@ -15,6 +8,7 @@ import { History } from 'components/game/home/History';
 import { useQueryUserById } from 'hooks/useQueryUserById';
 import { useRouter } from 'next/router';
 import { getAvatarImageUrl } from 'api/user/getAvatarImageUrl';
+import { BadgedAvatar } from 'components/common/BadgedAvatar';
 
 const Profile: NextPage = () => {
   const router = useRouter();
@@ -67,20 +61,12 @@ const Profile: NextPage = () => {
         sx={{ p: 2 }}
       >
         <Grid item>
-          <Badge
-            overlap="circular"
-            anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-            badgeContent=""
-            color={
-              user.status === 'ONLINE'
-                ? 'success'
-                : user.status === 'PLAYING'
-                ? 'error'
-                : 'default'
-            }
-          >
-            <Avatar sx={{ width: 150, height: 150 }} src={avatarImageUrl} />
-          </Badge>
+          <BadgedAvatar
+            status={user.status}
+            width={150}
+            height={150}
+            src={avatarImageUrl}
+          />
         </Grid>
         <Grid item>
           <Typography gutterBottom variant="h1" component="div">
