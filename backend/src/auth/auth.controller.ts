@@ -99,11 +99,8 @@ export class AuthController {
   }
 
   @Post('send2facode')
-  send2FACode(
-    @Param('id') id: string,
-    @Body() dto: Validate2FACodeDto,
-  ): Promise<string> {
-    return this.authService.send2FACode(Number(id), dto);
+  send2FACode(@Body() dto: Validate2FACodeDto): Promise<string> {
+    return this.authService.send2FACode(dto);
   }
 
   @Get('has2fa')
@@ -130,7 +127,7 @@ export class AuthController {
   }
 
   @Post('disable2fa')
-  disable2FA(@Body() data: Validate2FACodeDto): Promise<string> {
-    return this.authService.disable2FA(data);
+  disable2FA(@Body() dto: Validate2FACodeDto): Promise<string> {
+    return this.authService.disable2FA(dto);
   }
 }

@@ -152,31 +152,34 @@ export class AuthService {
       },
     });
     if (!user) throw new HttpException('User not found', HttpStatus.NOT_FOUND);
-    const secret = speakeasy.generateSecret();
+    // もしすでに有効なsecretがある場合は、そのsecretを使う
+    let secretBase32 = user.secret2FA;
+    if (user.secret2FA === '') {
+      secretBase32 = speakeasy.generateSecret().base32;
+    }
     const url = speakeasy.otpauthURL({
-      secret: secret.base32,
+      secret: secretBase32,
       label: user.name,
       issuer: 'ft_transcendence',
     });
     const qr_code = qrcode.toDataURL(url);
-    //取得したSecretをDBに保存。まだこのユーザーは2FA機能オン状態ではない。
+    //取得したSecretをDBに保存。まだこのユーザーは2FA機能オン状態ではない
     const user_db = await this.prisma.user.update({
       where: {
         id: userId,
       },
       data: {
-        secret2FA: secret.base32,
+        secret2FA: secretBase32,
       },
     });
 
     return qr_code;
   }
 
-  async send2FACode(userId: number, dto: Validate2FACodeDto): Promise<string> {
-    console.log(dto);
+  async send2FACode(dto: Validate2FACodeDto): Promise<string> {
     const user = await this.prisma.user.findUnique({
       where: {
-        id: userId,
+        id: Number(dto.userId),
       },
     });
     console.log(user.has2FA);
@@ -185,20 +188,19 @@ export class AuthService {
       token: dto.code,
     });
     if (!valid) {
-      throw new Error('hoge');
+      return 'failure';
     }
-
     //2FAの登録が完了したら、このユーザーは2FA機能をオンにする
     const user_db = await this.prisma.user.update({
       where: {
-        id: userId,
+        id: Number(dto.userId),
       },
       data: {
         has2FA: true,
       },
     });
 
-    return 'ok';
+    return 'success';
   }
 
   async has2FA(userId: number): Promise<string> {
