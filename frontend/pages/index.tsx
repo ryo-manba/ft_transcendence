@@ -36,7 +36,6 @@ const schema = z.object({
 const Home: NextPage = () => {
   const router = useRouter();
   const [isRegister, setIsRegister] = useState(false);
-  const [tryLogin, setTryLogin] = useState(false);
   const [error, setError] = useState<string[]>([]);
   const [showPassword, setShowPassword] = useState(false);
 
@@ -82,47 +81,11 @@ const Home: NextPage = () => {
     }
   };
 
-  const oauthLogin = async () => {
-    if (process.env.NEXT_PUBLIC_API_URL) {
-      if (!session || session.user === null || session.user === undefined) {
-        return;
-      } else {
-        try {
-          reset();
-          // console.log(session.user);
-          const url_oauth = `${process.env.NEXT_PUBLIC_API_URL}/auth/oauth-login`;
-          if (session.user) {
-            await axios.post(url_oauth, {
-              oAuthId: session.user.email,
-              // oAuthId: session.user.oAuthId,
-              imagePath: '',
-              //session.user.image,
-            });
-          }
-          await router.push('/dashboard');
-        } catch (e) {
-          console.log('[OAuth] signup failure: catch');
-          if (axios.isAxiosError(e) && e.response && e.response.data) {
-            reset();
-            const messages = (e.response.data as AxiosErrorResponse).message;
-            if (Array.isArray(messages)) setError(messages);
-            else setError([messages]);
-          }
-        }
-      }
-    }
-  };
-
   if (status === 'loading') {
     return <Loading fullHeight={true} />;
-  }
-
-  if (status === 'authenticated') {
-    if (tryLogin == false) {
-      setTryLogin(true);
-      void (async () => {
-        await oauthLogin();
-      })();
+  } else if (status === 'authenticated') {
+    if (session && session.user !== null && session.user !== undefined) {
+      void router.push('/authenticate');
     }
 
     return <Loading fullHeight={true} />;
