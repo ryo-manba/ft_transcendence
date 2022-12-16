@@ -33,6 +33,13 @@ export const Result = ({ finishedGameInfo }: Props) => {
           </Typography>
         </Grid>
       )}
+      {playState === PlayState.stateTimedUp && (
+        <Grid item sx={{ mt: 3 }}>
+          <Typography align="center" gutterBottom variant="h4" component="h4">
+            Time is up. Please retry a new game.
+          </Typography>
+        </Grid>
+      )}
       {playState === PlayState.stateFinished && (
         <Grid container justifyContent="space-around">
           <Grid item>
