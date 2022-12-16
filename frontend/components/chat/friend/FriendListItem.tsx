@@ -53,7 +53,7 @@ export const FriendListItem = memo(function FriendListItem({ friend }: Props) {
     });
   }, []);
 
-  const inviteFriend = (friend: Friend) => {
+  const inviteGame = (friend: Friend) => {
     const invitation: Invitation = {
       guestId: friend.id,
       hostId: user.id,
@@ -119,7 +119,7 @@ export const FriendListItem = memo(function FriendListItem({ friend }: Props) {
         friend={friend}
         onClose={handleClose}
         open={open}
-        inviteFriend={inviteFriend}
+        inviteGame={inviteGame}
       />
     </>
   );

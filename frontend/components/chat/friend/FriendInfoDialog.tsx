@@ -18,7 +18,7 @@ type Props = {
   friend: Friend;
   open: boolean;
   onClose: () => void;
-  inviteFriend: (friend: Friend) => void;
+  inviteGame: (friend: Friend) => void;
 };
 
 /**
@@ -32,7 +32,7 @@ export const FriendInfoDialog = memo(function FriendInfoDialog({
   friend,
   open,
   onClose,
-  inviteFriend,
+  inviteGame: inviteFriend,
 }: Props) {
   const [actionType, setActionType] = useState('Profile');
   const router = useRouter();
