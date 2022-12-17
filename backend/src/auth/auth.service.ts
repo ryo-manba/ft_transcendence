@@ -17,6 +17,9 @@ import { Msg, Jwt } from './interfaces/auth.interface';
 import * as qrcode from 'qrcode';
 import * as speakeasy from 'speakeasy';
 import { LogoutDto } from './dto/logout.dto';
+import { v4 as uuidv4 } from 'uuid';
+import axios from 'axios';
+import * as fs from 'fs';
 
 @Injectable()
 export class AuthService {
@@ -108,6 +111,25 @@ export class AuthService {
     };
   }
 
+  async downloadImage(imagePath: string) {
+    try {
+      const { data } = await axios.get<ArrayBuffer>(imagePath, {
+        responseType: 'arraybuffer',
+      });
+      const buffer = Buffer.from(data);
+      const newAvatarPath = uuidv4() + '.jpg';
+      const filePath = process.env.AVATAR_IMAGE_DIR + '/' + newAvatarPath;
+      await fs.promises.writeFile(filePath, buffer);
+      console.log('Image saved successfully');
+
+      return newAvatarPath;
+    } catch {
+      console.error('Failed to save image');
+
+      return undefined;
+    }
+  }
+
   async oauthlogin(dto: CreateOAuthDto): Promise<Jwt> {
     let user = await this.prisma.user.findUnique({
       where: {
@@ -129,18 +151,18 @@ export class AuthService {
       } else {
         username = dto.oAuthId;
       }
+
+      const updatedAvatarPath = await this.downloadImage(dto.imagePath);
+
+      const data = {
+        oAuthId: dto.oAuthId,
+        name: username,
+        avatarPath: updatedAvatarPath,
+      };
+
       // DBへ新規追加
-      await this.prisma.user.create({
-        data: {
-          oAuthId: dto.oAuthId,
-          name: username,
-          avatarPath: dto.imagePath,
-        },
-      });
-      user = await this.prisma.user.findUnique({
-        where: {
-          oAuthId: dto.oAuthId,
-        },
+      user = await this.prisma.user.create({
+        data,
       });
     }
     // if (user.has2FA) {
@@ -148,6 +170,16 @@ export class AuthService {
 
     //   return user.toResponseUser(false, true);
     // }
+
+    // ここのupdateは上の処理で絶対に存在しているuser.idが入るはずなのでエラー処理不要
+    await this.prisma.user.update({
+      where: {
+        id: user.id,
+      },
+      data: {
+        status: 'ONLINE',
+      },
+    });
 
     return this.generateJwt(user.id, user.name);
   }
