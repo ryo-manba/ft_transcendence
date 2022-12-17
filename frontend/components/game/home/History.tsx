@@ -8,32 +8,61 @@ import {
   Alert,
   AlertTitle,
 } from '@mui/material';
+import { User } from '@prisma/client';
+import { getRecordsById } from 'api/records/getRecordsById';
+import { getUserById } from 'api/user/getUserById';
 import { Loading } from 'components/common/Loading';
-import { useQueryGameRecords } from 'hooks/useQueryGameRecords';
-import { useQueryUserById } from 'hooks/useQueryUserById';
+import { useEffect, useState } from 'react';
+import { GameRecordWithUserName } from 'types/game';
 
 type Props = {
   userId: number;
 };
 
 export const History = ({ userId }: Props) => {
-  const { data: user, error: userQueryError } = useQueryUserById(userId);
-  const { data: records, error: recordQueryError } = useQueryGameRecords(
-    user?.id,
+  const [user, setUser] = useState<Omit<User, 'hashedPassword'> | undefined>();
+  const [userError, setUserError] = useState<Error | undefined>(undefined);
+  const [records, setRecords] = useState<GameRecordWithUserName[] | undefined>(
+    undefined,
+  );
+  const [recordsError, setRecordsError] = useState<Error | undefined>(
+    undefined,
   );
 
-  if (userQueryError || recordQueryError) {
+  useEffect(() => {
+    const updateRecordsNUser = async () => {
+      await getRecordsById({ userId })
+        .then((res) => {
+          setRecords(res);
+        })
+        .catch((err) => {
+          setRecordsError(err as Error);
+        });
+      await getUserById({ userId })
+        .then((res) => {
+          setUser(res);
+        })
+        .catch((err) => {
+          setUserError(err as Error);
+        });
+    };
+
+    void updateRecordsNUser();
+  }, []);
+
+  if (userError !== undefined || recordsError !== undefined) {
     return (
       <Alert severity="error">
         <AlertTitle>Error</AlertTitle>
-        {userQueryError && `User fetching error: ${userQueryError.message}`}
-        {recordQueryError &&
-          `Game record fetching error: ${recordQueryError.message}`}
+        {userError !== undefined && <p>User Fetching Error</p>}
+        {records !== undefined && <p>Game Records Fetching Error</p>}
       </Alert>
     );
   }
 
-  if (records === undefined || user === undefined) return <Loading />;
+  if (records === undefined || user === undefined) {
+    return <Loading />;
+  }
 
   return (
     <>
@@ -56,7 +85,7 @@ export const History = ({ userId }: Props) => {
               }}
               sx={{ width: '30%' }}
             />
-            {item.winner.name === user.name ? (
+            {item.winnerName === user.name ? (
               <>
                 <ListItemAvatar>
                   <Avatar
@@ -78,7 +107,7 @@ export const History = ({ userId }: Props) => {
                   </Avatar>
                 </ListItemAvatar>
                 <ListItemText
-                  primary={item.loser.name}
+                  primary={item.loserName}
                   primaryTypographyProps={{
                     variant: 'h6',
                     align: 'center',
@@ -108,7 +137,7 @@ export const History = ({ userId }: Props) => {
                   </Avatar>
                 </ListItemAvatar>
                 <ListItemText
-                  primary={item.winner.name}
+                  primary={item.winnerName}
                   primaryTypographyProps={{
                     variant: 'h6',
                     align: 'center',

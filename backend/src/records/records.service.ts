@@ -25,7 +25,7 @@ export class RecordsService {
   }): Promise<GameRecordWithUserName[]> {
     const { skip, take, cursor, where, orderBy } = params;
 
-    return this.prisma.gameRecord.findMany({
+    const records = await this.prisma.gameRecord.findMany({
       skip,
       take,
       cursor,
@@ -36,6 +36,22 @@ export class RecordsService {
         winner: true,
       },
     });
+
+    // UserからuserNameのみを取り出す
+    const recordsWithUserName: GameRecordWithUserName[] = records.map(
+      (record) => {
+        return {
+          id: record.id,
+          winnerScore: record.winnerScore,
+          loserScore: record.loserScore,
+          createdAt: record.createdAt,
+          loserName: record.loser.name,
+          winnerName: record.winner.name,
+        };
+      },
+    );
+
+    return recordsWithUserName;
   }
 
   async createGameRecord(data: CreateGameRecordDto): Promise<GameRecord> {

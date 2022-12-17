@@ -1,5 +1,3 @@
-import { User } from '@prisma/client';
-
 const difficultyLevelArray: readonly string[] = [
   'Easy',
   'Normal',
@@ -22,8 +20,8 @@ export type GameRecordWithUserName = {
   winnerScore: number;
   loserScore: number;
   createdAt: Date;
-  loser: User;
-  winner: User;
+  loserName: string;
+  winnerName: string;
 };
 
 export type FinishedGameInfo = {
