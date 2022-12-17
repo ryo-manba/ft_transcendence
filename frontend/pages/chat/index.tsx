@@ -9,10 +9,12 @@ import { FriendSidebar } from 'components/chat/friend/FriendSidebar';
 import { Chatroom, Message } from 'types/chat';
 import { useQueryUser } from 'hooks/useQueryUser';
 import { Loading } from 'components/common/Loading';
+import { NextPage } from 'next';
+import { Layout } from 'components/common/Layout';
 
 const appBarHeight = '64px';
 
-const Chat = () => {
+const Chat: NextPage = () => {
   const [text, setText] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
   const NOT_JOINED_ROOM = 0;
@@ -105,7 +107,7 @@ const Chat = () => {
   };
 
   return (
-    <>
+    <Layout title="chat">
       <Header title="Chatroom" />
       <Grid
         container
@@ -179,7 +181,7 @@ const Chat = () => {
           <FriendSidebar />
         </Grid>
       </Grid>
-    </>
+    </Layout>
   );
 };
 

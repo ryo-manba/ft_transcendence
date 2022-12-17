@@ -55,6 +55,25 @@ export const Host = () => {
     };
   });
 
+  const routeChangeHandler = useCallback(() => {
+    if (invitedFriendState.friendId !== null && user !== undefined) {
+      const invitation: Invitation = {
+        guestId: invitedFriendState.friendId,
+        hostId: user.id,
+      };
+
+      socket.emit('cancelInvitation', invitation);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    router.events.on('routeChangeStart', routeChangeHandler);
+
+    return () => {
+      router.events.off('routeChangeStart', routeChangeHandler);
+    };
+  });
+
   if (user === undefined) return <></>;
 
   const handleClose = useCallback(() => {
