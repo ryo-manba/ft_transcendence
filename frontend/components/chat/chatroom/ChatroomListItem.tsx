@@ -148,7 +148,7 @@ export const ChatroomListItem = memo(function ChatroomListItem({
     };
     socket.emit('chat:updatePassword', changePasswordInfo, (res: boolean) => {
       if (res) {
-        setSuccess(`${room.name} password has been changed successfully.`);
+        setSuccess('Password has been changed successfully.');
       } else {
         setError('Failed to change password.');
       }
@@ -165,7 +165,7 @@ export const ChatroomListItem = memo(function ChatroomListItem({
 
     socket.emit('chat:banUser', banUserInfo, (res: boolean) => {
       if (res) {
-        setSuccess(`${room.name} user has been banned successfully.`);
+        setSuccess('User has been banned successfully.');
       } else {
         setError('Failed to ban user.');
       }
@@ -200,7 +200,7 @@ export const ChatroomListItem = memo(function ChatroomListItem({
             }
             sx={{ mb: 2 }}
           >
-            {success}
+            {`${room.name}: ${success}`}
           </Alert>
         </Collapse>
       </Box>
