@@ -5,6 +5,7 @@ import {
   WebSocketServer,
   ConnectedSocket,
 } from '@nestjs/websockets';
+import { Chatroom, ChatroomType, ChatroomMembersStatus } from '@prisma/client';
 import { Server, Socket } from 'socket.io';
 import { Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
@@ -15,7 +16,8 @@ import { JoinChatroomDto } from './dto/join-chatroom.dto';
 import { CreateMessageDto } from './dto/create-message.dto';
 import { CreateAdminDto } from './dto/create-admin.dto';
 import { updatePasswordDto } from './dto/update-password.dto';
-import { Chatroom, ChatroomType } from '@prisma/client';
+import { updateMemberStatusDto } from './dto/update-member-status.dto';
+import { CheckBanDto } from './dto/check-ban.dto';
 
 @WebSocketGateway({
   cors: {
@@ -98,15 +100,16 @@ export class ChatGateway {
   }
 
   /**
-   * チャットルームに対応したメッセージを取得して返す
-   * @param RoomID
+   * ソケットを引数で受けとったルームにjoinさせる
+   * @param roomID
+   * @return チャットルームに対応したメッセージを取得して返す
    */
-  @SubscribeMessage('chat:getMessage')
+  @SubscribeMessage('chat:changeCurrentRoom')
   async onGetMessage(
     @ConnectedSocket() client: Socket,
     @MessageBody() roomId: number,
   ): Promise<any> {
-    this.logger.log(`chat:getMessage received -> ${roomId}`);
+    this.logger.log(`chat:changeCurrentRoom received -> ${roomId}`);
 
     // 0番目には、socketのidが入っている
     if (client.rooms.size >= 2) {
@@ -119,8 +122,31 @@ export class ChatGateway {
     // 既存のメッセージを取得する
     // TODO: limitで上限をつける
     const messages = await this.chatService.findMessages({ id: roomId });
+
     // 既存のメッセージを送り返す
-    client.emit('chat:getMessage', messages);
+    return messages;
+  }
+
+  /**
+   * ユーザーがチャットルームからBANされているかをチェックする
+   * @param CheckBanDto
+   * @return BANされていたらtrueを返す
+   */
+  @SubscribeMessage('chat:isBannedUser')
+  async isBannedUser(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() dto: CheckBanDto,
+  ): Promise<boolean> {
+    this.logger.log(`chat:isBannedUser received -> ${dto.userId}`);
+
+    const data = {
+      chatroomId_userId: {
+        ...dto,
+      },
+    };
+    const userInfo = await this.chatService.findJoinedUserInfo(data);
+
+    return userInfo.status === ChatroomMembersStatus.BAN;
   }
 
   /**
@@ -299,5 +325,20 @@ export class ChatGateway {
     );
 
     return await this.chatService.updatePassword(dto);
+  }
+
+  /**
+   * @param updateChatMemberStatusDto
+   * @return 以下の情報をオブジェクトの配列で返す
+   */
+  @SubscribeMessage('chat:banUser')
+  async banUser(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() dto: updateMemberStatusDto,
+  ): Promise<boolean> {
+    this.logger.log(`chat:banUser received -> roomId: ${dto.chatroomId}`);
+    const res = await this.chatService.updateMemberStatus(dto);
+
+    return res ? true : false;
   }
 }
