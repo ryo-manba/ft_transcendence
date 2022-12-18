@@ -114,7 +114,6 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
 
   useEffect(() => {
     if (user === undefined) return;
-    // フレンドを追加する項目を選択時に取得する
     if (selectedRoomSetting !== CHATROOM_SETTINGS.ADD_FRIEND) return;
 
     const fetchFriends = async () => {
@@ -132,7 +131,6 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
 
   useEffect(() => {
     if (user === undefined) return;
-    // Adminを追加する項目を選択時に取得する
     if (selectedRoomSetting !== CHATROOM_SETTINGS.SET_ADMIN) return;
 
     const fetchCanSetAdminUsers = async () => {
@@ -147,7 +145,6 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
 
   useEffect(() => {
     if (user === undefined) return;
-    // BANする項目を選択時に取得する
     if (selectedRoomSetting !== CHATROOM_SETTINGS.BAN_USER) return;
 
     const fetchCanBanUsers = async () => {
@@ -162,11 +159,9 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
 
   useEffect(() => {
     if (user === undefined) return;
-    // BANする項目を選択時に取得する
     if (selectedRoomSetting !== CHATROOM_SETTINGS.MUTE_USER) return;
 
     const fetchCanMuteUsers = async () => {
-      // チャットルーム入室している かつ すでにBANされていないユーザーを取得する
       const notMutedUsers = await fetchChatroomNormalUsers({
         roomId: room.id,
       });
