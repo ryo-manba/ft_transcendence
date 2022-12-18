@@ -1,5 +1,6 @@
 import type { NextPage } from 'next';
-import { Grid, Button, TextField, Stack } from '@mui/material';
+import { Grid, Button, TextField } from '@mui/material';
+import { Layout } from 'components/common/Layout';
 import Image from 'next/image';
 import { useState } from 'react';
 import { useQueryUser } from 'hooks/useQueryUser';
@@ -73,63 +74,79 @@ const Enable2FA: NextPage = () => {
 
   //実行時にQRコードを取得
   return (
-    <Grid
-      container
-      justifyContent="center"
-      direction="column"
-      alignItems="center"
-      sx={{ width: 360 }}
+    <Layout
+      title="Auth"
+      divClassName="flex min-h-screen flex-col items-center justify-center"
+      mainClassName="flex w-screen flex-1 flex-col items-center justify-center"
     >
-      <Grid item>
-        {/* QRコード */}
-        {qrCode != '' && (
-          <Image src={qrCode} width={200} height={200} alt="2FA QR Code" />
-        )}
-      </Grid>
-      <Grid item>
-        <form onSubmit={handleSubmit(onSubmit) as VoidFunction}>
-          <Grid
-            container
-            alignItems="center"
-            justifyContent="center"
-            sx={{ p: 4 }}
-            spacing={5}
-          >
-            <Stack spacing={2} direction="row">
-              {/* 認証コード入力欄 */}
-              <Controller
-                name="authCode"
-                control={control}
-                render={() => (
-                  <TextField
-                    // eslint-disable-next-line react/jsx-props-no-spreading
-                    {...register('authCode')}
-                    fullWidth
-                    required
-                    id="auth-code"
-                    label="Enter Code from Your Apps"
-                    autoComplete="new-password"
-                    error={errors.authCode ? true : false}
-                    helperText={errors.authCode?.message}
-                    sx={{ my: 2 }}
-                  />
-                )}
-              />
-              {/* 登録ボタン */}
-              <Button
-                variant="contained"
-                type="submit"
-                onClick={() => {
-                  clearErrors();
-                }}
+      <Grid
+        container
+        justifyContent="center"
+        direction="column"
+        alignItems="center"
+        sx={{ width: 360 }}
+      >
+        <Grid item>
+          {/* QRコード */}
+          {qrCode != '' && (
+            <Image src={qrCode} width={200} height={200} alt="2FA QR Code" />
+          )}
+        </Grid>
+        <Grid item>
+          <form onSubmit={handleSubmit(onSubmit) as VoidFunction}>
+            <Grid
+              container
+              alignItems="center"
+              justifyContent="center"
+              sx={{ p: 2 }}
+              spacing={2}
+            >
+              <Grid
+                container
+                alignItems="center"
+                justifyContent="center"
+                spacing={2}
+                sx={{ p: 2 }}
               >
-                REGISTERED
-              </Button>
-            </Stack>
-          </Grid>
-        </form>
+                {/* 認証コード入力欄 */}
+                <Grid item>
+                  <Controller
+                    name="authCode"
+                    control={control}
+                    render={() => (
+                      <TextField
+                        // eslint-disable-next-line react/jsx-props-no-spreading
+                        {...register('authCode')}
+                        fullWidth
+                        required
+                        id="auth-code"
+                        label="Enter Code from Your Apps"
+                        autoComplete="new-password"
+                        error={errors.authCode ? true : false}
+                        helperText={errors.authCode?.message}
+                        sx={{ my: 2 }}
+                      />
+                    )}
+                  />
+                </Grid>
+                {/* 登録ボタン */}
+                <Grid item>
+                  <Button
+                    variant="contained"
+                    type="submit"
+                    onClick={() => {
+                      clearErrors();
+                    }}
+                  >
+                    REGISTERED
+                  </Button>
+                </Grid>
+              </Grid>
+            </Grid>
+          </form>
+        </Grid>
       </Grid>
-    </Grid>
+    </Layout>
   );
 };
 
