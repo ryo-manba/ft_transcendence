@@ -94,15 +94,17 @@ export class ChatService {
   }
 
   async addMessage(createMessageDto: CreateMessageDto): Promise<Message> {
-    console.log(createMessageDto);
+    try {
+      const message = await this.prisma.message.create({
+        data: {
+          ...createMessageDto,
+        },
+      });
 
-    const Message = await this.prisma.message.create({
-      data: {
-        ...createMessageDto,
-      },
-    });
-
-    return Message;
+      return message;
+    } catch (err) {
+      return undefined;
+    }
   }
 
   /**
@@ -155,7 +157,7 @@ export class ChatService {
 
   /**
    * 入室しているユーザーの情報を返す
-   * @param userId
+   * @param ChatroomMembersWhereUniqueInput
    */
   async findJoinedUserInfo(
     chatroomMembersWhereUniqueInput: Prisma.ChatroomMembersWhereUniqueInput,
