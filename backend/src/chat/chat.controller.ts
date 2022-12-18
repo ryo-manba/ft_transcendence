@@ -31,4 +31,18 @@ export class ChatController {
   ): Promise<ChatUser[]> {
     return await this.chatService.findNotBannedUsers(roomId);
   }
+
+  /**
+   * @param roomId
+   * @return 以下を満たすユーザーのIDと名前の配列を返す
+   * - StatusがNormal
+   * - Adminではない
+   * - オーナーではない
+   */
+  @Get('normal-users')
+  async findChatroomNormalUsers(
+    @Query('roomId', ParseIntPipe) roomId: number,
+  ): Promise<ChatUser[]> {
+    return await this.chatService.findChatroomNormalUsers(roomId);
+  }
 }

@@ -23,8 +23,7 @@ import {
 } from 'types/chat';
 import { Friend } from 'types/friend';
 import { fetchJoinableFriends } from 'api/friend/fetchJoinableFriends';
-import { fetchCanSetAdminUsers } from 'api/chat/fetchCanSetAdminUsers';
-import { fetchNotBannedUsers } from 'api/chat/fetchNotBannedUsers';
+import { fetchChatroomNormalUsers } from 'api/chat/fetchChatroomNormalUsers';
 import { useQueryUser } from 'hooks/useQueryUser';
 import { Loading } from 'components/common/Loading';
 import Visibility from '@mui/icons-material/Visibility';
@@ -46,6 +45,7 @@ type Props = {
     checkPassword: string,
   ) => void;
   banUser: (userId: number) => void;
+  muteUser: (userId: number) => void;
 };
 
 export type PasswordForm = {
@@ -63,6 +63,7 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
   addAdmin,
   changePassword,
   banUser,
+  muteUser,
 }: Props) {
   const { data: user } = useQueryUser();
   const [selectedRoomSetting, setSelectedRoomSetting] =
@@ -70,6 +71,7 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
   const [selectedUserId, setSelectedUserId] = useState('');
   const [notAdminUsers, setNotAdminUsers] = useState<ChatUser[]>([]);
   const [notBannedUsers, setNotBannedUsers] = useState<ChatUser[]>([]);
+  const [notMutedUsers, setNotMutedUsers] = useState<ChatUser[]>([]);
   const [friends, setFriends] = useState<Friend[]>([]);
   const [showPassword, setShowPassword] = useState(false);
 
@@ -133,19 +135,14 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
     // Adminを追加する項目を選択時に取得する
     if (selectedRoomSetting !== CHATROOM_SETTINGS.SET_ADMIN) return;
 
-    const fetchCanSetAdminUsersWrapper = async () => {
-      // チャットルームに入室している かつ Adminではない かつ BANもMUTEもされていないユーザーを取得する
-      const notAdminUsers = await fetchCanSetAdminUsers({
+    const fetchCanSetAdminUsers = async () => {
+      const notAdminUsers = await fetchChatroomNormalUsers({
         roomId: room.id,
       });
-      // オーナーを弾く
-      const exceptOwner = notAdminUsers.filter(
-        (notAdmin) => notAdmin.id !== user.id,
-      );
-      setNotAdminUsers(exceptOwner);
+      setNotAdminUsers(notAdminUsers);
     };
 
-    void fetchCanSetAdminUsersWrapper();
+    void fetchCanSetAdminUsers();
   }, [selectedRoomSetting]);
 
   useEffect(() => {
@@ -154,18 +151,29 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
     if (selectedRoomSetting !== CHATROOM_SETTINGS.BAN_USER) return;
 
     const fetchCanBanUsers = async () => {
-      // チャットルーム入室している かつ すでにBANされていないユーザーを取得する
-      const notBannedUsers = await fetchNotBannedUsers({
+      const notBannedUsers = await fetchChatroomNormalUsers({
         roomId: room.id,
       });
-      // オーナーを弾く
-      const exceptOwner = notBannedUsers.filter(
-        (notBannedUser) => notBannedUser.id !== user.id,
-      );
-      setNotBannedUsers(exceptOwner);
+      setNotBannedUsers(notBannedUsers);
     };
 
     void fetchCanBanUsers();
+  });
+
+  useEffect(() => {
+    if (user === undefined) return;
+    // BANする項目を選択時に取得する
+    if (selectedRoomSetting !== CHATROOM_SETTINGS.MUTE_USER) return;
+
+    const fetchCanMuteUsers = async () => {
+      // チャットルーム入室している かつ すでにBANされていないユーザーを取得する
+      const notMutedUsers = await fetchChatroomNormalUsers({
+        roomId: room.id,
+      });
+      setNotMutedUsers(notMutedUsers);
+    };
+
+    void fetchCanMuteUsers();
   });
 
   if (user === undefined) {
@@ -229,10 +237,9 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
         changePassword(oldPassword, newPassword, checkPassword);
         break;
       case CHATROOM_SETTINGS.MUTE_USER:
-        console.log(selectedRoomSetting);
+        muteUser(Number(selectedUserId));
         break;
       case CHATROOM_SETTINGS.BAN_USER:
-        console.log('BAN_USER');
         banUser(Number(selectedUserId));
         break;
     }
@@ -511,6 +518,40 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
                     {notBannedUsers.map((notBanned) => (
                       <MenuItem value={String(notBanned.id)} key={notBanned.id}>
                         {notBanned.name}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </DialogContent>
+            )}
+          </>
+        )}
+        {selectedRoomSetting === CHATROOM_SETTINGS.MUTE_USER && (
+          <>
+            {notMutedUsers.length === 0 ? (
+              <div
+                className="mb-4 flex justify-center rounded-lg bg-red-100 p-4 text-sm text-red-700 dark:bg-red-200 dark:text-red-800"
+                role="alert"
+              >
+                <span className="font-medium">No users are available.</span>
+              </div>
+            ) : (
+              <DialogContent>
+                <FormControl sx={{ mx: 3, my: 1, minWidth: 200 }}>
+                  <InputLabel id="room-setting-select-label">User</InputLabel>
+                  <Select
+                    labelId="room-setting-select-label"
+                    id="room-setting"
+                    value={selectedUserId}
+                    label="setting"
+                    onChange={handleChangeUserId}
+                  >
+                    {notMutedUsers.map((notMutedUser) => (
+                      <MenuItem
+                        value={String(notMutedUser.id)}
+                        key={notMutedUser.id}
+                      >
+                        {notMutedUser.name}
                       </MenuItem>
                     ))}
                   </Select>

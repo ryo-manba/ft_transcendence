@@ -282,7 +282,7 @@ export class ChatService {
   }
 
   /**
-   * 所属している かつ BANされていない かつ adminではないユーザ一覧を返す
+   * チャットルームに所属している かつ BANされていない かつ adminではないユーザ一覧を返す
    * @param roomId
    */
   async findNotBannedUsers(roomId: number): Promise<ChatUser[]> {
@@ -310,6 +310,53 @@ export class ChatService {
     });
 
     return notBannedUsers;
+  }
+
+  /**
+   * 下記を満たすユーザ一覧を返す
+   * - チャットルームに所属している
+   * - statusがNORMAL
+   * - adminではない
+   * - オーナーではない
+   * @param roomId
+   */
+  async findChatroomNormalUsers(roomId: number): Promise<ChatUser[]> {
+    // adminを取得する
+    const adminUsers = await this.findAdmins(roomId);
+    const adminUserIds = adminUsers.map((admin) => admin.userId);
+
+    // チャットルームのオーナーを取得する
+    const chatroom = await this.findOne({
+      id: roomId,
+    });
+    const ownerId = chatroom.ownerId;
+
+    const adminAndOwnerIds = [...adminUserIds, ownerId];
+
+    const normalUsersInfo = await this.prisma.chatroomMembers.findMany({
+      where: {
+        AND: {
+          chatroomId: roomId,
+          status: ChatroomMembersStatus.NORMAL,
+          NOT: {
+            userId: { in: adminAndOwnerIds },
+          },
+        },
+      },
+      include: {
+        user: true,
+      },
+    });
+
+    // idと名前の配列にする
+    const normalUsers: ChatUser[] = normalUsersInfo.map((info) => {
+      return {
+        id: info.user.id,
+        name: info.user.name,
+      };
+    });
+
+    return normalUsers;
   }
 
   /**
