@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma.service';
 import {
@@ -24,6 +24,7 @@ const saltRounds = 12;
 @Injectable()
 export class ChatService {
   constructor(private prisma: PrismaService) {}
+  private logger: Logger = new Logger('ChatService');
 
   async findOne(
     chatroomWhereUniqueInput: Prisma.ChatroomWhereUniqueInput,
@@ -157,6 +158,8 @@ export class ChatService {
 
   /**
    * 入室しているユーザーの情報を返す
+   * - ユーザーがMUTE or BANされている場合は期間を確認する
+   * - 期間を越えている場合は、ステータスをNORMALに戻す
    * @param ChatroomMembersWhereUniqueInput
    */
   async findJoinedUserInfo(
@@ -166,6 +169,27 @@ export class ChatService {
     const userInfo = await this.prisma.chatroomMembers.findUnique({
       where: chatroomMembersWhereUniqueInput,
     });
+
+    // NORMAL以外の場合は期間が過ぎていないかを確認する
+    if (userInfo.status !== ChatroomMembersStatus.NORMAL) {
+      const startAt = userInfo.startAt?.getTime();
+      const endAt = userInfo.endAt?.getTime();
+      const now = Date.now();
+
+      // 期間内ではなかった場合NORMALに更新する
+      if (!(startAt <= now && now <= endAt)) {
+        const dto: updateMemberStatusDto = {
+          userId: userInfo.userId,
+          chatroomId: userInfo.chatroomId,
+          status: ChatroomMembersStatus.NORMAL,
+        };
+        try {
+          return await this.updateMemberStatus(dto);
+        } catch (err) {
+          return undefined;
+        }
+      }
+    }
 
     return userInfo;
   }
@@ -425,10 +449,25 @@ export class ChatService {
   async updateMemberStatus(
     dto: updateMemberStatusDto,
   ): Promise<ChatroomMembers> {
+    const isNormal = dto.status === ChatroomMembersStatus.NORMAL;
+
+    const startAt = isNormal ? null : new Date();
+    let endAt = new Date();
+    if (!isNormal) {
+      // NOTE: とりあえず期間を1週間に設定している
+      endAt.setDate(startAt.getDate() + 7);
+    } else {
+      endAt = null;
+    }
+
+    this.logger.log(`startAt: ${startAt?.getDate()}`);
+    this.logger.log(`endAt: ${endAt?.getDate()}`);
     try {
       const res = await this.prisma.chatroomMembers.update({
         data: {
           status: dto.status,
+          startAt: startAt,
+          endAt: endAt,
         },
         where: {
           chatroomId_userId: {
