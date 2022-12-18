@@ -16,7 +16,7 @@ export class ChatController {
   async findNotAdminUsers(
     @Query('roomId', ParseIntPipe) roomId: number,
   ): Promise<ChatUser[]> {
-    return await this.chatService.findNotAdminUsers(roomId);
+    return await this.chatService.findCanSetAdminUsers(roomId);
   }
 
   /**

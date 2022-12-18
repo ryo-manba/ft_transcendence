@@ -23,7 +23,7 @@ import {
 } from 'types/chat';
 import { Friend } from 'types/friend';
 import { fetchJoinableFriends } from 'api/friend/fetchJoinableFriends';
-import { fetchNotAdminUsers } from 'api/chat/fetchNotAdminUsers';
+import { fetchCanSetAdminUsers } from 'api/chat/fetchCanSetAdminUsers';
 import { fetchNotBannedUsers } from 'api/chat/fetchNotBannedUsers';
 import { useQueryUser } from 'hooks/useQueryUser';
 import { Loading } from 'components/common/Loading';
@@ -133,9 +133,9 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
     // Adminを追加する項目を選択時に取得する
     if (selectedRoomSetting !== CHATROOM_SETTINGS.SET_ADMIN) return;
 
-    const fetchCanSetAdminUsers = async () => {
-      // チャットルーム入室している かつ すでにAdminではない ユーザーを取得する
-      const notAdminUsers = await fetchNotAdminUsers({
+    const fetchCanSetAdminUsersWrapper = async () => {
+      // チャットルームに入室している かつ Adminではない かつ BANもMUTEもされていないユーザーを取得する
+      const notAdminUsers = await fetchCanSetAdminUsers({
         roomId: room.id,
       });
       // オーナーを弾く
@@ -145,7 +145,7 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
       setNotAdminUsers(exceptOwner);
     };
 
-    void fetchCanSetAdminUsers();
+    void fetchCanSetAdminUsersWrapper();
   }, [selectedRoomSetting]);
 
   useEffect(() => {

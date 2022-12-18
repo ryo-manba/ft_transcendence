@@ -7,7 +7,7 @@ type Props = {
 
 const endpoint = `${process.env.NEXT_PUBLIC_API_URL as string}/chat/non-admin`;
 
-export const fetchNotAdminUsers = async ({ roomId }: Props) => {
+export const fetchCanSetAdminUsers = async ({ roomId }: Props) => {
   try {
     const response = await axios.get<ChatUser[]>(endpoint, {
       params: { roomId: roomId },

@@ -234,24 +234,17 @@ export class ChatService {
   }
 
   /**
-   * 所属している かつ adminではないユーザ一覧を返す
+   * チャットルームに所属している かつ adminではない かつ BANもMUTEもされていないユーザ一覧を返す
    * @param roomId
    */
-  async findNotAdminUsers(roomId: number): Promise<ChatUser[]> {
-    // ルームに所属しているユーザー一覧を取得する
-    const joinedUsersInfo = await this.prisma.chatroomMembers.findMany({
-      where: {
-        chatroomId: roomId,
-      },
-      include: {
-        user: true,
-      },
-    });
-
+  async findCanSetAdminUsers(roomId: number): Promise<ChatUser[]> {
     // ルームのadmin一覧を取得する
     const adminUsers = await this.prisma.chatroomAdmin.findMany({
       where: {
         chatroomId: roomId,
+      },
+      select: {
+        userId: true,
       },
     });
 
@@ -260,24 +253,36 @@ export class ChatService {
       return admin.userId;
     });
 
-    // adminのユーザー除去する
-    const notAdminUsersInfo = joinedUsersInfo.filter(
-      (info) => !adminUserIds.includes(info.user.id),
-    );
-
-    // idと名前の配列にする
-    const notAdminUsers: ChatUser[] = notAdminUsersInfo.map((info) => {
-      return {
-        id: info.user.id,
-        name: info.user.name,
-      };
+    // adminではない かつ statusがNORMAL
+    const canSetAdminUsersInfo = await this.prisma.chatroomMembers.findMany({
+      where: {
+        AND: {
+          chatroomId: roomId,
+          NOT: {
+            userId: { in: adminUserIds },
+          },
+          status: ChatroomMembersStatus.NORMAL,
+        },
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
     });
 
-    return notAdminUsers;
+    const canSetAdminUsers: ChatUser[] = canSetAdminUsersInfo.map((info) => {
+      return info.user;
+    });
+
+    return canSetAdminUsers;
   }
 
   /**
-   * 所属している かつ BANされていないユーザ一覧を返す
+   * 所属している かつ BANされていない かつ adminではないユーザ一覧を返す
    * @param roomId
    */
   async findNotBannedUsers(roomId: number): Promise<ChatUser[]> {
