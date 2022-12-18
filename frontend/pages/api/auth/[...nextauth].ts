@@ -21,10 +21,17 @@ export default NextAuth({
       // サインインした時に実施したい処理
       return true;
     },
+    session({ session, token }) {
+      if (token?.access_token) {
+        session.access_token = token.access_token;
+        session.id = token.sub;
+      }
+
+      return session;
+    },
     jwt({ token, account }) {
-      // async jwt({ token, user, account, profile, isNewUser }) {
-      if (account?.accessToken) {
-        token.accessToken = account.accessToken;
+      if (account?.access_token) {
+        token.access_token = account.access_token;
       }
 
       return token;

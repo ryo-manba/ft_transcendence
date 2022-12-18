@@ -2,23 +2,47 @@ import axios from 'axios';
 import { useRouter } from 'next/router';
 import { useEffect } from 'react';
 import { useSession } from 'next-auth/react';
-import { AxiosErrorResponse } from '../types';
 import { Loading } from 'components/common/Loading';
 
 const Authenticate = () => {
   const router = useRouter();
   const { data: session, status } = useSession();
   useEffect(() => {
-    try {
+    const f = async () => {
       if (status === 'authenticated') {
         if (process.env.NEXT_PUBLIC_API_URL) {
           if (session && session.user) {
+            let login = '';
+            let image_url = '';
+            console.log(session);
+            if (session.user.email.indexOf('gmail.com') !== -1) {
+              // gmailでのログインの場合
+              login = session.user.email;
+              image_url = session.user.image;
+            } else {
+              // 42の場合、user情報を取得
+              type Image = {
+                link: string;
+              };
+              type UserInfo = {
+                login: string;
+                image: Image;
+              };
+              const url_getdata =
+                'https://api.intra.42.fr/v2/users/' + String(session.id);
+              const response = await axios.get<UserInfo>(url_getdata, {
+                headers: {
+                  Authorization: 'Bearer ' + String(session.access_token),
+                },
+              });
+              login = response.data.login;
+              image_url = response.data.image.link;
+            }
             const url_oauth = `${process.env.NEXT_PUBLIC_API_URL}/auth/oauth-login`;
-            const imageUrl = session.user.image ? session.user.image : '';
-            void axios
+            await axios
               .post(url_oauth, {
-                oAuthId: session.user.email, //TODO: oAuthIdに変更したい
-                imagePath: imageUrl,
+                oAuthId: login,
+                imagePath: image_url,
               })
               .then((res) => {
                 console.log(res);
@@ -30,13 +54,8 @@ const Authenticate = () => {
           }
         }
       }
-    } catch (e) {
-      console.log('[Exception] /auth/oauth-login failure');
-      if (axios.isAxiosError(e) && e.response && e.response.data) {
-        const messages = (e.response.data as AxiosErrorResponse).message;
-        console.log(messages);
-      }
-    }
+    };
+    void f();
   }, []);
 
   return <Loading fullHeight={true} />;
