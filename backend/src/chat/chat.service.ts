@@ -281,20 +281,20 @@ export class ChatService {
    * @param roomId
    */
   async findNotBannedUsers(roomId: number): Promise<ChatUser[]> {
-    // ルームに所属しているユーザー一覧を取得する
-    const joinedUsersInfo = await this.prisma.chatroomMembers.findMany({
+    // ルームに所属している かつ statusがBAN以外のユーザーを取得する
+    const notBannedUsersInfo = await this.prisma.chatroomMembers.findMany({
       where: {
-        chatroomId: roomId,
+        AND: {
+          chatroomId: roomId,
+          status: {
+            not: ChatroomMembersStatus.BAN,
+          },
+        },
       },
       include: {
         user: true,
       },
     });
-
-    // statusがBANのユーザーを取り除く
-    const notBannedUsersInfo = joinedUsersInfo.filter(
-      (info) => info.status !== ChatroomMembersStatus.BAN,
-    );
 
     // idと名前の配列にする
     const notBannedUsers: ChatUser[] = notBannedUsersInfo.map((info) => {
