@@ -5,8 +5,10 @@ import {
   Chatroom,
   ChatroomAdmin,
   ChatroomType,
+  ChatroomMembers,
   Message,
   Prisma,
+  ChatroomMembersStatus,
 } from '@prisma/client';
 import { CreateChatroomDto } from './dto/create-chatroom.dto';
 import { CreateMessageDto } from './dto/create-message.dto';
@@ -14,6 +16,7 @@ import { CreateAdminDto } from './dto/create-admin.dto';
 import { JoinChatroomDto } from './dto/join-chatroom.dto';
 import type { ChatUser } from './types/chat';
 import { updatePasswordDto } from './dto/update-password.dto';
+import { updateMemberStatusDto } from './dto/update-member-status.dto';
 
 // 2の12乗回の演算が必要という意味
 const saltRounds = 12;
@@ -151,13 +154,27 @@ export class ChatService {
   }
 
   /**
+   * 入室しているユーザーの情報を返す
+   * @param userId
+   */
+  async findJoinedUserInfo(
+    chatroomMembersWhereUniqueInput: Prisma.ChatroomMembersWhereUniqueInput,
+  ): Promise<ChatroomMembers | null> {
+    // チャットルームメンバーからuserIdが含まれているものを取得する
+    const userInfo = await this.prisma.chatroomMembers.findUnique({
+      where: chatroomMembersWhereUniqueInput,
+    });
+
+    return userInfo;
+  }
+
+  /**
    * チャットルームに入室する
    * @param id
    * @return 入室したチャットルームを返す
    */
   async joinRoom(dto: JoinChatroomDto): Promise<Chatroom> {
     console.log('joinRoom: ', dto);
-    // TODO: ブロックされているユーザーは入れないようにする?
     // 入室するチャットルームを取得する
     const chatroom = await this.prisma.chatroom.findUnique({
       where: {
@@ -218,7 +235,6 @@ export class ChatService {
 
   /**
    * 所属している かつ adminではないユーザ一覧を返す
-   * @param userId
    * @param roomId
    */
   async findNotAdminUsers(roomId: number): Promise<ChatUser[]> {
@@ -258,6 +274,37 @@ export class ChatService {
     });
 
     return notAdminUsers;
+  }
+
+  /**
+   * 所属している かつ BANされていないユーザ一覧を返す
+   * @param roomId
+   */
+  async findNotBannedUsers(roomId: number): Promise<ChatUser[]> {
+    // ルームに所属している かつ statusがBAN以外のユーザーを取得する
+    const notBannedUsersInfo = await this.prisma.chatroomMembers.findMany({
+      where: {
+        AND: {
+          chatroomId: roomId,
+          status: {
+            not: ChatroomMembersStatus.BAN,
+          },
+        },
+      },
+      include: {
+        user: true,
+      },
+    });
+
+    // idと名前の配列にする
+    const notBannedUsers: ChatUser[] = notBannedUsersInfo.map((info) => {
+      return {
+        id: info.user.id,
+        name: info.user.name,
+      };
+    });
+
+    return notBannedUsers;
   }
 
   /**
@@ -314,6 +361,32 @@ export class ChatService {
       return true;
     } catch (err) {
       return false;
+    }
+  }
+
+  /**
+   * チャットルームに所属するユーザーのステータスを更新する
+   * @param updateMemberStatusDto
+   */
+  async updateMemberStatus(
+    dto: updateMemberStatusDto,
+  ): Promise<ChatroomMembers> {
+    try {
+      const res = await this.prisma.chatroomMembers.update({
+        data: {
+          status: dto.status,
+        },
+        where: {
+          chatroomId_userId: {
+            chatroomId: dto.chatroomId,
+            userId: dto.userId,
+          },
+        },
+      });
+
+      return res;
+    } catch (err) {
+      return undefined;
     }
   }
 }

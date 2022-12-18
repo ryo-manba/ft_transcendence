@@ -6,16 +6,17 @@ import {
   MessageBody,
   WebSocketServer,
 } from '@nestjs/websockets';
-import { Socket, Server } from 'socket.io';
+import { Socket, Server, RemoteSocket } from 'socket.io';
 import { RecordsService } from '../records/records.service';
 import { UserService } from '../user/user.service';
 import { v4 as uuidv4 } from 'uuid';
+import { DefaultEventsMap } from 'socket.io/dist/typed-events';
 
 type Player = {
   name: string;
   id: number;
   point: number;
-  socket: Socket;
+  socket: Socket | RemoteSocket<DefaultEventsMap, undefined>;
   height: number;
   score: number;
 };
@@ -68,6 +69,54 @@ type FinishedGameInfo = {
   loserScore: number;
 };
 
+type Friend = {
+  id: number;
+  name: string;
+};
+
+type Invitation = {
+  guestId: number;
+  hostId: number;
+  hostSocketId: string;
+};
+
+// host側は同時に複数招待を送ることはできない
+class InvitationList {
+  items: Invitation[] = [];
+  insert = (newItem: Invitation): boolean => {
+    const found = this.items.find((item) => item.hostId === newItem.hostId);
+
+    if (found === undefined) {
+      this.items.push(newItem);
+
+      return true;
+    }
+
+    return false;
+  };
+
+  // 消去する要素があればtrueを返す
+  delete = (hostId: number): boolean => {
+    const oldLen = this.items.length;
+    this.items = this.items.filter((item) => item.hostId !== hostId);
+
+    return oldLen !== this.items.length;
+  };
+
+  find = (hostId: number): Invitation => {
+    const found = this.items.find((item) => item.hostId === hostId);
+
+    return found;
+  };
+
+  findHosts = (guestId: number): number[] => {
+    const found = this.items.filter((item) => item.guestId === guestId);
+    if (found === undefined) return undefined;
+
+    return found.map((item) => item.hostId);
+  };
+}
+
 @WebSocketGateway({
   cors: {
     origin: '*',
@@ -82,6 +131,8 @@ export class GameGateway {
 
   gameRooms: RoomInfo[] = [];
   waitingQueue: Player[] = [];
+  invitationList: InvitationList = new InvitationList();
+  userSocketMap: Map<number, Set<string>> = new Map();
 
   // Game parameters
   static initialHeight = 250;
@@ -115,11 +166,30 @@ export class GameGateway {
   handleDisconnect(socket: Socket) {
     this.logger.log(`Disconnected: ${socket.id}`);
 
+    const id = (socket.handshake.auth as { id: number }).id;
+
+    // ゲーム招待をしていた場合キャンセル
+    const invitation = this.invitationList.find(id);
+    if (invitation !== undefined) {
+      const guestSocketIds = this.userSocketMap.get(invitation.guestId);
+      if (guestSocketIds !== undefined) {
+        guestSocketIds.forEach((socketId) => {
+          this.server.to(socketId).emit('cancelInvitation', invitation.hostId);
+        });
+      }
+      this.invitationList.delete(id);
+    }
+
+    // userIdとsocketIdをのつながりを消す
+    const socketIds = this.userSocketMap.get(id);
+    if (socketIds !== undefined) socketIds.delete(socket.id);
+
     this.gameRooms = this.gameRooms.filter(
       (room) =>
         room.player1.socket.id !== socket.id &&
         room.player2.socket.id !== socket.id,
     );
+
     this.waitingQueue = this.waitingQueue.filter(
       (player) => player.socket.id !== socket.id,
     );
@@ -140,6 +210,145 @@ export class GameGateway {
       player1.socket.emit('standBy', playerNames);
       player2.socket.emit('select', playerNames);
     }
+  }
+
+  /**
+   * 接続と招待者の通知
+   * @param socket
+   * @param data
+   * @returns Friend[]
+   */
+  @SubscribeMessage('getInvitedLlist')
+  async getInvitedList(
+    @ConnectedSocket() socket: Socket,
+    @MessageBody() data: number,
+  ): Promise<Friend[]> {
+    // userIdとsocketIdをつなげる
+    const socketIds = this.userSocketMap.get(data);
+    if (socketIds === undefined)
+      this.userSocketMap.set(data, new Set([socket.id]));
+    else socketIds.add(socket.id);
+
+    // 招待を送ったhostの一覧を返す
+    const hostIds = this.invitationList.findHosts(data);
+    if (hostIds === undefined) return [];
+    else {
+      const hosts = await this.user.findAll({
+        where: {
+          id: {
+            in: Array.from(hostIds),
+          },
+        },
+      });
+
+      return hosts.map((item) => {
+        return { name: item.name, id: item.id } as Friend;
+      });
+    }
+  }
+
+  /**
+   * 招待を送る
+   * @param data
+   * @returns res
+   */
+  @SubscribeMessage('inviteFriend')
+  async inviteFriend(
+    @ConnectedSocket() socket: Socket,
+    @MessageBody() data: Omit<Invitation, 'hostSocketId'>,
+  ): Promise<boolean> {
+    const newInvitation: Invitation = {
+      guestId: data.guestId,
+      hostId: data.hostId,
+      hostSocketId: socket.id,
+    };
+    const res = this.invitationList.insert(newInvitation);
+
+    if (res) {
+      const host = await this.user.findOne(data.hostId);
+
+      const guestSocketIds = this.userSocketMap.get(data.guestId);
+      if (guestSocketIds !== undefined) {
+        guestSocketIds.forEach((socketId) => {
+          this.server.to(socketId).emit('inviteFriend', {
+            name: host.name,
+            id: host.id,
+          } as Friend);
+        });
+      }
+    }
+
+    return res;
+  }
+
+  /**
+   * host側が招待をキャンセルする
+   * @param data
+   */
+  @SubscribeMessage('cancelInvitation')
+  cancelInvitation(@MessageBody() data: Omit<Invitation, 'hostSocketId'>) {
+    const res = this.invitationList.delete(data.hostId);
+
+    // guest側にキャンセルを伝える
+    if (res) {
+      const guestSocketIds = this.userSocketMap.get(data.guestId);
+      if (guestSocketIds !== undefined) {
+        guestSocketIds.forEach((socketId) => {
+          this.server.to(socketId).emit('cancelInvitation', data.hostId);
+        });
+      }
+    }
+  }
+
+  /**
+   * guestが招待を受け入れる
+   * @param socket
+   * @param data
+   */
+  @SubscribeMessage('acceptInvitation')
+  async beginFriendMatch(
+    @ConnectedSocket() socket: Socket,
+    @MessageBody() data: Omit<Invitation, 'hostSocketId'>,
+  ) {
+    const invitation = this.invitationList.find(data.hostId);
+    if (invitation === undefined) return;
+
+    this.invitationList.delete(invitation.hostId);
+
+    const hostSockets = await this.server
+      .in(invitation.hostSocketId)
+      .fetchSockets();
+    if (hostSockets.length === 0) return;
+
+    // ゲームを行うタブ以外には招待キャンセルする。
+    const guestSocketIds = this.userSocketMap.get(data.guestId);
+    if (guestSocketIds !== undefined) {
+      guestSocketIds.forEach((socketId) => {
+        if (socketId !== socket.id)
+          this.server.to(socketId).emit('cancelInvitation', data.hostId);
+      });
+    }
+
+    const user1 = await this.user.findOne(data.hostId);
+    const player1: Player = {
+      name: user1.name,
+      id: user1.id,
+      point: user1.point,
+      socket: hostSockets[0],
+      height: GameGateway.initialHeight,
+      score: 0,
+    };
+    const user2 = await this.user.findOne(data.guestId);
+    const player2: Player = {
+      name: user2.name,
+      id: user2.id,
+      point: user2.point,
+      socket: socket,
+      height: GameGateway.initialHeight,
+      score: 0,
+    };
+
+    void this.startGame(player1, player2);
   }
 
   @SubscribeMessage('playStart')
@@ -170,44 +379,48 @@ export class GameGateway {
         height: GameGateway.initialHeight,
         score: 0,
       };
-      const roomName = uuidv4();
-
-      this.logger.log(`${player1.socket.id} joined to room ${roomName}`);
-      this.logger.log(`${player2.socket.id} joined to room ${roomName}`);
-
-      await player1.socket.join(roomName);
-      await player2.socket.join(roomName);
-
-      const ball: Ball = {
-        x: GameGateway.ballInitialX,
-        y: GameGateway.ballInitialY,
-        radius: GameGateway.ballRadius,
-      };
-
-      const ballVec: BallVec = {
-        xVec: GameGateway.ballInitialXVec,
-        yVec: this.setBallYVec(),
-        speed: GameGateway.ballSpeed,
-      };
-
-      const newRoom: RoomInfo = {
-        roomName: roomName,
-        player1: player1,
-        player2: player2,
-        supporters: [],
-        ball: ball,
-        ballVec: ballVec,
-        isPlayer1Turn: true,
-        gameSetting: GameGateway.defaultSetting,
-        barSpeed: GameGateway.barSpeed,
-        rewards: 0,
-        gameState: 'Setting',
-      };
-
-      this.gameRooms.push(newRoom);
-
-      this.updatePlayerStatus(player1, player2);
+      void this.startGame(player1, player2);
     }
+  }
+
+  async startGame(player1: Player, player2: Player) {
+    const roomName = uuidv4();
+
+    this.logger.log(`${player1.socket.id} joined to room ${roomName}`);
+    this.logger.log(`${player2.socket.id} joined to room ${roomName}`);
+
+    await player1.socket.join(roomName);
+    await player2.socket.join(roomName);
+
+    const ball: Ball = {
+      x: GameGateway.ballInitialX,
+      y: GameGateway.ballInitialY,
+      radius: GameGateway.ballRadius,
+    };
+
+    const ballVec: BallVec = {
+      xVec: GameGateway.ballInitialXVec,
+      yVec: this.setBallYVec(),
+      speed: GameGateway.ballSpeed,
+    };
+
+    const newRoom: RoomInfo = {
+      roomName: roomName,
+      player1: player1,
+      player2: player2,
+      supporters: [],
+      ball: ball,
+      ballVec: ballVec,
+      isPlayer1Turn: true,
+      gameSetting: GameGateway.defaultSetting,
+      barSpeed: GameGateway.barSpeed,
+      rewards: 0,
+      gameState: 'Setting',
+    };
+
+    this.gameRooms.push(newRoom);
+
+    this.updatePlayerStatus(player1, player2);
   }
 
   @SubscribeMessage('watchGame')
@@ -227,6 +440,24 @@ export class GameGateway {
     await socket.join(data);
     const gameSetting = room.gameState === 'Setting' ? null : room.gameSetting;
     socket.emit('joinGameRoom', room.gameState, gameSetting);
+  }
+
+  @SubscribeMessage('timeUp')
+  cancelGame(@ConnectedSocket() socket: Socket) {
+    const room = this.gameRooms.find(
+      (r) =>
+        r.player1.socket.id === socket.id || r.player2.socket.id === socket.id,
+    );
+    if (!room) {
+      socket.emit('error');
+    } else {
+      this.server.to(room.roomName).emit('timedUp');
+      this.gameRooms = this.gameRooms.filter(
+        (room) =>
+          room.player1.socket.id !== socket.id &&
+          room.player2.socket.id !== socket.id,
+      );
+    }
   }
 
   @SubscribeMessage('completeSetting')

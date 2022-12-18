@@ -3,8 +3,10 @@ import {
   ListItem,
   ListItemText,
   ListItemAvatar,
-  Avatar,
-  Badge,
+  Box,
+  Collapse,
+  IconButton,
+  Alert,
 } from '@mui/material';
 import { Friend } from 'types/friend';
 import { useQueryUser } from 'hooks/useQueryUser';
@@ -13,6 +15,12 @@ import { Loading } from 'components/common/Loading';
 import { getAvatarImageUrl } from 'api/user/getAvatarImageUrl';
 import { getUserStatusById } from 'api/user/getUserStatusById';
 import { UserStatus } from '@prisma/client';
+import CloseIcon from '@mui/icons-material/Close';
+import { useSocketStore } from 'store/game/ClientSocket';
+import { useInvitedFriendStateStore } from 'store/game/InvitedFriendState';
+import { useRouter } from 'next/router';
+import { Invitation } from 'types/game';
+import { BadgedAvatar } from 'components/common/BadgedAvatar';
 
 type Props = {
   friend: Friend;
@@ -22,6 +30,13 @@ export const FriendListItem = memo(function FriendListItem({ friend }: Props) {
   const [open, setOpen] = useState(false);
   const [friendStatus, setFriendStatus] = useState<UserStatus>('OFFLINE');
   const { data: user } = useQueryUser();
+  const [error, setError] = useState('');
+  const { socket: gameSocket } = useSocketStore();
+  const updateInvitedFriendState = useInvitedFriendStateStore(
+    (store) => store.updateInvitedFriendState,
+  );
+  const router = useRouter();
+
   if (user === undefined) {
     return <Loading />;
   }
@@ -38,6 +53,22 @@ export const FriendListItem = memo(function FriendListItem({ friend }: Props) {
     });
   }, []);
 
+  const inviteGame = (friend: Friend) => {
+    const invitation: Invitation = {
+      guestId: friend.id,
+      hostId: user.id,
+    };
+    gameSocket.emit('inviteFriend', invitation, (res: boolean) => {
+      // [TODO] ここで招待するユーザの正しいステータスを受け取りなおしてエラーをセットする。
+      if (res) {
+        updateInvitedFriendState({ friendId: friend.id });
+        void router.push('game/home');
+      } else {
+        setError('You have already sent invitation now!');
+      }
+    });
+  };
+
   const handleClickOpen = () => {
     setOpen(true);
   };
@@ -48,22 +79,34 @@ export const FriendListItem = memo(function FriendListItem({ friend }: Props) {
 
   return (
     <>
+      <Box sx={{ width: '100%' }}>
+        <Collapse in={error !== ''}>
+          <Alert
+            severity="error"
+            action={
+              <IconButton
+                aria-label="close"
+                color="inherit"
+                size="small"
+                onClick={() => {
+                  setError('');
+                }}
+              >
+                <CloseIcon fontSize="inherit" />
+              </IconButton>
+            }
+            sx={{ mb: 2 }}
+          >
+            {error}
+          </Alert>
+        </Collapse>
+      </Box>
       <ListItem divider button onClick={handleClickOpen}>
         <ListItemAvatar>
-          <Badge
-            overlap="circular"
-            anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-            badgeContent=""
-            color={
-              friendStatus === 'ONLINE'
-                ? 'success'
-                : friendStatus === 'PLAYING'
-                ? 'error'
-                : 'default'
-            }
-          >
-            <Avatar src={getAvatarImageUrl(friend.id)} />
-          </Badge>
+          <BadgedAvatar
+            status={friendStatus}
+            src={getAvatarImageUrl(friend.id)}
+          />
         </ListItemAvatar>
         <ListItemText
           primary={friend.name}
@@ -72,7 +115,12 @@ export const FriendListItem = memo(function FriendListItem({ friend }: Props) {
           }}
         />
       </ListItem>
-      <FriendInfoDialog friend={friend} onClose={handleClose} open={open} />
+      <FriendInfoDialog
+        friend={friend}
+        onClose={handleClose}
+        open={open}
+        inviteGame={inviteGame}
+      />
     </>
   );
 });

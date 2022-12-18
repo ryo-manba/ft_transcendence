@@ -1,23 +1,23 @@
 import { Grid, Paper } from '@mui/material';
 import { useEffect } from 'react';
 import { usePlayStateStore, PlayState } from 'store/game/PlayState';
-import { useSocketStore } from 'store/game/ClientSocket';
 import { Start } from './Start';
 import { Wait } from './Wait';
 import { Watch } from './Watch';
 import { History } from './History';
 import { Profile } from './Profile';
 import { useQueryUser } from 'hooks/useQueryUser';
+import { useInvitedFriendStateStore } from 'store/game/InvitedFriendState';
+import { Host } from './Host';
 import { Loading } from 'components/common/Loading';
 
 export const Display = () => {
   const { data: user } = useQueryUser();
-  const { socket } = useSocketStore();
   const { playState } = usePlayStateStore();
   const updatePlayState = usePlayStateStore((store) => store.updatePlayState);
+  const { invitedFriendState } = useInvitedFriendStateStore();
 
   useEffect(() => {
-    if (socket.disconnected) socket.connect();
     updatePlayState(PlayState.stateNothing);
   }, []);
 
@@ -25,6 +25,7 @@ export const Display = () => {
 
   return (
     <>
+      {invitedFriendState.friendId !== null && <Host />}
       <Grid
         container
         justifyContent="center"

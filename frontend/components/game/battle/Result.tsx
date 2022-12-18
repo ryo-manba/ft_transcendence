@@ -1,8 +1,6 @@
 import Link from 'next/link';
 import { Button, Grid, Typography } from '@mui/material';
 import { PlayState, usePlayStateStore } from 'store/game/PlayState';
-import { useEffect } from 'react';
-import { useSocketStore } from 'store/game/ClientSocket';
 import { FinishedGameInfo } from 'types/game';
 
 type Props = {
@@ -11,11 +9,6 @@ type Props = {
 
 export const Result = ({ finishedGameInfo }: Props) => {
   const { playState } = usePlayStateStore();
-  const { socket } = useSocketStore();
-
-  useEffect(() => {
-    if (socket.connected) socket.disconnect();
-  }, []);
 
   return (
     <Grid
@@ -37,6 +30,13 @@ export const Result = ({ finishedGameInfo }: Props) => {
         <Grid item sx={{ mt: 3 }}>
           <Typography align="center" gutterBottom variant="h4" component="h4">
             Something went wrong...
+          </Typography>
+        </Grid>
+      )}
+      {playState === PlayState.stateTimedUp && (
+        <Grid item sx={{ mt: 3 }}>
+          <Typography align="center" gutterBottom variant="h4" component="h4">
+            Time is up. Please retry a new game.
           </Typography>
         </Grid>
       )}

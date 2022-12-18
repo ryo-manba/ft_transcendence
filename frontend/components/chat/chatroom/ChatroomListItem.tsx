@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { memo, useState, useEffect, Dispatch, SetStateAction } from 'react';
 import {
   ListItem,
   IconButton,
@@ -10,22 +10,30 @@ import {
 import SettingsIcon from '@mui/icons-material/Settings';
 import CloseIcon from '@mui/icons-material/Close';
 import { Socket } from 'socket.io-client';
-import { Chatroom, ChatroomType, JoinChatroomInfo } from 'types/chat';
+import { Chatroom, Message, ChatroomType, JoinChatroomInfo } from 'types/chat';
 import { useQueryUser } from 'hooks/useQueryUser';
 import { Loading } from 'components/common/Loading';
 import { ChatroomSettingDialog } from 'components/chat/chatroom/ChatroomSettingDialog';
 import { ChatErrorAlert } from 'components/chat/utils/ChatErrorAlert';
+import { ChatroomMembersStatus } from '@prisma/client';
 
 type Props = {
   room: Chatroom;
   socket: Socket;
-  setCurrentRoomId: (id: number) => void;
+  setCurrentRoomId: Dispatch<SetStateAction<number>>;
+  setMessages: Dispatch<SetStateAction<Message[]>>;
 };
 
-export const ChatroomListItem = ({ room, socket, setCurrentRoomId }: Props) => {
+export const ChatroomListItem = memo(function ChatroomListItem({
+  room,
+  socket,
+  setCurrentRoomId,
+  setMessages,
+}: Props) {
   const [open, setOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [changeSuccess, setChangeSuccess] = useState(false);
+  const [success, setSuccess] = useState('');
+  const [error, setError] = useState('');
   const { data: user } = useQueryUser();
 
   useEffect(() => {
@@ -46,10 +54,29 @@ export const ChatroomListItem = ({ room, socket, setCurrentRoomId }: Props) => {
     return <Loading />;
   }
 
-  const getMessage = (id: number) => {
-    console.log('getMessage:', id);
-    socket.emit('chat:getMessage', id);
-    setCurrentRoomId(id);
+  // ルームをクリックしたときの処理
+  const changeCurrentRoom = (roomId: number) => {
+    console.log('changeCurrentRoom:', roomId);
+
+    const checkBanInfo = {
+      userId: user.id,
+      chatroomId: roomId,
+    };
+    // banされていないかチェックする
+    socket.emit('chat:isBannedUser', checkBanInfo, (isBanned: boolean) => {
+      console.log('chat:isBannedUser', isBanned);
+      if (isBanned) {
+        setError('You were banned.');
+        setCurrentRoomId(0);
+        setMessages([]);
+      } else {
+        // 入室に成功したら、既存のメッセージを受け取る
+        socket.emit('chat:changeCurrentRoom', roomId, (messages: Message[]) => {
+          setMessages(messages);
+        });
+        setCurrentRoomId(roomId);
+      }
+    });
   };
 
   const handleClickOpen = () => {
@@ -60,11 +87,10 @@ export const ChatroomListItem = ({ room, socket, setCurrentRoomId }: Props) => {
     setOpen(false);
   };
 
-  const [error, setError] = useState('');
   const deleteRoom = () => {
     // 削除できるのはチャットルームオーナーだけ
     if (user.id !== room.ownerId) {
-      setError('Only the owner can delete chat rooms');
+      setError('Only the owner can delete chat rooms.');
     } else {
       const deleteRoomInfo = {
         id: room.id,
@@ -89,7 +115,7 @@ export const ChatroomListItem = ({ room, socket, setCurrentRoomId }: Props) => {
   const addAdmin = (userId: number) => {
     // Adminを設定できるのはチャットルームオーナーだけ
     if (user.id !== room.ownerId) {
-      setError('Only the owner can set admin');
+      setError('Only the owner can set admin.');
     } else {
       const setAdminInfo = {
         userId: userId,
@@ -99,7 +125,7 @@ export const ChatroomListItem = ({ room, socket, setCurrentRoomId }: Props) => {
       // callbackを受け取ることで判断する
       socket.emit('chat:addAdmin', setAdminInfo, (res: boolean) => {
         if (!res) {
-          setError('Failed to add admin');
+          setError('Failed to add admin.');
         }
       });
     }
@@ -111,7 +137,7 @@ export const ChatroomListItem = ({ room, socket, setCurrentRoomId }: Props) => {
     checkPassword: string,
   ) => {
     if (newPassword !== checkPassword) {
-      setError('Check passwords did not match');
+      setError('Check passwords did not match.');
 
       return;
     }
@@ -122,9 +148,26 @@ export const ChatroomListItem = ({ room, socket, setCurrentRoomId }: Props) => {
     };
     socket.emit('chat:updatePassword', changePasswordInfo, (res: boolean) => {
       if (res) {
-        setChangeSuccess(true);
+        setSuccess('Password has been changed successfully.');
       } else {
-        setError('Failed to change password');
+        setError('Failed to change password.');
+      }
+    });
+  };
+
+  const banUser = (userId: number) => {
+    console.log('ban:', ChatroomMembersStatus.BAN);
+    const banUserInfo = {
+      chatroomId: room.id,
+      userId: userId,
+      status: ChatroomMembersStatus.BAN,
+    };
+
+    socket.emit('chat:banUser', banUserInfo, (res: boolean) => {
+      if (res) {
+        setSuccess('User has been banned successfully.');
+      } else {
+        setError('Failed to ban user.');
       }
     });
   };
@@ -140,7 +183,7 @@ export const ChatroomListItem = ({ room, socket, setCurrentRoomId }: Props) => {
         </Collapse>
       </Box>
       <Box sx={{ width: '100%' }}>
-        <Collapse in={changeSuccess}>
+        <Collapse in={success !== ''}>
           <Alert
             severity="success"
             action={
@@ -149,7 +192,7 @@ export const ChatroomListItem = ({ room, socket, setCurrentRoomId }: Props) => {
                 color="inherit"
                 size="small"
                 onClick={() => {
-                  setChangeSuccess(false);
+                  setSuccess('');
                 }}
               >
                 <CloseIcon fontSize="inherit" />
@@ -157,7 +200,7 @@ export const ChatroomListItem = ({ room, socket, setCurrentRoomId }: Props) => {
             }
             sx={{ mb: 2 }}
           >
-            {room.name} password changed.
+            {`${room.name}: ${success}`}
           </Alert>
         </Collapse>
       </Box>
@@ -183,11 +226,12 @@ export const ChatroomListItem = ({ room, socket, setCurrentRoomId }: Props) => {
             addFriend={addFriend}
             addAdmin={addAdmin}
             changePassword={changePassword}
+            banUser={banUser}
           />
           <ListItemText
             primary={room.name}
             onClick={() => {
-              getMessage(room.id);
+              changeCurrentRoom(room.id);
             }}
             style={{
               overflow: 'hidden',
@@ -199,7 +243,7 @@ export const ChatroomListItem = ({ room, socket, setCurrentRoomId }: Props) => {
           <ListItemText
             primary={room.name}
             onClick={() => {
-              getMessage(room.id);
+              changeCurrentRoom(room.id);
             }}
             style={{
               overflow: 'hidden',
@@ -209,4 +253,4 @@ export const ChatroomListItem = ({ room, socket, setCurrentRoomId }: Props) => {
       )}
     </>
   );
-};
+});

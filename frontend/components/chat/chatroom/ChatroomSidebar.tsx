@@ -4,20 +4,20 @@ import { List } from '@mui/material';
 import { ChatroomListItem } from 'components/chat/chatroom/ChatroomListItem';
 import { ChatroomCreateButton } from 'components/chat/chatroom/ChatroomCreateButton';
 import { ChatroomJoinButton } from 'components/chat/chatroom/ChatroomJoinButton';
-import { Chatroom } from 'types/chat';
+import { Chatroom, Message } from 'types/chat';
 import { useQueryUser } from 'hooks/useQueryUser';
 import { Loading } from 'components/common/Loading';
 
 type Props = {
   socket: Socket;
   setCurrentRoomId: Dispatch<SetStateAction<number>>;
-  clearMessages: () => void;
+  setMessages: Dispatch<SetStateAction<Message[]>>;
 };
 
 export const ChatroomSidebar = memo(function ChatroomSidebar({
   socket,
   setCurrentRoomId,
-  clearMessages,
+  setMessages,
 }: Props) {
   const { data: user } = useQueryUser();
   const [rooms, setRooms] = useState<Chatroom[]>([]);
@@ -43,7 +43,7 @@ export const ChatroomSidebar = memo(function ChatroomSidebar({
     socket.on('chat:deleteRoom', (deletedRoom: Chatroom) => {
       console.log('chat:deleteRoom', deletedRoom);
       // 表示中のメッセージを削除する
-      clearMessages();
+      setMessages([]);
       setCurrentRoomId(0);
       // socketの退出処理をする
       socket.emit('chat:leaveRoom');
@@ -78,6 +78,7 @@ export const ChatroomSidebar = memo(function ChatroomSidebar({
               room={room}
               socket={socket}
               setCurrentRoomId={setCurrentRoomId}
+              setMessages={setMessages}
             />
           ))}
       </List>
