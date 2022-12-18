@@ -20,7 +20,7 @@ import * as z from 'zod';
 import { ChangeEventHandler, useState } from 'react';
 import { useMutationAvatar } from 'hooks/useMutationAvatar';
 import { Loading } from 'components/common/Loading';
-import { AxiosError } from 'axios';
+import axios, { AxiosError } from 'axios';
 import { AxiosErrorResponse } from 'types';
 import { getAvatarImageUrl } from 'api/user/getAvatarImageUrl';
 import { useRouter } from 'next/router';
@@ -115,7 +115,27 @@ const Setting: NextPage = () => {
 
   const onChange2faSetting = async () => {
     if (user.has2FA) {
-      await router.push('/setting/disable2fa');
+      if (process.env.NEXT_PUBLIC_API_URL) {
+        try {
+          const response = await axios.post<string>(
+            `${process.env.NEXT_PUBLIC_API_URL}/auth/disable2fa`,
+            {
+              userId: String(user.id),
+              code: '1234',
+            },
+          );
+
+          if (response.data == 'failure') {
+            reset();
+            console.log('Fail Register');
+          } else {
+            console.log(response);
+            await router.push('/setting');
+          }
+        } catch (e) {
+          console.log(e);
+        }
+      }
     } else {
       await router.push('/setting/enable2fa');
     }
