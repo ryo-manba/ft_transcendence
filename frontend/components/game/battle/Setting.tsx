@@ -24,6 +24,9 @@ export const Setting = () => {
   const { socket } = useSocketStore();
   const [difficulty, setDifficulty] = useState<DifficultyLevel>('Easy');
   const [matchPoint, setMatchPoint] = useState(3);
+  const durationOfSettingInSec = 30;
+  const timeoutIntervalInMilSec = 1000;
+  const [countDown, updateCountDown] = useState(durationOfSettingInSec);
 
   const handleDifficultySetting = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value: unknown = e.target.value;
@@ -46,11 +49,27 @@ export const Setting = () => {
       updatePlayState(PlayState.stateNothing);
     });
 
+    socket.on('timedUp', () => {
+      updatePlayState(PlayState.stateTimedUp);
+    });
+
     return () => {
       socket.off('playStarted');
       socket.off('error');
+      socket.off('timedUp');
     };
   }, [socket]);
+
+  useEffect(() => {
+    if (0 < countDown) {
+      setTimeout(() => {
+        updateCountDown(countDown - 1);
+      }, timeoutIntervalInMilSec);
+    } else if (countDown === 0) {
+      socket.emit('timeUp');
+      updatePlayState(PlayState.stateTimedUp);
+    }
+  }, [countDown, socket]);
 
   const handleSubmit = () => {
     socket.emit('completeSetting', { difficulty, matchPoint });
@@ -92,6 +111,19 @@ export const Setting = () => {
         )}
         {playState === PlayState.stateSelecting && (
           <Grid item>
+            <Grid
+              container
+              direction="column"
+              justifyContent="center"
+              alignItems="center"
+            >
+              <Grid item>
+                <Typography variant="h5"> Remaining Time</Typography>
+              </Grid>
+              <Grid item>
+                <Typography variant="h5">{countDown}</Typography>
+              </Grid>
+            </Grid>
             <FormControl>
               <FormLabel id="difficulty-radio-buttons-group-label">
                 Difficulty
@@ -136,7 +168,16 @@ export const Setting = () => {
                 <FormControlLabel value="10" control={<Radio />} label="10" />
               </RadioGroup>
             </FormControl>
-            <Button onClick={handleSubmit}>Start battle!</Button>
+            <Grid
+              container
+              direction="column"
+              justifyContent="center"
+              alignItems="center"
+            >
+              <Button variant="contained" onClick={handleSubmit}>
+                Start battle!
+              </Button>
+            </Grid>
           </Grid>
         )}
       </Grid>

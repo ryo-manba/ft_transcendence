@@ -28,6 +28,7 @@ const Battle: NextPage = () => {
         <Play updateFinishedGameInfo={setFinishedGameInfo} />
       )}
       {(playState === PlayState.stateFinished ||
+        playState === PlayState.stateTimedUp ||
         playState === PlayState.stateNothing) && (
         <Result finishedGameInfo={finishedGameInfo} />
       )}

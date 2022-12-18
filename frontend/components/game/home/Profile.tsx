@@ -1,26 +1,62 @@
-import { Typography, Grid, Avatar } from '@mui/material';
+import { Typography, Grid, Avatar, Alert, AlertTitle } from '@mui/material';
 import { useQueryUser } from 'hooks/useQueryUser';
 import PaidIcon from '@mui/icons-material/Paid';
 import ThumbUpOffAltIcon from '@mui/icons-material/ThumbUpOffAlt';
 import ThumbDownOffAltIcon from '@mui/icons-material/ThumbDownOffAlt';
 import { Loading } from 'components/common/Loading';
-import { useQueryGameRecords } from 'hooks/useQueryGameRecords';
+import { useEffect, useState } from 'react';
+import { GameRecordWithUserName } from 'types/game';
+import { getRecordsById } from 'api/records/getRecordsById';
 
 export const Profile = () => {
   const { data: user } = useQueryUser();
-  if (user === undefined) return <Loading />;
+  const [records, setRecords] = useState<GameRecordWithUserName[] | undefined>(
+    undefined,
+  );
+  const [recordsError, setRecordsError] = useState<Error | undefined>(
+    undefined,
+  );
+
+  useEffect(() => {
+    const updateRecords = async () => {
+      if (user !== undefined) {
+        await getRecordsById({ userId: user.id })
+          .then((res) => {
+            setRecords(res);
+          })
+          .catch((err) => {
+            setRecordsError(err as Error);
+          });
+      }
+    };
+
+    void updateRecords();
+  }, [user]);
+
+  if (recordsError !== undefined) {
+    return (
+      <Alert severity="error">
+        <AlertTitle>Error</AlertTitle>
+        <p>Game Records Fetching Error</p>
+      </Alert>
+    );
+  }
+
+  if (user === undefined) {
+    return <Loading />;
+  }
+
   const avatarImageUrl =
     user.avatarPath !== null
       ? `${process.env.NEXT_PUBLIC_API_URL as string}/user/${user.avatarPath}`
       : '';
-  const { data: records } = useQueryGameRecords(user.id);
   const numOfWins =
     records !== undefined
-      ? records.filter((r) => r.winner.name === user.name).length
+      ? records.filter((r) => r.winnerName === user.name).length
       : 0;
   const numOfLosses =
     records !== undefined
-      ? records.filter((r) => r.loser.name === user.name).length
+      ? records.filter((r) => r.loserName === user.name).length
       : 0;
 
   return (

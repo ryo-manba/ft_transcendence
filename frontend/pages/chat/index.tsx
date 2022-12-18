@@ -41,11 +41,6 @@ const Chat: NextPage = () => {
       setMessages((prev) => [...prev, data]);
     });
 
-    // 入室に成功したら、既存のメッセージを受け取る
-    socket.on('chat:getMessage', (data: Message[]) => {
-      setMessages(data);
-    });
-
     // メッセージが送信できたら、反映させる
     socket.on('chat:sendMessage', (data: Message) => {
       console.log('chat:sendMessage', data.message);
@@ -66,7 +61,6 @@ const Chat: NextPage = () => {
 
     return () => {
       socket.off('chat:receiveMessage');
-      socket.off('chat:getMessage');
       socket.off('chat:sendMessage');
       socket.off('chat:deleteRoom');
     };
@@ -101,11 +95,6 @@ const Chat: NextPage = () => {
     setText('');
   };
 
-  // 表示中のチャットルームが削除されたときに実行する
-  const clearMessages = () => {
-    setMessages([]);
-  };
-
   return (
     <Layout title="chat">
       <Header title="Chatroom" />
@@ -126,7 +115,7 @@ const Chat: NextPage = () => {
           <ChatroomSidebar
             socket={socket}
             setCurrentRoomId={setCurrentRoomId}
-            clearMessages={clearMessages}
+            setMessages={setMessages}
           />
         </Grid>
         <Grid

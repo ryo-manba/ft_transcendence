@@ -3,38 +3,71 @@ import { Header } from 'components/common/Header';
 import { Layout } from 'components/common/Layout';
 import { Loading } from 'components/common/Loading';
 import type { NextPage } from 'next';
-import { useQueryGameRecords } from 'hooks/useQueryGameRecords';
 import { History } from 'components/game/home/History';
-import { useQueryUserById } from 'hooks/useQueryUserById';
 import { useRouter } from 'next/router';
 import { getAvatarImageUrl } from 'api/user/getAvatarImageUrl';
 import { BadgedAvatar } from 'components/common/BadgedAvatar';
+import { useEffect, useState } from 'react';
+import { GameRecordWithUserName } from 'types/game';
+import { getRecordsById } from 'api/records/getRecordsById';
+import { User } from '@prisma/client';
+import { getUserById } from 'api/user/getUserById';
 
 const Profile: NextPage = () => {
   const router = useRouter();
-  const userId = Number(router.query.userId);
-  const { data: user, error: userQueryError } = useQueryUserById(userId);
-  const { data: records, error: recordQueryError } = useQueryGameRecords(
-    user?.id,
+  const [user, setUser] = useState<Omit<User, 'hashedPassword'> | undefined>(
+    undefined,
+  );
+  const [userError, setUserError] = useState<Error | undefined>(undefined);
+  const [records, setRecords] = useState<GameRecordWithUserName[] | undefined>(
+    undefined,
+  );
+  const [recordsError, setRecordsError] = useState<Error | undefined>(
+    undefined,
   );
 
-  if (router.isReady && (userQueryError || recordQueryError)) {
-    return (
-      <Layout title="Profile">
-        <Header title="Profile" />
-        <Alert severity="error">
-          <AlertTitle>Error</AlertTitle>
-          {userQueryError && `User fetching error: ${userQueryError.message}`}
-          {recordQueryError &&
-            `Game record fetching error: ${recordQueryError.message}`}
-        </Alert>
-      </Layout>
-    );
-  } else if (
-    router.isReady === false ||
-    user === undefined ||
-    records === undefined
-  ) {
+  useEffect(() => {
+    const updateRecordsNUser = async () => {
+      if (router.isReady) {
+        const userId = Number(router.query.userId);
+        await getRecordsById({ userId })
+          .then((res) => {
+            setRecords(res);
+          })
+          .catch((err) => {
+            setRecordsError(err as Error);
+          });
+        await getUserById({ userId })
+          .then((res) => {
+            setUser(res);
+          })
+          .catch((err) => {
+            setUserError(err as Error);
+          });
+      }
+    };
+
+    void updateRecordsNUser();
+  }, [router]);
+
+  if (userError !== undefined || recordsError !== undefined) {
+    if (!router.isReady) {
+      return <Loading fullHeight />;
+    } else {
+      return (
+        <Layout title="Profile">
+          <Header title="Profile" />
+          <Alert severity="error">
+            <AlertTitle>Error</AlertTitle>
+            {userError !== undefined && <p>User Fetching Error</p>}
+            {recordsError !== undefined && <p>Game Records Fetching Error</p>}
+          </Alert>
+        </Layout>
+      );
+    }
+  }
+
+  if (records === undefined || user === undefined) {
     return <Loading fullHeight />;
   }
 
@@ -43,11 +76,11 @@ const Profile: NextPage = () => {
   const avatarImageUrl = getAvatarImageUrl(user.id);
   const numOfWins =
     records !== undefined
-      ? records.filter((r) => r.winner.name === user.name).length
+      ? records.filter((r) => r.winnerName === user.name).length
       : 0;
   const numOfLosses =
     records !== undefined
-      ? records.filter((r) => r.loser.name === user.name).length
+      ? records.filter((r) => r.loserName === user.name).length
       : 0;
 
   return (
