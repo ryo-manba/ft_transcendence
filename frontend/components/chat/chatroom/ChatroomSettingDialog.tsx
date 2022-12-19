@@ -14,6 +14,12 @@ import {
   DialogTitle,
   TextField,
 } from '@mui/material';
+import Visibility from '@mui/icons-material/Visibility';
+import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
+import { useForm, SubmitHandler, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+
 import {
   Chatroom,
   ChatroomSettings,
@@ -26,11 +32,7 @@ import { fetchJoinableFriends } from 'api/friend/fetchJoinableFriends';
 import { fetchChatroomNormalUsers } from 'api/chat/fetchChatroomNormalUsers';
 import { useQueryUser } from 'hooks/useQueryUser';
 import { Loading } from 'components/common/Loading';
-import Visibility from '@mui/icons-material/Visibility';
-import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
-import { useForm, SubmitHandler, Controller } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
+import { ChatroomSettingDetailDialog } from 'components/chat/chatroom/ChatroomSettingDetailDialog';
 
 type Props = {
   room: Chatroom;
@@ -290,35 +292,12 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
           </FormControl>
         </DialogContent>
         {selectedRoomSetting === CHATROOM_SETTINGS.ADD_FRIEND && (
-          <>
-            {friends.length === 0 ? (
-              <div
-                className="mb-4 flex justify-center rounded-lg bg-red-100 p-4 text-sm text-red-700 dark:bg-red-200 dark:text-red-800"
-                role="alert"
-              >
-                <span className="font-medium">No users are available.</span>
-              </div>
-            ) : (
-              <DialogContent>
-                <FormControl sx={{ mx: 3, my: 1, minWidth: 200 }}>
-                  <InputLabel id="room-setting-select-label">Friend</InputLabel>
-                  <Select
-                    labelId="room-setting-select-label"
-                    id="room-setting"
-                    value={selectedUserId}
-                    label="setting"
-                    onChange={handleChangeUserId}
-                  >
-                    {friends.map((friend) => (
-                      <MenuItem value={String(friend.id)} key={friend.id}>
-                        {friend.name}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </DialogContent>
-            )}
-          </>
+          <ChatroomSettingDetailDialog
+            users={friends}
+            labelTitle="Friend"
+            selectedValue={selectedUserId}
+            onChange={handleChangeUserId}
+          />
         )}
         {selectedRoomSetting === CHATROOM_SETTINGS.SET_ADMIN && (
           <>
