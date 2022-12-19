@@ -300,35 +300,12 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
           />
         )}
         {selectedRoomSetting === CHATROOM_SETTINGS.SET_ADMIN && (
-          <>
-            {notAdminUsers.length === 0 ? (
-              <div
-                className="mb-4 flex justify-center rounded-lg bg-red-100 p-4 text-sm text-red-700 dark:bg-red-200 dark:text-red-800"
-                role="alert"
-              >
-                <span className="font-medium">No users are available.</span>
-              </div>
-            ) : (
-              <DialogContent>
-                <FormControl sx={{ mx: 3, my: 1, minWidth: 200 }}>
-                  <InputLabel id="room-setting-select-label">User</InputLabel>
-                  <Select
-                    labelId="room-setting-select-label"
-                    id="room-setting"
-                    value={selectedUserId}
-                    label="setting"
-                    onChange={handleChangeUserId}
-                  >
-                    {notAdminUsers.map((notAdmin) => (
-                      <MenuItem value={String(notAdmin.id)} key={notAdmin.id}>
-                        {notAdmin.name}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </DialogContent>
-            )}
-          </>
+          <ChatroomSettingDetailDialog
+            users={notAdminUsers}
+            labelTitle="User"
+            selectedValue={selectedUserId}
+            onChange={handleChangeUserId}
+          />
         )}
         {selectedRoomSetting === CHATROOM_SETTINGS.CHANGE_PASSWORD && (
           <>
@@ -470,69 +447,20 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
           </>
         )}
         {selectedRoomSetting === CHATROOM_SETTINGS.BAN_USER && (
-          <>
-            {notBannedUsers.length === 0 ? (
-              <div
-                className="mb-4 flex justify-center rounded-lg bg-red-100 p-4 text-sm text-red-700 dark:bg-red-200 dark:text-red-800"
-                role="alert"
-              >
-                <span className="font-medium">No users are available.</span>
-              </div>
-            ) : (
-              <DialogContent>
-                <FormControl sx={{ mx: 3, my: 1, minWidth: 200 }}>
-                  <InputLabel id="room-setting-select-label">User</InputLabel>
-                  <Select
-                    labelId="room-setting-select-label"
-                    id="room-setting"
-                    value={selectedUserId}
-                    label="setting"
-                    onChange={handleChangeUserId}
-                  >
-                    {notBannedUsers.map((notBanned) => (
-                      <MenuItem value={String(notBanned.id)} key={notBanned.id}>
-                        {notBanned.name}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </DialogContent>
-            )}
-          </>
+          <ChatroomSettingDetailDialog
+            users={notBannedUsers}
+            labelTitle="User"
+            selectedValue={selectedUserId}
+            onChange={handleChangeUserId}
+          />
         )}
         {selectedRoomSetting === CHATROOM_SETTINGS.MUTE_USER && (
-          <>
-            {notMutedUsers.length === 0 ? (
-              <div
-                className="mb-4 flex justify-center rounded-lg bg-red-100 p-4 text-sm text-red-700 dark:bg-red-200 dark:text-red-800"
-                role="alert"
-              >
-                <span className="font-medium">No users are available.</span>
-              </div>
-            ) : (
-              <DialogContent>
-                <FormControl sx={{ mx: 3, my: 1, minWidth: 200 }}>
-                  <InputLabel id="room-setting-select-label">User</InputLabel>
-                  <Select
-                    labelId="room-setting-select-label"
-                    id="room-setting"
-                    value={selectedUserId}
-                    label="setting"
-                    onChange={handleChangeUserId}
-                  >
-                    {notMutedUsers.map((notMutedUser) => (
-                      <MenuItem
-                        value={String(notMutedUser.id)}
-                        key={notMutedUser.id}
-                      >
-                        {notMutedUser.name}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </DialogContent>
-            )}
-          </>
+          <ChatroomSettingDetailDialog
+            users={notMutedUsers}
+            labelTitle="User"
+            selectedValue={selectedUserId}
+            onChange={handleChangeUserId}
+          />
         )}
         <DialogActions>
           <Button onClick={handleClose} variant="outlined">
