@@ -89,31 +89,14 @@ export class ChatGateway {
   async onMessage(
     @ConnectedSocket() client: Socket,
     @MessageBody() createMessageDto: CreateMessageDto,
-  ): Promise<boolean> {
+  ): Promise<any> {
     this.logger.log(
       `chat:sendMessage received -> ${createMessageDto.chatroomId}`,
     );
-
-    // BAN or MUTEされていないことを確認する
-    const userInfo = await this.chatService.findJoinedUserInfo({
-      chatroomId_userId: {
-        chatroomId: createMessageDto.chatroomId,
-        userId: createMessageDto.userId,
-      },
-    });
-    if (userInfo.status !== ChatroomMembersStatus.NORMAL) {
-      return false;
-    }
-
-    const res = await this.chatService.addMessage(createMessageDto);
-    if (res === undefined) {
-      return false;
-    }
+    await this.chatService.addMessage(createMessageDto);
     this.server
       .to(String(createMessageDto.chatroomId))
       .emit('chat:receiveMessage', createMessageDto);
-
-    return true;
   }
 
   /**
@@ -345,8 +328,8 @@ export class ChatGateway {
   }
 
   /**
-   * ユーザーをBANする
-   * @param updateMemberStatusDto
+   * @param updateChatMemberStatusDto
+   * @return 以下の情報をオブジェクトの配列で返す
    */
   @SubscribeMessage('chat:banUser')
   async banUser(
@@ -354,21 +337,6 @@ export class ChatGateway {
     @MessageBody() dto: updateMemberStatusDto,
   ): Promise<boolean> {
     this.logger.log(`chat:banUser received -> roomId: ${dto.chatroomId}`);
-    const res = await this.chatService.updateMemberStatus(dto);
-
-    return res ? true : false;
-  }
-
-  /**
-   * ユーザーをMUTEする
-   * @param updateChatMemberStatusDto
-   */
-  @SubscribeMessage('chat:muteUser')
-  async muteUser(
-    @ConnectedSocket() client: Socket,
-    @MessageBody() dto: updateMemberStatusDto,
-  ): Promise<boolean> {
-    this.logger.log(`chat:muteUser received -> roomId: ${dto.chatroomId}`);
     const res = await this.chatService.updateMemberStatus(dto);
 
     return res ? true : false;

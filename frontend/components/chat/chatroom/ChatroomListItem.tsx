@@ -156,6 +156,7 @@ export const ChatroomListItem = memo(function ChatroomListItem({
   };
 
   const banUser = (userId: number) => {
+    console.log('ban:', ChatroomMembersStatus.BAN);
     const banUserInfo = {
       chatroomId: room.id,
       userId: userId,
@@ -167,22 +168,6 @@ export const ChatroomListItem = memo(function ChatroomListItem({
         setSuccess('User has been banned successfully.');
       } else {
         setError('Failed to ban user.');
-      }
-    });
-  };
-
-  const muteUser = (userId: number) => {
-    const muteUserInfo = {
-      chatroomId: room.id,
-      userId: userId,
-      status: ChatroomMembersStatus.MUTE,
-    };
-
-    socket.emit('chat:muteUser', muteUserInfo, (res: boolean) => {
-      if (res) {
-        setSuccess('User has been muted successfully.');
-      } else {
-        setError('Failed to mute user.');
       }
     });
   };
@@ -242,7 +227,6 @@ export const ChatroomListItem = memo(function ChatroomListItem({
             addAdmin={addAdmin}
             changePassword={changePassword}
             banUser={banUser}
-            muteUser={muteUser}
           />
           <ListItemText
             primary={room.name}
