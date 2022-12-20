@@ -7,6 +7,7 @@ import { ChatroomJoinButton } from 'components/chat/chatroom/ChatroomJoinButton'
 import { Chatroom, Message } from 'types/chat';
 import { useQueryUser } from 'hooks/useQueryUser';
 import { Loading } from 'components/common/Loading';
+import { fetchJoinedRooms } from 'api/chat/fetchJoindRooms';
 
 type Props = {
   socket: Socket;
@@ -51,15 +52,22 @@ export const ChatroomSidebar = memo(function ChatroomSidebar({
       socket.emit('chat:getJoinedRooms', user.id);
     });
 
-    // setupが終わったら
-    // 入室中のチャットルーム一覧を取得する
-    socket.emit('chat:getJoinedRooms', user.id);
-
     return () => {
       socket.off('chat:getJoinedRooms');
       socket.off('chat:createRoom');
       socket.off('chat:updateSideBarRooms');
     };
+  }, []);
+
+  useEffect(() => {
+    if (user == undefined) return;
+    const fetchRooms = async () => {
+      const res = await fetchJoinedRooms({ userId: user.id });
+
+      setRooms(res);
+    };
+
+    void fetchRooms();
   }, []);
 
   if (user === undefined) {

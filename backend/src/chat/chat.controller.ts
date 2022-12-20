@@ -1,6 +1,7 @@
 import { Query, Controller, Get, ParseIntPipe } from '@nestjs/common';
 import { ChatService } from './chat.service';
 import type { ChatUser } from './types/chat';
+import type { Chatroom } from '@prisma/client';
 
 @Controller('chat')
 export class ChatController {
@@ -30,5 +31,16 @@ export class ChatController {
     @Query('roomId', ParseIntPipe) roomId: number,
   ): Promise<ChatUser[]> {
     return await this.chatService.findNotBannedUsers(roomId);
+  }
+
+  /**
+   * @param userId
+   * @return 入室しているチャットルーム一覧を返す
+   */
+  @Get('joined-rooms')
+  async findJoinedRooms(
+    @Query('userId', ParseIntPipe) userId: number,
+  ): Promise<Chatroom[]> {
+    return await this.chatService.findJoinedRooms(userId);
   }
 }
