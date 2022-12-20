@@ -114,64 +114,50 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
   //   }
   // });
 
+  const fetchFriends = async (userId: number) => {
+    const res = await fetchJoinableFriends({
+      userId: userId,
+      roomId: room.id,
+    });
+    setFriends(res);
+  };
+
+  const fetchCanSetAdminUsers = async () => {
+    const notAdminUsers = await fetchChatroomNormalUsers({
+      roomId: room.id,
+    });
+    setNotAdminUsers(notAdminUsers);
+  };
+
+  const fetchCanBanUsers = async () => {
+    const notBannedUsers = await fetchChatroomNormalUsers({
+      roomId: room.id,
+    });
+    setNotBannedUsers(notBannedUsers);
+  };
+
+  const fetchCanMuteUsers = async () => {
+    const notMutedUsers = await fetchChatroomNormalUsers({
+      roomId: room.id,
+    });
+    setNotMutedUsers(notMutedUsers);
+  };
+
+  // 設定項目を選択した時に対応するユーザ一覧を取得する
   useEffect(() => {
     if (user === undefined) return;
-    if (selectedRoomSetting !== CHATROOM_SETTINGS.ADD_FRIEND) return;
-
-    const fetchFriends = async () => {
-      // フォローしている かつ そのチャットルームに所属していないユーザーを取得する
-      const res = await fetchJoinableFriends({
-        userId: user.id,
-        roomId: room.id,
-      });
-
-      setFriends(res);
-    };
-
-    void fetchFriends();
+    switch (selectedRoomSetting) {
+      case CHATROOM_SETTINGS.ADD_FRIEND:
+        void fetchFriends(user.id);
+      case CHATROOM_SETTINGS.SET_ADMIN:
+        void fetchCanSetAdminUsers();
+      case CHATROOM_SETTINGS.BAN_USER:
+        void fetchCanBanUsers();
+      case CHATROOM_SETTINGS.MUTE_USER:
+        void fetchCanMuteUsers();
+      default:
+    }
   }, [selectedRoomSetting]);
-
-  useEffect(() => {
-    if (user === undefined) return;
-    if (selectedRoomSetting !== CHATROOM_SETTINGS.SET_ADMIN) return;
-
-    const fetchCanSetAdminUsers = async () => {
-      const notAdminUsers = await fetchChatroomNormalUsers({
-        roomId: room.id,
-      });
-      setNotAdminUsers(notAdminUsers);
-    };
-
-    void fetchCanSetAdminUsers();
-  }, [selectedRoomSetting]);
-
-  useEffect(() => {
-    if (user === undefined) return;
-    if (selectedRoomSetting !== CHATROOM_SETTINGS.BAN_USER) return;
-
-    const fetchCanBanUsers = async () => {
-      const notBannedUsers = await fetchChatroomNormalUsers({
-        roomId: room.id,
-      });
-      setNotBannedUsers(notBannedUsers);
-    };
-
-    void fetchCanBanUsers();
-  });
-
-  useEffect(() => {
-    if (user === undefined) return;
-    if (selectedRoomSetting !== CHATROOM_SETTINGS.MUTE_USER) return;
-
-    const fetchCanMuteUsers = async () => {
-      const notMutedUsers = await fetchChatroomNormalUsers({
-        roomId: room.id,
-      });
-      setNotMutedUsers(notMutedUsers);
-    };
-
-    void fetchCanMuteUsers();
-  });
 
   if (user === undefined) {
     return <Loading />;
