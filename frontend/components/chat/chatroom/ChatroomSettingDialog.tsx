@@ -46,7 +46,7 @@ type Props = {
   muteUser: (userId: number) => void;
 };
 
-export type PasswordForm = {
+type PasswordForm = {
   oldPassword: string;
   newPassword: string;
   checkPassword: string;
@@ -72,30 +72,25 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
   const [notMutedUsers, setNotMutedUsers] = useState<ChatUser[]>([]);
   const [friends, setFriends] = useState<Friend[]>([]);
 
+  const errorInputPassword = 'Passwords must be at least 5 characters';
   const schema = z.object({
     oldPassword: z.string().refine(
       (value: string) =>
         selectedRoomSetting !== CHATROOM_SETTINGS.CHANGE_PASSWORD ||
         value.length >= 5,
-      () => ({
-        message: 'Passwords must be at least 5 characters',
-      }),
+      () => ({ message: errorInputPassword }),
     ),
     newPassword: z.string().refine(
       (value: string) =>
         selectedRoomSetting !== CHATROOM_SETTINGS.CHANGE_PASSWORD ||
         value.length >= 5,
-      () => ({
-        message: 'Passwords must be at least 5 characters',
-      }),
+      () => ({ message: errorInputPassword }),
     ),
     checkPassword: z.string().refine(
       (value: string) =>
         selectedRoomSetting !== CHATROOM_SETTINGS.CHANGE_PASSWORD ||
         value.length >= 5,
-      () => ({
-        message: 'Passwords must be at least 5 characters',
-      }),
+      () => ({ message: errorInputPassword }),
     ),
   });
   // TODO: 余裕あったら以下を使えるようにする
@@ -225,6 +220,7 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
   };
 
   const isOwner = room.ownerId === user.id;
+  const passwordHelper = 'Must be min 5 characters';
 
   return (
     <>
@@ -296,7 +292,7 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
                 inputName="oldPassword"
                 labelName="Old Password"
                 error={errors.oldPassword}
-                helperText="Must be min 5 characters"
+                helperText={passwordHelper}
               />
             </DialogContent>
             <DialogContent>
@@ -305,7 +301,7 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
                 inputName="newPassword"
                 labelName="New Password"
                 error={errors.newPassword}
-                helperText="Must be min 5 characters"
+                helperText={passwordHelper}
               />
             </DialogContent>
             <DialogContent>
@@ -314,7 +310,7 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
                 inputName="checkPassword"
                 labelName="Check Password"
                 error={errors.checkPassword}
-                helperText="Must be min 5 characters"
+                helperText={passwordHelper}
               />
             </DialogContent>
           </>
