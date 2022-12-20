@@ -265,14 +265,7 @@ export class ChatService {
    */
   async findCanSetAdminUsers(roomId: number): Promise<ChatUser[]> {
     // ルームのadmin一覧を取得する
-    const adminUsers = await this.prisma.chatroomAdmin.findMany({
-      where: {
-        chatroomId: roomId,
-      },
-      select: {
-        userId: true,
-      },
-    });
+    const adminUsers = await this.findAdmins(roomId);
 
     // idの配列にする
     const adminUserIds = adminUsers.map((admin) => {
