@@ -1,5 +1,4 @@
 import { memo, useState, useEffect, Dispatch, SetStateAction } from 'react';
-import { Socket } from 'socket.io-client';
 import { List } from '@mui/material';
 import { ChatroomListItem } from 'components/chat/chatroom/ChatroomListItem';
 import { ChatroomCreateButton } from 'components/chat/chatroom/ChatroomCreateButton';
@@ -7,23 +6,23 @@ import { ChatroomJoinButton } from 'components/chat/chatroom/ChatroomJoinButton'
 import { Chatroom, Message } from 'types/chat';
 import { useQueryUser } from 'hooks/useQueryUser';
 import { Loading } from 'components/common/Loading';
+import { useSocketStore } from 'store/chat/ClientSocket';
 
 type Props = {
-  socket: Socket;
   setCurrentRoomId: Dispatch<SetStateAction<number>>;
   setMessages: Dispatch<SetStateAction<Message[]>>;
 };
 
 export const ChatroomSidebar = memo(function ChatroomSidebar({
-  socket,
   setCurrentRoomId,
   setMessages,
 }: Props) {
   const { data: user } = useQueryUser();
   const [rooms, setRooms] = useState<Chatroom[]>([]);
+  const { socket: socket } = useSocketStore();
 
   useEffect(() => {
-    if (!socket || !user) return;
+    if (!user) return;
     // 入室しているルーム一覧を受け取る
     socket.on('chat:getJoinedRooms', (data: Chatroom[]) => {
       console.log('chat:getJoinedRooms', data);
@@ -60,7 +59,7 @@ export const ChatroomSidebar = memo(function ChatroomSidebar({
       socket.off('chat:createRoom');
       socket.off('chat:updateSideBarRooms');
     };
-  }, []);
+  }, [user]);
 
   if (user === undefined) {
     return <Loading />;
@@ -68,15 +67,14 @@ export const ChatroomSidebar = memo(function ChatroomSidebar({
 
   return (
     <>
-      <ChatroomCreateButton socket={socket} />
-      <ChatroomJoinButton socket={socket} user={user} />
+      <ChatroomCreateButton />
+      <ChatroomJoinButton />
       <List dense={false}>
         {rooms &&
           rooms.map((room, i) => (
             <ChatroomListItem
               key={i}
               room={room}
-              socket={socket}
               setCurrentRoomId={setCurrentRoomId}
               setMessages={setMessages}
             />

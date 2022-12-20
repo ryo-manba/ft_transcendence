@@ -1,21 +1,20 @@
 import { memo, useState, useCallback, useEffect } from 'react';
-import { Socket } from 'socket.io-client';
 import { Button } from '@mui/material';
 import AddCircleOutlineRounded from '@mui/icons-material/AddCircleOutlineRounded';
-import { User, Chatroom } from '@prisma/client';
+import { Chatroom } from '@prisma/client';
 import { ChatroomJoinDialog } from 'components/chat/chatroom/ChatroomJoinDialog';
+import { useSocketStore } from 'store/chat/ClientSocket';
+import { useQueryUser } from 'hooks/useQueryUser';
+import { Loading } from 'components/common/Loading';
 
-type Props = {
-  socket: Socket;
-  user: Omit<User, 'hashedPassword'>;
-};
-
-export const ChatroomJoinButton = memo(function ChatroomJoinButton({
-  user,
-  socket,
-}: Props) {
+export const ChatroomJoinButton = memo(function ChatroomJoinButton() {
   const [open, setOpen] = useState(false);
   const [rooms, setRooms] = useState<Chatroom[]>([]);
+  const { socket: socket } = useSocketStore();
+  const { data: user } = useQueryUser();
+  if (user === undefined) {
+    return <Loading fullHeight />;
+  }
 
   const getJoinableRooms = useCallback(() => {
     socket.emit('chat:getJoinableRooms', user.id);
@@ -56,12 +55,7 @@ export const ChatroomJoinButton = memo(function ChatroomJoinButton({
       >
         Search Room
       </Button>
-      <ChatroomJoinDialog
-        rooms={rooms}
-        open={open}
-        onClose={handleClose}
-        socket={socket}
-      />
+      <ChatroomJoinDialog rooms={rooms} open={open} onClose={handleClose} />
     </>
   );
 });

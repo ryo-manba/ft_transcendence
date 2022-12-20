@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { io, Socket } from 'socket.io-client';
 import { TextField, IconButton } from '@mui/material';
 import Grid from '@mui/material/Unstable_Grid2';
 import SendIcon from '@mui/icons-material/Send';
@@ -9,6 +8,7 @@ import { FriendSidebar } from 'components/chat/friend/FriendSidebar';
 import { Chatroom, Message } from 'types/chat';
 import { useQueryUser } from 'hooks/useQueryUser';
 import { Loading } from 'components/common/Loading';
+import { useSocketStore } from 'store/chat/ClientSocket';
 
 const appBarHeight = '64px';
 
@@ -17,18 +17,8 @@ const Chat = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const NOT_JOINED_ROOM = 0;
   const [currentRoomId, setCurrentRoomId] = useState(NOT_JOINED_ROOM);
-  const [socket, setSocket] = useState<Socket>();
-
+  const { socket: socket } = useSocketStore();
   const { data: user } = useQueryUser();
-
-  useEffect(() => {
-    const temp = io('ws://localhost:3001/chat');
-    setSocket(temp);
-
-    return () => {
-      temp.disconnect();
-    };
-  }, []);
 
   useEffect(() => {
     if (!socket || !user) return;
@@ -66,10 +56,6 @@ const Chat = () => {
 
   if (user === undefined) {
     return <Loading fullHeight />;
-  }
-
-  if (socket === undefined) {
-    return null;
   }
 
   const showMessage = (list: Message[]) => {
@@ -111,7 +97,6 @@ const Chat = () => {
           }}
         >
           <ChatroomSidebar
-            socket={socket}
             setCurrentRoomId={setCurrentRoomId}
             setMessages={setMessages}
           />

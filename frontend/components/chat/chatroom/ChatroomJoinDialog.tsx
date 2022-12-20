@@ -25,16 +25,15 @@ import LockIcon from '@mui/icons-material/Lock';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import { Chatroom } from '@prisma/client';
-import { Socket } from 'socket.io-client';
 import { CHATROOM_TYPE, JoinChatroomInfo } from 'types/chat';
 import { useQueryUser } from 'hooks/useQueryUser';
 import { Loading } from 'components/common/Loading';
 import { ChatErrorAlert } from 'components/chat/utils/ChatErrorAlert';
+import { useSocketStore } from 'store/chat/ClientSocket';
 
 type Props = {
   open: boolean;
   rooms: Chatroom[];
-  socket: Socket;
   onClose: () => void;
 };
 
@@ -43,15 +42,14 @@ export type ChatroomJoinForm = {
 };
 
 export const ChatroomJoinDialog = memo(function ChatroomJoinDialog({
-  onClose,
-  socket,
-  rooms,
   open,
+  rooms,
+  onClose,
 }: Props) {
   const [showPassword, setShowPassword] = useState(false);
   const [selectedRoom, setSelectedRoom] = useState<Chatroom | null>(null);
   const [error, setError] = useState('');
-
+  const { socket: socket } = useSocketStore();
   const { data: user } = useQueryUser();
   if (user === undefined) {
     return <Loading />;

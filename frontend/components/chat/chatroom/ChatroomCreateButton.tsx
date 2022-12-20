@@ -1,5 +1,4 @@
 import { useState, memo, useCallback } from 'react';
-import { Socket } from 'socket.io-client';
 import {
   Button,
   TextField,
@@ -24,26 +23,22 @@ import { Loading } from 'components/common/Loading';
 import { useForm, SubmitHandler, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-
-type Props = {
-  socket: Socket;
-};
+import { useSocketStore } from 'store/chat/ClientSocket';
 
 export type ChatroomForm = {
   roomName: string;
   password: string;
 };
 
-export const ChatroomCreateButton = memo(function ChatroomCreateButton({
-  socket,
-}: Props) {
+export const ChatroomCreateButton = memo(function ChatroomCreateButton() {
   const [open, setOpen] = useState(false);
   const [roomType, setRoomType] = useState<ChatroomType>(CHATROOM_TYPE.PUBLIC);
   const [showPassword, setShowPassword] = useState(false);
+  const { socket: socket } = useSocketStore();
 
   const { data: user } = useQueryUser();
   if (user === undefined) {
-    return <Loading />;
+    return <Loading fullHeight />;
   }
 
   const schema = z.object({
