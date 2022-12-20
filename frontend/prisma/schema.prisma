@@ -39,8 +39,6 @@ model ChatroomMembers {
   chatroomId Int
   userId     Int
   status     ChatroomMembersStatus @default(NORMAL)
-  endAt      DateTime?
-  startAt    DateTime?
   Chatroom   Chatroom              @relation(fields: [chatroomId], references: [id], onDelete: Cascade)
   User       User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
 
