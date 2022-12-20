@@ -13,6 +13,7 @@ import { useRouter } from 'next/router';
 import { usePlayerNamesStore } from 'store/game/PlayerNames';
 import { Invitation } from 'types/game';
 import { useQueryUser } from 'hooks/useQueryUser';
+import { useMutationStatus } from 'hooks/useMutationStatus';
 
 export const Host = () => {
   const [open, setOpen] = useState(true);
@@ -20,14 +21,26 @@ export const Host = () => {
   const updatePlayerNames = usePlayerNamesStore(
     (store) => store.updatePlayerNames,
   );
-
   const router = useRouter();
   const { data: user } = useQueryUser();
   const { socket } = useSocketStore();
   const { invitedFriendState, updateInvitedFriendState } =
     useInvitedFriendStateStore();
+  const { updateStatusMutation } = useMutationStatus();
 
   useEffect(() => {
+    if (user === undefined) return;
+
+    const start = () => {
+      try {
+        updateStatusMutation.mutate({
+          userId: user.id,
+          status: 'PLAYING',
+        });
+      } catch (error) {
+        return;
+      }
+    };
     socket.on('select', (playerNames: [string, string]) => {
       updatePlayerNames(playerNames);
       updatePlayState(PlayState.stateSelecting);
@@ -36,6 +49,7 @@ export const Host = () => {
       });
       setOpen(false);
 
+      start();
       void router.push('/game/battle');
     });
     socket.on('standBy', (playerNames: [string, string]) => {
@@ -46,6 +60,7 @@ export const Host = () => {
       });
       setOpen(false);
 
+      start();
       void router.push('/game/battle');
     });
 
@@ -55,29 +70,8 @@ export const Host = () => {
     };
   });
 
-  const routeChangeHandler = useCallback(() => {
+  const cancelInvitation = useCallback(() => {
     if (invitedFriendState.friendId !== null && user !== undefined) {
-      const invitation: Invitation = {
-        guestId: invitedFriendState.friendId,
-        hostId: user.id,
-      };
-
-      socket.emit('cancelInvitation', invitation);
-    }
-  }, [user]);
-
-  useEffect(() => {
-    router.events.on('routeChangeStart', routeChangeHandler);
-
-    return () => {
-      router.events.off('routeChangeStart', routeChangeHandler);
-    };
-  });
-
-  if (user === undefined) return <></>;
-
-  const handleClose = useCallback(() => {
-    if (invitedFriendState.friendId !== null) {
       const invitation: Invitation = {
         guestId: invitedFriendState.friendId,
         hostId: user.id,
@@ -87,7 +81,15 @@ export const Host = () => {
       updateInvitedFriendState({ friendId: null });
       setOpen(false);
     }
-  }, []);
+  }, [user]);
+
+  useEffect(() => {
+    router.events.on('routeChangeStart', cancelInvitation);
+
+    return () => {
+      router.events.off('routeChangeStart', cancelInvitation);
+    };
+  });
 
   return (
     <Modal open={open} aria-labelledby="modal-modal-title">
@@ -120,7 +122,7 @@ export const Host = () => {
           </Typography>
         </Grid>
         <Grid item>
-          <Button onClick={handleClose}>cancel</Button>
+          <Button onClick={cancelInvitation}>cancel</Button>
         </Grid>
       </Grid>
     </Modal>

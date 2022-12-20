@@ -96,7 +96,7 @@ const Chat: NextPage = () => {
   };
 
   return (
-    <Layout title="chat">
+    <Layout title="Chat">
       <Header title="Chatroom" />
       <Grid
         container
