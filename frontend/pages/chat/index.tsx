@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { io, Socket } from 'socket.io-client';
-import { TextField, IconButton } from '@mui/material';
+import { TextField, IconButton, Box, Collapse } from '@mui/material';
 import Grid from '@mui/material/Unstable_Grid2';
 import SendIcon from '@mui/icons-material/Send';
 import { Header } from 'components/common/Header';
@@ -9,6 +9,7 @@ import { FriendSidebar } from 'components/chat/friend/FriendSidebar';
 import { Chatroom, Message } from 'types/chat';
 import { useQueryUser } from 'hooks/useQueryUser';
 import { Loading } from 'components/common/Loading';
+import { ChatErrorAlert } from 'components/chat/utils/ChatErrorAlert';
 
 const appBarHeight = '64px';
 
@@ -18,7 +19,7 @@ const Chat = () => {
   const NOT_JOINED_ROOM = 0;
   const [currentRoomId, setCurrentRoomId] = useState(NOT_JOINED_ROOM);
   const [socket, setSocket] = useState<Socket>();
-
+  const [error, setError] = useState<string>('');
   const { data: user } = useQueryUser();
 
   useEffect(() => {
@@ -39,12 +40,6 @@ const Chat = () => {
       setMessages((prev) => [...prev, data]);
     });
 
-    // メッセージが送信できたら、反映させる
-    socket.on('chat:sendMessage', (data: Message) => {
-      console.log('chat:sendMessage', data.message);
-      setMessages((prev) => [...prev, data]);
-    });
-
     // 現在所属しているチャットルームが削除された場合、表示されているチャット履歴を削除する
     socket.on('chat:deleteRoom', (deletedRoom: Chatroom) => {
       console.log('chat:deleteRoom', deletedRoom);
@@ -59,7 +54,6 @@ const Chat = () => {
 
     return () => {
       socket.off('chat:receiveMessage');
-      socket.off('chat:sendMessage');
       socket.off('chat:deleteRoom');
     };
   }, [socket, user]);
@@ -89,7 +83,11 @@ const Chat = () => {
       message: text,
     };
 
-    socket.emit('chat:sendMessage', message);
+    socket.emit('chat:sendMessage', message, (res: boolean) => {
+      if (!res) {
+        setError('You can not send a message.');
+      }
+    });
     setText('');
   };
 
@@ -124,6 +122,11 @@ const Chat = () => {
           }}
         >
           <h2>{`Hello: ${user.name}`}</h2>
+          <Box sx={{ width: '100%' }}>
+            <Collapse in={error !== ''}>
+              <ChatErrorAlert error={error} setError={setError} />
+            </Collapse>
+          </Box>
           <div style={{ marginLeft: 5, marginRight: 5 }}>
             <div style={{ display: 'flex', alignItems: 'end' }}>
               <TextField
