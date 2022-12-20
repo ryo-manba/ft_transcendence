@@ -9,24 +9,22 @@ import {
 } from '@mui/material';
 import SettingsIcon from '@mui/icons-material/Settings';
 import CloseIcon from '@mui/icons-material/Close';
-import { Socket } from 'socket.io-client';
 import { Chatroom, Message, ChatroomType, JoinChatroomInfo } from 'types/chat';
 import { useQueryUser } from 'hooks/useQueryUser';
 import { Loading } from 'components/common/Loading';
 import { ChatroomSettingDialog } from 'components/chat/chatroom/ChatroomSettingDialog';
 import { ChatErrorAlert } from 'components/chat/utils/ChatErrorAlert';
 import { ChatroomMembersStatus } from '@prisma/client';
+import { useSocketStore } from 'store/chat/ClientSocket';
 
 type Props = {
   room: Chatroom;
-  socket: Socket;
   setCurrentRoomId: Dispatch<SetStateAction<number>>;
   setMessages: Dispatch<SetStateAction<Message[]>>;
 };
 
 export const ChatroomListItem = memo(function ChatroomListItem({
   room,
-  socket,
   setCurrentRoomId,
   setMessages,
 }: Props) {
@@ -34,6 +32,7 @@ export const ChatroomListItem = memo(function ChatroomListItem({
   const [isAdmin, setIsAdmin] = useState(false);
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
+  const { socket: socket } = useSocketStore();
   const { data: user } = useQueryUser();
 
   useEffect(() => {

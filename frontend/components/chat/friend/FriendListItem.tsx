@@ -5,8 +5,6 @@ import {
   ListItemAvatar,
   Box,
   Collapse,
-  IconButton,
-  Alert,
 } from '@mui/material';
 import { Friend } from 'types/friend';
 import { useQueryUser } from 'hooks/useQueryUser';
@@ -15,12 +13,12 @@ import { Loading } from 'components/common/Loading';
 import { getAvatarImageUrl } from 'api/user/getAvatarImageUrl';
 import { getUserStatusById } from 'api/user/getUserStatusById';
 import { UserStatus } from '@prisma/client';
-import CloseIcon from '@mui/icons-material/Close';
 import { useSocketStore } from 'store/game/ClientSocket';
 import { useInvitedFriendStateStore } from 'store/game/InvitedFriendState';
 import { useRouter } from 'next/router';
 import { Invitation } from 'types/game';
 import { BadgedAvatar } from 'components/common/BadgedAvatar';
+import { ChatErrorAlert } from 'components/chat/utils/ChatErrorAlert';
 
 type Props = {
   friend: Friend;
@@ -81,24 +79,7 @@ export const FriendListItem = memo(function FriendListItem({ friend }: Props) {
     <>
       <Box sx={{ width: '100%' }}>
         <Collapse in={error !== ''}>
-          <Alert
-            severity="error"
-            action={
-              <IconButton
-                aria-label="close"
-                color="inherit"
-                size="small"
-                onClick={() => {
-                  setError('');
-                }}
-              >
-                <CloseIcon fontSize="inherit" />
-              </IconButton>
-            }
-            sx={{ mb: 2 }}
-          >
-            {error}
-          </Alert>
+          <ChatErrorAlert error={error} setError={setError} />
         </Collapse>
       </Box>
       <ListItem divider button onClick={handleClickOpen}>

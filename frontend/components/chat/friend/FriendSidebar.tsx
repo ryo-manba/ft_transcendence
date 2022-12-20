@@ -11,23 +11,17 @@ export const FriendSidebar = () => {
   const [friends, setFriends] = useState<Friend[]>([]);
   const { data: user } = useQueryUser();
   if (user === undefined) {
-    return <Loading />;
+    return <Loading fullHeight />;
   }
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchFriends = async () => {
       const res = await fetchFollowingUsers({ userId: user.id });
 
       setFriends(res);
     };
 
-    fetchData()
-      .then((res) => {
-        console.log(res);
-      })
-      .catch((err) => {
-        console.log(err);
-      });
+    void fetchFriends();
   }, []);
 
   return (
