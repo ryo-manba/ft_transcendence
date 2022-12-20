@@ -5,18 +5,13 @@ import {
   DialogActions,
   DialogContent,
   InputLabel,
-  IconButton,
-  InputAdornment,
   Select,
   SelectChangeEvent,
   MenuItem,
   FormControl,
   DialogTitle,
-  TextField,
 } from '@mui/material';
-import Visibility from '@mui/icons-material/Visibility';
-import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
-import { useForm, SubmitHandler, Controller } from 'react-hook-form';
+import { useForm, SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 
@@ -33,6 +28,7 @@ import { fetchChatroomNormalUsers } from 'api/chat/fetchChatroomNormalUsers';
 import { useQueryUser } from 'hooks/useQueryUser';
 import { Loading } from 'components/common/Loading';
 import { ChatroomSettingDetailDialog } from 'components/chat/chatroom/ChatroomSettingDetailDialog';
+import { ChatPasswordForm } from 'components/chat/utils/ChatPasswordForm';
 
 type Props = {
   room: Chatroom;
@@ -75,7 +71,6 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
   const [notBannedUsers, setNotBannedUsers] = useState<ChatUser[]>([]);
   const [notMutedUsers, setNotMutedUsers] = useState<ChatUser[]>([]);
   const [friends, setFriends] = useState<Friend[]>([]);
-  const [showPassword, setShowPassword] = useState(false);
 
   const schema = z.object({
     oldPassword: z.string().refine(
@@ -296,138 +291,30 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
         {selectedRoomSetting === CHATROOM_SETTINGS.CHANGE_PASSWORD && (
           <>
             <DialogContent>
-              <Controller
-                name="oldPassword"
+              <ChatPasswordForm
                 control={control}
-                render={({ field }) => (
-                  <TextField
-                    margin="dense"
-                    label="Old Password"
-                    type={showPassword ? 'text' : 'password'}
-                    error={errors.oldPassword ? true : false}
-                    helperText={
-                      errors.oldPassword
-                        ? errors.oldPassword?.message
-                        : 'Must be min 5 characters'
-                    }
-                    InputProps={{
-                      endAdornment: (
-                        <InputAdornment position="end">
-                          <IconButton
-                            aria-label="toggle password visibility"
-                            onClick={() => {
-                              setShowPassword(!showPassword);
-                            }}
-                            onMouseDown={(event) => {
-                              event.preventDefault();
-                            }}
-                            edge="end"
-                          >
-                            {showPassword ? (
-                              <VisibilityOffIcon />
-                            ) : (
-                              <Visibility />
-                            )}
-                          </IconButton>
-                        </InputAdornment>
-                      ),
-                    }}
-                    fullWidth
-                    variant="standard"
-                    // eslint-disable-next-line react/jsx-props-no-spreading
-                    {...field}
-                  />
-                )}
+                inputName="oldPassword"
+                labelName="Old Password"
+                error={errors.oldPassword}
+                helperText="Must be min 5 characters"
               />
             </DialogContent>
             <DialogContent>
-              <Controller
-                name="newPassword"
+              <ChatPasswordForm
                 control={control}
-                render={({ field }) => (
-                  <TextField
-                    margin="dense"
-                    label="New Password"
-                    type={showPassword ? 'text' : 'password'}
-                    error={errors.newPassword ? true : false}
-                    helperText={
-                      errors.newPassword
-                        ? errors.newPassword?.message
-                        : 'Must be min 5 characters'
-                    }
-                    InputProps={{
-                      endAdornment: (
-                        <InputAdornment position="end">
-                          <IconButton
-                            aria-label="toggle password visibility"
-                            onClick={() => {
-                              setShowPassword(!showPassword);
-                            }}
-                            onMouseDown={(event) => {
-                              event.preventDefault();
-                            }}
-                            edge="end"
-                          >
-                            {showPassword ? (
-                              <VisibilityOffIcon />
-                            ) : (
-                              <Visibility />
-                            )}
-                          </IconButton>
-                        </InputAdornment>
-                      ),
-                    }}
-                    fullWidth
-                    variant="standard"
-                    // eslint-disable-next-line react/jsx-props-no-spreading
-                    {...field}
-                  />
-                )}
+                inputName="newPassword"
+                labelName="New Password"
+                error={errors.newPassword}
+                helperText="Must be min 5 characters"
               />
             </DialogContent>
             <DialogContent>
-              <Controller
-                name="checkPassword"
+              <ChatPasswordForm
                 control={control}
-                render={({ field }) => (
-                  <TextField
-                    margin="dense"
-                    label="Check Password"
-                    type={showPassword ? 'text' : 'password'}
-                    error={errors.checkPassword ? true : false}
-                    helperText={
-                      errors.checkPassword
-                        ? errors.checkPassword?.message
-                        : 'Must be min 5 characters'
-                    }
-                    InputProps={{
-                      endAdornment: (
-                        <InputAdornment position="end">
-                          <IconButton
-                            aria-label="toggle password visibility"
-                            onClick={() => {
-                              setShowPassword(!showPassword);
-                            }}
-                            onMouseDown={(event) => {
-                              event.preventDefault();
-                            }}
-                            edge="end"
-                          >
-                            {showPassword ? (
-                              <VisibilityOffIcon />
-                            ) : (
-                              <Visibility />
-                            )}
-                          </IconButton>
-                        </InputAdornment>
-                      ),
-                    }}
-                    fullWidth
-                    variant="standard"
-                    // eslint-disable-next-line react/jsx-props-no-spreading
-                    {...field}
-                  />
-                )}
+                inputName="checkPassword"
+                labelName="Check Password"
+                error={errors.checkPassword}
+                helperText="Must be min 5 characters"
               />
             </DialogContent>
           </>
