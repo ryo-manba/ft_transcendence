@@ -10,16 +10,9 @@ import { Loading } from './Loading';
 type Props = {
   title: string;
   children: ReactNode;
-  divClassName?: string;
-  mainClassName?: string;
 };
 
-export const Layout: FC<Props> = ({
-  children,
-  title = 'Next.js',
-  divClassName = '',
-  mainClassName = '',
-}) => {
+export const Layout: FC<Props> = ({ children, title = 'Next.js' }) => {
   // ログインしてなければLoadingを表示
   const router = useRouter();
   const { socket: gameSocket } = useSocketStore();
@@ -62,13 +55,13 @@ export const Layout: FC<Props> = ({
   }
 
   return (
-    <div className={divClassName}>
+    <div>
       <Head>
         <title>{title}</title>
       </Head>
       {/* <main style={{ backgroundImage: `url(${Image.src})` }}>{children}</main> */}
       {hosts.length !== 0 && <Guest hosts={hosts} />}
-      <main className={mainClassName}>{children}</main>
+      <main>{children}</main>
     </div>
   );
 };
