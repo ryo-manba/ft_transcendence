@@ -6,7 +6,6 @@ import axios from 'axios';
 import { IconDatabase } from '@tabler/icons';
 import Image from 'next/image';
 import GppGoodIcon from '@mui/icons-material/GppGood';
-import { Layout } from 'components/common/Layout';
 import { useForm, SubmitHandler, Controller } from 'react-hook-form';
 import { AuthForm, AxiosErrorResponse } from '../types';
 import {
@@ -26,6 +25,7 @@ import { signIn, useSession } from 'next-auth/react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Loading } from 'components/common/Loading';
+import Head from 'next/head';
 
 // username, passwordのvalidation
 const schema = z.object({
@@ -128,145 +128,150 @@ const Home: NextPage = () => {
   }
 
   return (
-    <Layout
-      title="Auth"
-      divClassName="flex min-h-screen flex-col items-center justify-center"
-      mainClassName="flex w-screen flex-1 flex-col items-center justify-center"
-    >
-      <Grid
-        container
-        justifyContent="center"
-        direction="column"
-        alignItems="center"
-        sx={{ width: 360 }}
-      >
-        <GppGoodIcon color="primary" sx={{ width: 100, height: 100 }} />
-        {error.length !== 0 && (
-          <Alert severity="error">
-            <>
-              <AlertTitle>Authorization Error</AlertTitle>
-              {error.map((e, i) => (
-                <Typography variant="body2" key={i}>
-                  {e}
-                </Typography>
-              ))}
-            </>
-          </Alert>
-        )}
-        <form onSubmit={handleSubmit(onSubmit) as VoidFunction}>
-          <Controller
-            name="username"
-            control={control}
-            render={({ field }) => (
-              <TextField
-                fullWidth
-                size="small"
-                sx={{ my: 2 }}
-                label="Username"
-                error={errors.username ? true : false}
-                helperText={errors.username?.message}
-                {...field}
-              />
-            )}
-          />
-          <Controller
-            name="password"
-            control={control}
-            render={({ field }) => (
-              <TextField
-                label="Password"
-                type={showPassword ? 'text' : 'password'}
-                error={errors.password ? true : false}
-                helperText={
-                  errors.password
-                    ? errors.password?.message
-                    : 'Must be min 5 char'
-                }
-                InputProps={{
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <IconButton
-                        aria-label="toggle password visibility"
-                        onClick={() => {
-                          setShowPassword(!showPassword);
-                        }}
-                        onMouseDown={(event) => {
-                          event.preventDefault();
-                        }}
-                        edge="end"
-                      >
-                        {showPassword ? <VisibilityOffIcon /> : <Visibility />}
-                      </IconButton>
-                    </InputAdornment>
-                  ),
-                }}
-                size="small"
-                sx={{ my: 1 }}
-                fullWidth
-                {...field}
-              />
-            )}
-          />
-          <Grid container justifyContent="space-between">
+    <div className="flex min-h-screen flex-col items-center justify-center">
+      <Head>
+        <title>Auth</title>
+      </Head>
+      <main className="flex w-screen flex-1 flex-col items-center justify-center">
+        <Grid
+          container
+          justifyContent="center"
+          direction="column"
+          alignItems="center"
+          sx={{ width: 360 }}
+        >
+          <GppGoodIcon color="primary" sx={{ width: 100, height: 100 }} />
+          {error.length !== 0 && (
+            <Alert severity="error">
+              <>
+                <AlertTitle>Authorization Error</AlertTitle>
+                {error.map((e, i) => (
+                  <Typography variant="body2" key={i}>
+                    {e}
+                  </Typography>
+                ))}
+              </>
+            </Alert>
+          )}
+          <form onSubmit={handleSubmit(onSubmit) as VoidFunction}>
+            <Controller
+              name="username"
+              control={control}
+              render={({ field }) => (
+                <TextField
+                  fullWidth
+                  size="small"
+                  sx={{ my: 2 }}
+                  label="Username"
+                  error={errors.username ? true : false}
+                  helperText={errors.username?.message}
+                  {...field}
+                />
+              )}
+            />
+            <Controller
+              name="password"
+              control={control}
+              render={({ field }) => (
+                <TextField
+                  label="Password"
+                  type={showPassword ? 'text' : 'password'}
+                  error={errors.password ? true : false}
+                  helperText={
+                    errors.password
+                      ? errors.password?.message
+                      : 'Must be min 5 char'
+                  }
+                  InputProps={{
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IconButton
+                          aria-label="toggle password visibility"
+                          onClick={() => {
+                            setShowPassword(!showPassword);
+                          }}
+                          onMouseDown={(event) => {
+                            event.preventDefault();
+                          }}
+                          edge="end"
+                        >
+                          {showPassword ? (
+                            <VisibilityOffIcon />
+                          ) : (
+                            <Visibility />
+                          )}
+                        </IconButton>
+                      </InputAdornment>
+                    ),
+                  }}
+                  size="small"
+                  sx={{ my: 1 }}
+                  fullWidth
+                  {...field}
+                />
+              )}
+            />
+            <Grid container justifyContent="space-between">
+              <Grid item>
+                <Link
+                  component="button"
+                  type="button"
+                  variant="body2"
+                  onClick={() => {
+                    clearErrors();
+                    setError([]);
+                    setIsRegister(!isRegister);
+                  }}
+                >
+                  {isRegister
+                    ? 'Have an account? Login'
+                    : "Don't have an account? Register"}
+                </Link>
+              </Grid>
+              <Grid item>
+                <Button
+                  variant="contained"
+                  type="submit"
+                  startIcon={<IconDatabase />}
+                  onClick={() => {
+                    setError([]);
+                  }}
+                >
+                  {isRegister ? 'Register' : 'Login'}
+                </Button>
+              </Grid>
+            </Grid>
+          </form>
+          <br />
+          <Grid container justifyContent="space-evenly">
             <Grid item>
-              <Link
-                component="button"
-                type="button"
-                variant="body2"
+              <Image
+                src="/images/ico-42-logo.jpg"
                 onClick={() => {
-                  clearErrors();
-                  setError([]);
-                  setIsRegister(!isRegister);
+                  void (async () => {
+                    await signIn('42-school');
+                  })();
                 }}
-              >
-                {isRegister
-                  ? 'Have an account? Login'
-                  : "Don't have an account? Register"}
-              </Link>
+                width={50}
+                height={50}
+              />
             </Grid>
             <Grid item>
-              <Button
-                variant="contained"
-                type="submit"
-                startIcon={<IconDatabase />}
+              <Image
+                src="/images/ico-google-logo-96.png"
                 onClick={() => {
-                  setError([]);
+                  void (async () => {
+                    await signIn('google');
+                  })();
                 }}
-              >
-                {isRegister ? 'Register' : 'Login'}
-              </Button>
+                width={50}
+                height={50}
+              />
             </Grid>
-          </Grid>
-        </form>
-        <br />
-        <Grid container justifyContent="space-evenly">
-          <Grid item>
-            <Image
-              src="/images/ico-42-logo.jpg"
-              onClick={() => {
-                void (async () => {
-                  await signIn('42-school');
-                })();
-              }}
-              width={50}
-              height={50}
-            />
-          </Grid>
-          <Grid item>
-            <Image
-              src="/images/ico-google-logo-96.png"
-              onClick={() => {
-                void (async () => {
-                  await signIn('google');
-                })();
-              }}
-              width={50}
-              height={50}
-            />
           </Grid>
         </Grid>
-      </Grid>
-    </Layout>
+      </main>
+    </div>
   );
 };
 
