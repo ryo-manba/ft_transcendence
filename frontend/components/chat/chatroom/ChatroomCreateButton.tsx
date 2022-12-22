@@ -1,7 +1,9 @@
-import { useState, memo, useCallback } from 'react';
+import { useState, memo, useCallback, Dispatch, SetStateAction } from 'react';
 import { Socket } from 'socket.io-client';
 import {
   Button,
+  Box,
+  Collapse,
   TextField,
   Dialog,
   DialogActions,
@@ -18,15 +20,22 @@ import {
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import AddCircleOutlineRounded from '@mui/icons-material/AddCircleOutlineRounded';
-import { CreateChatroomInfo, ChatroomType, CHATROOM_TYPE } from 'types/chat';
+import {
+  CreateChatroomInfo,
+  ChatroomType,
+  CHATROOM_TYPE,
+  Chatroom,
+} from 'types/chat';
 import { useQueryUser } from 'hooks/useQueryUser';
 import { Loading } from 'components/common/Loading';
 import { useForm, SubmitHandler, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
+import { ChatErrorAlert } from 'components/chat/utils/ChatErrorAlert';
 
 type Props = {
   socket: Socket;
+  setRooms: Dispatch<SetStateAction<Chatroom[]>>;
 };
 
 export type ChatroomForm = {
@@ -36,10 +45,12 @@ export type ChatroomForm = {
 
 export const ChatroomCreateButton = memo(function ChatroomCreateButton({
   socket,
+  setRooms,
 }: Props) {
   const [open, setOpen] = useState(false);
   const [roomType, setRoomType] = useState<ChatroomType>(CHATROOM_TYPE.PUBLIC);
   const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState('');
 
   const { data: user } = useQueryUser();
   if (user === undefined) {
@@ -94,7 +105,11 @@ export const ChatroomCreateButton = memo(function ChatroomCreateButton({
 
   const createChatroom = useCallback(
     (room: CreateChatroomInfo) => {
-      socket.emit('chat:createRoom', room);
+      socket.emit('chat:createRoom', room, (res: Chatroom) => {
+        res === undefined
+          ? setError('Failed to create room.')
+          : setRooms((prev) => [...prev, res]);
+      });
     },
     [socket],
   );
@@ -115,6 +130,11 @@ export const ChatroomCreateButton = memo(function ChatroomCreateButton({
 
   return (
     <>
+      <Box sx={{ width: '100%' }}>
+        <Collapse in={error !== ''}>
+          <ChatErrorAlert error={error} setError={setError} />
+        </Collapse>
+      </Box>
       <Button
         color="primary"
         variant="outlined"
