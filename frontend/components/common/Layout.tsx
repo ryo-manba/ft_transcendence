@@ -1,4 +1,4 @@
-import { Guest } from 'components/game/home/Guest';
+import { GameGuest } from 'components/common/GameGuest';
 import { useQueryUser } from 'hooks/useQueryUser';
 import Head from 'next/head';
 import { useRouter } from 'next/router';

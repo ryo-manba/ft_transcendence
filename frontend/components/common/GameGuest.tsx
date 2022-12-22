@@ -3,6 +3,7 @@ import {
   Dialog,
   DialogActions,
   DialogTitle,
+  IconButton,
   List,
   ListItem,
   ListItemText,
@@ -16,14 +17,16 @@ import { useRouter } from 'next/router';
 import { usePlayerNamesStore } from 'store/game/PlayerNames';
 import { useQueryUser } from 'hooks/useQueryUser';
 import { Invitation } from 'types/game';
+import { CloseButton } from '@mantine/core';
+import { useMutationStatus } from 'hooks/useMutationStatus';
 
 type Props = {
   hosts: Friend[];
 };
 
-export const Guest = ({ hosts }: Props) => {
-  // const [openInvitation, setOpenInvitation] = useState(false);
-  const [openSelecter, setOpenSelecter] = useState(false);
+export const GameGuest = ({ hosts }: Props) => {
+  const [openDialog, setOpenDialog] = useState(false);
+  const [openSnackbar, setOpenSnackbar] = useState(true);
   const { socket } = useSocketStore();
   const updatePlayState = usePlayStateStore((store) => store.updatePlayState);
   const updatePlayerNames = usePlayerNamesStore(
@@ -31,13 +34,14 @@ export const Guest = ({ hosts }: Props) => {
   );
   const router = useRouter();
   const { data: user } = useQueryUser();
+  const { updateStatusMutation } = useMutationStatus();
 
   const handleClick = useCallback(() => {
-    setOpenSelecter(true);
+    setOpenDialog(true);
   }, []);
 
   const handleClose = useCallback(() => {
-    setOpenSelecter(false);
+    setOpenDialog(false);
   }, []);
 
   const handleSelectClick = useCallback(
@@ -54,14 +58,30 @@ export const Guest = ({ hosts }: Props) => {
   );
 
   useEffect(() => {
+    if (user === undefined) return;
+    const updateStatusPlaying = () => {
+      try {
+        updateStatusMutation.mutate({
+          userId: user.id,
+          status: 'PLAYING',
+        });
+      } catch (error) {
+        return;
+      }
+    };
+
     socket.on('select', (playerNames: [string, string]) => {
       updatePlayerNames(playerNames);
       updatePlayState(PlayState.stateSelecting);
+
+      updateStatusPlaying();
       void router.push('/game/battle');
     });
     socket.on('standBy', (playerNames: [string, string]) => {
       updatePlayerNames(playerNames);
       updatePlayState(PlayState.stateStandingBy);
+
+      updateStatusPlaying();
       void router.push('/game/battle');
     });
 
@@ -74,13 +94,26 @@ export const Guest = ({ hosts }: Props) => {
   return (
     <>
       <Snackbar
-        open={hosts.length !== 0}
+        open={hosts.length !== 0 && openSnackbar}
         message={`you are invited to game`}
         anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
         key={0}
-        action={<Button onClick={handleClick}>JOIN</Button>}
+        action={
+          <>
+            <Button onClick={handleClick}>JOIN</Button>
+            <IconButton
+              aria-label="close"
+              sx={{ p: 0.5 }}
+              onClick={() => {
+                setOpenSnackbar(false);
+              }}
+            >
+              <CloseButton />
+            </IconButton>
+          </>
+        }
       />
-      <Dialog open={openSelecter}>
+      <Dialog open={openDialog}>
         <DialogTitle>Friend Match</DialogTitle>
         <List>
           {hosts.map((host) => (
