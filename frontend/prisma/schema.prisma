@@ -106,6 +106,7 @@ enum ChatroomType {
   PUBLIC
   PRIVATE
   PROTECTED
+  DM
 }
 
 enum UserStatus {
