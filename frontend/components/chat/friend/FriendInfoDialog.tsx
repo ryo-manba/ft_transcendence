@@ -21,20 +21,23 @@ type Props = {
   inviteGame: (friend: Friend) => void;
 };
 
-/**
- * NOTE: 現状は各項目を選択できるところまで
- * TODO: 以下の処理は今後追加する
- * - 友人のProfileを表示
- * - Gameに誘う
- * - ダイレクトメッセージ
- */
+const FRIEND_ACTIONS = {
+  PROFILE: 'Profile',
+  INVITE_GAME: 'Invite Game',
+  DM: 'Direct Message',
+} as const;
+
+type FriendActions = typeof FRIEND_ACTIONS[keyof typeof FRIEND_ACTIONS];
+
 export const FriendInfoDialog = memo(function FriendInfoDialog({
   friend,
   open,
   onClose,
   inviteGame: inviteFriend,
 }: Props) {
-  const [actionType, setActionType] = useState('Profile');
+  const [actionType, setActionType] = useState<FriendActions>(
+    FRIEND_ACTIONS.PROFILE,
+  );
   const router = useRouter();
 
   const initDialog = useCallback(() => {
@@ -42,7 +45,7 @@ export const FriendInfoDialog = memo(function FriendInfoDialog({
   }, [actionType]);
 
   const handleChangeType = (event: SelectChangeEvent) => {
-    setActionType(event.target.value);
+    setActionType(event.target.value as FriendActions);
   };
 
   const handleClose = () => {
@@ -66,7 +69,7 @@ export const FriendInfoDialog = memo(function FriendInfoDialog({
           inviteFriend(friend);
           break;
         case 'Direct Message':
-          console.log(actionType);
+          console.log('Direct Message');
           break;
         default:
           break;
