@@ -31,7 +31,7 @@ export const Host = () => {
   useEffect(() => {
     if (user === undefined) return;
 
-    const start = () => {
+    const updateStatusPlaying = () => {
       try {
         updateStatusMutation.mutate({
           userId: user.id,
@@ -49,7 +49,7 @@ export const Host = () => {
       });
       setOpen(false);
 
-      start();
+      updateStatusPlaying();
       void router.push('/game/battle');
     });
     socket.on('standBy', (playerNames: [string, string]) => {
@@ -60,7 +60,7 @@ export const Host = () => {
       });
       setOpen(false);
 
-      start();
+      updateStatusPlaying();
       void router.push('/game/battle');
     });
 

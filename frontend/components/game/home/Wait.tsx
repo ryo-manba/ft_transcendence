@@ -34,7 +34,7 @@ export const Wait = () => {
   const router = useRouter();
   useEffect(() => {
     if (user === undefined) return;
-    const start = () => {
+    const updateStatusPlaying = () => {
       try {
         updateStatusMutation.mutate({
           userId: user.id,
@@ -48,14 +48,14 @@ export const Wait = () => {
       updatePlayerNames(playerNames);
       updatePlayState(PlayState.stateSelecting);
 
-      start();
+      updateStatusPlaying();
       void router.push('/game/battle');
     });
     socket.on('standBy', (playerNames: [string, string]) => {
       updatePlayerNames(playerNames);
       updatePlayState(PlayState.stateStandingBy);
 
-      start();
+      updateStatusPlaying();
       void router.push('/game/battle');
     });
 
