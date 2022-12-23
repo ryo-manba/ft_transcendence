@@ -1,5 +1,5 @@
 {
   "extends": "./tsconfig.json",
-  "include": ["pages", "store", "components", ".eslintrc.js"],
+  "include": ["pages", "store", "components", "api", ".eslintrc.js"],
   "exclude": ["node_modules"]
 }
