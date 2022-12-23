@@ -44,14 +44,29 @@ export const Wait = () => {
 
   const router = useRouter();
   useEffect(() => {
+    if (user === undefined) return;
+    const updateStatusPlaying = () => {
+      try {
+        updateStatusMutation.mutate({
+          userId: user.id,
+          status: 'PLAYING',
+        });
+      } catch (error) {
+        return;
+      }
+    };
     socket.on('select', (playerNames: [string, string]) => {
       updatePlayerNames(playerNames);
       updatePlayState(PlayState.stateSelecting);
+
+      updateStatusPlaying();
       void router.push('/game/battle');
     });
     socket.on('standBy', (playerNames: [string, string]) => {
       updatePlayerNames(playerNames);
       updatePlayState(PlayState.stateStandingBy);
+
+      updateStatusPlaying();
       void router.push('/game/battle');
     });
 
@@ -59,7 +74,7 @@ export const Wait = () => {
       socket.off('select');
       socket.off('standBy');
     };
-  }, [socket]);
+  }, [socket, user]);
 
   useEffect(() => {
     router.events.on('routeChangeStart', cancelPlay);

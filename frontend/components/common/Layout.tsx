@@ -1,4 +1,4 @@
-import { Guest } from 'components/game/home/Guest';
+import { GameGuest } from 'components/common/GameGuest';
 import { useQueryUser } from 'hooks/useQueryUser';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
@@ -67,7 +67,7 @@ export const Layout: FC<Props> = ({
         <title>{title}</title>
       </Head>
       {/* <main style={{ backgroundImage: `url(${Image.src})` }}>{children}</main> */}
-      {hosts.length !== 0 && <Guest hosts={hosts} />}
+      {hosts.length !== 0 && <GameGuest hosts={hosts} />}
       <main className={mainClassName}>{children}</main>
     </div>
   );

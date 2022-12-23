@@ -5,15 +5,16 @@ import {
   DialogActions,
   DialogContent,
   InputLabel,
-  IconButton,
-  InputAdornment,
   Select,
   SelectChangeEvent,
   MenuItem,
   FormControl,
   DialogTitle,
-  TextField,
 } from '@mui/material';
+import { useForm, SubmitHandler } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+
 import {
   Chatroom,
   ChatroomSettings,
@@ -23,15 +24,11 @@ import {
 } from 'types/chat';
 import { Friend } from 'types/friend';
 import { fetchJoinableFriends } from 'api/friend/fetchJoinableFriends';
-import { fetchNotAdminUsers } from 'api/chat/fetchNotAdminUsers';
-import { fetchNotBannedUsers } from 'api/chat/fetchNotBannedUsers';
+import { fetchChatroomNormalUsers } from 'api/chat/fetchChatroomNormalUsers';
 import { useQueryUser } from 'hooks/useQueryUser';
 import { Loading } from 'components/common/Loading';
-import Visibility from '@mui/icons-material/Visibility';
-import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
-import { useForm, SubmitHandler, Controller } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
+import { ChatroomSettingDetailDialog } from 'components/chat/chatroom/ChatroomSettingDetailDialog';
+import { ChatPasswordForm } from 'components/chat/utils/ChatPasswordForm';
 
 type Props = {
   room: Chatroom;
@@ -46,9 +43,10 @@ type Props = {
     checkPassword: string,
   ) => void;
   banUser: (userId: number) => void;
+  muteUser: (userId: number) => void;
 };
 
-export type PasswordForm = {
+type PasswordForm = {
   oldPassword: string;
   newPassword: string;
   checkPassword: string;
@@ -63,6 +61,7 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
   addAdmin,
   changePassword,
   banUser,
+  muteUser,
 }: Props) {
   const { data: user } = useQueryUser();
   const [selectedRoomSetting, setSelectedRoomSetting] =
@@ -70,33 +69,28 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
   const [selectedUserId, setSelectedUserId] = useState('');
   const [notAdminUsers, setNotAdminUsers] = useState<ChatUser[]>([]);
   const [notBannedUsers, setNotBannedUsers] = useState<ChatUser[]>([]);
+  const [notMutedUsers, setNotMutedUsers] = useState<ChatUser[]>([]);
   const [friends, setFriends] = useState<Friend[]>([]);
-  const [showPassword, setShowPassword] = useState(false);
 
+  const errorInputPassword = 'Passwords must be at least 5 characters';
   const schema = z.object({
     oldPassword: z.string().refine(
       (value: string) =>
         selectedRoomSetting !== CHATROOM_SETTINGS.CHANGE_PASSWORD ||
         value.length >= 5,
-      () => ({
-        message: 'Passwords must be at least 5 characters',
-      }),
+      () => ({ message: errorInputPassword }),
     ),
     newPassword: z.string().refine(
       (value: string) =>
         selectedRoomSetting !== CHATROOM_SETTINGS.CHANGE_PASSWORD ||
         value.length >= 5,
-      () => ({
-        message: 'Passwords must be at least 5 characters',
-      }),
+      () => ({ message: errorInputPassword }),
     ),
     checkPassword: z.string().refine(
       (value: string) =>
         selectedRoomSetting !== CHATROOM_SETTINGS.CHANGE_PASSWORD ||
         value.length >= 5,
-      () => ({
-        message: 'Passwords must be at least 5 characters',
-      }),
+      () => ({ message: errorInputPassword }),
     ),
   });
   // TODO: 余裕あったら以下を使えるようにする
@@ -110,63 +104,50 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
   //   }
   // });
 
+  const fetchFriends = async (userId: number) => {
+    const res = await fetchJoinableFriends({
+      userId: userId,
+      roomId: room.id,
+    });
+    setFriends(res);
+  };
+
+  const fetchCanSetAdminUsers = async () => {
+    const notAdminUsers = await fetchChatroomNormalUsers({
+      roomId: room.id,
+    });
+    setNotAdminUsers(notAdminUsers);
+  };
+
+  const fetchCanBanUsers = async () => {
+    const notBannedUsers = await fetchChatroomNormalUsers({
+      roomId: room.id,
+    });
+    setNotBannedUsers(notBannedUsers);
+  };
+
+  const fetchCanMuteUsers = async () => {
+    const notMutedUsers = await fetchChatroomNormalUsers({
+      roomId: room.id,
+    });
+    setNotMutedUsers(notMutedUsers);
+  };
+
+  // 設定項目を選択した時に対応するユーザ一覧を取得する
   useEffect(() => {
     if (user === undefined) return;
-    // フレンドを追加する項目を選択時に取得する
-    if (selectedRoomSetting !== CHATROOM_SETTINGS.ADD_FRIEND) return;
-
-    const fetchFriends = async () => {
-      // フォローしている かつ そのチャットルームに所属していないユーザーを取得する
-      const res = await fetchJoinableFriends({
-        userId: user.id,
-        roomId: room.id,
-      });
-
-      setFriends(res);
-    };
-
-    void fetchFriends();
+    switch (selectedRoomSetting) {
+      case CHATROOM_SETTINGS.ADD_FRIEND:
+        void fetchFriends(user.id);
+      case CHATROOM_SETTINGS.SET_ADMIN:
+        void fetchCanSetAdminUsers();
+      case CHATROOM_SETTINGS.BAN_USER:
+        void fetchCanBanUsers();
+      case CHATROOM_SETTINGS.MUTE_USER:
+        void fetchCanMuteUsers();
+      default:
+    }
   }, [selectedRoomSetting]);
-
-  useEffect(() => {
-    if (user === undefined) return;
-    // Adminを追加する項目を選択時に取得する
-    if (selectedRoomSetting !== CHATROOM_SETTINGS.SET_ADMIN) return;
-
-    const fetchCanSetAdminUsers = async () => {
-      // チャットルーム入室している かつ すでにAdminではない ユーザーを取得する
-      const notAdminUsers = await fetchNotAdminUsers({
-        roomId: room.id,
-      });
-      // オーナーを弾く
-      const exceptOwner = notAdminUsers.filter(
-        (notAdmin) => notAdmin.id !== user.id,
-      );
-      setNotAdminUsers(exceptOwner);
-    };
-
-    void fetchCanSetAdminUsers();
-  }, [selectedRoomSetting]);
-
-  useEffect(() => {
-    if (user === undefined) return;
-    // BANする項目を選択時に取得する
-    if (selectedRoomSetting !== CHATROOM_SETTINGS.BAN_USER) return;
-
-    const fetchCanBanUsers = async () => {
-      // チャットルーム入室している かつ すでにBANされていないユーザーを取得する
-      const notBannedUsers = await fetchNotBannedUsers({
-        roomId: room.id,
-      });
-      // オーナーを弾く
-      const exceptOwner = notBannedUsers.filter(
-        (notBannedUser) => notBannedUser.id !== user.id,
-      );
-      setNotBannedUsers(exceptOwner);
-    };
-
-    void fetchCanBanUsers();
-  });
 
   if (user === undefined) {
     return <Loading />;
@@ -229,10 +210,9 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
         changePassword(oldPassword, newPassword, checkPassword);
         break;
       case CHATROOM_SETTINGS.MUTE_USER:
-        console.log(selectedRoomSetting);
+        muteUser(Number(selectedUserId));
         break;
       case CHATROOM_SETTINGS.BAN_USER:
-        console.log('BAN_USER');
         banUser(Number(selectedUserId));
         break;
     }
@@ -240,6 +220,7 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
   };
 
   const isOwner = room.ownerId === user.id;
+  const passwordHelper = 'Must be min 5 characters';
 
   return (
     <>
@@ -288,236 +269,67 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
           </FormControl>
         </DialogContent>
         {selectedRoomSetting === CHATROOM_SETTINGS.ADD_FRIEND && (
-          <>
-            {friends.length === 0 ? (
-              <div
-                className="mb-4 flex justify-center rounded-lg bg-red-100 p-4 text-sm text-red-700 dark:bg-red-200 dark:text-red-800"
-                role="alert"
-              >
-                <span className="font-medium">No users are available.</span>
-              </div>
-            ) : (
-              <DialogContent>
-                <FormControl sx={{ mx: 3, my: 1, minWidth: 200 }}>
-                  <InputLabel id="room-setting-select-label">Friend</InputLabel>
-                  <Select
-                    labelId="room-setting-select-label"
-                    id="room-setting"
-                    value={selectedUserId}
-                    label="setting"
-                    onChange={handleChangeUserId}
-                  >
-                    {friends.map((friend) => (
-                      <MenuItem value={String(friend.id)} key={friend.id}>
-                        {friend.name}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </DialogContent>
-            )}
-          </>
+          <ChatroomSettingDetailDialog
+            users={friends}
+            labelTitle="Friend"
+            selectedValue={selectedUserId}
+            onChange={handleChangeUserId}
+          />
         )}
         {selectedRoomSetting === CHATROOM_SETTINGS.SET_ADMIN && (
-          <>
-            {notAdminUsers.length === 0 ? (
-              <div
-                className="mb-4 flex justify-center rounded-lg bg-red-100 p-4 text-sm text-red-700 dark:bg-red-200 dark:text-red-800"
-                role="alert"
-              >
-                <span className="font-medium">No users are available.</span>
-              </div>
-            ) : (
-              <DialogContent>
-                <FormControl sx={{ mx: 3, my: 1, minWidth: 200 }}>
-                  <InputLabel id="room-setting-select-label">User</InputLabel>
-                  <Select
-                    labelId="room-setting-select-label"
-                    id="room-setting"
-                    value={selectedUserId}
-                    label="setting"
-                    onChange={handleChangeUserId}
-                  >
-                    {notAdminUsers.map((notAdmin) => (
-                      <MenuItem value={String(notAdmin.id)} key={notAdmin.id}>
-                        {notAdmin.name}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </DialogContent>
-            )}
-          </>
+          <ChatroomSettingDetailDialog
+            users={notAdminUsers}
+            labelTitle="User"
+            selectedValue={selectedUserId}
+            onChange={handleChangeUserId}
+          />
         )}
         {selectedRoomSetting === CHATROOM_SETTINGS.CHANGE_PASSWORD && (
           <>
             <DialogContent>
-              <Controller
-                name="oldPassword"
+              <ChatPasswordForm
                 control={control}
-                render={({ field }) => (
-                  <TextField
-                    margin="dense"
-                    label="Old Password"
-                    type={showPassword ? 'text' : 'password'}
-                    error={errors.oldPassword ? true : false}
-                    helperText={
-                      errors.oldPassword
-                        ? errors.oldPassword?.message
-                        : 'Must be min 5 characters'
-                    }
-                    InputProps={{
-                      endAdornment: (
-                        <InputAdornment position="end">
-                          <IconButton
-                            aria-label="toggle password visibility"
-                            onClick={() => {
-                              setShowPassword(!showPassword);
-                            }}
-                            onMouseDown={(event) => {
-                              event.preventDefault();
-                            }}
-                            edge="end"
-                          >
-                            {showPassword ? (
-                              <VisibilityOffIcon />
-                            ) : (
-                              <Visibility />
-                            )}
-                          </IconButton>
-                        </InputAdornment>
-                      ),
-                    }}
-                    fullWidth
-                    variant="standard"
-                    // eslint-disable-next-line react/jsx-props-no-spreading
-                    {...field}
-                  />
-                )}
+                inputName="oldPassword"
+                labelName="Old Password"
+                error={errors.oldPassword}
+                helperText={passwordHelper}
               />
             </DialogContent>
             <DialogContent>
-              <Controller
-                name="newPassword"
+              <ChatPasswordForm
                 control={control}
-                render={({ field }) => (
-                  <TextField
-                    margin="dense"
-                    label="New Password"
-                    type={showPassword ? 'text' : 'password'}
-                    error={errors.newPassword ? true : false}
-                    helperText={
-                      errors.newPassword
-                        ? errors.newPassword?.message
-                        : 'Must be min 5 characters'
-                    }
-                    InputProps={{
-                      endAdornment: (
-                        <InputAdornment position="end">
-                          <IconButton
-                            aria-label="toggle password visibility"
-                            onClick={() => {
-                              setShowPassword(!showPassword);
-                            }}
-                            onMouseDown={(event) => {
-                              event.preventDefault();
-                            }}
-                            edge="end"
-                          >
-                            {showPassword ? (
-                              <VisibilityOffIcon />
-                            ) : (
-                              <Visibility />
-                            )}
-                          </IconButton>
-                        </InputAdornment>
-                      ),
-                    }}
-                    fullWidth
-                    variant="standard"
-                    // eslint-disable-next-line react/jsx-props-no-spreading
-                    {...field}
-                  />
-                )}
+                inputName="newPassword"
+                labelName="New Password"
+                error={errors.newPassword}
+                helperText={passwordHelper}
               />
             </DialogContent>
             <DialogContent>
-              <Controller
-                name="checkPassword"
+              <ChatPasswordForm
                 control={control}
-                render={({ field }) => (
-                  <TextField
-                    margin="dense"
-                    label="Check Password"
-                    type={showPassword ? 'text' : 'password'}
-                    error={errors.checkPassword ? true : false}
-                    helperText={
-                      errors.checkPassword
-                        ? errors.checkPassword?.message
-                        : 'Must be min 5 characters'
-                    }
-                    InputProps={{
-                      endAdornment: (
-                        <InputAdornment position="end">
-                          <IconButton
-                            aria-label="toggle password visibility"
-                            onClick={() => {
-                              setShowPassword(!showPassword);
-                            }}
-                            onMouseDown={(event) => {
-                              event.preventDefault();
-                            }}
-                            edge="end"
-                          >
-                            {showPassword ? (
-                              <VisibilityOffIcon />
-                            ) : (
-                              <Visibility />
-                            )}
-                          </IconButton>
-                        </InputAdornment>
-                      ),
-                    }}
-                    fullWidth
-                    variant="standard"
-                    // eslint-disable-next-line react/jsx-props-no-spreading
-                    {...field}
-                  />
-                )}
+                inputName="checkPassword"
+                labelName="Check Password"
+                error={errors.checkPassword}
+                helperText={passwordHelper}
               />
             </DialogContent>
           </>
         )}
         {selectedRoomSetting === CHATROOM_SETTINGS.BAN_USER && (
-          <>
-            {notBannedUsers.length === 0 ? (
-              <div
-                className="mb-4 flex justify-center rounded-lg bg-red-100 p-4 text-sm text-red-700 dark:bg-red-200 dark:text-red-800"
-                role="alert"
-              >
-                <span className="font-medium">No users are available.</span>
-              </div>
-            ) : (
-              <DialogContent>
-                <FormControl sx={{ mx: 3, my: 1, minWidth: 200 }}>
-                  <InputLabel id="room-setting-select-label">User</InputLabel>
-                  <Select
-                    labelId="room-setting-select-label"
-                    id="room-setting"
-                    value={selectedUserId}
-                    label="setting"
-                    onChange={handleChangeUserId}
-                  >
-                    {notBannedUsers.map((notBanned) => (
-                      <MenuItem value={String(notBanned.id)} key={notBanned.id}>
-                        {notBanned.name}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </DialogContent>
-            )}
-          </>
+          <ChatroomSettingDetailDialog
+            users={notBannedUsers}
+            labelTitle="User"
+            selectedValue={selectedUserId}
+            onChange={handleChangeUserId}
+          />
+        )}
+        {selectedRoomSetting === CHATROOM_SETTINGS.MUTE_USER && (
+          <ChatroomSettingDetailDialog
+            users={notMutedUsers}
+            labelTitle="User"
+            selectedValue={selectedUserId}
+            onChange={handleChangeUserId}
+          />
         )}
         <DialogActions>
           <Button onClick={handleClose} variant="outlined">
