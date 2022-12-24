@@ -79,8 +79,9 @@ export const Wait = () => {
             left: '50%',
             transform: 'translate(-50%, -50%)',
             bgcolor: 'background.paper',
-            width: '300px',
-            height: '200px',
+            width: '270px',
+            height: '180px',
+            borderRadius: '5px',
           }}
         >
           <Grid item>
@@ -90,7 +91,7 @@ export const Wait = () => {
               <DoneOutlineIcon />
             )}
           </Grid>
-          <Grid item sx={{ mt: 1 }}>
+          <Grid item sx={{ mt: 2 }}>
             <Typography
               variant="h6"
               id="modal-modal-title"
