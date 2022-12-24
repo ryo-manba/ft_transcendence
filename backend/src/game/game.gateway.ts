@@ -300,6 +300,15 @@ export class GameGateway {
     }
   }
 
+  @SubscribeMessage('denyInvitation')
+  denyInvitation(@MessageBody() data: Omit<Invitation, 'hostSockedId'>) {
+    const invitation = this.invitationList.find(data.hostId);
+    if (invitation === undefined) return;
+
+    this.invitationList.delete(invitation.hostId);
+    this.server.to(invitation.hostSocketId).emit('denyInvitation');
+  }
+
   /**
    * guestが招待を受け入れる
    * @param socket

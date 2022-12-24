@@ -67,7 +67,7 @@ export const Layout: FC<Props> = ({
         <title>{title}</title>
       </Head>
       {/* <main style={{ backgroundImage: `url(${Image.src})` }}>{children}</main> */}
-      {hosts.length !== 0 && <GameGuest hosts={hosts} />}
+      {hosts.length !== 0 && <GameGuest hosts={hosts} setHosts={setHosts} />}
       <main className={mainClassName}>{children}</main>
     </div>
   );

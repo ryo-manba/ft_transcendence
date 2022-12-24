@@ -14,9 +14,10 @@ import { usePlayerNamesStore } from 'store/game/PlayerNames';
 import { Invitation } from 'types/game';
 import { useQueryUser } from 'hooks/useQueryUser';
 import { useMutationStatus } from 'hooks/useMutationStatus';
+import ErrorIcon from '@mui/icons-material/Error';
 
 export const Host = () => {
-  const [open, setOpen] = useState(true);
+  const [invitationDenied, setInvitationDenied] = useState(false);
   const updatePlayState = usePlayStateStore((store) => store.updatePlayState);
   const updatePlayerNames = usePlayerNamesStore(
     (store) => store.updatePlayerNames,
@@ -47,7 +48,6 @@ export const Host = () => {
       updateInvitedFriendState({
         friendId: null,
       });
-      setOpen(false);
 
       updateStatusPlaying();
       void router.push('/game/battle');
@@ -58,15 +58,19 @@ export const Host = () => {
       updateInvitedFriendState({
         friendId: null,
       });
-      setOpen(false);
 
       updateStatusPlaying();
       void router.push('/game/battle');
+    });
+    socket.on('denyInvitation', () => {
+      // InvitedFriendStateの変更はcancelInvitationにて行う。
+      setInvitationDenied(true);
     });
 
     return () => {
       socket.off('select');
       socket.off('standBy');
+      socket.off('denyInvitation');
     };
   });
 
@@ -79,7 +83,6 @@ export const Host = () => {
 
       socket.emit('cancelInvitation', invitation);
       updateInvitedFriendState({ friendId: null });
-      setOpen(false);
     }
   }, [user]);
 
@@ -92,7 +95,10 @@ export const Host = () => {
   });
 
   return (
-    <Modal open={open} aria-labelledby="modal-modal-title">
+    <Modal
+      open={invitedFriendState.friendId !== null}
+      aria-labelledby="modal-modal-title"
+    >
       <Grid
         container
         justifyContent="center"
@@ -108,19 +114,39 @@ export const Host = () => {
           height: '25%',
         }}
       >
-        <Grid item>
-          <CircularProgress />
-        </Grid>
-        <Grid item sx={{ mt: 1 }}>
-          <Typography
-            variant="h6"
-            id="modal-modal-title"
-            align="center"
-            gutterBottom
-          >
-            Waiting for Opponent...
-          </Typography>
-        </Grid>
+        {invitationDenied ? (
+          <>
+            <Grid>
+              <ErrorIcon fontSize="large" />
+            </Grid>
+            <Grid item sx={{ mt: 1 }}>
+              <Typography
+                variant="h6"
+                id="modal-modal-title"
+                align="center"
+                gutterBottom
+              >
+                Invitation was denied...
+              </Typography>
+            </Grid>
+          </>
+        ) : (
+          <>
+            <Grid item>
+              <CircularProgress />
+            </Grid>
+            <Grid item sx={{ mt: 1 }}>
+              <Typography
+                variant="h6"
+                id="modal-modal-title"
+                align="center"
+                gutterBottom
+              >
+                Waiting for Opponent...
+              </Typography>
+            </Grid>
+          </>
+        )}
         <Grid item>
           <Button onClick={cancelInvitation}>cancel</Button>
         </Grid>
