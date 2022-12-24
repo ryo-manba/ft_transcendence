@@ -486,11 +486,70 @@ export class ChatService {
   }
 
   /**
+   * 3つの配列を結合して、値の重複を取得するSetを作成する
+   */
+  getDuplicateIds(arr1: number[], arr2: number[], arr3: number[]): number[] {
+    const duplicateIds = new Set(
+      arr1
+        .concat(arr2, arr3)
+        .filter((id, index, self) => self.indexOf(id) !== index),
+    );
+
+    // Setから配列を作成して返す
+    return [...duplicateIds];
+  }
+
+  /**
+   * user1 と user2 が含まれているDMルームがすでに存在するかを確認する
+   * @return 既にある -> true
+   * @teturn ない -> false
+   */
+  async isCreatedDMRoom(userId1: number, userId2: number): Promise<boolean> {
+    const DMRooms = await this.prisma.chatroom.findMany({
+      where: {
+        type: 'DM',
+      },
+    });
+    const DMRoomIds = DMRooms.map((room) => {
+      return room.id;
+    });
+    this.logger.log('DMRoomIds', DMRoomIds);
+
+    const rooms1 = await this.findJoinedRooms(userId1);
+    const rooms2 = await this.findJoinedRooms(userId2);
+    const roomIds1 = rooms1.map((room) => {
+      return room.id;
+    });
+    this.logger.log('rooms1', rooms1);
+    const roomIds2 = rooms2.map((room) => {
+      return room.id;
+    });
+    this.logger.log('rooms2', rooms2);
+    const arr = this.getDuplicateIds(DMRoomIds, roomIds1, roomIds2);
+    this.logger.log('arr', arr);
+    if (arr.length > 0) {
+      this.logger.log('isCreatedDMRoom: already created');
+
+      return true;
+    }
+
+    return false;
+  }
+
+  /**
    * チャットルームに所属するユーザーのステータスを更新する
    * @param createDirectMessageDto
    */
   async startDirectMessage(dto: createDirectMessageDto): Promise<boolean> {
     this.logger.log('startDirectMessage: ', dto);
+
+    const isCreated = await this.isCreatedDMRoom(dto.userId1, dto.userId2);
+    this.logger.log('isCreated', isCreated);
+    if (isCreated) {
+      return false;
+    }
+
+    // 共通するRoom一覧を取得する
     const roomName = '[DM] ' + dto.name1 + '_' + dto.name2;
     const createChatroomDto: CreateChatroomDto = {
       name: roomName,

@@ -5,7 +5,12 @@ import {
   WebSocketServer,
   ConnectedSocket,
 } from '@nestjs/websockets';
-import { Chatroom, ChatroomType, ChatroomMembersStatus } from '@prisma/client';
+import {
+  Chatroom,
+  ChatroomType,
+  ChatroomMembersStatus,
+  Message,
+} from '@prisma/client';
 import { Server, Socket } from 'socket.io';
 import { Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
@@ -117,10 +122,10 @@ export class ChatGateway {
    * @return チャットルームに対応したメッセージを取得して返す
    */
   @SubscribeMessage('chat:changeCurrentRoom')
-  async onGetMessage(
+  async changeCurrentRoom(
     @ConnectedSocket() client: Socket,
     @MessageBody() roomId: number,
-  ): Promise<any> {
+  ): Promise<Message[]> {
     this.logger.log(`chat:changeCurrentRoom received -> ${roomId}`);
 
     // 0番目には、socketのidが入っている
@@ -381,6 +386,7 @@ export class ChatGateway {
     @MessageBody() dto: createDirectMessageDto,
   ): Promise<boolean> {
     this.logger.log('chat:directMessage received');
+    // TODO: 既にルームが存在する場合はそのルームに入室させる
     const res = await this.chatService.startDirectMessage(dto);
 
     return res ? true : false;
