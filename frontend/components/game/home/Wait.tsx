@@ -5,7 +5,7 @@ import {
   Typography,
   Button,
 } from '@mui/material';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { usePlayStateStore, PlayState } from 'store/game/PlayState';
 import { useSocketStore } from 'store/game/ClientSocket';
 import { usePlayerNamesStore } from 'store/game/PlayerNames';
@@ -22,11 +22,12 @@ export const Wait = () => {
   const { data: user } = useQueryUser();
   const { updateStatusMutation } = useMutationStatus();
 
-  const cancelPlay = () => {
+  const cancelPlay = useCallback(() => {
+    if (playState === PlayState.statePlaying) return;
     setOpen(false);
     updatePlayState(PlayState.stateNothing);
     socket.emit('playCancel');
-  };
+  }, []);
   const updatePlayerNames = usePlayerNamesStore(
     (store) => store.updatePlayerNames,
   );
