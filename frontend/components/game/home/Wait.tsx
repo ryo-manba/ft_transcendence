@@ -79,8 +79,8 @@ export const Wait = () => {
             left: '50%',
             transform: 'translate(-50%, -50%)',
             bgcolor: 'background.paper',
-            width: '25%',
-            height: '25%',
+            width: '300px',
+            height: '200px',
           }}
         >
           <Grid item>
@@ -97,17 +97,21 @@ export const Wait = () => {
               align="center"
               gutterBottom
             >
-              Waiting for Opponent...
+              {playState === PlayState.stateWaiting
+                ? 'Waiting for Opponent...'
+                : 'Wait a Minute...'}
             </Typography>
           </Grid>
-          <Grid item>
-            <Button
-              disabled={playState !== PlayState.stateWaiting}
-              onClick={handleClose}
-            >
-              cancel
-            </Button>
-          </Grid>
+          {playState === PlayState.stateWaiting && (
+            <Grid item>
+              <Button
+                disabled={playState !== PlayState.stateWaiting}
+                onClick={handleClose}
+              >
+                cancel
+              </Button>
+            </Grid>
+          )}
         </Grid>
       </Modal>
     </Grid>
