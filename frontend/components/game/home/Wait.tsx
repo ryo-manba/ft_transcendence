@@ -22,7 +22,7 @@ export const Wait = () => {
   const { data: user } = useQueryUser();
   const { updateStatusMutation } = useMutationStatus();
 
-  const handleClose = () => {
+  const cancelPlay = () => {
     setOpen(false);
     updatePlayState(PlayState.stateNothing);
     socket.emit('playCancel');
@@ -64,6 +64,14 @@ export const Wait = () => {
       socket.off('standBy');
     };
   }, [socket, user]);
+
+  useEffect(() => {
+    router.events.on('routeChangeStart', cancelPlay);
+
+    return () => {
+      router.events.off('routeChangeStart', cancelPlay);
+    };
+  });
 
   return (
     <Grid item>
@@ -107,7 +115,7 @@ export const Wait = () => {
             <Grid item>
               <Button
                 disabled={playState !== PlayState.stateWaiting}
-                onClick={handleClose}
+                onClick={cancelPlay}
               >
                 cancel
               </Button>
