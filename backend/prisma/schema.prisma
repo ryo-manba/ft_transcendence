@@ -80,6 +80,8 @@ model ChatroomMembers {
   user       User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId     Int
   status     ChatroomMembersStatus @default(NORMAL)
+  startAt    DateTime? // BAN or MUTEの期間
+  endAt      DateTime?
 
   @@id([chatroomId, userId])
   @@unique([chatroomId, userId])

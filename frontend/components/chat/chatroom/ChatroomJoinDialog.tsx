@@ -124,7 +124,7 @@ export const ChatroomJoinDialog = memo(function ChatroomJoinDialog({
 
     const joinRoomInfo: JoinChatroomInfo = {
       userId: user.id,
-      roomId: selectedRoom.id,
+      chatroomId: selectedRoom.id,
       type: selectedRoom.type,
       password: isProtected(selectedRoom) ? password : undefined,
     };

@@ -1,5 +1,8 @@
 import { useState, memo, useCallback, Dispatch, SetStateAction } from 'react';
 import { Socket } from 'socket.io-client';
+import { useForm, SubmitHandler, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
 import {
   Button,
   Box,
@@ -10,15 +13,11 @@ import {
   DialogContent,
   DialogTitle,
   InputLabel,
-  IconButton,
-  InputAdornment,
   Select,
   SelectChangeEvent,
   MenuItem,
   FormControl,
 } from '@mui/material';
-import Visibility from '@mui/icons-material/Visibility';
-import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import AddCircleOutlineRounded from '@mui/icons-material/AddCircleOutlineRounded';
 import {
   CreateChatroomInfo,
@@ -28,10 +27,8 @@ import {
 } from 'types/chat';
 import { useQueryUser } from 'hooks/useQueryUser';
 import { Loading } from 'components/common/Loading';
-import { useForm, SubmitHandler, Controller } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
 import { ChatErrorAlert } from 'components/chat/utils/ChatErrorAlert';
+import { ChatPasswordForm } from 'components/chat/utils/ChatPasswordForm';
 
 type Props = {
   socket: Socket;
@@ -49,7 +46,6 @@ export const ChatroomCreateButton = memo(function ChatroomCreateButton({
 }: Props) {
   const [open, setOpen] = useState(false);
   const [roomType, setRoomType] = useState<ChatroomType>(CHATROOM_TYPE.PUBLIC);
-  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
 
   const { data: user } = useQueryUser();
@@ -171,49 +167,12 @@ export const ChatroomCreateButton = memo(function ChatroomCreateButton({
         </DialogContent>
         {roomType === CHATROOM_TYPE.PROTECTED && (
           <DialogContent>
-            <Controller
-              name="password"
+            <ChatPasswordForm
               control={control}
-              render={({ field }) => (
-                <TextField
-                  autoFocus
-                  margin="dense"
-                  label="Password"
-                  type={showPassword ? 'text' : 'password'}
-                  error={errors.password ? true : false}
-                  helperText={
-                    errors.password
-                      ? errors.password?.message
-                      : 'Must be min 5 characters'
-                  }
-                  InputProps={{
-                    endAdornment: (
-                      <InputAdornment position="end">
-                        <IconButton
-                          aria-label="toggle password visibility"
-                          onClick={() => {
-                            setShowPassword(!showPassword);
-                          }}
-                          onMouseDown={(event) => {
-                            event.preventDefault();
-                          }}
-                          edge="end"
-                        >
-                          {showPassword ? (
-                            <VisibilityOffIcon />
-                          ) : (
-                            <Visibility />
-                          )}
-                        </IconButton>
-                      </InputAdornment>
-                    ),
-                  }}
-                  fullWidth
-                  variant="standard"
-                  // eslint-disable-next-line react/jsx-props-no-spreading
-                  {...field}
-                />
-              )}
+              inputName="password"
+              labelName="Password"
+              error={errors.password}
+              helperText="Must be min 5 characters"
             />
           </DialogContent>
         )}
@@ -240,6 +199,7 @@ export const ChatroomCreateButton = memo(function ChatroomCreateButton({
           <Button
             onClick={handleSubmit(onSubmit) as VoidFunction}
             variant="contained"
+            autoFocus
           >
             Create
           </Button>

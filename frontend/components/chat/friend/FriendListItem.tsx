@@ -56,13 +56,24 @@ export const FriendListItem = memo(function FriendListItem({
     });
   }, []);
 
-  const inviteGame = (friend: Friend) => {
+  const inviteGame = async (friend: Friend) => {
+    // 最新のユーザ状態を取り直す
+    const status = await getUserStatusById({ userId: friend.id });
+    if (status !== friendStatus) {
+      setFriendStatus(status);
+    }
+    if (status !== UserStatus.ONLINE) {
+      setError(`${friend.name} is now ${status}`);
+
+      return;
+    }
+
     const invitation: Invitation = {
       guestId: friend.id,
       hostId: user.id,
     };
+
     gameSocket.emit('inviteFriend', invitation, (res: boolean) => {
-      // [TODO] ここで招待するユーザの正しいステータスを受け取りなおしてエラーをセットする。
       if (res) {
         updateInvitedFriendState({ friendId: friend.id });
         void router.push('game/home');
