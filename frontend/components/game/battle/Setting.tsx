@@ -49,14 +49,14 @@ export const Setting = () => {
       updatePlayState(PlayState.stateNothing);
     });
 
-    socket.on('canceled', () => {
+    socket.on('cancelOngoingBattle', () => {
       updatePlayState(PlayState.stateCanceled);
     });
 
     return () => {
       socket.off('playStarted');
       socket.off('error');
-      socket.off('canceled');
+      socket.off('cancelOngoingBattle');
     };
   }, [socket]);
 
@@ -66,7 +66,7 @@ export const Setting = () => {
         updateCountDown(countDown - 1);
       }, timeoutIntervalInMilSec);
     } else if (countDown === 0) {
-      socket.emit('cancel');
+      socket.emit('cancelOngoingBattle');
       updatePlayState(PlayState.stateCanceled);
     }
   }, [countDown, socket]);
