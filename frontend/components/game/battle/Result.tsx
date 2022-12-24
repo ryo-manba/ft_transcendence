@@ -33,10 +33,10 @@ export const Result = ({ finishedGameInfo }: Props) => {
           </Typography>
         </Grid>
       )}
-      {playState === PlayState.stateTimedUp && (
+      {playState === PlayState.stateCanceled && (
         <Grid item sx={{ mt: 3 }}>
           <Typography align="center" gutterBottom variant="h4" component="h4">
-            Time is up. Please retry a new game.
+            The game was canceled. Please retry a new game.
           </Typography>
         </Grid>
       )}
