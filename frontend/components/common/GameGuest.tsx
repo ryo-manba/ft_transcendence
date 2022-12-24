@@ -52,7 +52,7 @@ export const GameGuest = ({ hosts, setHosts }: Props) => {
     setOpenDialog(false);
   }, []);
 
-  const handleSelectClick = useCallback(
+  const handleJoinClick = useCallback(
     (friend: Friend) => {
       if (user !== undefined) {
         const match: Invitation = {
@@ -149,7 +149,7 @@ export const GameGuest = ({ hosts, setHosts }: Props) => {
                 }}
               />
               <ButtonGroup>
-                <Button onClick={() => handleSelectClick(host)}>JOIN</Button>
+                <Button onClick={() => handleJoinClick(host)}>JOIN</Button>
                 <Button onClick={() => handleDenyClick(host)} color="error">
                   DENY
                 </Button>

@@ -110,8 +110,9 @@ export const Host = () => {
           left: '50%',
           transform: 'translate(-50%, -50%)',
           bgcolor: 'background.paper',
-          width: '25%',
-          height: '25%',
+          width: '270px',
+          height: '180px',
+          borderRadius: '5px',
         }}
       >
         {invitationDenied ? (
@@ -135,7 +136,7 @@ export const Host = () => {
             <Grid item>
               <CircularProgress />
             </Grid>
-            <Grid item sx={{ mt: 1 }}>
+            <Grid item sx={{ mt: 2 }}>
               <Typography
                 variant="h6"
                 id="modal-modal-title"
