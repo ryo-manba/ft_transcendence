@@ -99,7 +99,6 @@ export const FriendListItem = memo(function FriendListItem({
         return;
       }
     });
-    socket.emit('chat:getJoinedRooms', user.id);
   };
 
   const handleClickOpen = () => {

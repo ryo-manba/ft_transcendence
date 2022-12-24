@@ -6,6 +6,8 @@ import {
   DialogContent,
   SelectChangeEvent,
   DialogTitle,
+  InputLabel,
+  FormControl,
 } from '@mui/material';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -173,7 +175,7 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
   };
 
   const handleClose = () => {
-    setSelectedRoomSetting(CHATROOM_SETTINGS.DELETE_ROOM);
+    setSelectedRoomSetting(CHATROOM_SETTINGS.MUTE_USER);
     initDialog();
     onClose();
   };
@@ -216,19 +218,23 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
     handleClose();
   };
 
-  const isOwner = room.ownerId === user.id;
   const passwordHelper = 'Must be min 5 characters';
 
   return (
     <>
       <Dialog open={open} onClose={handleClose}>
         <DialogTitle>Room Settings</DialogTitle>
-        <ChatroomSettingItems
-          isOwner={isOwner}
-          roomType={room.type}
-          selectedRoomSetting={selectedRoomSetting}
-          handleChangeSetting={handleChangeSetting}
-        />
+        <DialogContent>
+          <FormControl sx={{ mx: 3, my: 1, minWidth: 200 }}>
+            <InputLabel id="room-setting-select-label">Setting</InputLabel>
+            <ChatroomSettingItems
+              isOwner={room.ownerId === user.id}
+              roomType={room.type}
+              selectedRoomSetting={selectedRoomSetting}
+              handleChangeSetting={handleChangeSetting}
+            />
+          </FormControl>
+        </DialogContent>
         {selectedRoomSetting === CHATROOM_SETTINGS.ADD_FRIEND && (
           <ChatroomSettingDetailDialog
             users={friends}

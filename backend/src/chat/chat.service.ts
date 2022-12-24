@@ -488,11 +488,11 @@ export class ChatService {
   /**
    * 3つの配列を結合して、値の重複を取得するSetを作成する
    */
-  getDuplicateIds(arr1: number[], arr2: number[], arr3: number[]): number[] {
+  getDuplicateIds(arr1: number[], arr2: number[]): number[] {
     const duplicateIds = new Set(
-      arr1
-        .concat(arr2, arr3)
-        .filter((id, index, self) => self.indexOf(id) !== index),
+      [...arr1, ...arr2].filter(
+        (id, index, self) => self.indexOf(id) !== index,
+      ),
     );
 
     // Setから配列を作成して返す
@@ -515,17 +515,33 @@ export class ChatService {
     });
     this.logger.log('DMRoomIds', DMRoomIds);
 
-    const rooms1 = await this.findJoinedRooms(userId1);
-    const rooms2 = await this.findJoinedRooms(userId2);
+    // userが所属しているDMのルームのみ取得する
+    const rooms1 = await this.prisma.chatroomMembers.findMany({
+      where: {
+        AND: {
+          userId: userId1,
+          chatroomId: { in: DMRoomIds },
+        },
+      },
+    });
+    const rooms2 = await this.prisma.chatroomMembers.findMany({
+      where: {
+        AND: {
+          userId: userId2,
+          chatroomId: { in: DMRoomIds },
+        },
+      },
+    });
+
     const roomIds1 = rooms1.map((room) => {
-      return room.id;
+      return room.chatroomId;
     });
     this.logger.log('rooms1', rooms1);
     const roomIds2 = rooms2.map((room) => {
-      return room.id;
+      return room.chatroomId;
     });
     this.logger.log('rooms2', rooms2);
-    const arr = this.getDuplicateIds(DMRoomIds, roomIds1, roomIds2);
+    const arr = this.getDuplicateIds(roomIds1, roomIds2);
     this.logger.log('arr', arr);
     if (arr.length > 0) {
       this.logger.log('isCreatedDMRoom: already created');

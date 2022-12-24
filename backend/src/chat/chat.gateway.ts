@@ -389,6 +389,12 @@ export class ChatGateway {
     // TODO: 既にルームが存在する場合はそのルームに入室させる
     const res = await this.chatService.startDirectMessage(dto);
 
+    if (res) {
+      const rooms = await this.chatService.findJoinedRooms(dto.userId1);
+      // フロントエンドへ送り返す
+      client.emit('chat:getJoinedRooms', rooms);
+    }
+
     return res ? true : false;
   }
 }
