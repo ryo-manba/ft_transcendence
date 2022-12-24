@@ -23,17 +23,6 @@ export const Wait = () => {
   const { updateStatusMutation } = useMutationStatus();
 
   const cancelPlay = () => {
-    if (user === undefined) {
-      return;
-    }
-    try {
-      updateStatusMutation.mutate({
-        userId: user.id,
-        status: 'ONLINE',
-      });
-    } catch (error) {
-      return;
-    }
     setOpen(false);
     updatePlayState(PlayState.stateNothing);
     socket.emit('playCancel');
