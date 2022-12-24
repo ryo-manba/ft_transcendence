@@ -1,7 +1,7 @@
 export type Chatroom = {
   id: number;
   name: string;
-  type: string;
+  type: ChatroomType;
   ownerId: number;
   hashedPassword?: string;
 };

@@ -10,7 +10,7 @@ import {
 import SettingsIcon from '@mui/icons-material/Settings';
 import CloseIcon from '@mui/icons-material/Close';
 import { Socket } from 'socket.io-client';
-import { Chatroom, Message, ChatroomType, JoinChatroomInfo } from 'types/chat';
+import { Chatroom, Message, JoinChatroomInfo } from 'types/chat';
 import { useQueryUser } from 'hooks/useQueryUser';
 import { Loading } from 'components/common/Loading';
 import { ChatroomSettingDialog } from 'components/chat/chatroom/ChatroomSettingDialog';
@@ -105,7 +105,7 @@ export const ChatroomListItem = memo(function ChatroomListItem({
     const joinRoomInfo: JoinChatroomInfo = {
       userId: friendId,
       chatroomId: room.id,
-      type: room.type as ChatroomType,
+      type: room.type,
     };
 
     // TODO:フレンドを入室させたあとのgatewayからのレスポンス対応は今後行う

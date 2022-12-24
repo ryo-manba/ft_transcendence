@@ -4,11 +4,7 @@ import {
   Dialog,
   DialogActions,
   DialogContent,
-  InputLabel,
-  Select,
   SelectChangeEvent,
-  MenuItem,
-  FormControl,
   DialogTitle,
 } from '@mui/material';
 import { useForm, SubmitHandler } from 'react-hook-form';
@@ -28,6 +24,7 @@ import { fetchChatroomNormalUsers } from 'api/chat/fetchChatroomNormalUsers';
 import { useQueryUser } from 'hooks/useQueryUser';
 import { Loading } from 'components/common/Loading';
 import { ChatroomSettingDetailDialog } from 'components/chat/chatroom/ChatroomSettingDetailDialog';
+import { ChatroomSettingItems } from 'components/chat/chatroom/ChatroomSettingItems';
 import { ChatPasswordForm } from 'components/chat/utils/ChatPasswordForm';
 
 type Props = {
@@ -226,48 +223,12 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
     <>
       <Dialog open={open} onClose={handleClose}>
         <DialogTitle>Room Settings</DialogTitle>
-        <DialogContent>
-          <FormControl sx={{ mx: 3, my: 1, minWidth: 200 }}>
-            <InputLabel id="room-setting-select-label">Setting</InputLabel>
-            <Select
-              labelId="room-setting-select-label"
-              id="room-setting"
-              value={selectedRoomSetting}
-              label="setting"
-              onChange={handleChangeSetting}
-            >
-              {isOwner && (
-                <MenuItem value={CHATROOM_SETTINGS.DELETE_ROOM}>
-                  {CHATROOM_SETTINGS.DELETE_ROOM}
-                </MenuItem>
-              )}
-              {isOwner && (
-                <MenuItem value={CHATROOM_SETTINGS.SET_ADMIN}>
-                  {CHATROOM_SETTINGS.SET_ADMIN}
-                </MenuItem>
-              )}
-              {/* パスワードで保護されたルームのみ選択可能 */}
-              {isOwner && room.type === CHATROOM_TYPE.PROTECTED && (
-                <MenuItem value={CHATROOM_SETTINGS.CHANGE_PASSWORD}>
-                  {CHATROOM_SETTINGS.CHANGE_PASSWORD}
-                </MenuItem>
-              )}
-              {/* 非公開のルームのみフレンド追加ボタンが選択可能 */}
-              {isOwner && room.type === CHATROOM_TYPE.PRIVATE && (
-                <MenuItem value={CHATROOM_SETTINGS.ADD_FRIEND}>
-                  {CHATROOM_SETTINGS.ADD_FRIEND}
-                </MenuItem>
-              )}
-              {/* 以下はAdminも設定可能な項目 */}
-              <MenuItem value={CHATROOM_SETTINGS.MUTE_USER}>
-                {CHATROOM_SETTINGS.MUTE_USER}
-              </MenuItem>
-              <MenuItem value={CHATROOM_SETTINGS.BAN_USER}>
-                {CHATROOM_SETTINGS.BAN_USER}
-              </MenuItem>
-            </Select>
-          </FormControl>
-        </DialogContent>
+        <ChatroomSettingItems
+          isOwner={isOwner}
+          roomType={room.type}
+          selectedRoomSetting={selectedRoomSetting}
+          handleChangeSetting={handleChangeSetting}
+        />
         {selectedRoomSetting === CHATROOM_SETTINGS.ADD_FRIEND && (
           <ChatroomSettingDetailDialog
             users={friends}
