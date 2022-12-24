@@ -15,7 +15,7 @@ export type CreateChatroomInfo = {
 
 export type JoinChatroomInfo = {
   userId: number;
-  roomId: number;
+  chatroomId: number;
   type: ChatroomType;
   password?: string;
 };
@@ -30,6 +30,7 @@ export const CHATROOM_TYPE = {
   PUBLIC: 'PUBLIC',
   PRIVATE: 'PRIVATE',
   PROTECTED: 'PROTECTED',
+  DM: 'DM',
 } as const;
 
 export type ChatroomType = typeof CHATROOM_TYPE[keyof typeof CHATROOM_TYPE];

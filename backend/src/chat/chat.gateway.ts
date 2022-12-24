@@ -17,6 +17,7 @@ import { CreateMessageDto } from './dto/create-message.dto';
 import { CreateAdminDto } from './dto/create-admin.dto';
 import { updatePasswordDto } from './dto/update-password.dto';
 import { updateMemberStatusDto } from './dto/update-member-status.dto';
+import { createDirectMessageDto } from './dto/create-direct-message.dto';
 import { CheckBanDto } from './dto/check-ban.dto';
 
 @WebSocketGateway({
@@ -332,6 +333,21 @@ export class ChatGateway {
   ): Promise<boolean> {
     this.logger.log(`chat:banUser received -> roomId: ${dto.chatroomId}`);
     const res = await this.chatService.updateMemberStatus(dto);
+
+    return res ? true : false;
+  }
+
+  /**
+   * @param createChatroomDto
+   * @return 以下の情報をオブジェクトの配列で返す
+   */
+  @SubscribeMessage('chat:directMessage')
+  async startDirectMessage(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() dto: createDirectMessageDto,
+  ): Promise<boolean> {
+    this.logger.log('chat:directMessage received');
+    const res = await this.chatService.startDirectMessage(dto);
 
     return res ? true : false;
   }

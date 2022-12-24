@@ -165,7 +165,7 @@ const Chat = () => {
             borderBottom: '1px solid',
           }}
         >
-          <FriendSidebar />
+          <FriendSidebar socket={socket} />
         </Grid>
       </Grid>
     </>

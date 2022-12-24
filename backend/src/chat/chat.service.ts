@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma.service';
 import {
@@ -17,6 +17,7 @@ import { JoinChatroomDto } from './dto/join-chatroom.dto';
 import type { ChatUser } from './types/chat';
 import { updatePasswordDto } from './dto/update-password.dto';
 import { updateMemberStatusDto } from './dto/update-member-status.dto';
+import { createDirectMessageDto } from './dto/create-direct-message.dto';
 
 // 2の12乗回の演算が必要という意味
 const saltRounds = 12;
@@ -24,6 +25,7 @@ const saltRounds = 12;
 @Injectable()
 export class ChatService {
   constructor(private prisma: PrismaService) {}
+  private logger: Logger = new Logger('ChatService');
 
   async findOne(
     chatroomWhereUniqueInput: Prisma.ChatroomWhereUniqueInput,
@@ -71,6 +73,8 @@ export class ChatService {
       // 成功したチャットルームの情報を返す
       return chatroom;
     } catch (error) {
+      this.logger.log('create', error);
+
       return undefined;
     }
   }
@@ -178,7 +182,7 @@ export class ChatService {
     // 入室するチャットルームを取得する
     const chatroom = await this.prisma.chatroom.findUnique({
       where: {
-        id: dto.roomId,
+        id: dto.chatroomId,
       },
     });
     if (!chatroom) {
@@ -201,11 +205,12 @@ export class ChatService {
       await this.prisma.chatroomMembers.create({
         data: {
           userId: dto.userId,
-          chatroomId: dto.roomId,
+          chatroomId: dto.chatroomId,
         },
       });
     } catch (error) {
-      // userId or chatroomIdが正しくない場合は失敗する
+      this.logger.log('joinRoom', error);
+
       return undefined;
     }
 
@@ -224,7 +229,7 @@ export class ChatService {
     const joinDto: JoinChatroomDto = {
       userId: dto.ownerId,
       type: dto.type,
-      roomId: createdRoom.id,
+      chatroomId: createdRoom.id,
       password: dto.password,
     };
     const isSuccess = await this.joinRoom(joinDto);
@@ -321,6 +326,8 @@ export class ChatService {
 
       return admin;
     } catch (error) {
+      this.logger.log('createAdmin', error);
+
       return undefined;
     }
   }
@@ -359,7 +366,9 @@ export class ChatService {
       });
 
       return true;
-    } catch (err) {
+    } catch (error) {
+      this.logger.log('updatePassword', error);
+
       return false;
     }
   }
@@ -385,8 +394,64 @@ export class ChatService {
       });
 
       return res;
-    } catch (err) {
+    } catch (error) {
+      this.logger.log('updateMemberStatus', error);
+
       return undefined;
+    }
+  }
+
+  /**
+   * チャットルームに所属するユーザーのステータスを更新する
+   * @param createDirectMessageDto
+   */
+  async startDirectMessage(dto: createDirectMessageDto): Promise<boolean> {
+    this.logger.log('startDirectMessage: ', dto);
+    const roomName = '[DM] ' + dto.name1 + '_' + dto.name2;
+    const createChatroomDto: CreateChatroomDto = {
+      name: roomName,
+      type: ChatroomType.DM,
+      ownerId: dto.userId1,
+    };
+    try {
+      // チャットルームを作成する
+      const createdRoom = await this.create(createChatroomDto);
+
+      const joinChatroomDto1 = {
+        userId: dto.userId1,
+        chatroomId: createdRoom.id,
+      };
+      const joinChatroomDto2 = {
+        userId: dto.userId2,
+        chatroomId: createdRoom.id,
+      };
+
+      this.logger.log('members createMany', joinChatroomDto1, joinChatroomDto2);
+      // 入室処理を行う
+      await this.prisma.chatroomMembers.createMany({
+        data: [joinChatroomDto1, joinChatroomDto2],
+      });
+
+      const createAdminDto1: CreateAdminDto = {
+        userId: dto.userId1,
+        chatroomId: createdRoom.id,
+      };
+      const createAdminDto2: CreateAdminDto = {
+        userId: dto.userId2,
+        chatroomId: createdRoom.id,
+      };
+
+      this.logger.log('admins createMany', createAdminDto1, createAdminDto2);
+      // adminに追加する
+      await this.prisma.chatroomAdmin.createMany({
+        data: [createAdminDto1, createAdminDto2],
+      });
+
+      return true;
+    } catch (error) {
+      this.logger.log('startDirectMessage', error);
+
+      return false;
     }
   }
 }

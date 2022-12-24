@@ -104,7 +104,7 @@ export const ChatroomListItem = memo(function ChatroomListItem({
   const addFriend = (friendId: number) => {
     const joinRoomInfo: JoinChatroomInfo = {
       userId: friendId,
-      roomId: room.id,
+      chatroomId: room.id,
       type: room.type as ChatroomType,
     };
 
