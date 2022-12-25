@@ -346,7 +346,7 @@ export class ChatGateway {
     return res ? true : false;
   }
 
-  /*
+  /**
    * ユーザーをMUTEする
    * @param updateChatMemberStatusDto
    */

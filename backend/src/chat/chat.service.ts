@@ -521,7 +521,7 @@ export class ChatService {
   }
 
   /**
-   * 3つの配列を結合して、値の重複を取得するSetを作成する
+   * 2つの配列を結合して、値の重複を取得する
    */
   getDuplicateIds(arr1: number[], arr2: number[]): number[] {
     const duplicateIds = new Set(
@@ -571,13 +571,10 @@ export class ChatService {
     const roomIds1 = rooms1.map((room) => {
       return room.chatroomId;
     });
-    this.logger.log('rooms1', rooms1);
     const roomIds2 = rooms2.map((room) => {
       return room.chatroomId;
     });
-    this.logger.log('rooms2', rooms2);
     const arr = this.getDuplicateIds(roomIds1, roomIds2);
-    this.logger.log('arr', arr);
     if (arr.length > 0) {
       this.logger.log('isCreatedDMRoom: already created');
 
