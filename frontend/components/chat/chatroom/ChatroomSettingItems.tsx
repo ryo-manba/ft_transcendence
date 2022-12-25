@@ -1,17 +1,16 @@
 import { memo } from 'react';
 import { Select, SelectChangeEvent, MenuItem } from '@mui/material';
-import { ChatroomSettings, CHATROOM_SETTINGS } from 'types/chat';
-import { ChatroomType } from '@prisma/client';
+import { ChatroomSetting, ChatroomType } from 'types/chat';
 
 type Props = {
   isOwner: boolean;
   roomType: ChatroomType;
-  selectedRoomSetting: ChatroomSettings;
+  selectedRoomSetting: ChatroomSetting;
   handleChangeSetting: (event: SelectChangeEvent) => void;
 };
 
 type DMSettingProps = {
-  selectedRoomSetting: ChatroomSettings;
+  selectedRoomSetting: ChatroomSetting;
   handleChangeSetting: (event: SelectChangeEvent) => void;
 };
 
@@ -28,8 +27,8 @@ const DMSettingItems = memo(function DMSettingItems({
       label="setting"
       onChange={handleChangeSetting}
     >
-      <MenuItem value={CHATROOM_SETTINGS.DELETE_ROOM}>
-        {CHATROOM_SETTINGS.DELETE_ROOM}
+      <MenuItem value={ChatroomSetting.DELETE_ROOM}>
+        {ChatroomSetting.DELETE_ROOM}
       </MenuItem>
     </Select>
   );
@@ -66,32 +65,32 @@ export const ChatroomSettingItems = memo(function ChatroomSettingItems({
       label="setting"
       onChange={handleChangeSetting}
     >
-      <MenuItem value={CHATROOM_SETTINGS.MUTE_USER}>
-        {CHATROOM_SETTINGS.MUTE_USER}
+      <MenuItem value={ChatroomSetting.MUTE_USER}>
+        {ChatroomSetting.MUTE_USER}
       </MenuItem>
-      <MenuItem value={CHATROOM_SETTINGS.BAN_USER}>
-        {CHATROOM_SETTINGS.BAN_USER}
+      <MenuItem value={ChatroomSetting.BAN_USER}>
+        {ChatroomSetting.BAN_USER}
       </MenuItem>
       {isOwner && (
-        <MenuItem value={CHATROOM_SETTINGS.DELETE_ROOM}>
-          {CHATROOM_SETTINGS.DELETE_ROOM}
+        <MenuItem value={ChatroomSetting.DELETE_ROOM}>
+          {ChatroomSetting.DELETE_ROOM}
         </MenuItem>
       )}
       {isOwner && (
-        <MenuItem value={CHATROOM_SETTINGS.SET_ADMIN}>
-          {CHATROOM_SETTINGS.SET_ADMIN}
+        <MenuItem value={ChatroomSetting.SET_ADMIN}>
+          {ChatroomSetting.SET_ADMIN}
         </MenuItem>
       )}
       {/* パスワードで保護されたルームのみ選択可能 */}
       {isOwner && roomType === ChatroomType.PROTECTED && (
-        <MenuItem value={CHATROOM_SETTINGS.CHANGE_PASSWORD}>
-          {CHATROOM_SETTINGS.CHANGE_PASSWORD}
+        <MenuItem value={ChatroomSetting.CHANGE_PASSWORD}>
+          {ChatroomSetting.CHANGE_PASSWORD}
         </MenuItem>
       )}
       {/* 非公開のルームのみフレンド追加ボタンが選択可能 */}
       {isOwner && roomType === ChatroomType.PRIVATE && (
-        <MenuItem value={CHATROOM_SETTINGS.ADD_FRIEND}>
-          {CHATROOM_SETTINGS.ADD_FRIEND}
+        <MenuItem value={ChatroomSetting.ADD_FRIEND}>
+          {ChatroomSetting.ADD_FRIEND}
         </MenuItem>
       )}
     </Select>
