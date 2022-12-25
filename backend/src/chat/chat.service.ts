@@ -18,6 +18,7 @@ import type { ChatUser } from './types/chat';
 import { updatePasswordDto } from './dto/update-password.dto';
 import { updateMemberStatusDto } from './dto/update-member-status.dto';
 import { createDirectMessageDto } from './dto/create-direct-message.dto';
+import { DeleteChatroomDto } from './dto/delete-chatroom.dto';
 
 // 2の12乗回の演算が必要という意味
 const saltRounds = 12;
@@ -95,6 +96,40 @@ export class ChatService {
     return this.prisma.chatroom.delete({
       where,
     });
+  }
+
+  async deleteRoom(dto: DeleteChatroomDto): Promise<Chatroom> {
+    const whereInput = { id: dto.id };
+    const room = await this.findOne(whereInput);
+    if (room === undefined) {
+      return undefined;
+    }
+    // DM以外の場合はオーナーのみ削除可能
+    if (room.type !== ChatroomType.DM && room.ownerId !== dto.userId) {
+      return undefined;
+    }
+
+    // DMの場合はAdminのみ削除できる(所属しているユーザー)
+    if (room.type === ChatroomType.DM) {
+      const isAdmin = await this.prisma.chatroomAdmin.findUnique({
+        where: {
+          chatroomId_userId: {
+            chatroomId: dto.id,
+            userId: dto.userId,
+          },
+        },
+      });
+      if (isAdmin === undefined) {
+        return undefined;
+      }
+    }
+    try {
+      return await this.remove(whereInput);
+    } catch (error) {
+      this.logger.log('deleteRoom', error);
+
+      return undefined;
+    }
   }
 
   async addMessage(createMessageDto: CreateMessageDto): Promise<Message> {

@@ -15,7 +15,7 @@ import { useQueryUser } from 'hooks/useQueryUser';
 import { Loading } from 'components/common/Loading';
 import { ChatroomSettingDialog } from 'components/chat/chatroom/ChatroomSettingDialog';
 import { ChatErrorAlert } from 'components/chat/utils/ChatErrorAlert';
-import { ChatroomMembersStatus } from '@prisma/client';
+import { ChatroomMembersStatus, ChatroomType } from '@prisma/client';
 
 type Props = {
   room: Chatroom;
@@ -88,15 +88,20 @@ export const ChatroomListItem = memo(function ChatroomListItem({
   };
 
   const deleteRoom = () => {
-    // 削除できるのはチャットルームオーナーだけ
-    if (user.id !== room.ownerId) {
+    // NOTE: 削除できるのはチャットルームオーナーだけ
+    //       DMの場合は例外的にどちらのユーザーも削除できる
+    if (room.type !== ChatroomType.DM && user.id !== room.ownerId) {
       setError('Only the owner can delete chat rooms.');
     } else {
       const deleteRoomInfo = {
         id: room.id,
         userId: user.id,
       };
-      socket.emit('chat:deleteRoom', deleteRoomInfo);
+      socket.emit('chat:deleteRoom', deleteRoomInfo, (res: boolean) => {
+        if (!res) {
+          setError('Failed to delete room.');
+        }
+      });
     }
   };
 

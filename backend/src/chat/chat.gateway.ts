@@ -206,35 +206,22 @@ export class ChatGateway {
   @SubscribeMessage('chat:deleteRoom')
   async onRoomDelete(
     @ConnectedSocket() client: Socket,
-    @MessageBody() deleteChatroomDto: DeleteChatroomDto,
-  ): Promise<any> {
-    this.logger.log(
-      `chat:deleteRoom received -> roomId: ${deleteChatroomDto.id}, userId: ${deleteChatroomDto.userId}`,
-    );
-    const roomId = deleteChatroomDto.id;
-    const userId = deleteChatroomDto.userId;
-
-    const data = { id: deleteChatroomDto.id };
-    const room = await this.chatService.findOne(data);
-    const admins = await this.chatService.findAdmins(roomId);
-
-    // 削除を実行したユーザーがadminに含まれているかを確かめる
-    const isAdmin = admins.findIndex((admin) => admin.userId === userId) != -1;
-
-    // adminかownerの場合削除が実行できる
-    if (isAdmin || room.ownerId === userId) {
-      const deletedRoom = await this.chatService.remove(data);
-      if (deletedRoom === undefined) return;
-      // 現時点でチャットルームを表示しているユーザーに通知を送る
-      this.server
-        .to(String(deletedRoom.id))
-        .emit('chat:deleteRoom', deletedRoom);
-
-      // 全ユーザーのチャットルームを更新させる
-      // NOTE: 本来削除されたルームに所属しているユーザーだけに送りたいが,
-      //       それを判定するのが難しいためブロードキャストで送信している
-      this.server.emit('chat:updateSideBarRooms');
+    @MessageBody() dto: DeleteChatroomDto,
+  ): Promise<boolean> {
+    this.logger.log(`chat:deleteRoom received -> roomId: ${dto.id}`);
+    const deletedRoom = await this.chatService.deleteRoom(dto);
+    if (!deletedRoom) {
+      return false;
     }
+    // 現時点でチャットルームを表示しているユーザーに通知を送る
+    this.server.to(String(deletedRoom.id)).emit('chat:deleteRoom', deletedRoom);
+
+    // 全ユーザーのチャットルームを更新させる
+    // NOTE: 本来削除されたルームに所属しているユーザーだけに送りたいが,
+    //       それを判定するのが難しいためブロードキャストで送信している
+    this.server.emit('chat:updateSideBarRooms');
+
+    return true;
   }
 
   /**
