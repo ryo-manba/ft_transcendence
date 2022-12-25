@@ -22,7 +22,7 @@ export const Wait = () => {
   const { data: user } = useQueryUser();
   const { updateStatusMutation } = useMutationStatus();
 
-  const handleClose = () => {
+  const cancelPlay = () => {
     setOpen(false);
     updatePlayState(PlayState.stateNothing);
     socket.emit('playCancel');
@@ -65,6 +65,14 @@ export const Wait = () => {
     };
   }, [socket, user]);
 
+  useEffect(() => {
+    router.events.on('routeChangeStart', cancelPlay);
+
+    return () => {
+      router.events.off('routeChangeStart', cancelPlay);
+    };
+  });
+
   return (
     <Grid item>
       <Modal open={open} aria-labelledby="modal-modal-title">
@@ -103,7 +111,7 @@ export const Wait = () => {
           <Grid item>
             <Button
               disabled={playState !== PlayState.stateWaiting}
-              onClick={handleClose}
+              onClick={cancelPlay}
             >
               cancel
             </Button>
