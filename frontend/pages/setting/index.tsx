@@ -20,10 +20,11 @@ import * as z from 'zod';
 import { ChangeEventHandler, useState } from 'react';
 import { useMutationAvatar } from 'hooks/useMutationAvatar';
 import { Loading } from 'components/common/Loading';
-import axios, { AxiosError } from 'axios';
+import { AxiosError } from 'axios';
 import { AxiosErrorResponse } from 'types';
 import { getAvatarImageUrl } from 'api/user/getAvatarImageUrl';
 import { useRouter } from 'next/router';
+import { useMutationHas2FA } from 'hooks/useMutationHas2FA';
 
 const schema = z.object({
   username: z.string().min(1, { message: 'Username cannot be empty' }),
@@ -45,6 +46,7 @@ const Setting: NextPage = () => {
   });
   const { updateNameMutation } = useMutationName();
   const { updateAvatarMutation, deleteAvatarMutation } = useMutationAvatar();
+  const { disableHas2FAMutation } = useMutationHas2FA();
   const router = useRouter();
 
   if (user === undefined) return <Loading fullHeight />;
@@ -115,27 +117,10 @@ const Setting: NextPage = () => {
 
   const onChange2faSetting = async () => {
     if (user.has2FA) {
-      if (process.env.NEXT_PUBLIC_API_URL) {
-        try {
-          const response = await axios.post<string>(
-            `${process.env.NEXT_PUBLIC_API_URL}/auth/disable2fa`,
-            {
-              userId: String(user.id),
-              code: '1234',
-            },
-          );
-
-          if (response.data == 'failure') {
-            reset();
-            console.log('Fail Register');
-          } else {
-            console.log(response);
-            await router.push('/setting');
-          }
-        } catch (e) {
-          console.log(e);
-        }
-      }
+      //TODO: 確認ダイアログを出した後に解除したい
+      disableHas2FAMutation.mutate({
+        userId: user.id,
+      });
     } else {
       await router.push('/setting/enable2fa');
     }

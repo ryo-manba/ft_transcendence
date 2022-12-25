@@ -11,14 +11,17 @@ const Authenticate = () => {
     const f = async () => {
       if (status === 'authenticated') {
         if (process.env.NEXT_PUBLIC_API_URL) {
-          if (session && session.user) {
+          if (session && session.user !== undefined && session.user !== null) {
             let login = '';
             let image_url = '';
             console.log(session);
-            if (session.user.email.indexOf('gmail.com') !== -1) {
+            if (
+              session.user.email &&
+              session.user.email.indexOf('gmail.com') !== -1
+            ) {
               // gmailでのログインの場合
               login = session.user.email;
-              image_url = session.user.image;
+              if (session.user.image) image_url = session.user.image;
             } else {
               // 42の場合、user情報を取得
               type Image = {
@@ -29,10 +32,10 @@ const Authenticate = () => {
                 image: Image;
               };
               const url_getdata =
-                'https://api.intra.42.fr/v2/users/' + String(session.id);
+                'https://api.intra.42.fr/v2/users/' + String(session.user.id);
               const response = await axios.get<UserInfo>(url_getdata, {
                 headers: {
-                  Authorization: 'Bearer ' + String(session.access_token),
+                  Authorization: 'Bearer ' + String(session.user.access_token),
                 },
               });
               login = response.data.login;

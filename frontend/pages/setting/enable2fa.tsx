@@ -4,10 +4,10 @@ import { Layout } from 'components/common/Layout';
 import Image from 'next/image';
 import { useState } from 'react';
 import { useQueryUser } from 'hooks/useQueryUser';
-import { useRouter } from 'next/router';
 import axios from 'axios';
 import { useForm, SubmitHandler, Controller } from 'react-hook-form';
 import { TwoAuthForm } from 'types/setting';
+import { useMutationHas2FA } from 'hooks/useMutationHas2FA';
 
 const Enable2FA: NextPage = () => {
   const {
@@ -16,11 +16,10 @@ const Enable2FA: NextPage = () => {
     handleSubmit,
     formState: { errors },
     clearErrors,
-    reset,
   } = useForm<TwoAuthForm>();
   const { data: user } = useQueryUser();
-  const router = useRouter();
   const [qrCode, setQrCode] = useState('');
+  const { enableHas2FAMutation } = useMutationHas2FA();
 
   const onCreateComponent = async (): Promise<void> => {
     if (process.env.NEXT_PUBLIC_API_URL && user) {
@@ -30,7 +29,6 @@ const Enable2FA: NextPage = () => {
         );
         if (response) {
           setQrCode(response.data);
-          console.log(response.data);
         }
       } catch (e) {
         console.log(e);
@@ -42,43 +40,19 @@ const Enable2FA: NextPage = () => {
     void onCreateComponent();
   }
 
-  const onSubmit: SubmitHandler<TwoAuthForm> = async (data: TwoAuthForm) => {
+  const onSubmit: SubmitHandler<TwoAuthForm> = (data: TwoAuthForm) => {
     clearErrors();
     if (process.env.NEXT_PUBLIC_API_URL && user !== undefined) {
-      try {
-        const response = await axios.post(
-          `${process.env.NEXT_PUBLIC_API_URL}/auth/send2facode`,
-          {
-            userId: String(user.id),
-            code: data.authCode,
-          },
-        );
-        if (response.data == 'failure') {
-          reset();
-          console.log('Fail Register');
-        } else {
-          console.log(response);
-          await router.push('/setting');
-        }
-      } catch (e) {
-        if (axios.isAxiosError(e) && e.response && e.response.status === 400) {
-          console.log(e);
-        }
-
-        return [];
-      }
+      enableHas2FAMutation.mutate({
+        userId: user.id,
+        authCode: data.authCode,
+      });
     }
-
-    return [];
   };
 
   //実行時にQRコードを取得
   return (
-    <Layout
-      title="Auth"
-      divClassName="flex min-h-screen flex-col items-center justify-center"
-      mainClassName="flex w-screen flex-1 flex-col items-center justify-center"
-    >
+    <Layout title="Auth">
       <Grid
         container
         justifyContent="center"
