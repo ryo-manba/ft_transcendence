@@ -101,7 +101,9 @@ export const Play = ({ updateFinishedGameInfo }: Props) => {
   const { playState } = usePlayStateStore();
   const { playerNames } = usePlayerNamesStore();
   const { gameSetting } = useGameSettingStore();
-  const [scores, updateScores] = useState<[number, number]>([0, 0]);
+  const updateGameSetting = useGameSettingStore(
+    (store) => store.updateGameSetting,
+  );
   const [gameParameters, setGameParameters] = useState(
     getGameParameters(getWindowWidth()),
   );
@@ -265,7 +267,11 @@ export const Play = ({ updateFinishedGameInfo }: Props) => {
 
   useEffect(() => {
     socket.on('updateScores', (newScores: [number, number]) => {
-      updateScores(newScores);
+      updateGameSetting({
+        ...gameSetting,
+        player1Score: newScores[0],
+        player2Score: newScores[1],
+      });
     });
 
     return () => {
@@ -402,9 +408,9 @@ export const Play = ({ updateFinishedGameInfo }: Props) => {
         />
         <GameHeader
           maxWidth={gameParameters.canvasWidth}
-          left={scores[0]}
+          left={gameSetting.player1Score}
           center=":"
-          right={scores[1]}
+          right={gameSetting.player2Score}
         />
         <canvas
           ref={canvasRef}
