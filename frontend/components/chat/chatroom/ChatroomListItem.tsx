@@ -3,19 +3,22 @@ import {
   ListItem,
   IconButton,
   ListItemText,
+  ListItemAvatar,
+  Avatar,
   Alert,
   Box,
   Collapse,
 } from '@mui/material';
 import SettingsIcon from '@mui/icons-material/Settings';
+import ChatIcon from '@mui/icons-material/Chat';
 import CloseIcon from '@mui/icons-material/Close';
+import { ChatroomMembersStatus, ChatroomType } from '@prisma/client';
 import { Socket } from 'socket.io-client';
 import { Chatroom, Message, JoinChatroomInfo } from 'types/chat';
 import { useQueryUser } from 'hooks/useQueryUser';
 import { Loading } from 'components/common/Loading';
 import { ChatroomSettingDialog } from 'components/chat/chatroom/ChatroomSettingDialog';
 import { ChatErrorAlert } from 'components/chat/utils/ChatErrorAlert';
-import { ChatroomMembersStatus, ChatroomType } from '@prisma/client';
 
 type Props = {
   room: Chatroom;
@@ -238,6 +241,15 @@ export const ChatroomListItem = memo(function ChatroomListItem({
           divider
           button
         >
+          <ListItemAvatar>
+            {room.type === ChatroomType.DM ? (
+              <Avatar />
+            ) : (
+              <Avatar>
+                <ChatIcon />
+              </Avatar>
+            )}
+          </ListItemAvatar>
           <ChatroomSettingDialog
             room={room}
             open={open}
@@ -261,6 +273,11 @@ export const ChatroomListItem = memo(function ChatroomListItem({
         </ListItem>
       ) : (
         <ListItem divider button>
+          <ListItemAvatar>
+            <Avatar>
+              <ChatIcon />
+            </Avatar>
+          </ListItemAvatar>
           <ListItemText
             primary={room.name}
             onClick={() => {

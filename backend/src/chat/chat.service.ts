@@ -601,7 +601,7 @@ export class ChatService {
     }
 
     // 共通するRoom一覧を取得する
-    const roomName = '[DM] ' + dto.name1 + '_' + dto.name2;
+    const roomName = dto.name1 + '_' + dto.name2;
     const createChatroomDto: CreateChatroomDto = {
       name: roomName,
       type: ChatroomType.DM,
