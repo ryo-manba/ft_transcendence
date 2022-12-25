@@ -40,9 +40,15 @@ export const Watch = () => {
   const { updateStatusMutation } = useMutationStatus();
 
   useEffect(() => {
+    if (user === undefined) return;
+
     socket.emit('watchList');
     socket.on('watchListed', (data: WatchInfo[]) => {
-      setRooms(data);
+      setRooms(
+        data.filter(
+          (elem) => elem.name1 !== user.name && elem.name2 !== user.name,
+        ),
+      );
     });
     const intervalId = setInterval(() => {
       socket.emit('watchList');
@@ -78,7 +84,7 @@ export const Watch = () => {
       socket.off('watchListed');
       socket.off('joinGameRoom');
     };
-  }, [socket]);
+  }, [socket, user]);
 
   const watchGame = (room: WatchInfo) => {
     const playerNames: [string, string] = [room.name1, room.name2];
