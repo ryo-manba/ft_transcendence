@@ -209,28 +209,32 @@ const Home: NextPage = () => {
           <br />
           <Grid container justifyContent="space-evenly">
             <Grid item>
-              <Image
-                src="/images/ico-42-logo.jpg"
-                onClick={() => {
-                  void (async () => {
-                    await signIn('42-school');
-                  })();
-                }}
-                width={50}
-                height={50}
-              />
+              <Button>
+                <Image
+                  src="/images/ico-42-logo.jpg"
+                  onClick={() => {
+                    void (async () => {
+                      await signIn('42-school');
+                    })();
+                  }}
+                  width={50}
+                  height={50}
+                />
+              </Button>
             </Grid>
             <Grid item>
-              <Image
-                src="/images/ico-google-logo-96.png"
-                onClick={() => {
-                  void (async () => {
-                    await signIn('google');
-                  })();
-                }}
-                width={50}
-                height={50}
-              />
+              <Button>
+                <Image
+                  src="/images/ico-google-logo-96.png"
+                  onClick={() => {
+                    void (async () => {
+                      await signIn('google');
+                    })();
+                  }}
+                  width={50}
+                  height={50}
+                />
+              </Button>
             </Grid>
           </Grid>
         </Grid>
