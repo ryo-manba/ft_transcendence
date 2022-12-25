@@ -446,7 +446,7 @@ export class GameGateway {
     socket.emit('joinGameRoom', room.gameState, gameSetting);
   }
 
-  @SubscribeMessage('timeUp')
+  @SubscribeMessage('cancelOngoingBattle')
   cancelGame(@ConnectedSocket() socket: Socket) {
     const room = this.gameRooms.find(
       (r) =>
@@ -455,7 +455,7 @@ export class GameGateway {
     if (!room) {
       socket.emit('error');
     } else {
-      this.server.to(room.roomName).emit('timedUp');
+      this.server.to(room.roomName).emit('cancelOngoingBattle');
       this.gameRooms = this.gameRooms.filter(
         (room) =>
           room.player1.socket.id !== socket.id &&

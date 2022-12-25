@@ -7,7 +7,7 @@ export const PlayState = {
   stateStandingBy: 3,
   statePlaying: 4,
   stateFinished: 5,
-  stateTimedUp: 6,
+  stateCanceled: 6,
 } as const;
 
 export type PlayState = typeof PlayState[keyof typeof PlayState];
