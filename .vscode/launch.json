@@ -2,8 +2,8 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "type": "pwa-node",
-      "name": "Launch via yarn",
+      "type": "node",
+      "name": "Debug Backend",
       "request": "launch",
       "runtimeArgs": ["run", "start:dev"],
       "runtimeExecutable": "yarn",
@@ -11,8 +11,13 @@
       "sourceMaps": true,
       "envFile": "${workspaceFolder}/.env",
       "cwd": "${workspaceRoot}/backend",
-      "console": "integratedTerminal",
-      "protocol": "inspector"
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "Debug Frontend",
+      "type": "chrome",
+      "request": "launch",
+      "url": "http://localhost:3000"
     }
   ]
 }

@@ -356,7 +356,10 @@ export class GameGateway {
     @ConnectedSocket() socket: Socket,
     @MessageBody() data: number,
   ) {
-    if (this.waitingQueue.length === 0) {
+    const waitingUserIdx = this.waitingQueue.findIndex(
+      (item) => item.id !== data,
+    );
+    if (waitingUserIdx === -1) {
       const user = await this.user.findOne(data);
       if (user === null) return;
       this.waitingQueue.push({
@@ -370,7 +373,8 @@ export class GameGateway {
     } else {
       const user = await this.user.findOne(data);
       if (user === null) return;
-      const player1 = this.waitingQueue.pop();
+
+      const player1 = this.waitingQueue.splice(waitingUserIdx, 1)[0];
       const player2 = {
         name: user.name,
         id: data,
@@ -442,7 +446,7 @@ export class GameGateway {
     socket.emit('joinGameRoom', room.gameState, gameSetting);
   }
 
-  @SubscribeMessage('timeUp')
+  @SubscribeMessage('cancelOngoingBattle')
   cancelGame(@ConnectedSocket() socket: Socket) {
     const room = this.gameRooms.find(
       (r) =>
@@ -451,7 +455,7 @@ export class GameGateway {
     if (!room) {
       socket.emit('error');
     } else {
-      this.server.to(room.roomName).emit('timedUp');
+      this.server.to(room.roomName).emit('cancelOngoingBattle');
       this.gameRooms = this.gameRooms.filter(
         (room) =>
           room.player1.socket.id !== socket.id &&

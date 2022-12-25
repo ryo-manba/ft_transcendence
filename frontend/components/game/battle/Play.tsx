@@ -10,6 +10,7 @@ import { useQueryUser } from 'hooks/useQueryUser';
 import { Loading } from 'components/common/Loading';
 import { useGameSettingStore } from 'store/game/GameSetting';
 import { useMutationStatus } from 'hooks/useMutationStatus';
+import { useRouter } from 'next/router';
 
 type Props = {
   updateFinishedGameInfo: (newInfo: FinishedGameInfo) => void;
@@ -97,6 +98,7 @@ export const Play = ({ updateFinishedGameInfo }: Props) => {
 
   const { socket } = useSocketStore();
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const { playState } = usePlayStateStore();
   const { playerNames } = usePlayerNamesStore();
   const { gameSetting } = useGameSettingStore();
   const [scores, updateScores] = useState<[number, number]>([0, 0]);
@@ -120,6 +122,7 @@ export const Play = ({ updateFinishedGameInfo }: Props) => {
   const { updatePointMutation } = useMutationPoint();
   const { updateStatusMutation } = useMutationStatus();
   const { data: user } = useQueryUser();
+  const router = useRouter();
   const FPS = 60;
   const waitMillSec = 1000 / FPS;
 
@@ -332,6 +335,30 @@ export const Play = ({ updateFinishedGameInfo }: Props) => {
       window.removeEventListener('resize', handleWindowResize);
     };
   }, []);
+
+  useEffect(() => {
+    const cancelOngoingBattle = () => {
+      if (playState === PlayState.statePlaying) {
+        socket.emit('cancelOngoingBattle');
+      }
+    };
+
+    router.events.on('routeChangeStart', cancelOngoingBattle);
+
+    return () => {
+      router.events.off('routeChangeStart', cancelOngoingBattle);
+    };
+  });
+
+  useEffect(() => {
+    socket.on('cancelOngoingBattle', () => {
+      updatePlayState(PlayState.stateCanceled);
+    });
+
+    return () => {
+      socket.off('cancelOngoingBattle');
+    };
+  }, [socket]);
 
   useEffect(() => {
     if (countDown > 0) {
