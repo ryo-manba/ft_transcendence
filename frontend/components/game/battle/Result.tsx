@@ -47,7 +47,7 @@ export const Result = ({ finishedGameInfo }: Props) => {
               Result
             </Typography>
           </Grid>
-          <Grid container>
+          <Grid container spacing={3}>
             <Grid item xs={6}>
               <Typography
                 align="center"
@@ -55,7 +55,7 @@ export const Result = ({ finishedGameInfo }: Props) => {
                 variant="h4"
                 component="h4"
               >
-                Winner
+                Win
               </Typography>
             </Grid>
             <Grid item xs={6}>
@@ -65,33 +65,35 @@ export const Result = ({ finishedGameInfo }: Props) => {
                 variant="h4"
                 component="h4"
               >
-                Loser
+                Lose
               </Typography>
             </Grid>
           </Grid>
-          <Grid container>
-            <Grid item xs={6}>
+          <Grid container spacing={3} wrap="nowrap">
+            <Grid item xs={6} zeroMinWidth>
               <Typography
                 align="center"
                 gutterBottom
                 variant="h5"
                 component="h5"
+                noWrap
               >
                 {finishedGameInfo.winnerName}
               </Typography>
             </Grid>
-            <Grid item xs={6}>
+            <Grid item xs={6} zeroMinWidth>
               <Typography
                 align="center"
                 gutterBottom
                 variant="h5"
                 component="h5"
+                noWrap
               >
                 {finishedGameInfo.loserName}
               </Typography>
             </Grid>
           </Grid>
-          <Grid container>
+          <Grid container spacing={3}>
             <Grid item xs={6}>
               <Typography
                 align="center"
