@@ -4,30 +4,22 @@ import {
   Dialog,
   DialogActions,
   DialogContent,
-  InputLabel,
-  Select,
   SelectChangeEvent,
-  MenuItem,
-  FormControl,
   DialogTitle,
+  InputLabel,
+  FormControl,
 } from '@mui/material';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-
-import {
-  Chatroom,
-  ChatroomSettings,
-  CHATROOM_SETTINGS,
-  CHATROOM_TYPE,
-  ChatUser,
-} from 'types/chat';
+import { Chatroom, ChatroomSetting, ChatUser } from 'types/chat';
 import { Friend } from 'types/friend';
 import { fetchJoinableFriends } from 'api/friend/fetchJoinableFriends';
 import { fetchChatroomNormalUsers } from 'api/chat/fetchChatroomNormalUsers';
 import { useQueryUser } from 'hooks/useQueryUser';
 import { Loading } from 'components/common/Loading';
 import { ChatroomSettingDetailDialog } from 'components/chat/chatroom/ChatroomSettingDetailDialog';
+import { ChatroomSettingItems } from 'components/chat/chatroom/ChatroomSettingItems';
 import { ChatPasswordForm } from 'components/chat/utils/ChatPasswordForm';
 
 type Props = {
@@ -65,7 +57,7 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
 }: Props) {
   const { data: user } = useQueryUser();
   const [selectedRoomSetting, setSelectedRoomSetting] =
-    useState<ChatroomSettings>(CHATROOM_SETTINGS.MUTE_USER);
+    useState<ChatroomSetting>(ChatroomSetting.MUTE_USER);
   const [selectedUserId, setSelectedUserId] = useState('');
   const [notAdminUsers, setNotAdminUsers] = useState<ChatUser[]>([]);
   const [notBannedUsers, setNotBannedUsers] = useState<ChatUser[]>([]);
@@ -76,19 +68,19 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
   const schema = z.object({
     oldPassword: z.string().refine(
       (value: string) =>
-        selectedRoomSetting !== CHATROOM_SETTINGS.CHANGE_PASSWORD ||
+        selectedRoomSetting !== ChatroomSetting.CHANGE_PASSWORD ||
         value.length >= 5,
       () => ({ message: errorInputPassword }),
     ),
     newPassword: z.string().refine(
       (value: string) =>
-        selectedRoomSetting !== CHATROOM_SETTINGS.CHANGE_PASSWORD ||
+        selectedRoomSetting !== ChatroomSetting.CHANGE_PASSWORD ||
         value.length >= 5,
       () => ({ message: errorInputPassword }),
     ),
     checkPassword: z.string().refine(
       (value: string) =>
-        selectedRoomSetting !== CHATROOM_SETTINGS.CHANGE_PASSWORD ||
+        selectedRoomSetting !== ChatroomSetting.CHANGE_PASSWORD ||
         value.length >= 5,
       () => ({ message: errorInputPassword }),
     ),
@@ -137,13 +129,13 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
   useEffect(() => {
     if (user === undefined) return;
     switch (selectedRoomSetting) {
-      case CHATROOM_SETTINGS.ADD_FRIEND:
+      case ChatroomSetting.ADD_FRIEND:
         void fetchFriends(user.id);
-      case CHATROOM_SETTINGS.SET_ADMIN:
+      case ChatroomSetting.SET_ADMIN:
         void fetchCanSetAdminUsers();
-      case CHATROOM_SETTINGS.BAN_USER:
+      case ChatroomSetting.BAN_USER:
         void fetchCanBanUsers();
-      case CHATROOM_SETTINGS.MUTE_USER:
+      case ChatroomSetting.MUTE_USER:
         void fetchCanMuteUsers();
       default:
     }
@@ -176,7 +168,7 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
   };
 
   const handleClose = () => {
-    setSelectedRoomSetting(CHATROOM_SETTINGS.DELETE_ROOM);
+    setSelectedRoomSetting(ChatroomSetting.MUTE_USER);
     initDialog();
     onClose();
   };
@@ -184,7 +176,7 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
   /// ダイアログで項目を変更したときの処理
   const handleChangeSetting = (event: SelectChangeEvent) => {
     initDialog();
-    setSelectedRoomSetting(event.target.value as ChatroomSettings);
+    setSelectedRoomSetting(event.target.value as ChatroomSetting);
   };
 
   const handleChangeUserId = (event: SelectChangeEvent) => {
@@ -197,29 +189,28 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
     checkPassword,
   }: PasswordForm) => {
     switch (selectedRoomSetting) {
-      case CHATROOM_SETTINGS.DELETE_ROOM:
+      case ChatroomSetting.DELETE_ROOM:
         deleteRoom();
         break;
-      case CHATROOM_SETTINGS.ADD_FRIEND:
+      case ChatroomSetting.ADD_FRIEND:
         addFriend(Number(selectedUserId));
         break;
-      case CHATROOM_SETTINGS.SET_ADMIN:
+      case ChatroomSetting.SET_ADMIN:
         addAdmin(Number(selectedUserId));
         break;
-      case CHATROOM_SETTINGS.CHANGE_PASSWORD:
+      case ChatroomSetting.CHANGE_PASSWORD:
         changePassword(oldPassword, newPassword, checkPassword);
         break;
-      case CHATROOM_SETTINGS.MUTE_USER:
+      case ChatroomSetting.MUTE_USER:
         muteUser(Number(selectedUserId));
         break;
-      case CHATROOM_SETTINGS.BAN_USER:
+      case ChatroomSetting.BAN_USER:
         banUser(Number(selectedUserId));
         break;
     }
     handleClose();
   };
 
-  const isOwner = room.ownerId === user.id;
   const passwordHelper = 'Must be min 5 characters';
 
   return (
@@ -229,46 +220,15 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
         <DialogContent>
           <FormControl sx={{ mx: 3, my: 1, minWidth: 200 }}>
             <InputLabel id="room-setting-select-label">Setting</InputLabel>
-            <Select
-              labelId="room-setting-select-label"
-              id="room-setting"
-              value={selectedRoomSetting}
-              label="setting"
-              onChange={handleChangeSetting}
-            >
-              {isOwner && (
-                <MenuItem value={CHATROOM_SETTINGS.DELETE_ROOM}>
-                  {CHATROOM_SETTINGS.DELETE_ROOM}
-                </MenuItem>
-              )}
-              {isOwner && (
-                <MenuItem value={CHATROOM_SETTINGS.SET_ADMIN}>
-                  {CHATROOM_SETTINGS.SET_ADMIN}
-                </MenuItem>
-              )}
-              {/* パスワードで保護されたルームのみ選択可能 */}
-              {isOwner && room.type === CHATROOM_TYPE.PROTECTED && (
-                <MenuItem value={CHATROOM_SETTINGS.CHANGE_PASSWORD}>
-                  {CHATROOM_SETTINGS.CHANGE_PASSWORD}
-                </MenuItem>
-              )}
-              {/* 非公開のルームのみフレンド追加ボタンが選択可能 */}
-              {isOwner && room.type === CHATROOM_TYPE.PRIVATE && (
-                <MenuItem value={CHATROOM_SETTINGS.ADD_FRIEND}>
-                  {CHATROOM_SETTINGS.ADD_FRIEND}
-                </MenuItem>
-              )}
-              {/* 以下はAdminも設定可能な項目 */}
-              <MenuItem value={CHATROOM_SETTINGS.MUTE_USER}>
-                {CHATROOM_SETTINGS.MUTE_USER}
-              </MenuItem>
-              <MenuItem value={CHATROOM_SETTINGS.BAN_USER}>
-                {CHATROOM_SETTINGS.BAN_USER}
-              </MenuItem>
-            </Select>
+            <ChatroomSettingItems
+              isOwner={room.ownerId === user.id}
+              roomType={room.type}
+              selectedRoomSetting={selectedRoomSetting}
+              handleChangeSetting={handleChangeSetting}
+            />
           </FormControl>
         </DialogContent>
-        {selectedRoomSetting === CHATROOM_SETTINGS.ADD_FRIEND && (
+        {selectedRoomSetting === ChatroomSetting.ADD_FRIEND && (
           <ChatroomSettingDetailDialog
             users={friends}
             labelTitle="Friend"
@@ -276,7 +236,7 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
             onChange={handleChangeUserId}
           />
         )}
-        {selectedRoomSetting === CHATROOM_SETTINGS.SET_ADMIN && (
+        {selectedRoomSetting === ChatroomSetting.SET_ADMIN && (
           <ChatroomSettingDetailDialog
             users={notAdminUsers}
             labelTitle="User"
@@ -284,7 +244,7 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
             onChange={handleChangeUserId}
           />
         )}
-        {selectedRoomSetting === CHATROOM_SETTINGS.CHANGE_PASSWORD && (
+        {selectedRoomSetting === ChatroomSetting.CHANGE_PASSWORD && (
           <>
             <DialogContent>
               <ChatPasswordForm
@@ -315,7 +275,7 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
             </DialogContent>
           </>
         )}
-        {selectedRoomSetting === CHATROOM_SETTINGS.BAN_USER && (
+        {selectedRoomSetting === ChatroomSetting.BAN_USER && (
           <ChatroomSettingDetailDialog
             users={notBannedUsers}
             labelTitle="User"
@@ -323,7 +283,7 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
             onChange={handleChangeUserId}
           />
         )}
-        {selectedRoomSetting === CHATROOM_SETTINGS.MUTE_USER && (
+        {selectedRoomSetting === ChatroomSetting.MUTE_USER && (
           <ChatroomSettingDetailDialog
             users={notMutedUsers}
             labelTitle="User"

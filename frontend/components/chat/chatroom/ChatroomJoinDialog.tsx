@@ -26,7 +26,7 @@ import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import { Chatroom } from '@prisma/client';
 import { Socket } from 'socket.io-client';
-import { CHATROOM_TYPE, JoinChatroomInfo } from 'types/chat';
+import { ChatroomType, JoinChatroomInfo } from 'types/chat';
 import { useQueryUser } from 'hooks/useQueryUser';
 import { Loading } from 'components/common/Loading';
 import { ChatErrorAlert } from 'components/chat/utils/ChatErrorAlert';
@@ -60,7 +60,7 @@ export const ChatroomJoinDialog = memo(function ChatroomJoinDialog({
   const schema = z.object({
     password: z.string().refine(
       (value: string) =>
-        selectedRoom?.type !== CHATROOM_TYPE.PROTECTED || value.length >= 5,
+        selectedRoom?.type !== ChatroomType.PROTECTED || value.length >= 5,
       () => ({
         message: 'Passwords must be at least 5 characters',
       }),
@@ -90,7 +90,7 @@ export const ChatroomJoinDialog = memo(function ChatroomJoinDialog({
   };
 
   const isProtected = (room: Chatroom | null) => {
-    return room?.type == CHATROOM_TYPE.PROTECTED;
+    return room?.type == ChatroomType.PROTECTED;
   };
 
   const handleClickListItem = (room: Chatroom) => {
@@ -124,7 +124,7 @@ export const ChatroomJoinDialog = memo(function ChatroomJoinDialog({
 
     const joinRoomInfo: JoinChatroomInfo = {
       userId: user.id,
-      roomId: selectedRoom.id,
+      chatroomId: selectedRoom.id,
       type: selectedRoom.type,
       password: isProtected(selectedRoom) ? password : undefined,
     };
