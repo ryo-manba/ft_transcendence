@@ -8,6 +8,7 @@ import {
   Req,
   Get,
   Param,
+  Patch,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { AuthService } from './auth.service';
@@ -98,12 +99,9 @@ export class AuthController {
     return this.authService.generateQrCode(Number(id));
   }
 
-  @Post('send2facode')
-  send2FACode(
-    @Param('id') id: string,
-    @Body() dto: Validate2FACodeDto,
-  ): Promise<string> {
-    return this.authService.send2FACode(Number(id), dto);
+  @Patch('send2facode')
+  send2FACode(@Body() dto: Validate2FACodeDto): Promise<string> {
+    return this.authService.send2FACode(dto);
   }
 
   @Get('has2fa')
@@ -129,8 +127,8 @@ export class AuthController {
     };
   }
 
-  @Post('disable2fa')
-  disable2FA(@Body() data: Validate2FACodeDto): Promise<string> {
-    return this.authService.disable2FA(data);
+  @Patch('disable2fa')
+  disable2FA(@Body() dto: Validate2FACodeDto): Promise<string> {
+    return this.authService.disable2FA(dto);
   }
 }

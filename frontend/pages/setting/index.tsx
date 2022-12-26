@@ -23,6 +23,8 @@ import { Loading } from 'components/common/Loading';
 import { AxiosError } from 'axios';
 import { AxiosErrorResponse } from 'types';
 import { getAvatarImageUrl } from 'api/user/getAvatarImageUrl';
+import { useRouter } from 'next/router';
+import { useMutationHas2FA } from 'hooks/useMutationHas2FA';
 
 const schema = z.object({
   username: z.string().min(1, { message: 'Username cannot be empty' }),
@@ -44,6 +46,8 @@ const Setting: NextPage = () => {
   });
   const { updateNameMutation } = useMutationName();
   const { updateAvatarMutation, deleteAvatarMutation } = useMutationAvatar();
+  const { disableHas2FAMutation } = useMutationHas2FA();
+  const router = useRouter();
 
   if (user === undefined) return <Loading fullHeight />;
 
@@ -108,6 +112,17 @@ const Setting: NextPage = () => {
         userId: user.id,
         avatarPath: user.avatarPath,
       });
+    }
+  };
+
+  const onChange2faSetting = async () => {
+    if (user.has2FA) {
+      //TODO: 確認ダイアログを出した後に解除したい
+      disableHas2FAMutation.mutate({
+        userId: user.id,
+      });
+    } else {
+      await router.push('/setting/enable2fa');
     }
   };
 
@@ -220,7 +235,31 @@ const Setting: NextPage = () => {
             </Button>
           </Grid>
         </Grid>
+        <Grid
+          container
+          alignItems="center"
+          justifyContent="center"
+          spacing={2}
+          sx={{ p: 2 }}
+        >
+          <Grid item>
+            <Button
+              variant="contained"
+              component="label"
+              onClick={() => {
+                void onChange2faSetting();
+              }}
+            >
+              {user.has2FA ? 'DISABLE 2FA' : 'ENABLE 2FA'}
+            </Button>
+          </Grid>
+        </Grid>
       </form>
+      {/* <Grid container alignItems="center" justifyContent="center" spacing={2}>
+        <Grid item>
+          <Enable2FA></Enable2FA>
+        </Grid>
+      </Grid> */}
     </Layout>
   );
 };

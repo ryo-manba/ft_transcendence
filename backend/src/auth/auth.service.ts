@@ -30,6 +30,7 @@ export class AuthService {
   ) {}
 
   private logger: Logger = new Logger('AuthService');
+  preAuthSecrets = new Map<number, string>();
 
   async singUp(dto: AuthDto): Promise<Msg> {
     // 2の12乗回の演算が必要、という意味の12
@@ -192,53 +193,43 @@ export class AuthService {
       },
     });
     if (!user) throw new HttpException('User not found', HttpStatus.NOT_FOUND);
-    const secret = speakeasy.generateSecret();
+    // シークレットを生成してURLを発行し、QRコード画像を作成
+    const secretBase32 = speakeasy.generateSecret().base32;
     const url = speakeasy.otpauthURL({
-      secret: secret.base32,
+      secret: secretBase32,
       label: user.name,
       issuer: 'ft_transcendence',
     });
     const qr_code = qrcode.toDataURL(url);
-    //取得したSecretをDBに保存。まだこのユーザーは2FA機能オン状態ではない。
-    const user_db = await this.prisma.user.update({
-      where: {
-        id: userId,
-      },
-      data: {
-        secret2FA: secret.base32,
-      },
-    });
+    // 一時的にシークレットを保存
+    this.preAuthSecrets.set(userId, secretBase32);
 
     return qr_code;
   }
 
-  async send2FACode(userId: number, dto: Validate2FACodeDto): Promise<string> {
-    console.log(dto);
-    const user = await this.prisma.user.findUnique({
-      where: {
-        id: userId,
-      },
-    });
-    console.log(user.has2FA);
+  async send2FACode(dto: Validate2FACodeDto): Promise<string> {
+    // ユーザーのシークレットを取得
+    const userSecret = this.preAuthSecrets.get(Number(dto.userId));
     const valid = speakeasy.totp.verify({
-      secret: user.secret2FA,
+      secret: userSecret,
       token: dto.code,
     });
     if (!valid) {
-      throw new Error('hoge');
+      return 'failure';
     }
-
-    //2FAの登録が完了したら、このユーザーは2FA機能をオンにする
+    //2FAの登録が完了したら、2FA機能をオンにして登録
     const user_db = await this.prisma.user.update({
       where: {
-        id: userId,
+        id: Number(dto.userId),
       },
       data: {
         has2FA: true,
+        secret2FA: userSecret,
       },
     });
+    this.preAuthSecrets.delete(Number(dto.userId));
 
-    return 'ok';
+    return 'success';
   }
 
   async has2FA(userId: number): Promise<string> {
