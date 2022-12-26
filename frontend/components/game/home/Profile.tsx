@@ -73,15 +73,16 @@ export const Profile = () => {
           justifyContent="center"
           alignItems="center"
           spacing={1}
+          wrap="nowrap"
         >
           <Grid item>
             <Avatar
               src={avatarImageUrl} // Avatar can show a default avatar image when the provided path is invalid
-              sx={{ width: 100, height: 100 }}
+              sx={{ width: 90, height: 90 }}
             />
           </Grid>
-          <Grid item>
-            <Typography gutterBottom variant="h5" component="div">
+          <Grid item sx={{ width: '75%' }}>
+            <Typography noWrap gutterBottom variant="h5" component="div">
               {user.name}
             </Typography>
           </Grid>
