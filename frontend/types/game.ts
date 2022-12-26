@@ -13,6 +13,8 @@ export const isDifficultyLevel = (value: unknown): value is DifficultyLevel => {
 export type GameSetting = {
   difficulty: DifficultyLevel;
   matchPoint: number;
+  player1Score: number;
+  player2Score: number;
 };
 
 export type GameRecordWithUserName = {

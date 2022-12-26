@@ -27,6 +27,8 @@ export const Setting = () => {
   const durationOfSettingInSec = 30;
   const timeoutIntervalInMilSec = 1000;
   const [countDown, updateCountDown] = useState(durationOfSettingInSec);
+  const player1DefaultScore = 0;
+  const player2DefaultScore = 0;
 
   const handleDifficultySetting = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value: unknown = e.target.value;
@@ -72,7 +74,12 @@ export const Setting = () => {
   }, [countDown, socket]);
 
   const handleSubmit = () => {
-    socket.emit('completeSetting', { difficulty, matchPoint });
+    socket.emit('completeSetting', {
+      difficulty,
+      matchPoint,
+      player1Score: player1DefaultScore,
+      player2Score: player2DefaultScore,
+    });
   };
 
   return (

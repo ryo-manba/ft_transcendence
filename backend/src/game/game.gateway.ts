@@ -38,6 +38,8 @@ type DifficultyLevel = 'Easy' | 'Normal' | 'Hard';
 type GameSetting = {
   difficulty: DifficultyLevel;
   matchPoint: number;
+  player1Score: number;
+  player2Score: number;
 };
 
 type GameState = 'Setting' | 'Playing';
@@ -149,6 +151,8 @@ export class GameGateway {
   static defaultSetting: GameSetting = {
     difficulty: 'Easy',
     matchPoint: 3,
+    player1Score: 0,
+    player2Score: 0,
   };
 
   static boardWidth = 1000;
@@ -476,6 +480,7 @@ export class GameGateway {
     if (!room) {
       socket.emit('error');
     } else {
+      this.logger.log('completeSetting: ', data);
       room.gameSetting = data;
       room.rewards = 10 * data.matchPoint;
       switch (data.difficulty) {
@@ -638,6 +643,8 @@ export class GameGateway {
         this.server
           .to(room.roomName)
           .emit('updateScores', [room.player1.score, room.player2.score]);
+        room.gameSetting.player1Score = room.player1.score;
+        room.gameSetting.player2Score = room.player2.score;
       }
     }
     this.sendGameInfo(room);
