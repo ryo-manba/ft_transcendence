@@ -25,8 +25,10 @@ import { ChatPasswordForm } from 'components/chat/utils/ChatPasswordForm';
 type Props = {
   room: Chatroom;
   open: boolean;
+  isAdmin: boolean;
   onClose: () => void;
   deleteRoom: () => void;
+  leaveRoom: () => void;
   addFriend: (friendId: number) => void;
   addAdmin: (userId: number) => void;
   changePassword: (
@@ -47,8 +49,10 @@ type PasswordForm = {
 export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
   room,
   open,
+  isAdmin,
   onClose,
   deleteRoom,
+  leaveRoom,
   addFriend,
   addAdmin,
   changePassword,
@@ -131,12 +135,16 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
     switch (selectedRoomSetting) {
       case ChatroomSetting.ADD_FRIEND:
         void fetchFriends(user.id);
+        break;
       case ChatroomSetting.SET_ADMIN:
         void fetchCanSetAdminUsers();
+        break;
       case ChatroomSetting.BAN_USER:
         void fetchCanBanUsers();
+        break;
       case ChatroomSetting.MUTE_USER:
         void fetchCanMuteUsers();
+        break;
       default:
     }
   }, [selectedRoomSetting]);
@@ -192,6 +200,9 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
       case ChatroomSetting.DELETE_ROOM:
         deleteRoom();
         break;
+      case ChatroomSetting.LEAVE_ROOM:
+        leaveRoom();
+        break;
       case ChatroomSetting.ADD_FRIEND:
         addFriend(Number(selectedUserId));
         break;
@@ -212,6 +223,7 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
   };
 
   const passwordHelper = 'Must be min 5 characters';
+  const isOwner = room.ownerId === user.id;
 
   return (
     <>
@@ -221,7 +233,8 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
           <FormControl sx={{ mx: 3, my: 1, minWidth: 200 }}>
             <InputLabel id="room-setting-select-label">Setting</InputLabel>
             <ChatroomSettingItems
-              isOwner={room.ownerId === user.id}
+              isAdmin={isAdmin}
+              isOwner={isOwner}
               roomType={room.type}
               selectedRoomSetting={selectedRoomSetting}
               handleChangeSetting={handleChangeSetting}

@@ -34,28 +34,26 @@ export const ChatroomListItem = memo(function ChatroomListItem({
   setMessages,
 }: Props) {
   const [open, setOpen] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
   const { data: user } = useQueryUser();
-
-  useEffect(() => {
-    if (!user) return;
-
-    // adminかどうかを判定する
-    socket.emit('chat:getAdminIds', room.id, (adminIds: number[]) => {
-      console.log('adminIds', adminIds);
-      adminIds.map((id) => {
-        if (id === user.id) {
-          setIsAdmin(true);
-        }
-      });
-    });
-  }, [user]);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   if (user === undefined) {
     return <Loading />;
   }
+
+  useEffect(() => {
+    if (user === undefined) return;
+
+    // adminかどうかを判定する
+    socket.emit('chat:getAdminIds', room.id, (adminIds: number[]) => {
+      console.log('adminIds', adminIds);
+      if (adminIds.includes(user.id)) {
+        setIsAdmin(true);
+      }
+    });
+  }, [user]);
 
   // ルームをクリックしたときの処理
   const changeCurrentRoom = (roomId: number) => {
@@ -195,6 +193,26 @@ export const ChatroomListItem = memo(function ChatroomListItem({
     });
   };
 
+  const leaveRoom = () => {
+    const leaveRoomInfo = {
+      chatroomId: room.id,
+      userId: user.id,
+    };
+
+    socket.emit('chat:leaveRoom', leaveRoomInfo, (res: boolean) => {
+      if (res) {
+        setMessages([]);
+        setCurrentRoomId(0);
+        // 所属しているチャットルーム一覧を取得する
+        socket.emit('chat:getJoinedRooms', user.id);
+
+        setSuccess('You have left the chat room.');
+      } else {
+        setError('Failed to leave room.');
+      }
+    });
+  };
+
   return (
     <>
       <Box sx={{ width: '100%' }}>
@@ -227,68 +245,51 @@ export const ChatroomListItem = memo(function ChatroomListItem({
           </Alert>
         </Collapse>
       </Box>
-      {user.id === room.ownerId || isAdmin ? (
-        <ListItem
-          secondaryAction={
-            <IconButton
-              edge="end"
-              aria-label="settings"
-              onClick={handleClickOpen}
-            >
-              <SettingsIcon />
-            </IconButton>
-          }
-          divider
-          button
-        >
-          <ListItemAvatar>
-            {room.type === ChatroomType.DM ? (
-              <Avatar />
-            ) : (
-              <Avatar>
-                <ChatIcon />
-              </Avatar>
-            )}
-          </ListItemAvatar>
-          <ChatroomSettingDialog
-            room={room}
-            open={open}
-            onClose={handleClose}
-            deleteRoom={deleteRoom}
-            addFriend={addFriend}
-            addAdmin={addAdmin}
-            changePassword={changePassword}
-            banUser={banUser}
-            muteUser={muteUser}
-          />
-          <ListItemText
-            primary={room.name}
-            onClick={() => {
-              changeCurrentRoom(room.id);
-            }}
-            style={{
-              overflow: 'hidden',
-            }}
-          />
-        </ListItem>
-      ) : (
-        <ListItem divider button>
-          <ListItemAvatar>
+      <ListItem
+        secondaryAction={
+          <IconButton
+            edge="end"
+            aria-label="settings"
+            onClick={handleClickOpen}
+          >
+            <SettingsIcon />
+          </IconButton>
+        }
+        divider
+        button
+      >
+        <ListItemAvatar>
+          {room.type === ChatroomType.DM ? (
+            <Avatar />
+          ) : (
             <Avatar>
               <ChatIcon />
             </Avatar>
-          </ListItemAvatar>
-          <ListItemText
-            primary={room.name}
-            onClick={() => {
-              changeCurrentRoom(room.id);
-            }}
-            style={{
-              overflow: 'hidden',
-            }}
-          />
-        </ListItem>
-      )}
+          )}
+        </ListItemAvatar>
+        <ChatroomSettingDialog
+          room={room}
+          open={open}
+          isAdmin={isAdmin}
+          onClose={handleClose}
+          deleteRoom={deleteRoom}
+          leaveRoom={leaveRoom}
+          addFriend={addFriend}
+          addAdmin={addAdmin}
+          changePassword={changePassword}
+          banUser={banUser}
+          muteUser={muteUser}
+        />
+        <ListItemText
+          primary={room.name}
+          onClick={() => {
+            changeCurrentRoom(room.id);
+          }}
+          style={{
+            overflow: 'hidden',
+          }}
+        />
+      </ListItem>
     </>
   );
 });

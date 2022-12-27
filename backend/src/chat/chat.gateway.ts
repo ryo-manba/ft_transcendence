@@ -24,6 +24,7 @@ import { updatePasswordDto } from './dto/update-password.dto';
 import { updateMemberStatusDto } from './dto/update-member-status.dto';
 import { createDirectMessageDto } from './dto/create-direct-message.dto';
 import { CheckBanDto } from './dto/check-ban.dto';
+import { DeleteChatroomMemberDto } from './dto/delete-chatroom-member.dto';
 
 @WebSocketGateway({
   cors: {
@@ -185,17 +186,38 @@ export class ChatGateway {
   }
 
   /**
-   * チャットルームから退出する
+   * ルームからソケットを退出させる
    * @param client
    * @param roomId
+   */
+  @SubscribeMessage('chat:leaveSocket')
+  async leaveSocket(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() roomId: number,
+  ): Promise<void> {
+    this.logger.log(`chat:leaveSocket received -> ${roomId}`);
+    await client.leave(String(roomId));
+  }
+
+  /**
+   * 退出処理を行う
+   * @param client
+   * @param DeleteChatroomMemberDto
    */
   @SubscribeMessage('chat:leaveRoom')
   async onRoomLeave(
     @ConnectedSocket() client: Socket,
-    @MessageBody() roomId: number,
-  ): Promise<any> {
-    this.logger.log(`chat:leaveRoom received -> ${roomId}`);
-    await client.leave(String(roomId));
+    @MessageBody() dto: DeleteChatroomMemberDto,
+  ): Promise<boolean> {
+    this.logger.log(`chat:leaveRoom received userId -> ${dto.userId}`);
+
+    const deletedMember = await this.chatService.removeChatroomMember(dto);
+    if (deletedMember === undefined) {
+      return false;
+    }
+    await this.leaveSocket(client, dto.chatroomId);
+
+    return true;
   }
 
   /**

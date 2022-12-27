@@ -3,6 +3,7 @@ import { Select, SelectChangeEvent, MenuItem } from '@mui/material';
 import { ChatroomSetting, ChatroomType } from 'types/chat';
 
 type Props = {
+  isAdmin: boolean;
   isOwner: boolean;
   roomType: ChatroomType;
   selectedRoomSetting: ChatroomSetting;
@@ -37,12 +38,14 @@ const DMSettingItems = memo(function DMSettingItems({
 /**
  * ユーザーのタイプ：Owner, Admin, Normal
  * - チャットルームを削除する： Owner, DMの場合はAdminも可能
+ * - チャットルームを退出する： 全てのユーザーが実行可能
  * - adminを設定する：Owner
  * - friendを入室させる：PrivateかつOwnerのみ
  * - ミュートする：Owner, Admin（DMでは表示しない）
  * - BANする：Owner, Admin（DMでは表示しない）
  */
 export const ChatroomSettingItems = memo(function ChatroomSettingItems({
+  isAdmin,
   isOwner,
   roomType,
   selectedRoomSetting,
@@ -65,12 +68,21 @@ export const ChatroomSettingItems = memo(function ChatroomSettingItems({
       label="setting"
       onChange={handleChangeSetting}
     >
-      <MenuItem value={ChatroomSetting.MUTE_USER}>
-        {ChatroomSetting.MUTE_USER}
+      <MenuItem value={ChatroomSetting.LEAVE_ROOM}>
+        {ChatroomSetting.LEAVE_ROOM}
       </MenuItem>
-      <MenuItem value={ChatroomSetting.BAN_USER}>
-        {ChatroomSetting.BAN_USER}
-      </MenuItem>
+      {isAdmin ||
+        (isOwner && (
+          <MenuItem value={ChatroomSetting.MUTE_USER}>
+            {ChatroomSetting.MUTE_USER}
+          </MenuItem>
+        ))}
+      {isAdmin ||
+        (isOwner && (
+          <MenuItem value={ChatroomSetting.BAN_USER}>
+            {ChatroomSetting.BAN_USER}
+          </MenuItem>
+        ))}
       {isOwner && (
         <MenuItem value={ChatroomSetting.DELETE_ROOM}>
           {ChatroomSetting.DELETE_ROOM}

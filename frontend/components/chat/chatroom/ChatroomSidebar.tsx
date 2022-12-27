@@ -41,7 +41,7 @@ export const ChatroomSidebar = memo(function ChatroomSidebar({
       setMessages([]);
       setCurrentRoomId(0);
       // socketの退出処理をする
-      socket.emit('chat:leaveRoom');
+      socket.emit('chat:leaveSocket');
       // 所属しているチャットルーム一覧を取得する
       socket.emit('chat:getJoinedRooms', user.id);
     });
