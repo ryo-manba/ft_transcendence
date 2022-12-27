@@ -1,4 +1,4 @@
-import { Grid } from '@mui/material';
+import { Grid, Typography } from '@mui/material';
 
 type GameHeaderProps = {
   maxWidth: number;
@@ -9,7 +9,7 @@ type GameHeaderProps = {
 
 export const GameHeader = (props: GameHeaderProps) => {
   return (
-    <Grid container maxWidth={props.maxWidth}>
+    <Grid container maxWidth={props.maxWidth} wrap="nowrap" sx={{ pt: 2 }}>
       <Grid
         container
         item
@@ -17,8 +17,11 @@ export const GameHeader = (props: GameHeaderProps) => {
         direction="row"
         alignItems="center"
         justifyContent="center"
+        zeroMinWidth
       >
-        <h2>{props.left}</h2>
+        <Typography variant="h5" noWrap align="center">
+          {props.left}
+        </Typography>
       </Grid>
       <Grid
         container
@@ -28,7 +31,9 @@ export const GameHeader = (props: GameHeaderProps) => {
         alignItems="center"
         justifyContent="center"
       >
-        <h2>{props.center}</h2>
+        <Typography variant="h5" noWrap align="center">
+          {props.center}
+        </Typography>
       </Grid>
       <Grid
         container
@@ -37,8 +42,11 @@ export const GameHeader = (props: GameHeaderProps) => {
         direction="row"
         alignItems="center"
         justifyContent="center"
+        zeroMinWidth
       >
-        <h2>{props.right}</h2>
+        <Typography variant="h5" noWrap align="center">
+          {props.right}
+        </Typography>
       </Grid>
     </Grid>
   );

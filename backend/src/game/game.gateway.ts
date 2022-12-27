@@ -38,6 +38,8 @@ type DifficultyLevel = 'Easy' | 'Normal' | 'Hard';
 type GameSetting = {
   difficulty: DifficultyLevel;
   matchPoint: number;
+  player1Score: number;
+  player2Score: number;
 };
 
 type GameState = 'Setting' | 'Playing';
@@ -149,6 +151,8 @@ export class GameGateway {
   static defaultSetting: GameSetting = {
     difficulty: 'Easy',
     matchPoint: 3,
+    player1Score: 0,
+    player2Score: 0,
   };
 
   static boardWidth = 1000;
@@ -365,7 +369,10 @@ export class GameGateway {
     @ConnectedSocket() socket: Socket,
     @MessageBody() data: number,
   ) {
-    if (this.waitingQueue.length === 0) {
+    const waitingUserIdx = this.waitingQueue.findIndex(
+      (item) => item.id !== data,
+    );
+    if (waitingUserIdx === -1) {
       const user = await this.user.findOne(data);
       if (user === null) return;
       this.waitingQueue.push({
@@ -379,7 +386,8 @@ export class GameGateway {
     } else {
       const user = await this.user.findOne(data);
       if (user === null) return;
-      const player1 = this.waitingQueue.pop();
+
+      const player1 = this.waitingQueue.splice(waitingUserIdx, 1)[0];
       const player2 = {
         name: user.name,
         id: data,
@@ -451,7 +459,7 @@ export class GameGateway {
     socket.emit('joinGameRoom', room.gameState, gameSetting);
   }
 
-  @SubscribeMessage('timeUp')
+  @SubscribeMessage('cancelOngoingBattle')
   cancelGame(@ConnectedSocket() socket: Socket) {
     const room = this.gameRooms.find(
       (r) =>
@@ -460,7 +468,7 @@ export class GameGateway {
     if (!room) {
       socket.emit('error');
     } else {
-      this.server.to(room.roomName).emit('timedUp');
+      this.server.to(room.roomName).emit('cancelOngoingBattle');
       this.gameRooms = this.gameRooms.filter(
         (room) =>
           room.player1.socket.id !== socket.id &&
@@ -481,6 +489,7 @@ export class GameGateway {
     if (!room) {
       socket.emit('error');
     } else {
+      this.logger.log('completeSetting: ', data);
       room.gameSetting = data;
       room.rewards = 10 * data.matchPoint;
       switch (data.difficulty) {
@@ -643,6 +652,8 @@ export class GameGateway {
         this.server
           .to(room.roomName)
           .emit('updateScores', [room.player1.score, room.player2.score]);
+        room.gameSetting.player1Score = room.player1.score;
+        room.gameSetting.player2Score = room.player2.score;
       }
     }
     this.sendGameInfo(room);

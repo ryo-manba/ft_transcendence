@@ -9,6 +9,8 @@ type State = {
 const defaultGameSetting: GameSetting = {
   difficulty: 'Easy',
   matchPoint: 3,
+  player1Score: 0,
+  player2Score: 0,
 };
 
 export const useGameSettingStore = create<State>((set) => ({

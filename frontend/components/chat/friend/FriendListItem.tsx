@@ -5,9 +5,8 @@ import {
   ListItemAvatar,
   Box,
   Collapse,
-  IconButton,
-  Alert,
 } from '@mui/material';
+import { Socket } from 'socket.io-client';
 import { Friend } from 'types/friend';
 import { useQueryUser } from 'hooks/useQueryUser';
 import { FriendInfoDialog } from 'components/chat/friend/FriendInfoDialog';
@@ -15,18 +14,22 @@ import { Loading } from 'components/common/Loading';
 import { getAvatarImageUrl } from 'api/user/getAvatarImageUrl';
 import { getUserStatusById } from 'api/user/getUserStatusById';
 import { UserStatus } from '@prisma/client';
-import CloseIcon from '@mui/icons-material/Close';
 import { useSocketStore } from 'store/game/ClientSocket';
 import { useInvitedFriendStateStore } from 'store/game/InvitedFriendState';
 import { useRouter } from 'next/router';
 import { Invitation } from 'types/game';
 import { BadgedAvatar } from 'components/common/BadgedAvatar';
+import { ChatErrorAlert } from 'components/chat/utils/ChatErrorAlert';
 
 type Props = {
   friend: Friend;
+  socket: Socket;
 };
 
-export const FriendListItem = memo(function FriendListItem({ friend }: Props) {
+export const FriendListItem = memo(function FriendListItem({
+  friend,
+  socket,
+}: Props) {
   const [open, setOpen] = useState(false);
   const [friendStatus, setFriendStatus] = useState<UserStatus>('OFFLINE');
   const { data: user } = useQueryUser();
@@ -80,6 +83,24 @@ export const FriendListItem = memo(function FriendListItem({ friend }: Props) {
     });
   };
 
+  const directMessage = (friend: Friend) => {
+    // TODO: すでにDMを行っている場合はDMの画面に遷移させる
+    const DMInfo = {
+      userId1: user.id,
+      userId2: friend.id,
+      name1: user.name,
+      name2: friend.name,
+    };
+    console.log('chat:directMessage %o', DMInfo);
+    socket.emit('chat:directMessage', DMInfo, (res: boolean) => {
+      if (!res) {
+        setError('Failed to start direct messages.');
+
+        return;
+      }
+    });
+  };
+
   const handleClickOpen = () => {
     setOpen(true);
   };
@@ -92,24 +113,7 @@ export const FriendListItem = memo(function FriendListItem({ friend }: Props) {
     <>
       <Box sx={{ width: '100%' }}>
         <Collapse in={error !== ''}>
-          <Alert
-            severity="error"
-            action={
-              <IconButton
-                aria-label="close"
-                color="inherit"
-                size="small"
-                onClick={() => {
-                  setError('');
-                }}
-              >
-                <CloseIcon fontSize="inherit" />
-              </IconButton>
-            }
-            sx={{ mb: 2 }}
-          >
-            {error}
-          </Alert>
+          <ChatErrorAlert error={error} setError={setError} />
         </Collapse>
       </Box>
       <ListItem divider button onClick={handleClickOpen}>
@@ -131,6 +135,7 @@ export const FriendListItem = memo(function FriendListItem({ friend }: Props) {
         onClose={handleClose}
         open={open}
         inviteGame={inviteGame}
+        directMessage={directMessage}
       />
     </>
   );

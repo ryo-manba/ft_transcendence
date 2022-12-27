@@ -3,19 +3,22 @@ import {
   ListItem,
   IconButton,
   ListItemText,
+  ListItemAvatar,
+  Avatar,
   Alert,
   Box,
   Collapse,
 } from '@mui/material';
 import SettingsIcon from '@mui/icons-material/Settings';
+import ChatIcon from '@mui/icons-material/Chat';
 import CloseIcon from '@mui/icons-material/Close';
+import { ChatroomMembersStatus, ChatroomType } from '@prisma/client';
 import { Socket } from 'socket.io-client';
-import { Chatroom, Message, ChatroomType, JoinChatroomInfo } from 'types/chat';
+import { Chatroom, Message, JoinChatroomInfo } from 'types/chat';
 import { useQueryUser } from 'hooks/useQueryUser';
 import { Loading } from 'components/common/Loading';
 import { ChatroomSettingDialog } from 'components/chat/chatroom/ChatroomSettingDialog';
 import { ChatErrorAlert } from 'components/chat/utils/ChatErrorAlert';
-import { ChatroomMembersStatus } from '@prisma/client';
 
 type Props = {
   room: Chatroom;
@@ -88,15 +91,20 @@ export const ChatroomListItem = memo(function ChatroomListItem({
   };
 
   const deleteRoom = () => {
-    // 削除できるのはチャットルームオーナーだけ
-    if (user.id !== room.ownerId) {
+    // NOTE: 削除できるのはチャットルームオーナーだけ
+    //       DMの場合は例外的にどちらのユーザーも削除できる
+    if (room.type !== ChatroomType.DM && user.id !== room.ownerId) {
       setError('Only the owner can delete chat rooms.');
     } else {
       const deleteRoomInfo = {
         id: room.id,
         userId: user.id,
       };
-      socket.emit('chat:deleteRoom', deleteRoomInfo);
+      socket.emit('chat:deleteRoom', deleteRoomInfo, (res: boolean) => {
+        if (!res) {
+          setError('Failed to delete room.');
+        }
+      });
     }
   };
 
@@ -104,8 +112,8 @@ export const ChatroomListItem = memo(function ChatroomListItem({
   const addFriend = (friendId: number) => {
     const joinRoomInfo: JoinChatroomInfo = {
       userId: friendId,
-      roomId: room.id,
-      type: room.type as ChatroomType,
+      chatroomId: room.id,
+      type: room.type,
     };
 
     // TODO:フレンドを入室させたあとのgatewayからのレスポンス対応は今後行う
@@ -233,6 +241,15 @@ export const ChatroomListItem = memo(function ChatroomListItem({
           divider
           button
         >
+          <ListItemAvatar>
+            {room.type === ChatroomType.DM ? (
+              <Avatar />
+            ) : (
+              <Avatar>
+                <ChatIcon />
+              </Avatar>
+            )}
+          </ListItemAvatar>
           <ChatroomSettingDialog
             room={room}
             open={open}
@@ -256,6 +273,11 @@ export const ChatroomListItem = memo(function ChatroomListItem({
         </ListItem>
       ) : (
         <ListItem divider button>
+          <ListItemAvatar>
+            <Avatar>
+              <ChatIcon />
+            </Avatar>
+          </ListItemAvatar>
           <ListItemText
             primary={room.name}
             onClick={() => {

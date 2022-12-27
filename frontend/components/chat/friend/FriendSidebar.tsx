@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
+import { memo, useState, useEffect } from 'react';
 import { List } from '@mui/material';
+import { Socket } from 'socket.io-client';
 import { FriendAddButton } from 'components/chat/friend/FriendAddButton';
 import { FriendListItem } from 'components/chat/friend/FriendListItem';
 import { Loading } from 'components/common/Loading';
@@ -7,27 +8,25 @@ import { useQueryUser } from 'hooks/useQueryUser';
 import { Friend } from 'types/friend';
 import { fetchFollowingUsers } from 'api/friend/fetchFollowingUsers';
 
-export const FriendSidebar = () => {
+type Props = {
+  socket: Socket;
+};
+
+export const FriendSidebar = memo(function FriendSidebar({ socket }: Props) {
   const [friends, setFriends] = useState<Friend[]>([]);
   const { data: user } = useQueryUser();
   if (user === undefined) {
-    return <Loading />;
+    return <Loading fullHeight />;
   }
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchFriends = async () => {
       const res = await fetchFollowingUsers({ userId: user.id });
 
       setFriends(res);
     };
 
-    fetchData()
-      .then((res) => {
-        console.log(res);
-      })
-      .catch((err) => {
-        console.log(err);
-      });
+    void fetchFriends();
   }, []);
 
   return (
@@ -37,9 +36,9 @@ export const FriendSidebar = () => {
       <List dense={false}>
         {friends &&
           friends.map((friend) => (
-            <FriendListItem key={friend.id} friend={friend} />
+            <FriendListItem key={friend.id} friend={friend} socket={socket} />
           ))}
       </List>
     </>
   );
-};
+});

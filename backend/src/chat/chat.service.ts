@@ -17,6 +17,8 @@ import { JoinChatroomDto } from './dto/join-chatroom.dto';
 import type { ChatUser } from './types/chat';
 import { updatePasswordDto } from './dto/update-password.dto';
 import { updateMemberStatusDto } from './dto/update-member-status.dto';
+import { createDirectMessageDto } from './dto/create-direct-message.dto';
+import { DeleteChatroomDto } from './dto/delete-chatroom.dto';
 
 // 2の12乗回の演算が必要という意味
 const saltRounds = 12;
@@ -72,6 +74,8 @@ export class ChatService {
       // 成功したチャットルームの情報を返す
       return chatroom;
     } catch (error) {
+      this.logger.log('create', error);
+
       return undefined;
     }
   }
@@ -92,6 +96,40 @@ export class ChatService {
     return this.prisma.chatroom.delete({
       where,
     });
+  }
+
+  async deleteRoom(dto: DeleteChatroomDto): Promise<Chatroom> {
+    const whereInput = { id: dto.id };
+    const room = await this.findOne(whereInput);
+    if (room === undefined) {
+      return undefined;
+    }
+    // DM以外の場合はオーナーのみ削除可能
+    if (room.type !== ChatroomType.DM && room.ownerId !== dto.userId) {
+      return undefined;
+    }
+
+    // DMの場合はAdminのみ削除できる(所属しているユーザー)
+    if (room.type === ChatroomType.DM) {
+      const isAdmin = await this.prisma.chatroomAdmin.findUnique({
+        where: {
+          chatroomId_userId: {
+            chatroomId: dto.id,
+            userId: dto.userId,
+          },
+        },
+      });
+      if (isAdmin === undefined) {
+        return undefined;
+      }
+    }
+    try {
+      return await this.remove(whereInput);
+    } catch (error) {
+      this.logger.log('deleteRoom', error);
+
+      return undefined;
+    }
   }
 
   async addMessage(createMessageDto: CreateMessageDto): Promise<Message> {
@@ -204,7 +242,7 @@ export class ChatService {
     // 入室するチャットルームを取得する
     const chatroom = await this.prisma.chatroom.findUnique({
       where: {
-        id: dto.roomId,
+        id: dto.chatroomId,
       },
     });
     if (!chatroom) {
@@ -227,11 +265,12 @@ export class ChatService {
       await this.prisma.chatroomMembers.create({
         data: {
           userId: dto.userId,
-          chatroomId: dto.roomId,
+          chatroomId: dto.chatroomId,
         },
       });
     } catch (error) {
-      // userId or chatroomIdが正しくない場合は失敗する
+      this.logger.log('joinRoom', error);
+
       return undefined;
     }
 
@@ -250,7 +289,7 @@ export class ChatService {
     const joinDto: JoinChatroomDto = {
       userId: dto.ownerId,
       type: dto.type,
-      roomId: createdRoom.id,
+      chatroomId: createdRoom.id,
       password: dto.password,
     };
     const isSuccess = await this.joinRoom(joinDto);
@@ -391,6 +430,8 @@ export class ChatService {
 
       return admin;
     } catch (error) {
+      this.logger.log('createAdmin', error);
+
       return undefined;
     }
   }
@@ -429,7 +470,9 @@ export class ChatService {
       });
 
       return true;
-    } catch (err) {
+    } catch (error) {
+      this.logger.log('updatePassword', error);
+
       return false;
     }
   }
@@ -470,8 +513,136 @@ export class ChatService {
       });
 
       return res;
-    } catch (err) {
+    } catch (error) {
+      this.logger.log('updateMemberStatus', error);
+
       return undefined;
+    }
+  }
+
+  /**
+   * 2つの配列を結合して、値の重複を取得する
+   */
+  getDuplicateIds(arr1: number[], arr2: number[]): number[] {
+    const duplicateIds = new Set(
+      [...arr1, ...arr2].filter(
+        (id, index, self) => self.indexOf(id) !== index,
+      ),
+    );
+
+    // Setから配列を作成して返す
+    return [...duplicateIds];
+  }
+
+  /**
+   * user1 と user2 が含まれているDMルームがすでに存在するかを確認する
+   * @return 既にある -> true
+   * @teturn ない -> false
+   */
+  async isCreatedDMRoom(userId1: number, userId2: number): Promise<boolean> {
+    const DMRooms = await this.prisma.chatroom.findMany({
+      where: {
+        type: 'DM',
+      },
+    });
+    const DMRoomIds = DMRooms.map((room) => {
+      return room.id;
+    });
+    this.logger.log('DMRoomIds', DMRoomIds);
+
+    // userが所属しているDMのルームのみ取得する
+    const rooms1 = await this.prisma.chatroomMembers.findMany({
+      where: {
+        AND: {
+          userId: userId1,
+          chatroomId: { in: DMRoomIds },
+        },
+      },
+    });
+    const rooms2 = await this.prisma.chatroomMembers.findMany({
+      where: {
+        AND: {
+          userId: userId2,
+          chatroomId: { in: DMRoomIds },
+        },
+      },
+    });
+
+    const roomIds1 = rooms1.map((room) => {
+      return room.chatroomId;
+    });
+    const roomIds2 = rooms2.map((room) => {
+      return room.chatroomId;
+    });
+    const arr = this.getDuplicateIds(roomIds1, roomIds2);
+    if (arr.length > 0) {
+      this.logger.log('isCreatedDMRoom: already created');
+
+      return true;
+    }
+
+    return false;
+  }
+
+  /**
+   * チャットルームに所属するユーザーのステータスを更新する
+   * @param createDirectMessageDto
+   */
+  async startDirectMessage(dto: createDirectMessageDto): Promise<boolean> {
+    this.logger.log('startDirectMessage: ', dto);
+
+    const isCreated = await this.isCreatedDMRoom(dto.userId1, dto.userId2);
+    this.logger.log('isCreated', isCreated);
+    if (isCreated) {
+      return false;
+    }
+
+    // 共通するRoom一覧を取得する
+    const roomName = dto.name1 + '_' + dto.name2;
+    const createChatroomDto: CreateChatroomDto = {
+      name: roomName,
+      type: ChatroomType.DM,
+      ownerId: dto.userId1,
+    };
+    try {
+      // チャットルームを作成する
+      const createdRoom = await this.create(createChatroomDto);
+
+      const joinChatroomDto1 = {
+        userId: dto.userId1,
+        chatroomId: createdRoom.id,
+      };
+      const joinChatroomDto2 = {
+        userId: dto.userId2,
+        chatroomId: createdRoom.id,
+      };
+
+      this.logger.log('members createMany', joinChatroomDto1, joinChatroomDto2);
+      // 入室処理を行う
+      await this.prisma.chatroomMembers.createMany({
+        data: [joinChatroomDto1, joinChatroomDto2],
+      });
+
+      const createAdminDto1: CreateAdminDto = {
+        userId: dto.userId1,
+        chatroomId: createdRoom.id,
+      };
+      const createAdminDto2: CreateAdminDto = {
+        userId: dto.userId2,
+        chatroomId: createdRoom.id,
+      };
+
+      this.logger.log('admins createMany', createAdminDto1, createAdminDto2);
+      // adminに追加する
+      await this.prisma.chatroomAdmin.createMany({
+        data: [createAdminDto1, createAdminDto2],
+      });
+
+      return true;
+    } catch (error) {
+      this.logger.log('startDirectMessage', error);
+
+      return false;
     }
   }
 }

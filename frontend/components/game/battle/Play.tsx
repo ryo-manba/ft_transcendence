@@ -10,6 +10,7 @@ import { useQueryUser } from 'hooks/useQueryUser';
 import { Loading } from 'components/common/Loading';
 import { useGameSettingStore } from 'store/game/GameSetting';
 import { useMutationStatus } from 'hooks/useMutationStatus';
+import { useRouter } from 'next/router';
 
 type Props = {
   updateFinishedGameInfo: (newInfo: FinishedGameInfo) => void;
@@ -97,9 +98,12 @@ export const Play = ({ updateFinishedGameInfo }: Props) => {
 
   const { socket } = useSocketStore();
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const { playState } = usePlayStateStore();
   const { playerNames } = usePlayerNamesStore();
   const { gameSetting } = useGameSettingStore();
-  const [scores, updateScores] = useState<[number, number]>([0, 0]);
+  const updateGameSetting = useGameSettingStore(
+    (store) => store.updateGameSetting,
+  );
   const [gameParameters, setGameParameters] = useState(
     getGameParameters(getWindowWidth()),
   );
@@ -120,6 +124,7 @@ export const Play = ({ updateFinishedGameInfo }: Props) => {
   const { updatePointMutation } = useMutationPoint();
   const { updateStatusMutation } = useMutationStatus();
   const { data: user } = useQueryUser();
+  const router = useRouter();
   const FPS = 60;
   const waitMillSec = 1000 / FPS;
 
@@ -262,7 +267,11 @@ export const Play = ({ updateFinishedGameInfo }: Props) => {
 
   useEffect(() => {
     socket.on('updateScores', (newScores: [number, number]) => {
-      updateScores(newScores);
+      updateGameSetting({
+        ...gameSetting,
+        player1Score: newScores[0],
+        player2Score: newScores[1],
+      });
     });
 
     return () => {
@@ -334,6 +343,30 @@ export const Play = ({ updateFinishedGameInfo }: Props) => {
   }, []);
 
   useEffect(() => {
+    const cancelOngoingBattle = () => {
+      if (playState === PlayState.statePlaying) {
+        socket.emit('cancelOngoingBattle');
+      }
+    };
+
+    router.events.on('routeChangeStart', cancelOngoingBattle);
+
+    return () => {
+      router.events.off('routeChangeStart', cancelOngoingBattle);
+    };
+  });
+
+  useEffect(() => {
+    socket.on('cancelOngoingBattle', () => {
+      updatePlayState(PlayState.stateCanceled);
+    });
+
+    return () => {
+      socket.off('cancelOngoingBattle');
+    };
+  }, [socket]);
+
+  useEffect(() => {
     if (countDown > 0) {
       setTimeout(() => {
         updateChangeCount(false);
@@ -375,9 +408,9 @@ export const Play = ({ updateFinishedGameInfo }: Props) => {
         />
         <GameHeader
           maxWidth={gameParameters.canvasWidth}
-          left={scores[0]}
+          left={gameSetting.player1Score}
           center=":"
-          right={scores[1]}
+          right={gameSetting.player2Score}
         />
         <canvas
           ref={canvasRef}

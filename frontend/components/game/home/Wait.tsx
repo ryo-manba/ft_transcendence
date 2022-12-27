@@ -5,7 +5,7 @@ import {
   Typography,
   Button,
 } from '@mui/material';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { usePlayStateStore, PlayState } from 'store/game/PlayState';
 import { useSocketStore } from 'store/game/ClientSocket';
 import { usePlayerNamesStore } from 'store/game/PlayerNames';
@@ -22,11 +22,12 @@ export const Wait = () => {
   const { data: user } = useQueryUser();
   const { updateStatusMutation } = useMutationStatus();
 
-  const handleClose = () => {
+  const cancelPlay = useCallback(() => {
+    if (playState === PlayState.statePlaying) return;
     setOpen(false);
     updatePlayState(PlayState.stateNothing);
     socket.emit('playCancel');
-  };
+  }, []);
   const updatePlayerNames = usePlayerNamesStore(
     (store) => store.updatePlayerNames,
   );
@@ -65,6 +66,14 @@ export const Wait = () => {
     };
   }, [socket, user]);
 
+  useEffect(() => {
+    router.events.on('routeChangeStart', cancelPlay);
+
+    return () => {
+      router.events.off('routeChangeStart', cancelPlay);
+    };
+  });
+
   return (
     <Grid item>
       <Modal open={open} aria-labelledby="modal-modal-title">
@@ -79,8 +88,9 @@ export const Wait = () => {
             left: '50%',
             transform: 'translate(-50%, -50%)',
             bgcolor: 'background.paper',
-            width: '25%',
-            height: '25%',
+            width: '270px',
+            height: '180px',
+            borderRadius: '5px',
           }}
         >
           <Grid item>
@@ -90,24 +100,28 @@ export const Wait = () => {
               <DoneOutlineIcon />
             )}
           </Grid>
-          <Grid item sx={{ mt: 1 }}>
+          <Grid item sx={{ mt: 2 }}>
             <Typography
               variant="h6"
               id="modal-modal-title"
               align="center"
               gutterBottom
             >
-              Waiting for Opponent...
+              {playState === PlayState.stateWaiting
+                ? 'Waiting for Opponent...'
+                : 'Wait a Minute...'}
             </Typography>
           </Grid>
-          <Grid item>
-            <Button
-              disabled={playState !== PlayState.stateWaiting}
-              onClick={handleClose}
-            >
-              cancel
-            </Button>
-          </Grid>
+          {playState === PlayState.stateWaiting && (
+            <Grid item>
+              <Button
+                disabled={playState !== PlayState.stateWaiting}
+                onClick={cancelPlay}
+              >
+                cancel
+              </Button>
+            </Grid>
+          )}
         </Grid>
       </Modal>
     </Grid>
