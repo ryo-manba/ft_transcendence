@@ -40,7 +40,9 @@ export const Display = () => {
 
   return (
     <>
-      {invitedFriendState.friendId !== null && <Host />}
+      {(invitedFriendState.friendId !== null ||
+        playState === PlayState.stateSelecting ||
+        playState === PlayState.stateStandingBy) && <Host />}
       <Grid
         container
         justifyContent="center"

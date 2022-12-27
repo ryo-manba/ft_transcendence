@@ -15,10 +15,11 @@ import { Invitation } from 'types/game';
 import { useQueryUser } from 'hooks/useQueryUser';
 import { useMutationStatus } from 'hooks/useMutationStatus';
 import ErrorIcon from '@mui/icons-material/Error';
+import DoneOutlineIcon from '@mui/icons-material/DoneOutline';
 
 export const Host = () => {
   const [invitationDenied, setInvitationDenied] = useState(false);
-  const updatePlayState = usePlayStateStore((store) => store.updatePlayState);
+  const { playState, updatePlayState } = usePlayStateStore();
   const updatePlayerNames = usePlayerNamesStore(
     (store) => store.updatePlayerNames,
   );
@@ -32,7 +33,7 @@ export const Host = () => {
   useEffect(() => {
     if (user === undefined) return;
 
-    const updateStatusPlaying = () => {
+    const updateUserStatusPlaying = () => {
       try {
         updateStatusMutation.mutate({
           userId: user.id,
@@ -49,7 +50,7 @@ export const Host = () => {
         friendId: null,
       });
 
-      updateStatusPlaying();
+      updateUserStatusPlaying();
       void router.push('/game/battle');
     });
     socket.on('standBy', (playerNames: [string, string]) => {
@@ -59,7 +60,7 @@ export const Host = () => {
         friendId: null,
       });
 
-      updateStatusPlaying();
+      updateUserStatusPlaying();
       void router.push('/game/battle');
     });
     socket.on('denyInvitation', () => {
@@ -95,10 +96,7 @@ export const Host = () => {
   });
 
   return (
-    <Modal
-      open={invitedFriendState.friendId !== null}
-      aria-labelledby="modal-modal-title"
-    >
+    <Modal open={true} aria-labelledby="modal-modal-title">
       <Grid
         container
         justifyContent="center"
@@ -115,42 +113,34 @@ export const Host = () => {
           borderRadius: '5px',
         }}
       >
-        {invitationDenied ? (
-          <>
-            <Grid>
-              <ErrorIcon fontSize="large" />
-            </Grid>
-            <Grid item sx={{ mt: 1 }}>
-              <Typography
-                variant="h6"
-                id="modal-modal-title"
-                align="center"
-                gutterBottom
-              >
-                Invitation was denied...
-              </Typography>
-            </Grid>
-          </>
-        ) : (
-          <>
-            <Grid item>
+        <>
+          <Grid>
+            {invitationDenied && <ErrorIcon fontSize="large" />}
+            {playState !== PlayState.stateNothing && <DoneOutlineIcon />}
+            {playState === PlayState.stateNothing && !invitationDenied && (
               <CircularProgress />
-            </Grid>
-            <Grid item sx={{ mt: 2 }}>
-              <Typography
-                variant="h6"
-                id="modal-modal-title"
-                align="center"
-                gutterBottom
-              >
-                Waiting for Opponent...
-              </Typography>
-            </Grid>
-          </>
+            )}
+          </Grid>
+          <Grid item sx={{ mt: 2 }}>
+            <Typography
+              variant="h6"
+              id="modal-modal-title"
+              align="center"
+              gutterBottom
+            >
+              {invitationDenied && 'Invitation was denied...'}
+              {playState !== PlayState.stateNothing && 'Wait a Minute...'}
+              {playState === PlayState.stateNothing &&
+                !invitationDenied &&
+                'Waiting for Opponent...'}
+            </Typography>
+          </Grid>
+        </>
+        {(invitationDenied || playState === PlayState.stateNothing) && (
+          <Grid item>
+            <Button onClick={cancelInvitation}>cancel</Button>
+          </Grid>
         )}
-        <Grid item>
-          <Button onClick={cancelInvitation}>cancel</Button>
-        </Grid>
       </Grid>
     </Modal>
   );
