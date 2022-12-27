@@ -16,7 +16,7 @@ export const MessageLeft = (props: Props) => {
 
   return (
     <>
-      <div style={{ display: 'flex' }}>
+      <div style={{ display: 'flex', margin: '10px' }}>
         <Avatar alt={displayName} src={photoURL}></Avatar>
         <div>
           <div

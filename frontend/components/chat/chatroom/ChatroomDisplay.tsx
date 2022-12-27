@@ -7,6 +7,8 @@ import { useQueryUser } from 'hooks/useQueryUser';
 import { Loading } from 'components/common/Loading';
 import { ChatErrorAlert } from 'components/chat/utils/ChatErrorAlert';
 import { MessageLeft } from 'components/chat/chatroom/ChatroomMessage';
+import InfiniteScroll from 'react-infinite-scroll-component';
+import { fetchMessages } from 'api/chat/fetchMessages';
 
 type Props = {
   socket: Socket;
@@ -26,19 +28,12 @@ export const ChatroomDisplay = memo(function ChatroomDisplay({
   const [text, setText] = useState('');
   const [error, setError] = useState<string>('');
   const { data: user } = useQueryUser();
+  const [page, setPage] = useState(1); // ページ番号を保持するstate
+  const [isLoading, setIsLoading] = useState(true);
 
   if (user === undefined) {
     return <Loading />;
   }
-
-  const showMessage = (list: Message[]) => {
-    return list.map((item, i) => (
-      <li key={i}>
-        <strong>{item.userId}: </strong>
-        {item.message}
-      </li>
-    ));
-  };
 
   // send a message to the server
   const sendMessage = () => {
@@ -83,20 +78,75 @@ export const ChatroomDisplay = memo(function ChatroomDisplay({
     };
   }, [socket, user]);
 
+  useEffect(() => {
+    setIsLoading(true);
+  }, [currentRoomId]);
+
   if (user === undefined) {
     return <Loading fullHeight />;
   }
 
+  // const getMessages = () => {
+  //   console.log('getMessages');
+  //   if (currentRoomId === 0) {
+  //     return;
+  //   }
+
+  //   // ページ番号をインクリメント
+  //   setPage((prev) => prev + 1);
+
+  //   const data = {
+  //     chatroomId: currentRoomId,
+  //     skip: page,
+  //   };
+  //   socket.emit('chat:getMessages', data, (res: Message[]) => {
+  //     console.log('res:', res);
+  //     setMessages([...messages, ...res]);
+  //     setIsLoading(false);
+  //   });
+  // };
+
+  const fetchData = async (roomId: number, skip: number) => {
+    // ページ番号をインクリメント
+    console.log('page:', page);
+    setPage((prev) => prev + 1);
+
+    const res = await fetchMessages({ roomId: roomId, skip: skip });
+    // 全て取得済みの場合、もう読み込まないようにする
+    if (res.length === 0) {
+      setIsLoading(false);
+    } else {
+      setMessages((prev) => [...prev, ...res]);
+    }
+  };
+
+  const fetchMoreData = () => {
+    console.log('fetchMoreData');
+    if (currentRoomId === 0) {
+      setIsLoading(false);
+
+      return;
+    } else {
+      setIsLoading(true);
+    }
+
+    setTimeout(() => {
+      void fetchData(currentRoomId, page);
+    }, 1500);
+    // setIsLoading(false);
+  };
+
+  const appBarHeight = '64px';
+
   return (
     <>
-      {/* <div style={{}}> */}
       <Paper
         style={{
           // padding: '0px',
           // position: 'relative',
           display: 'flex',
           flexDirection: 'column',
-          height: '100%',
+          height: `calc(100vh - ${appBarHeight})`,
         }}
       >
         <div
@@ -107,20 +157,29 @@ export const ChatroomDisplay = memo(function ChatroomDisplay({
             flexGrow: 1,
           }}
         >
-          <MessageLeft
-            message="sample"
-            timestamp="MM/DD 00:00"
-            photoURL="nourl"
-            displayName=""
-          />
-          <MessageLeft
-            message="sample"
-            timestamp="MM/DD 00:00"
-            photoURL="nourl"
-            displayName=""
-          />
+          <InfiniteScroll
+            dataLength={messages.length}
+            next={fetchMoreData}
+            hasMore={isLoading}
+            loader={<Loading />}
+            endMessage={
+              <p>
+                <b>Yay! You have seen it all</b>
+              </p>
+            }
+          >
+            {messages.map((item, i) => (
+              <MessageLeft
+                key={i}
+                message={item.message}
+                timestamp={'MM/DD 00:00'}
+                photoURL="nourl"
+                displayName=""
+              />
+            ))}
+          </InfiniteScroll>
         </div>
-        <ul>{showMessage(messages)}</ul>
+
         <Box sx={{ width: '100%' }}>
           <Collapse in={error !== ''}>
             <ChatErrorAlert error={error} setError={setError} />

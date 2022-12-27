@@ -17,6 +17,7 @@ import { JoinChatroomDto } from './dto/join-chatroom.dto';
 import type { ChatUser } from './types/chat';
 import { updatePasswordDto } from './dto/update-password.dto';
 import { updateMemberStatusDto } from './dto/update-member-status.dto';
+import { GetMessagesDto } from './dto/get-messages.dto';
 
 // 2の12乗回の演算が必要という意味
 const saltRounds = 12;
@@ -110,19 +111,21 @@ export class ChatService {
 
   /**
    * chatroomに紐づいたメッセージを取得する
-   * TODO: 引数に応じて取得する数を調整する
+   * @param GetMessagesDto
    */
-  async findMessages(
-    chatroomWhereUniqueInput: Prisma.ChatroomWhereUniqueInput,
-  ): Promise<Message[] | null> {
-    const res = await this.prisma.chatroom.findUnique({
-      where: chatroomWhereUniqueInput,
-      include: {
-        messages: true,
+  async findMessages(dto: GetMessagesDto): Promise<Message[]> {
+    const PAGE_SIZE = 10;
+
+    const messages = await this.prisma.message.findMany({
+      where: {
+        chatroomId: dto.chatroomId,
       },
+      skip: PAGE_SIZE * dto.skip,
+      take: PAGE_SIZE,
+      orderBy: { createdAt: 'desc' },
     });
 
-    return res.messages;
+    return messages;
   }
 
   async findAdmins(id: number): Promise<ChatroomAdmin[] | null> {
