@@ -7,6 +7,7 @@ import {
   Avatar,
   Alert,
   AlertTitle,
+  Pagination,
 } from '@mui/material';
 import { User } from '@prisma/client';
 import { getRecordsById } from 'api/records/getRecordsById';
@@ -28,10 +29,11 @@ export const History = ({ userId }: Props) => {
   const [recordsError, setRecordsError] = useState<Error | undefined>(
     undefined,
   );
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
     const updateRecordsNUser = async () => {
-      await getRecordsById({ userId })
+      await getRecordsById({ userId: userId })
         .then((res) => {
           setRecords(res);
         })
@@ -64,6 +66,10 @@ export const History = ({ userId }: Props) => {
     return <Loading />;
   }
 
+  const handleChange = (event: React.ChangeEvent<unknown>, value: number) => {
+    setPage(value);
+  };
+
   return (
     <>
       <Typography variant="h2" align="center" gutterBottom>
@@ -72,86 +78,98 @@ export const History = ({ userId }: Props) => {
       <List
         sx={{ width: '95%', margin: 'auto', height: '70%', overflow: 'auto' }}
       >
-        {records.map((item, index) => (
-          <ListItem key={index} sx={{ border: '1px solid' }}>
-            <ListItemText
-              primary={user.name}
-              primaryTypographyProps={{
-                variant: 'h6',
-                align: 'center',
-                style: {
-                  overflow: 'hidden',
-                },
-              }}
-              sx={{ width: '30%' }}
-            />
-            {item.winnerName === user.name ? (
-              <>
-                <ListItemAvatar>
-                  <Avatar
-                    sx={{
-                      bgcolor: 'success.main',
-                      margin: 'auto',
+        {records
+          .slice((page - 1) * 5, (page - 1) * 5 + 5)
+          .map((item, index) => (
+            <ListItem key={index} sx={{ border: '1px solid' }}>
+              <ListItemText
+                primary={user.name}
+                primaryTypographyProps={{
+                  variant: 'h6',
+                  align: 'center',
+                  style: {
+                    overflow: 'hidden',
+                  },
+                }}
+                sx={{ width: '30%' }}
+              />
+              {item.winnerName === user.name ? (
+                <>
+                  <ListItemAvatar>
+                    <Avatar
+                      sx={{
+                        bgcolor: 'success.main',
+                        margin: 'auto',
+                      }}
+                      variant="rounded"
+                    >
+                      {item.winnerScore}
+                    </Avatar>
+                  </ListItemAvatar>
+                  <ListItemAvatar>
+                    <Avatar
+                      variant="rounded"
+                      sx={{ bgcolor: 'error.main', margin: 'auto' }}
+                    >
+                      {item.loserScore}
+                    </Avatar>
+                  </ListItemAvatar>
+                  <ListItemText
+                    primary={item.loserName}
+                    primaryTypographyProps={{
+                      variant: 'h6',
+                      align: 'center',
+                      style: {
+                        overflow: 'hidden',
+                      },
                     }}
-                    variant="rounded"
-                  >
-                    {item.winnerScore}
-                  </Avatar>
-                </ListItemAvatar>
-                <ListItemAvatar>
-                  <Avatar
-                    variant="rounded"
-                    sx={{ bgcolor: 'error.main', margin: 'auto' }}
-                  >
-                    {item.loserScore}
-                  </Avatar>
-                </ListItemAvatar>
-                <ListItemText
-                  primary={item.loserName}
-                  primaryTypographyProps={{
-                    variant: 'h6',
-                    align: 'center',
-                    style: {
-                      overflow: 'hidden',
-                    },
-                  }}
-                  sx={{ width: '30%' }}
-                />
-              </>
-            ) : (
-              <>
-                <ListItemAvatar>
-                  <Avatar
-                    variant="rounded"
-                    sx={{ bgcolor: 'error.main', margin: 'auto' }}
-                  >
-                    {item.loserScore}
-                  </Avatar>
-                </ListItemAvatar>
-                <ListItemAvatar>
-                  <Avatar
-                    sx={{ bgcolor: 'success.main', margin: 'auto' }}
-                    variant="rounded"
-                  >
-                    {item.winnerScore}
-                  </Avatar>
-                </ListItemAvatar>
-                <ListItemText
-                  primary={item.winnerName}
-                  primaryTypographyProps={{
-                    variant: 'h6',
-                    align: 'center',
-                    style: {
-                      overflow: 'hidden',
-                    },
-                  }}
-                  sx={{ width: '30%' }}
-                />
-              </>
-            )}
-          </ListItem>
-        ))}
+                    sx={{ width: '30%' }}
+                  />
+                </>
+              ) : (
+                <>
+                  <ListItemAvatar>
+                    <Avatar
+                      variant="rounded"
+                      sx={{ bgcolor: 'error.main', margin: 'auto' }}
+                    >
+                      {item.loserScore}
+                    </Avatar>
+                  </ListItemAvatar>
+                  <ListItemAvatar>
+                    <Avatar
+                      sx={{ bgcolor: 'success.main', margin: 'auto' }}
+                      variant="rounded"
+                    >
+                      {item.winnerScore}
+                    </Avatar>
+                  </ListItemAvatar>
+                  <ListItemText
+                    primary={item.winnerName}
+                    primaryTypographyProps={{
+                      variant: 'h6',
+                      align: 'center',
+                      style: {
+                        overflow: 'hidden',
+                      },
+                    }}
+                    sx={{ width: '30%' }}
+                  />
+                </>
+              )}
+            </ListItem>
+          ))}
       </List>
+      <Pagination
+        count={Math.ceil(records.length / 5)}
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          textAlign: 'center',
+        }}
+        page={page}
+        onChange={handleChange}
+      />
     </>
   );
 };
