@@ -161,7 +161,7 @@ export const History = ({ userId }: Props) => {
         ))}
       </List>
       <Pagination
-        count={Math.ceil(records.length / 5)}
+        count={Math.ceil(records.length / take)}
         sx={{
           display: 'flex',
           justifyContent: 'center',
