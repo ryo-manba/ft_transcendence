@@ -17,18 +17,18 @@ up:
 
 .PHONY: down
 down:
-		docker compose down
+		docker-compose down
 
 .PHONY: local
 local: db setup
 
 .PHONY: db
 db:
-		docker compose up --build -d dev-postgres
+		docker-compose up --build -d dev-postgres
 
 .PHONY: db-up
 db-up:
-		docker compose up -d dev-posegres
+		docker-compose up -d dev-posegres
 
 # NOTE: docker composeの一部のコンテナのみをダウンするときにはこれがいいらしい
 # (参考: https://aton-kish.github.io/blog/post/2020/10/04/docker-compose-rm/)
@@ -39,7 +39,7 @@ db-down:
 # docker composeで立ち上がっているDBにprisma studioでつなぐコマンド
 .PHONY: studio
 studio:
-		docker compose exec backend-nestjs yarn prisma studio
+		docker-compose exec backend-nestjs yarn prisma studio
 
 .PHONY: ps
 ps:
