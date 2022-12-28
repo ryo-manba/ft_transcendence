@@ -33,7 +33,7 @@ export const History = ({ userId }: Props) => {
 
   useEffect(() => {
     const updateRecordsNUser = async () => {
-      await getRecordsById({ userId: userId })
+      await getRecordsById({ userId })
         .then((res) => {
           setRecords(res);
         })
@@ -70,6 +70,8 @@ export const History = ({ userId }: Props) => {
     setPage(value);
   };
 
+  const take = 5;
+
   return (
     <>
       <Typography variant="h2" align="center" gutterBottom>
@@ -78,87 +80,85 @@ export const History = ({ userId }: Props) => {
       <List
         sx={{ width: '95%', margin: 'auto', height: '70%', overflow: 'auto' }}
       >
-        {records
-          .slice((page - 1) * 5, (page - 1) * 5 + 5)
-          .map((item, index) => (
-            <ListItem key={index} sx={{ border: '1px solid' }}>
-              <ListItemText
-                primary={user.name}
-                primaryTypographyProps={{
-                  variant: 'h6',
-                  align: 'center',
-                  style: {
-                    overflow: 'hidden',
-                  },
-                }}
-                sx={{ width: '30%' }}
-              />
-              {item.winnerName === user.name ? (
-                <>
-                  <ListItemAvatar>
-                    <Avatar
-                      sx={{
-                        bgcolor: 'success.main',
-                        margin: 'auto',
-                      }}
-                      variant="rounded"
-                    >
-                      {item.winnerScore}
-                    </Avatar>
-                  </ListItemAvatar>
-                  <ListItemAvatar>
-                    <Avatar
-                      variant="rounded"
-                      sx={{ bgcolor: 'error.main', margin: 'auto' }}
-                    >
-                      {item.loserScore}
-                    </Avatar>
-                  </ListItemAvatar>
-                  <ListItemText
-                    primary={item.loserName}
-                    primaryTypographyProps={{
-                      variant: 'h6',
-                      align: 'center',
-                      style: {
-                        overflow: 'hidden',
-                      },
+        {records.slice((page - 1) * take, page * take).map((item, index) => (
+          <ListItem key={index} sx={{ border: '1px solid' }}>
+            <ListItemText
+              primary={user.name}
+              primaryTypographyProps={{
+                variant: 'h6',
+                align: 'center',
+                style: {
+                  overflow: 'hidden',
+                },
+              }}
+              sx={{ width: '30%' }}
+            />
+            {item.winnerName === user.name ? (
+              <>
+                <ListItemAvatar>
+                  <Avatar
+                    sx={{
+                      bgcolor: 'success.main',
+                      margin: 'auto',
                     }}
-                    sx={{ width: '30%' }}
-                  />
-                </>
-              ) : (
-                <>
-                  <ListItemAvatar>
-                    <Avatar
-                      variant="rounded"
-                      sx={{ bgcolor: 'error.main', margin: 'auto' }}
-                    >
-                      {item.loserScore}
-                    </Avatar>
-                  </ListItemAvatar>
-                  <ListItemAvatar>
-                    <Avatar
-                      sx={{ bgcolor: 'success.main', margin: 'auto' }}
-                      variant="rounded"
-                    >
-                      {item.winnerScore}
-                    </Avatar>
-                  </ListItemAvatar>
-                  <ListItemText
-                    primary={item.winnerName}
-                    primaryTypographyProps={{
-                      variant: 'h6',
-                      align: 'center',
-                      style: {
-                        overflow: 'hidden',
-                      },
-                    }}
-                    sx={{ width: '30%' }}
-                  />
-                </>
-              )}
-            </ListItem>
-          ))}
+                    variant="rounded"
+                  >
+                    {item.winnerScore}
+                  </Avatar>
+                </ListItemAvatar>
+                <ListItemAvatar>
+                  <Avatar
+                    variant="rounded"
+                    sx={{ bgcolor: 'error.main', margin: 'auto' }}
+                  >
+                    {item.loserScore}
+                  </Avatar>
+                </ListItemAvatar>
+                <ListItemText
+                  primary={item.loserName}
+                  primaryTypographyProps={{
+                    variant: 'h6',
+                    align: 'center',
+                    style: {
+                      overflow: 'hidden',
+                    },
+                  }}
+                  sx={{ width: '30%' }}
+                />
+              </>
+            ) : (
+              <>
+                <ListItemAvatar>
+                  <Avatar
+                    variant="rounded"
+                    sx={{ bgcolor: 'error.main', margin: 'auto' }}
+                  >
+                    {item.loserScore}
+                  </Avatar>
+                </ListItemAvatar>
+                <ListItemAvatar>
+                  <Avatar
+                    sx={{ bgcolor: 'success.main', margin: 'auto' }}
+                    variant="rounded"
+                  >
+                    {item.winnerScore}
+                  </Avatar>
+                </ListItemAvatar>
+                <ListItemText
+                  primary={item.winnerName}
+                  primaryTypographyProps={{
+                    variant: 'h6',
+                    align: 'center',
+                    style: {
+                      overflow: 'hidden',
+                    },
+                  }}
+                  sx={{ width: '30%' }}
+                />
+              </>
+            )}
+          </ListItem>
+        ))}
       </List>
       <Pagination
         count={Math.ceil(records.length / 5)}
