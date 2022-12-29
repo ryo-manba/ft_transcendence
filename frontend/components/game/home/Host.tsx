@@ -136,11 +136,11 @@ export const Host = () => {
             </Typography>
           </Grid>
         </>
-        {(invitationDenied || playState === PlayState.stateNothing) && (
-          <Grid item>
-            <Button onClick={cancelInvitation}>cancel</Button>
-          </Grid>
-        )}
+        <Grid item>
+          <Button onClick={cancelInvitation}>
+            {invitationDenied ? 'close' : 'cancel'}
+          </Button>
+        </Grid>
       </Grid>
     </Modal>
   );

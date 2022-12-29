@@ -122,7 +122,7 @@ export const GameGuest = ({ hosts, setHosts }: Props) => {
         key={0}
         action={
           <>
-            <Button onClick={handleClick}>JOIN</Button>
+            <Button onClick={handleClick}>OPEN</Button>
             <IconButton
               aria-label="close"
               sx={{ p: 0.5 }}
