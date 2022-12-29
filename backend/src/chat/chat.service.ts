@@ -443,6 +443,33 @@ export class ChatService {
   }
 
   /**
+   * statusがNORMALなユーザ一覧を返す
+   * @param roomId
+   */
+  async findChatroomActiveUsers(roomId: number): Promise<ChatUser[]> {
+    const activeUsersInfo = await this.prisma.chatroomMembers.findMany({
+      where: {
+        AND: {
+          chatroomId: roomId,
+          status: ChatroomMembersStatus.NORMAL,
+        },
+      },
+      include: {
+        user: true,
+      },
+    });
+
+    const activeUsers: ChatUser[] = activeUsersInfo.map((info) => {
+      return {
+        id: info.user.id,
+        name: info.user.name,
+      };
+    });
+
+    return activeUsers;
+  }
+
+  /**
    * チャットルームのadminを作成する
    * @param CreateAdminDto
    */

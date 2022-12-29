@@ -45,4 +45,15 @@ export class ChatController {
   ): Promise<ChatUser[]> {
     return await this.chatService.findChatroomNormalUsers(roomId);
   }
+
+  /**
+   * @param roomId
+   * @return chatroomに入室しているStatusがNormalなユーザーのIDと名前の配列を返す
+   */
+  @Get('active-users')
+  async findActiveUsers(
+    @Query('roomId', ParseIntPipe) roomId: number,
+  ): Promise<ChatUser[]> {
+    return await this.chatService.findChatroomActiveUsers(roomId);
+  }
 }
