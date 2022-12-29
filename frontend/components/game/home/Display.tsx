@@ -38,9 +38,14 @@ export const Display = () => {
 
   if (user === undefined) return <Loading />;
 
+  const showHost =
+    invitedFriendState.friendId !== null ||
+    playState === PlayState.stateSelecting ||
+    playState === PlayState.stateStandingBy;
+
   return (
     <>
-      {invitedFriendState.friendId !== null && <Host />}
+      {showHost && <Host />}
       <Grid
         container
         justifyContent="center"
@@ -61,12 +66,12 @@ export const Display = () => {
               playState === PlayState.statePlaying) && <Wait />}
           </Paper>
         </Grid>
-        <Grid item xs={5} sx={{ height: '50%' }}>
+        <Grid item xs={5} sx={{ height: '60%' }}>
           <Paper elevation={2} sx={{ height: '100%' }}>
             <History userId={user.id} />
           </Paper>
         </Grid>
-        <Grid item xs={5} sx={{ height: '50%' }}>
+        <Grid item xs={5} sx={{ height: '60%' }}>
           <Paper elevation={2} sx={{ height: '100%' }}>
             <Watch />
           </Paper>

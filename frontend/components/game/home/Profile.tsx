@@ -82,7 +82,13 @@ export const Profile = () => {
             />
           </Grid>
           <Grid item sx={{ width: '75%' }}>
-            <Typography noWrap gutterBottom variant="h5" component="div">
+            <Typography
+              noWrap
+              gutterBottom
+              variant="h5"
+              component="div"
+              align="center"
+            >
               {user.name}
             </Typography>
           </Grid>

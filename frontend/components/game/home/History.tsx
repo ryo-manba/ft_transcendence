@@ -7,6 +7,7 @@ import {
   Avatar,
   Alert,
   AlertTitle,
+  Pagination,
 } from '@mui/material';
 import { User } from '@prisma/client';
 import { getRecordsById } from 'api/records/getRecordsById';
@@ -28,6 +29,7 @@ export const History = ({ userId }: Props) => {
   const [recordsError, setRecordsError] = useState<Error | undefined>(
     undefined,
   );
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
     const updateRecordsNUser = async () => {
@@ -64,15 +66,21 @@ export const History = ({ userId }: Props) => {
     return <Loading />;
   }
 
+  const handleChange = (event: React.ChangeEvent<unknown>, value: number) => {
+    setPage(value);
+  };
+
+  const take = 5;
+
   return (
     <>
       <Typography variant="h2" align="center" gutterBottom>
         History
       </Typography>
       <List
-        sx={{ width: '95%', margin: 'auto', height: '70%', overflow: 'auto' }}
+        sx={{ width: '95%', margin: 'auto', height: '310px', overflow: 'auto' }}
       >
-        {records.map((item, index) => (
+        {records.slice((page - 1) * take, page * take).map((item, index) => (
           <ListItem key={index} sx={{ border: '1px solid' }}>
             <ListItemText
               primary={user.name}
@@ -152,6 +160,16 @@ export const History = ({ userId }: Props) => {
           </ListItem>
         ))}
       </List>
+      <Pagination
+        count={Math.ceil(records.length / take)}
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          textAlign: 'center',
+        }}
+        page={page}
+        onChange={handleChange}
+      />
     </>
   );
 };
