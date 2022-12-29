@@ -14,6 +14,7 @@ type Props = {
   labelTitle: string;
   selectedValue: string;
   onChange: (event: SelectChangeEvent) => void;
+  message?: string;
 };
 
 export const ChatroomSettingDetailDialog = memo(
@@ -22,6 +23,7 @@ export const ChatroomSettingDetailDialog = memo(
     labelTitle,
     selectedValue,
     onChange,
+    message = 'No users are available.',
   }: Props) {
     return (
       <>
@@ -30,7 +32,7 @@ export const ChatroomSettingDetailDialog = memo(
             className="mb-4 flex justify-center rounded-lg bg-red-100 p-4 text-sm text-red-700 dark:bg-red-200 dark:text-red-800"
             role="alert"
           >
-            <span className="font-medium">No users are available.</span>
+            <span className="font-medium">{message}</span>
           </div>
         ) : (
           <DialogContent>

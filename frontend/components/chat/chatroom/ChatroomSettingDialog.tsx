@@ -16,6 +16,7 @@ import { Chatroom, ChatroomSetting, ChatUser } from 'types/chat';
 import { Friend } from 'types/friend';
 import { fetchJoinableFriends } from 'api/friend/fetchJoinableFriends';
 import { fetchChatroomNormalUsers } from 'api/chat/fetchChatroomNormalUsers';
+import { fetchActiveUsers } from 'api/chat/fetchActiveUsers';
 import { useQueryUser } from 'hooks/useQueryUser';
 import { Loading } from 'components/common/Loading';
 import { ChatroomSettingDetailDialog } from 'components/chat/chatroom/ChatroomSettingDetailDialog';
@@ -28,7 +29,7 @@ type Props = {
   isAdmin: boolean;
   onClose: () => void;
   deleteRoom: () => void;
-  leaveRoom: () => void;
+  leaveRoom: (nextOwnerId: number | undefined) => void;
   addFriend: (friendId: number) => void;
   addAdmin: (userId: number) => void;
   changePassword: (
@@ -61,12 +62,13 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
 }: Props) {
   const { data: user } = useQueryUser();
   const [selectedRoomSetting, setSelectedRoomSetting] =
-    useState<ChatroomSetting>(ChatroomSetting.MUTE_USER);
+    useState<ChatroomSetting>(ChatroomSetting.LEAVE_ROOM);
   const [selectedUserId, setSelectedUserId] = useState('');
   const [notAdminUsers, setNotAdminUsers] = useState<ChatUser[]>([]);
   const [notBannedUsers, setNotBannedUsers] = useState<ChatUser[]>([]);
   const [notMutedUsers, setNotMutedUsers] = useState<ChatUser[]>([]);
   const [friends, setFriends] = useState<Friend[]>([]);
+  const [activeUsers, setActiveUsers] = useState<ChatUser[]>([]);
 
   const errorInputPassword = 'Passwords must be at least 5 characters';
   const schema = z.object({
@@ -129,6 +131,16 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
     setNotMutedUsers(notMutedUsers);
   };
 
+  const fetchCanSetOwnerUsers = async () => {
+    const activeUsers = await fetchActiveUsers({
+      roomId: room.id,
+    });
+    const activeNotOwnerUsers = activeUsers.filter(
+      (user) => user.id !== room.ownerId,
+    );
+    setActiveUsers(activeNotOwnerUsers);
+  };
+
   // 設定項目を選択した時に対応するユーザ一覧を取得する
   useEffect(() => {
     if (user === undefined) return;
@@ -144,6 +156,11 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
         break;
       case ChatroomSetting.MUTE_USER:
         void fetchCanMuteUsers();
+        break;
+      case ChatroomSetting.LEAVE_ROOM:
+        if (user.id === room.ownerId) {
+          void fetchCanSetOwnerUsers();
+        }
         break;
       default:
     }
@@ -176,7 +193,7 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
   };
 
   const handleClose = () => {
-    setSelectedRoomSetting(ChatroomSetting.MUTE_USER);
+    setSelectedRoomSetting(ChatroomSetting.LEAVE_ROOM);
     initDialog();
     onClose();
   };
@@ -201,7 +218,9 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
         deleteRoom();
         break;
       case ChatroomSetting.LEAVE_ROOM:
-        leaveRoom();
+        const arg =
+          user.id === room.ownerId ? Number(selectedUserId) : undefined;
+        leaveRoom(arg);
         break;
       case ChatroomSetting.ADD_FRIEND:
         addFriend(Number(selectedUserId));
@@ -241,6 +260,16 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
             />
           </FormControl>
         </DialogContent>
+        {selectedRoomSetting === ChatroomSetting.LEAVE_ROOM && isOwner && (
+          <ChatroomSettingDetailDialog
+            users={activeUsers}
+            labelTitle="Next Owner"
+            selectedValue={selectedUserId}
+            onChange={handleChangeUserId}
+            message="If you leave this room, it will be deleted."
+          />
+        )}
+
         {selectedRoomSetting === ChatroomSetting.ADD_FRIEND && (
           <ChatroomSettingDetailDialog
             users={friends}

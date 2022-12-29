@@ -193,7 +193,22 @@ export const ChatroomListItem = memo(function ChatroomListItem({
     });
   };
 
-  const leaveRoom = () => {
+  const leaveRoom = (nextOwnerId: number | undefined) => {
+    // オーナーが退出する場合は別のユーザーを次のオーナーにする
+    if (user.id === room.ownerId && nextOwnerId) {
+      const changeOwnerInfo = {
+        chatroomId: room.id,
+        ownerId: nextOwnerId,
+      };
+      socket.emit('chat:changeRoomOwner', changeOwnerInfo, (res: boolean) => {
+        if (!res) {
+          setError('Failed to change room owner.');
+
+          return;
+        }
+      });
+    }
+
     const leaveRoomInfo = {
       chatroomId: room.id,
       userId: user.id,

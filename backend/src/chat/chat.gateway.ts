@@ -25,6 +25,7 @@ import { updateMemberStatusDto } from './dto/update-member-status.dto';
 import { createDirectMessageDto } from './dto/create-direct-message.dto';
 import { CheckBanDto } from './dto/check-ban.dto';
 import { DeleteChatroomMemberDto } from './dto/delete-chatroom-member.dto';
+import { UpdateChatroomOwnerDto } from './dto/update-chatroom-owner.dto';
 
 @WebSocketGateway({
   cors: {
@@ -217,6 +218,27 @@ export class ChatGateway {
     }
     await this.leaveSocket(client, dto.chatroomId);
 
+    // チャットルームを抜けたことで入室者がいなくなる場合は削除する
+    const member = await this.prisma.chatroomMembers.findFirst({
+      where: {
+        chatroomId: dto.chatroomId,
+      },
+    });
+    console.log('member:', member);
+    if (!member) {
+      const deleteChatroomDto: DeleteChatroomDto = {
+        id: dto.chatroomId,
+        userId: dto.userId,
+      };
+      try {
+        await this.chatService.deleteRoom(deleteChatroomDto);
+      } catch (error) {
+        this.logger.log('chat:leaveRoom', error);
+
+        return false;
+      }
+    }
+
     return true;
   }
 
@@ -405,5 +427,38 @@ export class ChatGateway {
     }
 
     return res ? true : false;
+  }
+
+  /**
+   * チャットルームのオーナーを切り替える
+   * @param UpdateChatroomOwnerDto
+   */
+  @SubscribeMessage('chat:changeRoomOwner')
+  async changeRoomOwner(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() dto: UpdateChatroomOwnerDto,
+  ): Promise<boolean> {
+    this.logger.log('chat:changeRoomOwner received');
+
+    try {
+      await this.chatService.update({
+        data: {
+          owner: {
+            connect: {
+              id: dto.ownerId,
+            },
+          },
+        },
+        where: {
+          id: dto.chatroomId,
+        },
+      });
+    } catch (error) {
+      this.logger.log('chat:changeRoomOwner', error);
+
+      return false;
+    }
+
+    return true;
   }
 }
