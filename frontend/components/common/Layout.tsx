@@ -60,7 +60,7 @@ export const Layout: FC<Props> = ({ children, title = 'Next.js' }) => {
         <title>{title}</title>
       </Head>
       {/* <main style={{ backgroundImage: `url(${Image.src})` }}>{children}</main> */}
-      {hosts.length !== 0 && <GameGuest hosts={hosts} />}
+      {hosts.length !== 0 && <GameGuest hosts={hosts} setHosts={setHosts} />}
       <main>{children}</main>
     </div>
   );

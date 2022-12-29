@@ -38,9 +38,14 @@ export const Display = () => {
 
   if (user === undefined) return <Loading />;
 
+  const showHost =
+    invitedFriendState.friendId !== null ||
+    playState === PlayState.stateSelecting ||
+    playState === PlayState.stateStandingBy;
+
   return (
     <>
-      {invitedFriendState.friendId !== null && <Host />}
+      {showHost && <Host />}
       <Grid
         container
         justifyContent="center"
