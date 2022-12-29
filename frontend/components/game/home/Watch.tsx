@@ -102,7 +102,7 @@ export const Watch = () => {
 
   return (
     <>
-      <Typography variant="h2" align="center" gutterBottom>
+      <Typography variant="h2" align="center" gutterBottom noWrap>
         Ongoing Battles
       </Typography>
       <List
