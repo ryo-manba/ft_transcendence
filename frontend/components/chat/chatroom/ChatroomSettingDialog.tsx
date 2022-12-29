@@ -12,7 +12,7 @@ import {
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Chatroom, ChatroomSetting, ChatUser } from 'types/chat';
+import { Chatroom, ChatroomSetting, ChatUser, ChatroomType } from 'types/chat';
 import { Friend } from 'types/friend';
 import { fetchJoinableFriends } from 'api/friend/fetchJoinableFriends';
 import { fetchChatroomNormalUsers } from 'api/chat/fetchChatroomNormalUsers';
@@ -61,8 +61,18 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
   muteUser,
 }: Props) {
   const { data: user } = useQueryUser();
+
+  /**
+   * DMの場合はDeleteのみ選択できる
+   * その他にルームは共通してLeaveが選択できる
+   */
+  const initRoomSettingState =
+    room.type === ChatroomType.DM
+      ? ChatroomSetting.DELETE_ROOM
+      : ChatroomSetting.LEAVE_ROOM;
+
   const [selectedRoomSetting, setSelectedRoomSetting] =
-    useState<ChatroomSetting>(ChatroomSetting.LEAVE_ROOM);
+    useState<ChatroomSetting>(initRoomSettingState);
   const [selectedUserId, setSelectedUserId] = useState('');
   const [notAdminUsers, setNotAdminUsers] = useState<ChatUser[]>([]);
   const [notBannedUsers, setNotBannedUsers] = useState<ChatUser[]>([]);
@@ -193,7 +203,7 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
   };
 
   const handleClose = () => {
-    setSelectedRoomSetting(ChatroomSetting.LEAVE_ROOM);
+    setSelectedRoomSetting(initRoomSettingState);
     initDialog();
     onClose();
   };

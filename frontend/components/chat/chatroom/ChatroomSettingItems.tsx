@@ -71,18 +71,16 @@ export const ChatroomSettingItems = memo(function ChatroomSettingItems({
       <MenuItem value={ChatroomSetting.LEAVE_ROOM}>
         {ChatroomSetting.LEAVE_ROOM}
       </MenuItem>
-      {isAdmin ||
-        (isOwner && (
-          <MenuItem value={ChatroomSetting.MUTE_USER}>
-            {ChatroomSetting.MUTE_USER}
-          </MenuItem>
-        ))}
-      {isAdmin ||
-        (isOwner && (
-          <MenuItem value={ChatroomSetting.BAN_USER}>
-            {ChatroomSetting.BAN_USER}
-          </MenuItem>
-        ))}
+      {(isAdmin || isOwner) && (
+        <MenuItem value={ChatroomSetting.MUTE_USER}>
+          {ChatroomSetting.MUTE_USER}
+        </MenuItem>
+      )}
+      {(isAdmin || isOwner) && (
+        <MenuItem value={ChatroomSetting.BAN_USER}>
+          {ChatroomSetting.BAN_USER}
+        </MenuItem>
+      )}
       {isOwner && (
         <MenuItem value={ChatroomSetting.DELETE_ROOM}>
           {ChatroomSetting.DELETE_ROOM}
