@@ -219,9 +219,13 @@ export class ChatGateway {
     await this.leaveSocket(client, dto.chatroomId);
 
     // チャットルームを抜けたことで入室者がいなくなる場合は削除する
+    // BAN or MUTEのユーザーは無視する
     const member = await this.prisma.chatroomMembers.findFirst({
       where: {
-        chatroomId: dto.chatroomId,
+        AND: {
+          chatroomId: dto.chatroomId,
+          status: ChatroomMembersStatus.NORMAL,
+        },
       },
     });
     if (!member) {
