@@ -37,6 +37,7 @@ export type ChatroomType = typeof ChatroomType[keyof typeof ChatroomType];
 
 export const ChatroomSetting = {
   DELETE_ROOM: 'Delete Room',
+  LEAVE_ROOM: 'Leave Room',
   ADD_FRIEND: 'Add Friend', // private room
   CHANGE_PASSWORD: 'Change Password', // protected room
   SET_ADMIN: 'Set Admin',

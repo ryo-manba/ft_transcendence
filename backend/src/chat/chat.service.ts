@@ -19,6 +19,7 @@ import { updatePasswordDto } from './dto/update-password.dto';
 import { updateMemberStatusDto } from './dto/update-member-status.dto';
 import { createDirectMessageDto } from './dto/create-direct-message.dto';
 import { DeleteChatroomDto } from './dto/delete-chatroom.dto';
+import { DeleteChatroomMemberDto } from './dto/delete-chatroom-member.dto';
 
 // 2の12乗回の演算が必要という意味
 const saltRounds = 12;
@@ -142,6 +143,31 @@ export class ChatService {
 
       return message;
     } catch (err) {
+      return undefined;
+    }
+  }
+
+  /**
+   * chatroomのメンバーを削除する
+   */
+  async removeChatroomMember(
+    dto: DeleteChatroomMemberDto,
+  ): Promise<ChatroomMembers> {
+    this.logger.log('removeChatroomMember', dto);
+
+    try {
+      const deletedMember = await this.prisma.chatroomMembers.delete({
+        where: {
+          chatroomId_userId: {
+            ...dto,
+          },
+        },
+      });
+
+      return deletedMember;
+    } catch (error) {
+      this.logger.log('removeChatroomMember', error);
+
       return undefined;
     }
   }
@@ -414,6 +440,33 @@ export class ChatService {
     });
 
     return normalUsers;
+  }
+
+  /**
+   * statusがNORMALなユーザ一覧を返す
+   * @param roomId
+   */
+  async findChatroomActiveUsers(roomId: number): Promise<ChatUser[]> {
+    const activeUsersInfo = await this.prisma.chatroomMembers.findMany({
+      where: {
+        AND: {
+          chatroomId: roomId,
+          status: ChatroomMembersStatus.NORMAL,
+        },
+      },
+      include: {
+        user: true,
+      },
+    });
+
+    const activeUsers: ChatUser[] = activeUsersInfo.map((info) => {
+      return {
+        id: info.user.id,
+        name: info.user.name,
+      };
+    });
+
+    return activeUsers;
   }
 
   /**
