@@ -6,3 +6,4 @@ set -e
 yarn migrate
 
 # start application
+yarn build && yarn start
