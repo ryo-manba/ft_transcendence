@@ -24,8 +24,15 @@ import { AxiosError } from 'axios';
 import { AxiosErrorResponse } from 'types';
 import { getAvatarImageUrl } from 'api/user/getAvatarImageUrl';
 
+const username_max_len = Number(process.env.USERNAME_MAX_LEN);
+
 const schema = z.object({
-  username: z.string().min(1, { message: 'Username cannot be empty' }),
+  username: z
+    .string()
+    .min(1, { message: 'Username cannot be empty' })
+    .max(username_max_len, {
+      message: `Username must be shorter than or equal to ${username_max_len} characters`,
+    }),
 });
 
 const Setting: NextPage = () => {

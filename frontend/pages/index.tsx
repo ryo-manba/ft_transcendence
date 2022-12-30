@@ -27,10 +27,20 @@ import * as z from 'zod';
 import { Loading } from 'components/common/Loading';
 import Head from 'next/head';
 
+const usernameMaxLen = Number(process.env.USERNAME_MAX_LEN);
+const passwordMinLen = Number(process.env.USERNAME_MAX_LEN);
+
 // username, passwordのvalidation
 const schema = z.object({
-  username: z.string().min(1, { message: 'No username provided' }),
-  password: z.string().min(5, { message: 'Password should be min 5 chars' }),
+  username: z
+    .string()
+    .min(1, { message: 'No username provided' })
+    .max(usernameMaxLen, {
+      message: `Username must be shorter than or equal to ${usernameMaxLen} characters`,
+    }),
+  password: z.string().min(passwordMinLen, {
+    message: `Password should be min ${passwordMinLen} chars`,
+  }),
 });
 
 const Home: NextPage = () => {
