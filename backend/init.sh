@@ -6,4 +6,3 @@ set -e
 yarn migrate
 
 # start application
-yarn start:dev
