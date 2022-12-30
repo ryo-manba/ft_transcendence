@@ -9,6 +9,7 @@ import {
   FormControl,
   FormLabel,
 } from '@mui/material';
+import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { useSocketStore } from 'store/game/ClientSocket';
 import { useGameSettingStore } from 'store/game/GameSetting';
@@ -29,6 +30,7 @@ export const Setting = () => {
   const [countDown, updateCountDown] = useState(durationOfSettingInSec);
   const player1DefaultScore = 0;
   const player2DefaultScore = 0;
+  const router = useRouter();
 
   const handleDifficultySetting = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value: unknown = e.target.value;
@@ -81,6 +83,28 @@ export const Setting = () => {
       player2Score: player2DefaultScore,
     });
   };
+
+  useEffect(() => {
+    const cancelOngoingBattle = () => {
+      socket.emit('cancelOngoingBattle');
+    };
+
+    router.events.on('routeChangeStart', cancelOngoingBattle);
+
+    return () => {
+      router.events.off('routeChangeStart', cancelOngoingBattle);
+    };
+  });
+
+  useEffect(() => {
+    socket.on('cancelOngoingBattle', () => {
+      updatePlayState(PlayState.stateCanceled);
+    });
+
+    return () => {
+      socket.off('cancelOngoingBattle');
+    };
+  }, [socket]);
 
   return (
     <Grid item>
