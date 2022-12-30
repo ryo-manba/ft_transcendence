@@ -2,7 +2,7 @@ FROM node:16.18.0-alpine
 
 EXPOSE 3000
 
-WORKDIR /app
+WORKDIR /src
 
 COPY package.json yarn.lock ./
 
