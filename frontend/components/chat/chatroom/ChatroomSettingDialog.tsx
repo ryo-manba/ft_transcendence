@@ -251,6 +251,32 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
     handleClose();
   };
 
+  const isSelectTarget = () => {
+    return selectedUserId !== '';
+  };
+  const isDisableButton = () => {
+    switch (selectedRoomSetting) {
+      case ChatroomSetting.DELETE_ROOM:
+        return false;
+      case ChatroomSetting.LEAVE_ROOM:
+        // ownerかつ選択できる場合はユーザーを選択しないとボタンを表示しない
+        if (room.ownerId !== user.id) return false;
+        if (activeUsers.length === 0) return false;
+
+        return !isSelectTarget();
+      case ChatroomSetting.ADD_FRIEND:
+        return !isSelectTarget();
+      case ChatroomSetting.SET_ADMIN:
+        return !isSelectTarget();
+      case ChatroomSetting.CHANGE_PASSWORD:
+        return false;
+      case ChatroomSetting.MUTE_USER:
+        return !isSelectTarget();
+      case ChatroomSetting.BAN_USER:
+        return !isSelectTarget();
+    }
+  };
+
   const passwordHelper = 'Must be min 5 characters';
   const isOwner = room.ownerId === user.id;
 
@@ -279,7 +305,6 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
             message="If you leave this room, it will be deleted."
           />
         )}
-
         {selectedRoomSetting === ChatroomSetting.ADD_FRIEND && (
           <ChatroomSettingDetailDialog
             users={friends}
@@ -349,6 +374,7 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
           </Button>
           <Button
             onClick={handleSubmit(handleAction) as VoidFunction}
+            disabled={isDisableButton()}
             variant="contained"
           >
             OK
