@@ -153,7 +153,7 @@ export class ChatService {
   async removeChatroomMember(
     dto: DeleteChatroomMemberDto,
   ): Promise<ChatroomMembers> {
-    this.logger.log('leaveRoom', dto);
+    this.logger.log('removeChatroomMember', dto);
 
     try {
       const deletedMember = await this.prisma.chatroomMembers.delete({
@@ -166,7 +166,7 @@ export class ChatService {
 
       return deletedMember;
     } catch (error) {
-      this.logger.log('leaveRoom', error);
+      this.logger.log('removeChatroomMember', error);
 
       return undefined;
     }

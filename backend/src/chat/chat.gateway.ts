@@ -213,7 +213,7 @@ export class ChatGateway {
     this.logger.log(`chat:leaveRoom received userId -> ${dto.userId}`);
 
     const deletedMember = await this.chatService.removeChatroomMember(dto);
-    if (deletedMember === undefined) {
+    if (!deletedMember) {
       return false;
     }
     await this.leaveSocket(client, dto.chatroomId);
@@ -224,7 +224,6 @@ export class ChatGateway {
         chatroomId: dto.chatroomId,
       },
     });
-    console.log('member:', member);
     if (!member) {
       const deleteChatroomDto: DeleteChatroomDto = {
         id: dto.chatroomId,
