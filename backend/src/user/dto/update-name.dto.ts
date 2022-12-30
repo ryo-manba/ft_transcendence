@@ -1,6 +1,6 @@
 import { IsNotEmpty, IsString, MaxLength } from 'class-validator';
 
-const usernameMaxLen = Number(process.env.USERNAME_MAX_LEN);
+const usernameMaxLen = 50;
 
 export class UpdateNameDto {
   @IsString()

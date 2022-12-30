@@ -24,14 +24,14 @@ import { AxiosError } from 'axios';
 import { AxiosErrorResponse } from 'types';
 import { getAvatarImageUrl } from 'api/user/getAvatarImageUrl';
 
-const username_max_len = Number(process.env.USERNAME_MAX_LEN);
+const usernameMaxLen = 50;
 
 const schema = z.object({
   username: z
     .string()
     .min(1, { message: 'Username cannot be empty' })
-    .max(username_max_len, {
-      message: `Username must be shorter than or equal to ${username_max_len} characters`,
+    .max(usernameMaxLen, {
+      message: `Username must be shorter than or equal to ${usernameMaxLen} characters`,
     }),
 });
 

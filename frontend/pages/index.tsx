@@ -27,8 +27,8 @@ import * as z from 'zod';
 import { Loading } from 'components/common/Loading';
 import Head from 'next/head';
 
-const usernameMaxLen = Number(process.env.USERNAME_MAX_LEN);
-const passwordMinLen = Number(process.env.USERNAME_MAX_LEN);
+const usernameMaxLen = 50;
+const passwordMinLen = 5;
 
 // username, passwordのvalidation
 const schema = z.object({

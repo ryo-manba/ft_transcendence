@@ -1,7 +1,7 @@
 import { IsNotEmpty, IsString, MinLength, MaxLength } from 'class-validator';
 
-const passwordMinLen = Number(process.env.PASSWORD_MIN_LEN);
-const usernameMaxLen = Number(process.env.USERNAME_MAX_LEN);
+const passwordMinLen = 5;
+const usernameMaxLen = 50;
 
 export class AuthDto {
   @IsString()
