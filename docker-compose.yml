@@ -1,7 +1,8 @@
-version: '3.8'
+version: "3.8"
 services:
   dev-postgres:
     image: postgres:14.4-alpine
+    hostname: dev-postgres
     ports:
       - 5434:5432
     environment:
@@ -11,5 +12,34 @@ services:
     restart: always
     networks:
       - backend
+  backend-nestjs:
+    build:
+      context: ./backend
+    hostname: backend-nestjs
+    tty: true
+    ports:
+      - "3001:3001"
+      - "5555:5555"
+    networks:
+      - backend
+    depends_on:
+      - dev-postgres
+    restart: always
+    environment:
+      DATABASE_URL: postgresql://user:pass@dev-postgres:5432/dbname?schema=public
+  frontend-nextjs:
+    build:
+      context: ./frontend
+    tty: true
+    ports:
+      - "3000:3000"
+    networks:
+      - backend
+    depends_on:
+      - dev-postgres
+      - backend-nestjs
+    restart: always
+    environment:
+      DATABASE_URL: postgresql://user:pass@dev-postgres:5432/dbname?schema=public
 networks:
   backend:
