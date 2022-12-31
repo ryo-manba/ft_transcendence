@@ -28,11 +28,12 @@ export const useMutationHas2FA = () => {
           queryClient.removeQueries(['user']);
           void router.push('/setting'); //登録が成功したらsettingに戻る
         } else {
-          console.log('Register ERROR Please Retry');
-          // TODO: できたらここで失敗したアラート表示
+          // codeの数字が間違った場合
+          throw new Error('Register ERROR Please Retry');
         }
       },
       onError: (err: AxiosError) => {
+        // codeに数字以外が含まれる場合
         console.log(err);
         throw err;
       },
@@ -58,9 +59,6 @@ export const useMutationHas2FA = () => {
     {
       onSuccess: (res) => {
         if (res == 'disabled: true') {
-          //TODO: 登録解除したアラート出したい
-          console.log('Successs Disabled');
-          console.log(res);
           queryClient.removeQueries(['user']);
         }
       },

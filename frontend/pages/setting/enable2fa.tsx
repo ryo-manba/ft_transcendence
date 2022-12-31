@@ -1,5 +1,5 @@
 import type { NextPage } from 'next';
-import { Grid, Button, TextField } from '@mui/material';
+import { Grid, Button, TextField, Snackbar, Alert } from '@mui/material';
 import { Layout } from 'components/common/Layout';
 import Image from 'next/image';
 import { useState } from 'react';
@@ -20,6 +20,7 @@ const Enable2FA: NextPage = () => {
   const { data: user } = useQueryUser();
   const [qrCode, setQrCode] = useState('');
   const { enableHas2FAMutation } = useMutationHas2FA();
+  const [openSnack, setOpenSnack] = useState('none');
 
   const onCreateComponent = async (): Promise<void> => {
     if (process.env.NEXT_PUBLIC_API_URL && user) {
@@ -40,13 +41,26 @@ const Enable2FA: NextPage = () => {
     void onCreateComponent();
   }
 
+  const handleClose = () => {
+    setOpenSnack('none');
+  };
+
+  const on2FAMutationEnableError = () => {
+    setOpenSnack('ERROR');
+  };
+
   const onSubmit: SubmitHandler<TwoAuthForm> = (data: TwoAuthForm) => {
     clearErrors();
-    if (process.env.NEXT_PUBLIC_API_URL && user !== undefined) {
-      enableHas2FAMutation.mutate({
-        userId: user.id,
-        authCode: data.authCode,
-      });
+    if (user !== undefined) {
+      enableHas2FAMutation.mutate(
+        {
+          userId: user.id,
+          authCode: data.authCode,
+        },
+        {
+          onError: on2FAMutationEnableError,
+        },
+      );
     }
   };
 
@@ -72,49 +86,59 @@ const Enable2FA: NextPage = () => {
               container
               alignItems="center"
               justifyContent="center"
-              sx={{ p: 2 }}
               spacing={2}
+              sx={{ p: 2 }}
             >
-              <Grid
-                container
-                alignItems="center"
-                justifyContent="center"
-                spacing={2}
-                sx={{ p: 2 }}
-              >
-                {/* 認証コード入力欄 */}
-                <Grid item>
-                  <Controller
-                    name="authCode"
-                    control={control}
-                    render={() => (
-                      <TextField
-                        // eslint-disable-next-line react/jsx-props-no-spreading
-                        {...register('authCode')}
-                        fullWidth
-                        required
-                        id="auth-code"
-                        label="Enter Code from Your Apps"
-                        autoComplete="new-password"
-                        error={errors.authCode ? true : false}
-                        helperText={errors.authCode?.message}
-                        sx={{ my: 2 }}
-                      />
-                    )}
-                  />
-                </Grid>
-                {/* 登録ボタン */}
-                <Grid item>
-                  <Button
-                    variant="contained"
-                    type="submit"
-                    onClick={() => {
-                      clearErrors();
-                    }}
-                  >
-                    REGISTERED
-                  </Button>
-                </Grid>
+              {/* 認証コード入力欄 */}
+              <Grid item>
+                <Controller
+                  name="authCode"
+                  control={control}
+                  render={() => (
+                    <TextField
+                      // eslint-disable-next-line react/jsx-props-no-spreading
+                      {...register('authCode')}
+                      fullWidth
+                      required
+                      id="auth-code"
+                      label="Enter Code from Your Apps"
+                      autoComplete="new-password"
+                      error={errors.authCode ? true : false}
+                      helperText={errors.authCode?.message}
+                      sx={{ my: 2 }}
+                    />
+                  )}
+                />
+              </Grid>
+              {/* 登録ボタン */}
+              <Grid item>
+                <Button
+                  variant="contained"
+                  type="submit"
+                  onClick={() => {
+                    clearErrors();
+                  }}
+                >
+                  REGISTERED
+                </Button>
+                <Snackbar
+                  open={openSnack == 'SUCCESS'}
+                  autoHideDuration={6000}
+                  onClose={handleClose}
+                >
+                  <Alert onClose={handleClose} severity="success">
+                    2 Factor Auth is enabled!
+                  </Alert>
+                </Snackbar>
+                <Snackbar
+                  open={openSnack == 'ERROR'}
+                  autoHideDuration={6000}
+                  onClose={handleClose}
+                >
+                  <Alert onClose={handleClose} severity="error">
+                    Code is invalid! Try Again.
+                  </Alert>
+                </Snackbar>
               </Grid>
             </Grid>
           </form>
