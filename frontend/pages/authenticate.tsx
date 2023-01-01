@@ -23,26 +23,9 @@ const Authenticate = () => {
               login = session.user.email;
               if (session.user.image) image_url = session.user.image;
             } else if (session.user.email) {
+              // TODO: 42のアカウントでは、access_tokenからログインIDと画像を取得する必要がある。別PRで対応
               login = session.user.email;
               image_url = '';
-              // TODO: ここ以下は、Sessionの肩拡張が終わったら有効にする. lint対策で一時的にコメントアウト
-              // 42の場合、user情報を取得
-              // type Image = {
-              //   link: string;
-              // };
-              // type UserInfo = {
-              //   login: string;
-              //   image: Image;
-              // };
-              // const url_getdata =
-              //   'https://api.intra.42.fr/v2/users/' + String(session.user.id);
-              // const response = await axios.get<UserInfo>(url_getdata, {
-              //   headers: {
-              //     Authorization: 'Bearer ' + String(session.user.access_token),
-              //   },
-              // });
-              // login = response.data.login;
-              // image_url = response.data.image.link;
             }
             const url_oauth = `${process.env.NEXT_PUBLIC_API_URL}/auth/oauth-login`;
             await axios
