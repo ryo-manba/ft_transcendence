@@ -189,12 +189,6 @@ export class UserService {
       orderBy: [{ point: 'desc' }, { createdAt: 'asc' }],
     });
 
-    // なぜか上と同じことをfindAllを使って同じことをやろうとするとtype errorで怒られる
-    // これ、どなたか理由わかる方、教えて頂きたいです。
-    // const sortedUsers = await this.findAll({
-    //   orderBy: [{ point: 'desc' }, { createdAt: 'asc' }],
-    // });
-
     const userIndex = sortedUsers.findIndex((user) => user.id === userId);
     const ranking = userIndex + 1;
 
