@@ -14,7 +14,7 @@ export class JoinChatroomDto {
 
   @IsNumber()
   @IsNotEmpty()
-  roomId: number;
+  chatroomId: number;
 
   @IsEnum(ChatroomType)
   @IsNotEmpty()

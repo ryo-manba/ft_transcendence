@@ -32,8 +32,15 @@ import { getAvatarImageUrl } from 'api/user/getAvatarImageUrl';
 import { useRouter } from 'next/router';
 import { useMutationHas2FA } from 'hooks/useMutationHas2FA';
 
+const usernameMaxLen = 50;
+
 const schema = z.object({
-  username: z.string().min(1, { message: 'Username cannot be empty' }),
+  username: z
+    .string()
+    .min(1, { message: 'Username cannot be empty' })
+    .max(usernameMaxLen, {
+      message: `Username must be shorter than or equal to ${usernameMaxLen} characters`,
+    }),
 });
 
 const Setting: NextPage = () => {

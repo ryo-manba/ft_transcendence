@@ -14,10 +14,12 @@ import { usePlayerNamesStore } from 'store/game/PlayerNames';
 import { Invitation } from 'types/game';
 import { useQueryUser } from 'hooks/useQueryUser';
 import { useMutationStatus } from 'hooks/useMutationStatus';
+import ErrorIcon from '@mui/icons-material/Error';
+import DoneOutlineIcon from '@mui/icons-material/DoneOutline';
 
 export const Host = () => {
-  const [open, setOpen] = useState(true);
-  const updatePlayState = usePlayStateStore((store) => store.updatePlayState);
+  const [invitationDenied, setInvitationDenied] = useState(false);
+  const { playState, updatePlayState } = usePlayStateStore();
   const updatePlayerNames = usePlayerNamesStore(
     (store) => store.updatePlayerNames,
   );
@@ -31,7 +33,7 @@ export const Host = () => {
   useEffect(() => {
     if (user === undefined) return;
 
-    const updateStatusPlaying = () => {
+    const updateUserStatusPlaying = () => {
       try {
         updateStatusMutation.mutate({
           userId: user.id,
@@ -47,9 +49,8 @@ export const Host = () => {
       updateInvitedFriendState({
         friendId: null,
       });
-      setOpen(false);
 
-      updateStatusPlaying();
+      updateUserStatusPlaying();
       void router.push('/game/battle');
     });
     socket.on('standBy', (playerNames: [string, string]) => {
@@ -58,15 +59,19 @@ export const Host = () => {
       updateInvitedFriendState({
         friendId: null,
       });
-      setOpen(false);
 
-      updateStatusPlaying();
+      updateUserStatusPlaying();
       void router.push('/game/battle');
+    });
+    socket.on('denyInvitation', () => {
+      // InvitedFriendStateの変更はcancelInvitationにて行う。
+      setInvitationDenied(true);
     });
 
     return () => {
       socket.off('select');
       socket.off('standBy');
+      socket.off('denyInvitation');
     };
   });
 
@@ -79,7 +84,6 @@ export const Host = () => {
 
       socket.emit('cancelInvitation', invitation);
       updateInvitedFriendState({ friendId: null });
-      setOpen(false);
     }
   }, [user]);
 
@@ -92,7 +96,7 @@ export const Host = () => {
   });
 
   return (
-    <Modal open={open} aria-labelledby="modal-modal-title">
+    <Modal open={true} aria-labelledby="modal-modal-title">
       <Grid
         container
         justifyContent="center"
@@ -104,25 +108,38 @@ export const Host = () => {
           left: '50%',
           transform: 'translate(-50%, -50%)',
           bgcolor: 'background.paper',
-          width: '25%',
-          height: '25%',
+          width: '270px',
+          height: '180px',
+          borderRadius: '5px',
         }}
       >
+        <>
+          <Grid>
+            {invitationDenied && <ErrorIcon fontSize="large" />}
+            {playState !== PlayState.stateNothing && <DoneOutlineIcon />}
+            {playState === PlayState.stateNothing && !invitationDenied && (
+              <CircularProgress />
+            )}
+          </Grid>
+          <Grid item sx={{ mt: 2 }}>
+            <Typography
+              variant="h6"
+              id="modal-modal-title"
+              align="center"
+              gutterBottom
+            >
+              {invitationDenied && 'Invitation was denied...'}
+              {playState !== PlayState.stateNothing && 'Wait a Minute...'}
+              {playState === PlayState.stateNothing &&
+                !invitationDenied &&
+                'Waiting for Opponent...'}
+            </Typography>
+          </Grid>
+        </>
         <Grid item>
-          <CircularProgress />
-        </Grid>
-        <Grid item sx={{ mt: 1 }}>
-          <Typography
-            variant="h6"
-            id="modal-modal-title"
-            align="center"
-            gutterBottom
-          >
-            Waiting for Opponent...
-          </Typography>
-        </Grid>
-        <Grid item>
-          <Button onClick={cancelInvitation}>cancel</Button>
+          <Button onClick={cancelInvitation}>
+            {invitationDenied ? 'close' : 'cancel'}
+          </Button>
         </Grid>
       </Grid>
     </Modal>

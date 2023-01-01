@@ -1,10 +1,12 @@
-import { useState, memo, useCallback } from 'react';
+import { useState, memo, useCallback, Dispatch, SetStateAction } from 'react';
 import { Socket } from 'socket.io-client';
 import { useForm, SubmitHandler, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import {
   Button,
+  Box,
+  Collapse,
   TextField,
   Dialog,
   DialogActions,
@@ -17,13 +19,15 @@ import {
   FormControl,
 } from '@mui/material';
 import AddCircleOutlineRounded from '@mui/icons-material/AddCircleOutlineRounded';
-import { CreateChatroomInfo, ChatroomType, CHATROOM_TYPE } from 'types/chat';
+import { CreateChatroomInfo, ChatroomType, Chatroom } from 'types/chat';
 import { useQueryUser } from 'hooks/useQueryUser';
 import { Loading } from 'components/common/Loading';
+import { ChatErrorAlert } from 'components/chat/utils/ChatErrorAlert';
 import { ChatPasswordForm } from 'components/chat/utils/ChatPasswordForm';
 
 type Props = {
   socket: Socket;
+  setRooms: Dispatch<SetStateAction<Chatroom[]>>;
 };
 
 export type ChatroomForm = {
@@ -33,9 +37,11 @@ export type ChatroomForm = {
 
 export const ChatroomCreateButton = memo(function ChatroomCreateButton({
   socket,
+  setRooms,
 }: Props) {
   const [open, setOpen] = useState(false);
-  const [roomType, setRoomType] = useState<ChatroomType>(CHATROOM_TYPE.PUBLIC);
+  const [roomType, setRoomType] = useState<ChatroomType>(ChatroomType.PUBLIC);
+  const [error, setError] = useState('');
 
   const { data: user } = useQueryUser();
   if (user === undefined) {
@@ -46,7 +52,7 @@ export const ChatroomCreateButton = memo(function ChatroomCreateButton({
     roomName: z.string().min(1, { message: 'Room Name field is required' }),
     password: z.string().refine(
       (value: string) =>
-        roomType !== CHATROOM_TYPE.PROTECTED || value.length >= 5,
+        roomType !== ChatroomType.PROTECTED || value.length >= 5,
       () => ({
         message: 'Passwords must be at least 5 characters',
       }),
@@ -79,7 +85,7 @@ export const ChatroomCreateButton = memo(function ChatroomCreateButton({
 
   const handleClose = useCallback(() => {
     setOpen(false);
-    setRoomType(CHATROOM_TYPE.PUBLIC);
+    setRoomType(ChatroomType.PUBLIC);
     reset();
     clearErrors();
   }, [open]);
@@ -90,7 +96,11 @@ export const ChatroomCreateButton = memo(function ChatroomCreateButton({
 
   const createChatroom = useCallback(
     (room: CreateChatroomInfo) => {
-      socket.emit('chat:createRoom', room);
+      socket.emit('chat:createRoom', room, (res: Chatroom) => {
+        res === undefined
+          ? setError('Failed to create room.')
+          : setRooms((prev) => [...prev, res]);
+      });
     },
     [socket],
   );
@@ -100,8 +110,7 @@ export const ChatroomCreateButton = memo(function ChatroomCreateButton({
       name: data.roomName,
       type: roomType,
       ownerId: user.id,
-      password:
-        roomType === CHATROOM_TYPE.PROTECTED ? data.password : undefined,
+      password: roomType === ChatroomType.PROTECTED ? data.password : undefined,
     };
     console.log('create chatroom: %o', room);
     createChatroom(room);
@@ -111,6 +120,11 @@ export const ChatroomCreateButton = memo(function ChatroomCreateButton({
 
   return (
     <>
+      <Box sx={{ width: '100%' }}>
+        <Collapse in={error !== ''}>
+          <ChatErrorAlert error={error} setError={setError} />
+        </Collapse>
+      </Box>
       <Button
         color="primary"
         variant="outlined"
@@ -145,7 +159,7 @@ export const ChatroomCreateButton = memo(function ChatroomCreateButton({
             )}
           />
         </DialogContent>
-        {roomType === CHATROOM_TYPE.PROTECTED && (
+        {roomType === ChatroomType.PROTECTED && (
           <DialogContent>
             <ChatPasswordForm
               control={control}
@@ -166,9 +180,9 @@ export const ChatroomCreateButton = memo(function ChatroomCreateButton({
               label="type"
               onChange={handleChangeType}
             >
-              <MenuItem value={CHATROOM_TYPE.PUBLIC}>Public</MenuItem>
-              <MenuItem value={CHATROOM_TYPE.PRIVATE}>Private</MenuItem>
-              <MenuItem value={CHATROOM_TYPE.PROTECTED}>Protected</MenuItem>
+              <MenuItem value={ChatroomType.PUBLIC}>Public</MenuItem>
+              <MenuItem value={ChatroomType.PRIVATE}>Private</MenuItem>
+              <MenuItem value={ChatroomType.PROTECTED}>Protected</MenuItem>
             </Select>
           </FormControl>
         </DialogContent>

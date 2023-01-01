@@ -102,7 +102,13 @@ const Profile: NextPage = () => {
           />
         </Grid>
         <Grid item>
-          <Typography gutterBottom variant="h1" component="div">
+          <Typography
+            gutterBottom
+            variant="h1"
+            component="div"
+            align="center"
+            sx={{ wordBreak: 'break-word' }}
+          >
             {userName}
           </Typography>
         </Grid>

@@ -38,35 +38,40 @@ export const Display = () => {
 
   if (user === undefined) return <Loading />;
 
+  const showHost =
+    invitedFriendState.friendId !== null ||
+    playState === PlayState.stateSelecting ||
+    playState === PlayState.stateStandingBy;
+
   return (
     <>
-      {invitedFriendState.friendId !== null && <Host />}
+      {showHost && <Host />}
       <Grid
         container
         justifyContent="center"
         alignItems="stretch"
         direction="row"
-        spacing={4}
+        spacing={3}
         sx={{ mt: 1, height: 800 }}
       >
-        <Grid item xs={5}>
+        <Grid item xs={5} sx={{ minWidth: '430px' }}>
           <Paper elevation={2} sx={{ height: '100%' }}>
             <Profile />
           </Paper>
         </Grid>
-        <Grid item xs={5}>
+        <Grid item xs={5} sx={{ minWidth: '430px' }}>
           <Paper elevation={2} sx={{ height: '100%' }}>
             {playState === PlayState.stateNothing && <Start />}
             {(playState === PlayState.stateWaiting ||
               playState === PlayState.statePlaying) && <Wait />}
           </Paper>
         </Grid>
-        <Grid item xs={5} sx={{ height: '50%' }}>
+        <Grid item xs={5} sx={{ height: '60%', minWidth: '430px' }}>
           <Paper elevation={2} sx={{ height: '100%' }}>
             <History userId={user.id} />
           </Paper>
         </Grid>
-        <Grid item xs={5} sx={{ height: '50%' }}>
+        <Grid item xs={5} sx={{ height: '60%', minWidth: '430px' }}>
           <Paper elevation={2} sx={{ height: '100%' }}>
             <Watch />
           </Paper>

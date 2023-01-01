@@ -1,5 +1,6 @@
 import {
   Button,
+  ButtonGroup,
   Dialog,
   DialogActions,
   DialogTitle,
@@ -9,7 +10,13 @@ import {
   ListItemText,
   Snackbar,
 } from '@mui/material';
-import { useCallback, useEffect, useState } from 'react';
+import {
+  Dispatch,
+  SetStateAction,
+  useCallback,
+  useEffect,
+  useState,
+} from 'react';
 import { useSocketStore } from 'store/game/ClientSocket';
 import { usePlayStateStore, PlayState } from 'store/game/PlayState';
 import { Friend } from 'types/friend';
@@ -22,9 +29,10 @@ import { useMutationStatus } from 'hooks/useMutationStatus';
 
 type Props = {
   hosts: Friend[];
+  setHosts: Dispatch<SetStateAction<Friend[]>>;
 };
 
-export const GameGuest = ({ hosts }: Props) => {
+export const GameGuest = ({ hosts, setHosts }: Props) => {
   const [openDialog, setOpenDialog] = useState(false);
   const [openSnackbar, setOpenSnackbar] = useState(true);
   const { socket } = useSocketStore();
@@ -44,7 +52,7 @@ export const GameGuest = ({ hosts }: Props) => {
     setOpenDialog(false);
   }, []);
 
-  const handleSelectClick = useCallback(
+  const handleJoinClick = useCallback(
     (friend: Friend) => {
       if (user !== undefined) {
         const match: Invitation = {
@@ -57,9 +65,23 @@ export const GameGuest = ({ hosts }: Props) => {
     [user],
   );
 
+  const handleDenyClick = useCallback(
+    (friend: Friend) => {
+      setHosts(hosts.filter((elem) => elem.id !== friend.id));
+      if (user !== undefined) {
+        const match: Invitation = {
+          guestId: user.id,
+          hostId: friend.id,
+        };
+        socket.emit('denyInvitation', match);
+      }
+    },
+    [user],
+  );
+
   useEffect(() => {
     if (user === undefined) return;
-    const updateStatusPlaying = () => {
+    const updateUserStatusPlaying = () => {
       try {
         updateStatusMutation.mutate({
           userId: user.id,
@@ -74,14 +96,14 @@ export const GameGuest = ({ hosts }: Props) => {
       updatePlayerNames(playerNames);
       updatePlayState(PlayState.stateSelecting);
 
-      updateStatusPlaying();
+      updateUserStatusPlaying();
       void router.push('/game/battle');
     });
     socket.on('standBy', (playerNames: [string, string]) => {
       updatePlayerNames(playerNames);
       updatePlayState(PlayState.stateStandingBy);
 
-      updateStatusPlaying();
+      updateUserStatusPlaying();
       void router.push('/game/battle');
     });
 
@@ -100,7 +122,7 @@ export const GameGuest = ({ hosts }: Props) => {
         key={0}
         action={
           <>
-            <Button onClick={handleClick}>JOIN</Button>
+            <Button onClick={handleClick}>OPEN</Button>
             <IconButton
               aria-label="close"
               sx={{ p: 0.5 }}
@@ -117,12 +139,21 @@ export const GameGuest = ({ hosts }: Props) => {
         <DialogTitle>Friend Match</DialogTitle>
         <List>
           {hosts.map((host) => (
-            <ListItem
-              button
-              key={host.id}
-              onClick={() => handleSelectClick(host)}
-            >
-              <ListItemText primary={host.name} />
+            <ListItem key={host.id}>
+              <ListItemText
+                primary={host.name}
+                sx={{
+                  width: '100px',
+                  overflow: 'hidden',
+                  mr: '5px',
+                }}
+              />
+              <ButtonGroup>
+                <Button onClick={() => handleJoinClick(host)}>JOIN</Button>
+                <Button onClick={() => handleDenyClick(host)} color="error">
+                  DENY
+                </Button>
+              </ButtonGroup>
             </ListItem>
           ))}
         </List>

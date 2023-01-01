@@ -5,7 +5,7 @@ FRONTEND = ./frontend
 .PHONY: all
 all: $(NAME)
 
-$(NAME): build setup
+$(NAME): build
 
 .PHONY: build
 build:
@@ -18,6 +18,28 @@ up:
 .PHONY: down
 down:
 		docker-compose down
+
+.PHONY: local
+local: db setup
+
+.PHONY: db
+db:
+		docker-compose up --build -d dev-postgres
+
+.PHONY: db-up
+db-up:
+		docker-compose up -d dev-posegres
+
+# NOTE: docker composeの一部のコンテナのみをダウンするときにはこれがいいらしい
+# (参考: https://aton-kish.github.io/blog/post/2020/10/04/docker-compose-rm/)
+.PHONY: db-down
+db-down:
+		docker-compose rm -fsv dev-postgres
+
+# docker composeで立ち上がっているDBにprisma studioでつなぐコマンド
+.PHONY: studio
+studio:
+		docker-compose exec backend-nestjs yarn prisma studio
 
 .PHONY: ps
 ps:

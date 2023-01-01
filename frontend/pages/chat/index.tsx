@@ -49,7 +49,7 @@ const Chat: NextPage = () => {
       setMessages([]);
       setCurrentRoomId(NOT_JOINED_ROOM);
       // socketの退出処理をする
-      socket.emit('chat:leaveRoom');
+      socket.emit('chat:leaveSocket');
       // 所属しているチャットルーム一覧を取得する
       socket.emit('chat:getJoinedRooms', user.id);
     });
@@ -170,7 +170,7 @@ const Chat: NextPage = () => {
             borderBottom: '1px solid',
           }}
         >
-          <FriendSidebar />
+          <FriendSidebar socket={socket} />
         </Grid>
       </Grid>
     </Layout>

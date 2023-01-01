@@ -6,6 +6,7 @@ import {
   Typography,
   Tooltip,
   IconButton,
+  Pagination,
 } from '@mui/material';
 import { useMutationStatus } from 'hooks/useMutationStatus';
 import { useQueryUser } from 'hooks/useQueryUser';
@@ -38,6 +39,7 @@ export const Watch = () => {
   const router = useRouter();
   const { data: user } = useQueryUser();
   const { updateStatusMutation } = useMutationStatus();
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
     if (user === undefined) return;
@@ -92,13 +94,30 @@ export const Watch = () => {
     updatePlayerNames(playerNames);
   };
 
+  const handleChange = (event: React.ChangeEvent<unknown>, value: number) => {
+    setPage(value);
+  };
+
+  const take = 5;
+
   return (
     <>
-      <Typography variant="h2" align="center" gutterBottom>
+      <Typography
+        variant="h2"
+        align="center"
+        gutterBottom
+        noWrap
+        sx={{
+          mx: 'auto',
+          width: '95%',
+        }}
+      >
         Ongoing Battles
       </Typography>
-      <List sx={{ width: '95%', margin: 'auto' }}>
-        {rooms?.map((room) => (
+      <List
+        sx={{ width: '95%', margin: 'auto', overflow: 'auto', height: '310px' }}
+      >
+        {rooms?.slice((page - 1) * take, page * take).map((room) => (
           <ListItem
             key={room.roomName}
             sx={{ border: '1px solid' }}
@@ -146,6 +165,16 @@ export const Watch = () => {
           </ListItem>
         ))}
       </List>
+      <Pagination
+        count={Math.ceil(rooms?.length / take)}
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          textAlign: 'center',
+        }}
+        page={page}
+        onChange={handleChange}
+      />
     </>
   );
 };
