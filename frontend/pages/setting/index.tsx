@@ -61,7 +61,7 @@ const Setting: NextPage = () => {
   });
   const { updateNameMutation } = useMutationName();
   const { updateAvatarMutation, deleteAvatarMutation } = useMutationAvatar();
-  const { disableHas2FAMutation } = useMutationHas2FA();
+  const { changeHas2FAMutation } = useMutationHas2FA();
   const router = useRouter();
 
   if (user === undefined) return <Loading fullHeight />;
@@ -143,8 +143,10 @@ const Setting: NextPage = () => {
   const handleDialogClose = (result: string) => {
     setOpenConfirm(false);
     if (result == 'agree') {
-      disableHas2FAMutation.mutate({
+      changeHas2FAMutation.mutate({
+        isEnable: false,
         userId: user.id,
+        authCode: '',
       });
       setOpenSnack('OK');
     }

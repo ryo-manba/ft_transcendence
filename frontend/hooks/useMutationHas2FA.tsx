@@ -6,18 +6,29 @@ export const useMutationHas2FA = () => {
   const queryClient = useQueryClient();
   const router = useRouter();
 
-  const enableHas2FAMutation = useMutation<
+  const changeHas2FAMutation = useMutation<
     boolean, // 戻り値の型
     AxiosError,
-    { userId: number; authCode: string } //mutate実行時の引数
+    { isEnable: boolean; userId: number; authCode: string } //mutate実行時の引数
   >(
-    async ({ userId, authCode }) => {
+    async ({ isEnable, userId, authCode }) => {
+      if (isEnable) {
+        // 登録時
+        const { data } = await axios.patch<boolean>(
+          `${process.env.NEXT_PUBLIC_API_URL as string}/auth/send2facode`,
+          {
+            userId: String(userId),
+            code: authCode,
+          },
+        );
+
+        return data;
+      }
+      // 解除時
       const { data } = await axios.patch<boolean>(
-        `${process.env.NEXT_PUBLIC_API_URL as string}/auth/send2facode`,
-        {
-          userId: String(userId),
-          code: authCode,
-        },
+        `${
+          process.env.NEXT_PUBLIC_API_URL as string
+        }/auth/disable2fa/${userId}`,
       );
 
       return data;
@@ -40,33 +51,5 @@ export const useMutationHas2FA = () => {
     },
   );
 
-  const disableHas2FAMutation = useMutation<
-    boolean,
-    AxiosError,
-    { userId: number }
-  >(
-    async ({ userId }) => {
-      const { data } = await axios.patch<boolean>(
-        `${process.env.NEXT_PUBLIC_API_URL as string}/auth/disable2fa`,
-        {
-          userId: String(userId),
-          code: '1234', //登録時と同じ型を使うためダミーの値を設定している
-        },
-      );
-
-      return data;
-    },
-    {
-      onSuccess: (res) => {
-        if (res == true) {
-          queryClient.removeQueries(['user']);
-        }
-      },
-      onError: (err: AxiosError) => {
-        console.log(err);
-      },
-    },
-  );
-
-  return { enableHas2FAMutation, disableHas2FAMutation };
+  return { changeHas2FAMutation };
 };

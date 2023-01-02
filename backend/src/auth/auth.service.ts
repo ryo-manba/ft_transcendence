@@ -262,10 +262,10 @@ export class AuthService {
     return this.generateJwt(user.id, user.name);
   }
 
-  async disable2FA(data: Validate2FACodeDto): Promise<boolean> {
+  async disable2FA(id: string): Promise<boolean> {
     const user_db = await this.prisma.user.update({
       where: {
-        id: Number(data.userId),
+        id: Number(id),
       },
       data: {
         has2FA: false,

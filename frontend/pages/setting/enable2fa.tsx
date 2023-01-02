@@ -19,7 +19,7 @@ const Enable2FA: NextPage = () => {
   } = useForm<TwoAuthForm>();
   const { data: user } = useQueryUser();
   const [qrCode, setQrCode] = useState('');
-  const { enableHas2FAMutation } = useMutationHas2FA();
+  const { changeHas2FAMutation } = useMutationHas2FA();
   const [openSnack, setOpenSnack] = useState('');
 
   const onCreateComponent = async (): Promise<void> => {
@@ -52,8 +52,9 @@ const Enable2FA: NextPage = () => {
   const onSubmit: SubmitHandler<TwoAuthForm> = (data: TwoAuthForm) => {
     clearErrors();
     if (user !== undefined) {
-      enableHas2FAMutation.mutate(
+      changeHas2FAMutation.mutate(
         {
+          isEnable: true,
           userId: user.id,
           authCode: data.authCode,
         },

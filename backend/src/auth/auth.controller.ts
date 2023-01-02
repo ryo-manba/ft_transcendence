@@ -125,8 +125,8 @@ export class AuthController {
     return true;
   }
 
-  @Patch('disable2fa')
-  disable2FA(@Body() dto: Validate2FACodeDto): Promise<boolean> {
-    return this.authService.disable2FA(dto);
+  @Patch('disable2fa/:id')
+  disable2FA(@Param('id') id: string): Promise<boolean> {
+    return this.authService.disable2FA(id);
   }
 }
