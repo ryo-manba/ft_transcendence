@@ -64,7 +64,8 @@ const Setting: NextPage = () => {
   const { changeHas2FAMutation } = useMutationHas2FA();
   const router = useRouter();
 
-  if (user === undefined) return <Loading fullHeight />;
+  if (user === undefined || router.isReady === false)
+    return <Loading fullHeight />;
 
   const avatarImageUrl = getAvatarImageUrl(user.id);
 
