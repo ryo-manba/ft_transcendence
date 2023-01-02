@@ -22,8 +22,11 @@ import { CreateMessageDto } from './dto/create-message.dto';
 import { CreateAdminDto } from './dto/create-admin.dto';
 import { updatePasswordDto } from './dto/update-password.dto';
 import { updateMemberStatusDto } from './dto/update-member-status.dto';
+import { createDirectMessageDto } from './dto/create-direct-message.dto';
 import { CheckBanDto } from './dto/check-ban.dto';
 import { GetMessagesDto } from './dto/get-messages.dto';
+import { DeleteChatroomMemberDto } from './dto/delete-chatroom-member.dto';
+import { UpdateChatroomOwnerDto } from './dto/update-chatroom-owner.dto';
 
 @WebSocketGateway({
   cors: {
@@ -58,17 +61,11 @@ export class ChatGateway {
   async CreateRoom(
     @ConnectedSocket() client: Socket,
     @MessageBody() dto: CreateChatroomDto,
-  ): Promise<any> {
+  ): Promise<Chatroom> {
     this.logger.log(`chat:createRoom: ${dto.name}`);
 
     // 作成と入室を行う
-    const res = await this.chatService.createAndJoinRoom(dto);
-    if (res === undefined) {
-      return;
-    }
-
-    // チャットルームが作成できたら作成者のフロントエンドに反映させる
-    client.emit('chat:createRoom', res);
+    return await this.chatService.createAndJoinRoom(dto);
   }
 
   /**
@@ -128,7 +125,7 @@ export class ChatGateway {
    * @return チャットルームに対応したメッセージを取得して返す
    */
   @SubscribeMessage('chat:changeCurrentRoom')
-  async onGetMessage(
+  async changeCurrentRoom(
     @ConnectedSocket() client: Socket,
     @MessageBody() roomId: number,
   ): Promise<Message[]> {
@@ -195,17 +192,62 @@ export class ChatGateway {
   }
 
   /**
-   * チャットルームから退出する
+   * ルームからソケットを退出させる
    * @param client
    * @param roomId
+   */
+  @SubscribeMessage('chat:leaveSocket')
+  async leaveSocket(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() roomId: number,
+  ): Promise<void> {
+    this.logger.log(`chat:leaveSocket received -> ${roomId}`);
+    await client.leave(String(roomId));
+  }
+
+  /**
+   * 退出処理を行う
+   * @param client
+   * @param DeleteChatroomMemberDto
    */
   @SubscribeMessage('chat:leaveRoom')
   async onRoomLeave(
     @ConnectedSocket() client: Socket,
-    @MessageBody() roomId: number,
-  ): Promise<any> {
-    this.logger.log(`chat:leaveRoom received -> ${roomId}`);
-    await client.leave(String(roomId));
+    @MessageBody() dto: DeleteChatroomMemberDto,
+  ): Promise<boolean> {
+    this.logger.log(`chat:leaveRoom received userId -> ${dto.userId}`);
+
+    const deletedMember = await this.chatService.removeChatroomMember(dto);
+    if (!deletedMember) {
+      return false;
+    }
+    await this.leaveSocket(client, dto.chatroomId);
+
+    // チャットルームを抜けたことで入室者がいなくなる場合は削除する
+    // BAN or MUTEのユーザーは無視する
+    const member = await this.prisma.chatroomMembers.findFirst({
+      where: {
+        AND: {
+          chatroomId: dto.chatroomId,
+          status: ChatroomMembersStatus.NORMAL,
+        },
+      },
+    });
+    if (!member) {
+      const deleteChatroomDto: DeleteChatroomDto = {
+        id: dto.chatroomId,
+        userId: dto.userId,
+      };
+      try {
+        await this.chatService.deleteRoom(deleteChatroomDto);
+      } catch (error) {
+        this.logger.log('chat:leaveRoom', error);
+
+        return false;
+      }
+    }
+
+    return true;
   }
 
   /**
@@ -216,35 +258,22 @@ export class ChatGateway {
   @SubscribeMessage('chat:deleteRoom')
   async onRoomDelete(
     @ConnectedSocket() client: Socket,
-    @MessageBody() deleteChatroomDto: DeleteChatroomDto,
-  ): Promise<any> {
-    this.logger.log(
-      `chat:deleteRoom received -> roomId: ${deleteChatroomDto.id}, userId: ${deleteChatroomDto.userId}`,
-    );
-    const roomId = deleteChatroomDto.id;
-    const userId = deleteChatroomDto.userId;
-
-    const data = { id: deleteChatroomDto.id };
-    const room = await this.chatService.findOne(data);
-    const admins = await this.chatService.findAdmins(roomId);
-
-    // 削除を実行したユーザーがadminに含まれているかを確かめる
-    const isAdmin = admins.findIndex((admin) => admin.userId === userId) != -1;
-
-    // adminかownerの場合削除が実行できる
-    if (isAdmin || room.ownerId === userId) {
-      const deletedRoom = await this.chatService.remove(data);
-      if (deletedRoom === undefined) return;
-      // 現時点でチャットルームを表示しているユーザーに通知を送る
-      this.server
-        .to(String(deletedRoom.id))
-        .emit('chat:deleteRoom', deletedRoom);
-
-      // 全ユーザーのチャットルームを更新させる
-      // NOTE: 本来削除されたルームに所属しているユーザーだけに送りたいが,
-      //       それを判定するのが難しいためブロードキャストで送信している
-      this.server.emit('chat:updateSideBarRooms');
+    @MessageBody() dto: DeleteChatroomDto,
+  ): Promise<boolean> {
+    this.logger.log(`chat:deleteRoom received -> roomId: ${dto.id}`);
+    const deletedRoom = await this.chatService.deleteRoom(dto);
+    if (!deletedRoom) {
+      return false;
     }
+    // 現時点でチャットルームを表示しているユーザーに通知を送る
+    this.server.to(String(deletedRoom.id)).emit('chat:deleteRoom', deletedRoom);
+
+    // 全ユーザーのチャットルームを更新させる
+    // NOTE: 本来削除されたルームに所属しているユーザーだけに送りたいが,
+    //       それを判定するのが難しいためブロードキャストで送信している
+    this.server.emit('chat:updateSideBarRooms');
+
+    return true;
   }
 
   /**
@@ -397,5 +426,62 @@ export class ChatGateway {
     this.logger.log(`chat:getMessages received -> roomId: ${dto.chatroomId}`);
 
     return await this.chatService.findMessages(dto);
+  }
+
+  /*
+   * ダイレクトメッセージを始める
+   * - チャットルーム作成
+   * - 自分と相手をチャットルームに追加する
+   * @param createDirectMessageDto
+   */
+  @SubscribeMessage('chat:directMessage')
+  async startDirectMessage(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() dto: createDirectMessageDto,
+  ): Promise<boolean> {
+    this.logger.log('chat:directMessage received');
+    // TODO: 既にルームが存在する場合はそのルームに入室させる
+    const res = await this.chatService.startDirectMessage(dto);
+
+    if (res) {
+      const rooms = await this.chatService.findJoinedRooms(dto.userId1);
+      // フロントエンドへ送り返す
+      client.emit('chat:getJoinedRooms', rooms);
+    }
+
+    return res ? true : false;
+  }
+
+  /**
+   * チャットルームのオーナーを切り替える
+   * @param UpdateChatroomOwnerDto
+   */
+  @SubscribeMessage('chat:changeRoomOwner')
+  async changeRoomOwner(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() dto: UpdateChatroomOwnerDto,
+  ): Promise<boolean> {
+    this.logger.log('chat:changeRoomOwner received');
+
+    try {
+      await this.chatService.update({
+        data: {
+          owner: {
+            connect: {
+              id: dto.ownerId,
+            },
+          },
+        },
+        where: {
+          id: dto.chatroomId,
+        },
+      });
+    } catch (error) {
+      this.logger.log('chat:changeRoomOwner', error);
+
+      return false;
+    }
+
+    return true;
   }
 }

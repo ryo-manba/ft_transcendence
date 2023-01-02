@@ -12,6 +12,7 @@ import { GameRecordWithUserName } from 'types/game';
 import { getRecordsById } from 'api/records/getRecordsById';
 import { User } from '@prisma/client';
 import { getUserById } from 'api/user/getUserById';
+import { getUserRanking } from 'api/user/getUserRanking';
 
 const Profile: NextPage = () => {
   const router = useRouter();
@@ -25,6 +26,19 @@ const Profile: NextPage = () => {
   const [recordsError, setRecordsError] = useState<Error | undefined>(
     undefined,
   );
+  const [ranking, setRanking] = useState<number | undefined>(undefined);
+
+  useEffect(() => {
+    const updateRanking = async () => {
+      if (user === undefined) {
+        return;
+      }
+      const currentRanking = await getUserRanking({ userId: user.id });
+      setRanking(currentRanking);
+    };
+
+    void updateRanking();
+  }, [user]);
 
   useEffect(() => {
     const updateRecordsNUser = async () => {
@@ -102,11 +116,31 @@ const Profile: NextPage = () => {
           />
         </Grid>
         <Grid item>
-          <Typography gutterBottom variant="h1" component="div">
+          <Typography
+            gutterBottom
+            variant="h1"
+            component="div"
+            align="center"
+            sx={{ wordBreak: 'break-word' }}
+          >
             {userName}
           </Typography>
         </Grid>
         <Grid container direction="row" justifyContent="center" spacing={5}>
+          <Grid item>
+            <Grid container direction="column" alignItems="center">
+              <Grid item>
+                <Typography gutterBottom variant="h5" component="div">
+                  Rank
+                </Typography>
+              </Grid>
+              <Grid item>
+                <Typography gutterBottom variant="h4" component="div">
+                  {ranking === undefined ? '-' : ranking}
+                </Typography>
+              </Grid>
+            </Grid>
+          </Grid>
           <Grid item>
             <Grid container direction="column" alignItems="center">
               <Grid item>

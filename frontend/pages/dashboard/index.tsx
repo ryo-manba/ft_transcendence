@@ -16,7 +16,11 @@ const Dashboard: NextPage = () => {
   return (
     <Layout title="Dashboard">
       <Header title="ft_transcendence" />
-      <Typography variant="h3" gutterBottom sx={{ margin: '50px' }}>
+      <Typography
+        variant="h3"
+        gutterBottom
+        sx={{ margin: '50px', wordBreak: 'break-word' }}
+      >
         HELLO {user.name}
       </Typography>
       <Stack

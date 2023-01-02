@@ -6,6 +6,7 @@ import {
   Typography,
   Tooltip,
   IconButton,
+  Pagination,
 } from '@mui/material';
 import { useMutationStatus } from 'hooks/useMutationStatus';
 import { useQueryUser } from 'hooks/useQueryUser';
@@ -38,11 +39,18 @@ export const Watch = () => {
   const router = useRouter();
   const { data: user } = useQueryUser();
   const { updateStatusMutation } = useMutationStatus();
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
+    if (user === undefined) return;
+
     socket.emit('watchList');
     socket.on('watchListed', (data: WatchInfo[]) => {
-      setRooms(data);
+      setRooms(
+        data.filter(
+          (elem) => elem.name1 !== user.name && elem.name2 !== user.name,
+        ),
+      );
     });
     const intervalId = setInterval(() => {
       socket.emit('watchList');
@@ -78,7 +86,7 @@ export const Watch = () => {
       socket.off('watchListed');
       socket.off('joinGameRoom');
     };
-  }, [socket]);
+  }, [socket, user]);
 
   const watchGame = (room: WatchInfo) => {
     const playerNames: [string, string] = [room.name1, room.name2];
@@ -86,13 +94,30 @@ export const Watch = () => {
     updatePlayerNames(playerNames);
   };
 
+  const handleChange = (event: React.ChangeEvent<unknown>, value: number) => {
+    setPage(value);
+  };
+
+  const take = 5;
+
   return (
     <>
-      <Typography variant="h2" align="center" gutterBottom>
+      <Typography
+        variant="h2"
+        align="center"
+        gutterBottom
+        noWrap
+        sx={{
+          mx: 'auto',
+          width: '95%',
+        }}
+      >
         Ongoing Battles
       </Typography>
-      <List sx={{ width: '95%', margin: 'auto' }}>
-        {rooms?.map((room) => (
+      <List
+        sx={{ width: '95%', margin: 'auto', overflow: 'auto', height: '310px' }}
+      >
+        {rooms?.slice((page - 1) * take, page * take).map((room) => (
           <ListItem
             key={room.roomName}
             sx={{ border: '1px solid' }}
@@ -140,6 +165,16 @@ export const Watch = () => {
           </ListItem>
         ))}
       </List>
+      <Pagination
+        count={Math.ceil(rooms?.length / take)}
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          textAlign: 'center',
+        }}
+        page={page}
+        onChange={handleChange}
+      />
     </>
   );
 };

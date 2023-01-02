@@ -74,7 +74,7 @@ const Chat: NextPage = () => {
             borderBottom: '1px solid',
           }}
         >
-          <FriendSidebar />
+          <FriendSidebar socket={socket} />
         </Grid>
       </Grid>
     </Layout>

@@ -1,7 +1,7 @@
 export type Chatroom = {
   id: number;
   name: string;
-  type: string;
+  type: ChatroomType;
   ownerId: number;
   hashedPassword?: string;
 };
@@ -15,7 +15,7 @@ export type CreateChatroomInfo = {
 
 export type JoinChatroomInfo = {
   userId: number;
-  roomId: number;
+  chatroomId: number;
   type: ChatroomType;
   password?: string;
 };
@@ -26,16 +26,18 @@ export type Message = {
   message: string;
 };
 
-export const CHATROOM_TYPE = {
+export const ChatroomType = {
   PUBLIC: 'PUBLIC',
   PRIVATE: 'PRIVATE',
   PROTECTED: 'PROTECTED',
+  DM: 'DM',
 } as const;
 
-export type ChatroomType = typeof CHATROOM_TYPE[keyof typeof CHATROOM_TYPE];
+export type ChatroomType = typeof ChatroomType[keyof typeof ChatroomType];
 
-export const CHATROOM_SETTINGS = {
+export const ChatroomSetting = {
   DELETE_ROOM: 'Delete Room',
+  LEAVE_ROOM: 'Leave Room',
   ADD_FRIEND: 'Add Friend', // private room
   CHANGE_PASSWORD: 'Change Password', // protected room
   SET_ADMIN: 'Set Admin',
@@ -43,8 +45,8 @@ export const CHATROOM_SETTINGS = {
   BAN_USER: 'Ban User',
 } as const;
 
-export type ChatroomSettings =
-  typeof CHATROOM_SETTINGS[keyof typeof CHATROOM_SETTINGS];
+export type ChatroomSetting =
+  typeof ChatroomSetting[keyof typeof ChatroomSetting];
 
 export type ChatUser = {
   id: number;
