@@ -20,7 +20,7 @@ const Enable2FA: NextPage = () => {
   const { data: user } = useQueryUser();
   const [qrCode, setQrCode] = useState('');
   const { enableHas2FAMutation } = useMutationHas2FA();
-  const [openSnack, setOpenSnack] = useState('none');
+  const [openSnack, setOpenSnack] = useState('');
 
   const onCreateComponent = async (): Promise<void> => {
     if (process.env.NEXT_PUBLIC_API_URL && user) {
@@ -42,7 +42,7 @@ const Enable2FA: NextPage = () => {
   }
 
   const handleClose = () => {
-    setOpenSnack('none');
+    setOpenSnack('');
   };
 
   const on2FAMutationEnableError = () => {
@@ -119,7 +119,7 @@ const Enable2FA: NextPage = () => {
                     clearErrors();
                   }}
                 >
-                  REGISTERED
+                  REGISTER
                 </Button>
                 <Snackbar
                   open={openSnack == 'SUCCESS'}
