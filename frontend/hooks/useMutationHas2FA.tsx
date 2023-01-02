@@ -7,12 +7,12 @@ export const useMutationHas2FA = () => {
   const router = useRouter();
 
   const enableHas2FAMutation = useMutation<
-    string, // 戻り値の型
+    boolean, // 戻り値の型
     AxiosError,
     { userId: number; authCode: string } //mutate実行時の引数
   >(
     async ({ userId, authCode }) => {
-      const { data } = await axios.patch<string>(
+      const { data } = await axios.patch<boolean>(
         `${process.env.NEXT_PUBLIC_API_URL as string}/auth/send2facode`,
         {
           userId: String(userId),
@@ -20,11 +20,11 @@ export const useMutationHas2FA = () => {
         },
       );
 
-      return data; //この場合、success,failureが返る。
+      return data;
     },
     {
       onSuccess: (res) => {
-        if (res == 'success') {
+        if (res == true) {
           queryClient.removeQueries(['user']);
           void router.push('/setting'); //登録が成功したらsettingに戻る
         } else {
@@ -41,12 +41,12 @@ export const useMutationHas2FA = () => {
   );
 
   const disableHas2FAMutation = useMutation<
-    string,
+    boolean,
     AxiosError,
     { userId: number }
   >(
     async ({ userId }) => {
-      const { data } = await axios.patch<string>(
+      const { data } = await axios.patch<boolean>(
         `${process.env.NEXT_PUBLIC_API_URL as string}/auth/disable2fa`,
         {
           userId: String(userId),
@@ -58,7 +58,7 @@ export const useMutationHas2FA = () => {
     },
     {
       onSuccess: (res) => {
-        if (res == 'disabled: true') {
+        if (res == true) {
           queryClient.removeQueries(['user']);
         }
       },

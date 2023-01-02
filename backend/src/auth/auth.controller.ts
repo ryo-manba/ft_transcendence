@@ -100,12 +100,12 @@ export class AuthController {
   }
 
   @Patch('send2facode')
-  send2FACode(@Body() dto: Validate2FACodeDto): Promise<string> {
+  send2FACode(@Body() dto: Validate2FACodeDto): Promise<boolean> {
     return this.authService.send2FACode(dto);
   }
 
   @Get('has2fa')
-  has2FA(@Param('id') id: string): Promise<string> {
+  has2FA(@Param('id') id: string): Promise<boolean> {
     return this.authService.has2FA(Number(id));
   }
 
@@ -113,7 +113,7 @@ export class AuthController {
   async validate2FA(
     @Body() dto: Validate2FACodeDto,
     @Res({ passthrough: true }) res: Response,
-  ): Promise<Msg> {
+  ): Promise<boolean> {
     const jwt = await this.authService.validate2FA(dto);
     res.cookie('access_token', jwt.accessToken, {
       httpOnly: true,
@@ -122,13 +122,11 @@ export class AuthController {
       path: '/',
     });
 
-    return {
-      message: 'ok',
-    };
+    return true;
   }
 
   @Patch('disable2fa')
-  disable2FA(@Body() dto: Validate2FACodeDto): Promise<string> {
+  disable2FA(@Body() dto: Validate2FACodeDto): Promise<boolean> {
     return this.authService.disable2FA(dto);
   }
 }

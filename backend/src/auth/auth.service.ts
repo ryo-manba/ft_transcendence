@@ -207,7 +207,7 @@ export class AuthService {
     return qr_code;
   }
 
-  async send2FACode(dto: Validate2FACodeDto): Promise<string> {
+  async send2FACode(dto: Validate2FACodeDto): Promise<boolean> {
     // ユーザーのシークレットを取得
     const userSecret = this.preAuthSecrets.get(Number(dto.userId));
     const valid = speakeasy.totp.verify({
@@ -215,7 +215,7 @@ export class AuthService {
       token: dto.code,
     });
     if (!valid) {
-      return 'failure';
+      return false;
     }
     //2FAの登録が完了したら、2FA機能をオンにして登録
     const user_db = await this.prisma.user.update({
@@ -229,20 +229,19 @@ export class AuthService {
     });
     this.preAuthSecrets.delete(Number(dto.userId));
 
-    return 'success';
+    return true;
   }
 
-  async has2FA(userId: number): Promise<string> {
+  async has2FA(userId: number): Promise<boolean> {
     const user = await this.prisma.user.findUnique({
       where: {
         id: userId,
       },
     });
-    // TODO: 戻り値がstringで良いか、frontendの実装時に再検討予定
     if (user.has2FA) {
-      return 'enabled: true';
+      return true;
     } else {
-      return 'enabled: false';
+      return false;
     }
   }
 
@@ -263,7 +262,7 @@ export class AuthService {
     return this.generateJwt(user.id, user.name);
   }
 
-  async disable2FA(data: Validate2FACodeDto): Promise<string> {
+  async disable2FA(data: Validate2FACodeDto): Promise<boolean> {
     const user_db = await this.prisma.user.update({
       where: {
         id: Number(data.userId),
@@ -274,7 +273,6 @@ export class AuthService {
       },
     });
 
-    // TODO: 戻り値がstringで良いか、frontendの実装時に再検討予定
-    return 'disabled: true';
+    return true;
   }
 }
