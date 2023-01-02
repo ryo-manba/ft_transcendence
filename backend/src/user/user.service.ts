@@ -38,9 +38,9 @@ export class UserService {
   async findAll(params: {
     skip?: number;
     take?: number;
-    cursor?: Prisma.ChatroomWhereUniqueInput;
-    where?: Prisma.ChatroomWhereInput;
-    orderBy?: Prisma.ChatroomOrderByWithRelationInput;
+    cursor?: Prisma.UserWhereUniqueInput;
+    where?: Prisma.UserWhereInput;
+    orderBy?: Prisma.UserOrderByWithRelationInput;
   }): Promise<User[]> {
     const { skip, take, cursor, where, orderBy } = params;
 
@@ -182,5 +182,16 @@ export class UserService {
 
       throw error;
     }
+  }
+
+  async getRanking(userId: number): Promise<number> {
+    const sortedUsers = await this.prisma.user.findMany({
+      orderBy: [{ point: 'desc' }, { createdAt: 'asc' }],
+    });
+
+    const userIndex = sortedUsers.findIndex((user) => user.id === userId);
+    const ranking = userIndex + 1;
+
+    return ranking;
   }
 }
