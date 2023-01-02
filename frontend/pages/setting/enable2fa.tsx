@@ -123,15 +123,6 @@ const Enable2FA: NextPage = () => {
                   REGISTER
                 </Button>
                 <Snackbar
-                  open={openSnack == 'SUCCESS'}
-                  autoHideDuration={6000}
-                  onClose={handleClose}
-                >
-                  <Alert onClose={handleClose} severity="success">
-                    2 Factor Auth is enabled!
-                  </Alert>
-                </Snackbar>
-                <Snackbar
                   open={openSnack == 'ERROR'}
                   autoHideDuration={6000}
                   onClose={handleClose}
