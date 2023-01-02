@@ -30,4 +30,5 @@ export default NextAuth({
       return token;
     },
   },
+  secret: process.env.JWT_SECRET,
 });
