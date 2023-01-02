@@ -2,7 +2,7 @@ import type { NextPage } from 'next';
 import { Grid, Button, TextField, Snackbar, Alert } from '@mui/material';
 import { Layout } from 'components/common/Layout';
 import Image from 'next/image';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQueryUser } from 'hooks/useQueryUser';
 import axios from 'axios';
 import { useForm, SubmitHandler, Controller } from 'react-hook-form';
@@ -22,24 +22,23 @@ const Enable2FA: NextPage = () => {
   const { changeHas2FAMutation } = useMutationHas2FA();
   const [openSnack, setOpenSnack] = useState('');
 
-  const onCreateComponent = async (): Promise<void> => {
-    if (process.env.NEXT_PUBLIC_API_URL && user) {
-      try {
-        const response = await axios.get<string>(
-          `${process.env.NEXT_PUBLIC_API_URL}/auth/qr2fa/${user.id}`,
-        );
-        if (response) {
-          setQrCode(response.data);
+  useEffect(() => {
+    const getQrcode = async () => {
+      if (process.env.NEXT_PUBLIC_API_URL && user) {
+        try {
+          const response = await axios.get<string>(
+            `${process.env.NEXT_PUBLIC_API_URL}/auth/qr2fa/${user.id}`,
+          );
+          if (response) {
+            setQrCode(response.data);
+          }
+        } catch (e) {
+          console.log(e);
         }
-      } catch (e) {
-        console.log(e);
       }
-    }
-  };
-
-  if (qrCode == '') {
-    void onCreateComponent();
-  }
+    };
+    void getQrcode();
+  }, []);
 
   const handleClose = () => {
     setOpenSnack('');
