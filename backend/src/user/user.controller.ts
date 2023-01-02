@@ -62,6 +62,14 @@ export class UserController {
     return await this.userService.getStatus(id);
   }
 
+  @Get('ranking')
+  async getRanking(
+    @Req() req: Request,
+    @Query('id', ParseIntPipe) id: number,
+  ): Promise<number> {
+    return await this.userService.getRanking(id);
+  }
+
   @Patch('status/:id/:newStatus')
   updateStatus(
     @Param('id', ParseIntPipe) id: number,

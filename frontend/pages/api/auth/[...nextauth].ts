@@ -6,12 +6,12 @@ export default NextAuth({
   // Configure one or more authentication providers
   providers: [
     FortyTwoProvider({
-      clientId: process.env.FORTYTWO_CLIENT_ID!,
-      clientSecret: process.env.FORTYTWO_SECRET!,
+      clientId: process.env.FORTYTWO_CLIENT_ID as string,
+      clientSecret: process.env.FORTYTWO_SECRET as string,
     }),
     GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_SECRET!,
+      clientId: process.env.GOOGLE_CLIENT_ID as string,
+      clientSecret: process.env.GOOGLE_SECRET as string,
     }),
     // ...add more providers here
   ],
@@ -30,4 +30,5 @@ export default NextAuth({
       return token;
     },
   },
+  secret: process.env.JWT_SECRET,
 });
