@@ -301,8 +301,17 @@ const Setting: NextPage = () => {
                 </DialogContentText>
               </DialogContent>
               <DialogActions>
-                <Button onClick={() => handleDialogClose('agree')}>OK</Button>
-                <Button onClick={() => handleDialogClose('disagree')} autoFocus>
+                <Button
+                  onClick={() => handleDialogClose('agree')}
+                  variant="contained"
+                >
+                  YES
+                </Button>
+                <Button
+                  onClick={() => handleDialogClose('disagree')}
+                  variant="outlined"
+                  autoFocus
+                >
                   NO
                 </Button>
               </DialogActions>
