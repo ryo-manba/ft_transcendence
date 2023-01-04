@@ -9,7 +9,7 @@ export const useMutationHas2FA = () => {
   const changeHas2FAMutation = useMutation<
     boolean, // 戻り値の型
     AxiosError,
-    { isEnable: boolean; userId: number; authCode: string } //mutate実行時の引数
+    { isEnable: boolean; userId: number; authCode: number } //mutate実行時の引数
   >(
     async ({ isEnable, userId, authCode }) => {
       if (isEnable) {
@@ -17,7 +17,7 @@ export const useMutationHas2FA = () => {
         const { data } = await axios.patch<boolean>(
           `${process.env.NEXT_PUBLIC_API_URL as string}/auth/send2facode`,
           {
-            userId: String(userId),
+            userId: userId,
             code: authCode,
           },
         );

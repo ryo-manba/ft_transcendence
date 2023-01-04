@@ -147,7 +147,7 @@ const Setting: NextPage = () => {
       changeHas2FAMutation.mutate({
         isEnable: false,
         userId: user.id,
-        authCode: '',
+        authCode: 0,
       });
       setOpenSnack('OK');
     }

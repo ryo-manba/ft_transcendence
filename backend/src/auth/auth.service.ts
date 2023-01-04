@@ -209,7 +209,7 @@ export class AuthService {
 
   async send2FACode(dto: Validate2FACodeDto): Promise<boolean> {
     // ユーザーのシークレットを取得
-    const userSecret = this.preAuthSecrets.get(Number(dto.userId));
+    const userSecret = this.preAuthSecrets.get(dto.userId);
     const valid = speakeasy.totp.verify({
       secret: userSecret,
       token: dto.code,
@@ -266,11 +266,11 @@ export class AuthService {
     return this.generateJwt(user.id, user.name);
   }
 
-  async disable2FA(id: string): Promise<boolean> {
+  async disable2FA(id: number): Promise<boolean> {
     try {
       const user_db = await this.prisma.user.update({
         where: {
-          id: Number(id),
+          id: id,
         },
         data: {
           has2FA: false,

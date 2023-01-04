@@ -3,5 +3,5 @@ export type SettingForm = {
 };
 
 export type TwoAuthForm = {
-  authCode: string;
+  authCode: number;
 };
