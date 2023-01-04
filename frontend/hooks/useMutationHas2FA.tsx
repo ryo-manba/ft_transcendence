@@ -45,8 +45,7 @@ export const useMutationHas2FA = () => {
       },
       onError: (err: AxiosError) => {
         // codeに数字以外が含まれる場合
-        console.log(err);
-        throw err;
+        throw new Error(err.message);
       },
     },
   );
