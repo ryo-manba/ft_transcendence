@@ -32,8 +32,8 @@ const Enable2FA: NextPage = () => {
           if (response) {
             setQrCode(response.data);
           }
-        } catch (e) {
-          console.log(e);
+        } catch {
+          throw new Error('Can not get QR Code Exception.');
         }
       }
     };
