@@ -12,7 +12,7 @@ const Authenticate = () => {
       if (status === 'authenticated') {
         if (process.env.NEXT_PUBLIC_API_URL) {
           if (session && session.user !== undefined && session.user !== null) {
-            let login = '';
+            let loginName = '';
             let imageUrl = '';
             console.log(session);
             if (
@@ -20,17 +20,17 @@ const Authenticate = () => {
               session.user.email.indexOf('gmail.com') !== -1
             ) {
               // gmailでのログインの場合
-              login = session.user.email;
+              loginName = session.user.email;
               if (session.user.image) imageUrl = session.user.image;
             } else if (session.user.email) {
               // TODO: 42のアカウントでは、access_tokenからログインIDと画像を取得する必要がある。別PRで対応
-              login = session.user.email;
+              loginName = session.user.email;
               imageUrl = '';
             }
-            const url_oauth = `${process.env.NEXT_PUBLIC_API_URL}/auth/oauth-login`;
+            const urlOauth = `${process.env.NEXT_PUBLIC_API_URL}/auth/oauth-login`;
             await axios
-              .post(url_oauth, {
-                oAuthId: login,
+              .post(urlOauth, {
+                oAuthId: loginName,
                 imagePath: imageUrl,
               })
               .then((res) => {

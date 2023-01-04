@@ -332,11 +332,6 @@ const Setting: NextPage = () => {
           </Grid>
         </Grid>
       </form>
-      {/* <Grid container alignItems="center" justifyContent="center" spacing={2}>
-        <Grid item>
-          <Enable2FA></Enable2FA>
-        </Grid>
-      </Grid> */}
     </Layout>
   );
 };

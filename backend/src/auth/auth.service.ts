@@ -200,11 +200,11 @@ export class AuthService {
       label: user.name,
       issuer: 'ft_transcendence',
     });
-    const qr_code = qrcode.toDataURL(url);
+    const qrCode = qrcode.toDataURL(url);
     // 一時的にシークレットを保存
     this.preAuthSecrets.set(userId, secretBase32);
 
-    return qr_code;
+    return qrCode;
   }
 
   async send2FACode(dto: Validate2FACodeDto): Promise<boolean> {
@@ -219,16 +219,16 @@ export class AuthService {
     }
     //2FAの登録が完了したら、2FA機能をオンにして登録
     try {
-      const user_db = await this.prisma.user.update({
+      await this.prisma.user.update({
         where: {
-          id: Number(dto.userId),
+          id: dto.userId,
         },
         data: {
           has2FA: true,
           secret2FA: userSecret,
         },
       });
-      this.preAuthSecrets.delete(Number(dto.userId));
+      this.preAuthSecrets.delete(dto.userId);
     } catch {
       return false;
     }
@@ -252,7 +252,7 @@ export class AuthService {
   async validate2FA(data: Validate2FACodeDto): Promise<Jwt> {
     const user = await this.prisma.user.findUnique({
       where: {
-        id: Number(data.userId),
+        id: data.userId,
       },
     });
     const valid = speakeasy.totp.verify({
@@ -268,7 +268,7 @@ export class AuthService {
 
   async disable2FA(id: number): Promise<boolean> {
     try {
-      const user_db = await this.prisma.user.update({
+      await this.prisma.user.update({
         where: {
           id: id,
         },
