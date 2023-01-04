@@ -8,7 +8,7 @@ const Authenticate = () => {
   const router = useRouter();
   const { data: session, status } = useSession();
   useEffect(() => {
-    const f = async () => {
+    const oauthLogin = async () => {
       if (status === 'authenticated') {
         if (process.env.NEXT_PUBLIC_API_URL) {
           if (session && session.user !== undefined && session.user !== null) {
@@ -44,7 +44,7 @@ const Authenticate = () => {
         }
       }
     };
-    void f();
+    void oauthLogin();
   }, []);
 
   return <Loading fullHeight={true} />;
