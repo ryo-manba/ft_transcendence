@@ -7,6 +7,7 @@ import { Loading } from 'components/common/Loading';
 import { useQueryUser } from 'hooks/useQueryUser';
 import { Friend } from 'types/friend';
 import { fetchFollowingUsers } from 'api/friend/fetchFollowingUsers';
+import { ChatBlockButton } from 'components/chat/utils/ChatBlockButton';
 
 type Props = {
   socket: Socket;
@@ -33,6 +34,7 @@ export const FriendSidebar = memo(function FriendSidebar({ socket }: Props) {
     <>
       {/* フレンド追加したら、リストを更新する */}
       <FriendAddButton setFriends={setFriends} />
+      <ChatBlockButton />
       <List dense={false}>
         {friends &&
           friends.map((friend) => (
