@@ -218,16 +218,20 @@ export class AuthService {
       return false;
     }
     //2FAの登録が完了したら、2FA機能をオンにして登録
-    const user_db = await this.prisma.user.update({
-      where: {
-        id: Number(dto.userId),
-      },
-      data: {
-        has2FA: true,
-        secret2FA: userSecret,
-      },
-    });
-    this.preAuthSecrets.delete(Number(dto.userId));
+    try {
+      const user_db = await this.prisma.user.update({
+        where: {
+          id: Number(dto.userId),
+        },
+        data: {
+          has2FA: true,
+          secret2FA: userSecret,
+        },
+      });
+      this.preAuthSecrets.delete(Number(dto.userId));
+    } catch {
+      return false;
+    }
 
     return true;
   }
@@ -263,15 +267,19 @@ export class AuthService {
   }
 
   async disable2FA(id: string): Promise<boolean> {
-    const user_db = await this.prisma.user.update({
-      where: {
-        id: Number(id),
-      },
-      data: {
-        has2FA: false,
-        secret2FA: '',
-      },
-    });
+    try {
+      const user_db = await this.prisma.user.update({
+        where: {
+          id: Number(id),
+        },
+        data: {
+          has2FA: false,
+          secret2FA: '',
+        },
+      });
+    } catch {
+      return false;
+    }
 
     return true;
   }
