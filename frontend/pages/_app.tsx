@@ -11,6 +11,7 @@ import { SessionProvider } from 'next-auth/react';
 import type { Session } from 'next-auth';
 import { logout } from 'api/auth/logout';
 import { useRouter } from 'next/router';
+import dynamic from 'next/dynamic';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -32,6 +33,8 @@ function MyApp({
 }: AppProps<{ session: Session }>) {
   axios.defaults.withCredentials = true; // Cookieのやりとりする時に必要
   const router = useRouter();
+  const CSR = dynamic(() => import('components/CSRInner'), { ssr: false });
+
   useEffect(() => {
     // ロードされた時にCsrfトークンを取得するのでここで定義
     // ヘッダに自動的に付与される
@@ -63,7 +66,9 @@ function MyApp({
   return (
     <QueryClientProvider client={queryClient}>
       <SessionProvider session={session}>
-        <Component {...pageProps} />
+        <CSR>
+          <Component {...pageProps} />
+        </CSR>
       </SessionProvider>
       <ReactQueryDevtools />
     </QueryClientProvider>
