@@ -9,6 +9,7 @@ import {
   Get,
   Param,
   Patch,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { AuthService } from './auth.service';
@@ -95,8 +96,8 @@ export class AuthController {
   // API for 2Factor Auth
   //
   @Get('qr2fa/:id')
-  generateQrCode(@Param('id') id: string): Promise<string> {
-    return this.authService.generateQrCode(Number(id));
+  generateQrCode(@Param('id', ParseIntPipe) id: number): Promise<string> {
+    return this.authService.generateQrCode(id);
   }
 
   @Patch('send2facode')
@@ -105,8 +106,8 @@ export class AuthController {
   }
 
   @Get('has2fa')
-  has2FA(@Param('id') id: string): Promise<boolean> {
-    return this.authService.has2FA(Number(id));
+  has2FA(@Param('id', ParseIntPipe) id: number): Promise<boolean> {
+    return this.authService.has2FA(id);
   }
 
   @Post('validate2fa')
@@ -126,7 +127,7 @@ export class AuthController {
   }
 
   @Patch('disable2fa/:id')
-  disable2FA(@Param('id') id: string): Promise<boolean> {
-    return this.authService.disable2FA(Number(id));
+  disable2FA(@Param('id', ParseIntPipe) id: number): Promise<boolean> {
+    return this.authService.disable2FA(id);
   }
 }

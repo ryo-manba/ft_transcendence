@@ -9,7 +9,7 @@ export const useMutationHas2FA = () => {
   const changeHas2FAMutation = useMutation<
     boolean, // 戻り値の型
     AxiosError,
-    { isEnable: boolean; userId: number; authCode: number } //mutate実行時の引数
+    { isEnable: boolean; userId: number; authCode: string } //mutate実行時の引数
   >(
     async ({ isEnable, userId, authCode }) => {
       if (isEnable) {
