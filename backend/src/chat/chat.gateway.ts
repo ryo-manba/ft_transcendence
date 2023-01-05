@@ -26,6 +26,7 @@ import { createDirectMessageDto } from './dto/create-direct-message.dto';
 import { CheckBanDto } from './dto/check-ban.dto';
 import { DeleteChatroomMemberDto } from './dto/delete-chatroom-member.dto';
 import { UpdateChatroomOwnerDto } from './dto/update-chatroom-owner.dto';
+import { CreateBlockRelationDto } from './dto/create-block-relation.dto';
 
 @WebSocketGateway({
   cors: {
@@ -463,5 +464,21 @@ export class ChatGateway {
     }
 
     return true;
+  }
+
+  /**
+   * ユーザーをブロックする
+   * @param CreateBlockRelationDto
+   */
+  @SubscribeMessage('chat:blockUser')
+  async blockUser(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() dto: CreateBlockRelationDto,
+  ): Promise<boolean> {
+    this.logger.log('chat:blockUser received', dto);
+
+    const res = await this.chatService.blockUser(dto);
+
+    return !!res;
   }
 }

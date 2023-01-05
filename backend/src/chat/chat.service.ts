@@ -9,6 +9,7 @@ import {
   Message,
   Prisma,
   ChatroomMembersStatus,
+  BlockRelation,
 } from '@prisma/client';
 import { CreateChatroomDto } from './dto/create-chatroom.dto';
 import { CreateMessageDto } from './dto/create-message.dto';
@@ -20,6 +21,7 @@ import { updateMemberStatusDto } from './dto/update-member-status.dto';
 import { createDirectMessageDto } from './dto/create-direct-message.dto';
 import { DeleteChatroomDto } from './dto/delete-chatroom.dto';
 import { DeleteChatroomMemberDto } from './dto/delete-chatroom-member.dto';
+import { CreateBlockRelationDto } from './dto/create-block-relation.dto';
 
 // 2の12乗回の演算が必要という意味
 const saltRounds = 12;
@@ -590,7 +592,7 @@ export class ChatService {
   /**
    * user1 と user2 が含まれているDMルームがすでに存在するかを確認する
    * @return 既にある -> true
-   * @teturn ない -> false
+   * @return ない -> false
    */
   async isCreatedDMRoom(userId1: number, userId2: number): Promise<boolean> {
     const DMRooms = await this.prisma.chatroom.findMany({
@@ -696,6 +698,29 @@ export class ChatService {
       this.logger.log('startDirectMessage', error);
 
       return false;
+    }
+  }
+
+  /**
+   * ユーザーをブロックする
+   * (BlockUserRelationに新しくデータを作成する)
+   * @param CreateBlockUserDto
+   */
+  async blockUser(dto: CreateBlockRelationDto): Promise<BlockRelation> {
+    this.logger.log('blockUser: ', dto);
+
+    try {
+      const blockRelation = await this.prisma.blockRelation.create({
+        data: {
+          ...dto,
+        },
+      });
+
+      return blockRelation;
+    } catch (error) {
+      this.logger.log('blockUser: ', error);
+
+      return undefined;
     }
   }
 }
