@@ -7,6 +7,12 @@ import {
   Alert,
   AlertTitle,
   Typography,
+  Snackbar,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
 } from '@mui/material';
 import { Header } from 'components/common/Header';
 import { Layout } from 'components/common/Layout';
@@ -23,6 +29,8 @@ import { Loading } from 'components/common/Loading';
 import { AxiosError } from 'axios';
 import { AxiosErrorResponse } from 'types';
 import { getAvatarImageUrl } from 'api/user/getAvatarImageUrl';
+import { useRouter } from 'next/router';
+import { useMutationHas2FA } from 'hooks/useMutationHas2FA';
 
 const usernameMaxLen = 50;
 
@@ -38,6 +46,8 @@ const schema = z.object({
 const Setting: NextPage = () => {
   const { data: user } = useQueryUser();
   const [error, setError] = useState<string[]>([]);
+  const [openSnack, setOpenSnack] = useState('none');
+  const [openConfirm, setOpenConfirm] = useState(false);
   const {
     control,
     register,
@@ -51,8 +61,11 @@ const Setting: NextPage = () => {
   });
   const { updateNameMutation } = useMutationName();
   const { updateAvatarMutation, deleteAvatarMutation } = useMutationAvatar();
+  const { changeHas2FAMutation } = useMutationHas2FA();
+  const router = useRouter();
 
-  if (user === undefined) return <Loading fullHeight />;
+  if (user === undefined || router.isReady === false)
+    return <Loading fullHeight />;
 
   const avatarImageUrl = getAvatarImageUrl(user.id);
 
@@ -115,6 +128,38 @@ const Setting: NextPage = () => {
         userId: user.id,
         avatarPath: user.avatarPath,
       });
+    }
+  };
+
+  const handleSnackClose = (
+    event?: React.SyntheticEvent | Event,
+    reason?: string,
+  ) => {
+    if (reason === 'clickaway') {
+      return;
+    }
+    setOpenSnack('none');
+  };
+
+  const handleDialogClose = (result: string) => {
+    setOpenConfirm(false);
+    if (result == 'agree') {
+      changeHas2FAMutation.mutate({
+        isEnable: false,
+        userId: user.id,
+        authCode: '',
+      });
+      setOpenSnack('OK');
+    }
+  };
+
+  const onChange2faSetting = async () => {
+    if (user.has2FA) {
+      // 解除の確認ダイアログを開く
+      setOpenConfirm(true);
+    } else {
+      // 登録画面に進む
+      await router.push('/setting/enable2fa');
     }
   };
 
@@ -225,6 +270,65 @@ const Setting: NextPage = () => {
             >
               Update username
             </Button>
+          </Grid>
+        </Grid>
+        <Grid
+          container
+          alignItems="center"
+          justifyContent="center"
+          spacing={2}
+          sx={{ p: 2 }}
+        >
+          <Grid item>
+            <Button
+              variant="contained"
+              component="label"
+              onClick={() => {
+                void onChange2faSetting();
+              }}
+            >
+              {user.has2FA ? 'DISABLE 2FA' : 'ENABLE 2FA'}
+            </Button>
+            <Dialog
+              open={openConfirm}
+              onClose={handleDialogClose}
+              aria-labelledby="alert-dialog-title"
+              aria-describedby="alert-dialog-description"
+            >
+              <DialogTitle id="alert-dialog-title">
+                {'Disable 2FA?'}
+              </DialogTitle>
+              <DialogContent>
+                <DialogContentText id="alert-dialog-description">
+                  Do you want to disable 2-factor authentication?
+                </DialogContentText>
+              </DialogContent>
+              <DialogActions>
+                <Button
+                  onClick={() => handleDialogClose('agree')}
+                  variant="contained"
+                >
+                  YES
+                </Button>
+                <Button
+                  onClick={() => handleDialogClose('disagree')}
+                  variant="outlined"
+                  autoFocus
+                >
+                  NO
+                </Button>
+              </DialogActions>
+            </Dialog>
+
+            <Snackbar
+              open={openSnack == 'OK'}
+              autoHideDuration={6000}
+              onClose={handleSnackClose}
+            >
+              <Alert onClose={handleSnackClose} severity="success">
+                2 Factor Auth is disabled!
+              </Alert>
+            </Snackbar>
           </Grid>
         </Grid>
       </form>

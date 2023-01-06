@@ -8,6 +8,8 @@ import {
   Req,
   Get,
   Param,
+  Patch,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { AuthService } from './auth.service';
@@ -94,28 +96,25 @@ export class AuthController {
   // API for 2Factor Auth
   //
   @Get('qr2fa/:id')
-  generateQrCode(@Param('id') id: string): Promise<string> {
-    return this.authService.generateQrCode(Number(id));
+  generateQrCode(@Param('id', ParseIntPipe) id: number): Promise<string> {
+    return this.authService.generateQrCode(id);
   }
 
-  @Post('send2facode')
-  send2FACode(
-    @Param('id') id: string,
-    @Body() dto: Validate2FACodeDto,
-  ): Promise<string> {
-    return this.authService.send2FACode(Number(id), dto);
+  @Patch('send2facode')
+  send2FACode(@Body() dto: Validate2FACodeDto): Promise<boolean> {
+    return this.authService.send2FACode(dto);
   }
 
   @Get('has2fa')
-  has2FA(@Param('id') id: string): Promise<string> {
-    return this.authService.has2FA(Number(id));
+  has2FA(@Param('id', ParseIntPipe) id: number): Promise<boolean> {
+    return this.authService.has2FA(id);
   }
 
   @Post('validate2fa')
   async validate2FA(
     @Body() dto: Validate2FACodeDto,
     @Res({ passthrough: true }) res: Response,
-  ): Promise<Msg> {
+  ): Promise<boolean> {
     const jwt = await this.authService.validate2FA(dto);
     res.cookie('access_token', jwt.accessToken, {
       httpOnly: true,
@@ -124,13 +123,11 @@ export class AuthController {
       path: '/',
     });
 
-    return {
-      message: 'ok',
-    };
+    return true;
   }
 
-  @Post('disable2fa')
-  disable2FA(@Body() data: Validate2FACodeDto): Promise<string> {
-    return this.authService.disable2FA(data);
+  @Patch('disable2fa/:id')
+  disable2FA(@Param('id', ParseIntPipe) id: number): Promise<boolean> {
+    return this.authService.disable2FA(id);
   }
 }

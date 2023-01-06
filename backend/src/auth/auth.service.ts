@@ -30,6 +30,7 @@ export class AuthService {
   ) {}
 
   private logger: Logger = new Logger('AuthService');
+  preAuthSecrets = new Map<number, string>();
 
   async singUp(dto: AuthDto): Promise<Msg> {
     // 2の12乗回の演算が必要、という意味の12
@@ -192,73 +193,66 @@ export class AuthService {
       },
     });
     if (!user) throw new HttpException('User not found', HttpStatus.NOT_FOUND);
-    const secret = speakeasy.generateSecret();
+    // シークレットを生成してURLを発行し、QRコード画像を作成
+    const secretBase32 = speakeasy.generateSecret().base32;
     const url = speakeasy.otpauthURL({
-      secret: secret.base32,
+      secret: secretBase32,
       label: user.name,
       issuer: 'ft_transcendence',
     });
-    const qr_code = qrcode.toDataURL(url);
-    //取得したSecretをDBに保存。まだこのユーザーは2FA機能オン状態ではない。
-    const user_db = await this.prisma.user.update({
-      where: {
-        id: userId,
-      },
-      data: {
-        secret2FA: secret.base32,
-      },
-    });
+    const qrCode = qrcode.toDataURL(url);
+    // 一時的にシークレットを保存
+    this.preAuthSecrets.set(userId, secretBase32);
 
-    return qr_code;
+    return qrCode;
   }
 
-  async send2FACode(userId: number, dto: Validate2FACodeDto): Promise<string> {
-    console.log(dto);
-    const user = await this.prisma.user.findUnique({
-      where: {
-        id: userId,
-      },
-    });
-    console.log(user.has2FA);
+  async send2FACode(dto: Validate2FACodeDto): Promise<boolean> {
+    // ユーザーのシークレットを取得
+    const userSecret = this.preAuthSecrets.get(dto.userId);
     const valid = speakeasy.totp.verify({
-      secret: user.secret2FA,
+      secret: userSecret,
       token: dto.code,
     });
     if (!valid) {
-      throw new Error('hoge');
+      return false;
+    }
+    //2FAの登録が完了したら、2FA機能をオンにして登録
+    try {
+      await this.prisma.user.update({
+        where: {
+          id: dto.userId,
+        },
+        data: {
+          has2FA: true,
+          secret2FA: userSecret,
+        },
+      });
+      this.preAuthSecrets.delete(dto.userId);
+    } catch {
+      return false;
     }
 
-    //2FAの登録が完了したら、このユーザーは2FA機能をオンにする
-    const user_db = await this.prisma.user.update({
-      where: {
-        id: userId,
-      },
-      data: {
-        has2FA: true,
-      },
-    });
-
-    return 'ok';
+    return true;
   }
 
-  async has2FA(userId: number): Promise<string> {
+  async has2FA(userId: number): Promise<boolean> {
     const user = await this.prisma.user.findUnique({
       where: {
         id: userId,
       },
     });
-    // TODO: 戻り値がstringで良いか、frontendの実装時に再検討予定
     if (user.has2FA) {
-      return 'enabled: true';
+      return true;
     } else {
-      return 'enabled: false';
+      return false;
     }
   }
 
   async validate2FA(data: Validate2FACodeDto): Promise<Jwt> {
     const user = await this.prisma.user.findUnique({
       where: {
-        id: Number(data.userId),
+        id: data.userId,
       },
     });
     const valid = speakeasy.totp.verify({
@@ -272,18 +266,21 @@ export class AuthService {
     return this.generateJwt(user.id, user.name);
   }
 
-  async disable2FA(data: Validate2FACodeDto): Promise<string> {
-    const user_db = await this.prisma.user.update({
-      where: {
-        id: Number(data.userId),
-      },
-      data: {
-        has2FA: false,
-        secret2FA: '',
-      },
-    });
+  async disable2FA(id: number): Promise<boolean> {
+    try {
+      await this.prisma.user.update({
+        where: {
+          id: id,
+        },
+        data: {
+          has2FA: false,
+          secret2FA: '',
+        },
+      });
+    } catch {
+      return false;
+    }
 
-    // TODO: 戻り値がstringで良いか、frontendの実装時に再検討予定
-    return 'disabled: true';
+    return true;
   }
 }
