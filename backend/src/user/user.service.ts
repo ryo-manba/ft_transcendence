@@ -7,6 +7,7 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { UpdateNameDto } from './dto/update-name.dto';
 import { Prisma, User, UserStatus } from '@prisma/client';
+import { UpdateStatusDto } from './dto/update-status.dto';
 import { UpdatePointDto } from './dto/update-point.dto';
 import { UpdateAvatarDto } from './dto/update-avatar.dto';
 import { createReadStream, unlink } from 'node:fs';
@@ -162,16 +163,15 @@ export class UserService {
   }
 
   async updateStatus(
-    userId: number,
-    status: UserStatus,
+    dto: UpdateStatusDto,
   ): Promise<Omit<User, 'hashedPassword'>> {
     try {
       const user = await this.prisma.user.update({
         where: {
-          id: userId,
+          id: dto.userId,
         },
         data: {
-          status: status,
+          status: dto.status,
         },
       });
       delete user.hashedPassword;

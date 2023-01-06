@@ -18,6 +18,7 @@ import { Request } from 'express';
 import { UserService } from './user.service';
 import { UpdateNameDto } from './dto/update-name.dto';
 import { User, UserStatus } from '@prisma/client';
+import { UpdateStatusDto } from './dto/update-status.dto';
 import { UpdatePointDto } from './dto/update-point.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
@@ -70,12 +71,11 @@ export class UserController {
     return await this.userService.getRanking(id);
   }
 
-  @Patch('status/:id/:newStatus')
+  @Patch('update-status')
   updateStatus(
-    @Param('id', ParseIntPipe) id: number,
-    @Param('newStatus') status: UserStatus,
+    @Body() dto: UpdateStatusDto,
   ): Promise<Omit<User, 'hashedPassword'>> {
-    return this.userService.updateStatus(id, status);
+    return this.userService.updateStatus(dto);
   }
 
   @Get(':id')
