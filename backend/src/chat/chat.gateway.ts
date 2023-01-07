@@ -29,6 +29,7 @@ import { UpdateChatroomOwnerDto } from './dto/update-chatroom-owner.dto';
 import { OnGetRoomsDto } from './dto/on-get-rooms.dto';
 import { ChangeCurrentRoomDto } from './dto/change-current-room.dto';
 import { LeaveSocketDto } from './dto/leave-socket.dto';
+import { OnRoomJoinableDto } from './dto/on-room-joinable.dto';
 
 @WebSocketGateway({
   cors: {
@@ -296,14 +297,14 @@ export class ChatGateway {
 
   /**
    * 入室可能な部屋の一覧を返す
-   * @param userId
+   * @param OnRoomJoinableDto
    */
   @SubscribeMessage('chat:getJoinableRooms')
   async onRoomJoinable(
     @ConnectedSocket() client: Socket,
-    @MessageBody() userId: number,
+    @MessageBody() dto: OnRoomJoinableDto,
   ): Promise<any> {
-    this.logger.log(`chat:getJoinableRooms received -> roomId: ${userId}`);
+    this.logger.log(`chat:getJoinableRooms received -> roomId: ${dto.userId}`);
 
     // Private以外のチャットルームに絞る
     const notPrivate = {
@@ -318,7 +319,7 @@ export class ChatGateway {
     const viewableRooms = await this.chatService.findAll(notPrivate);
 
     // userが所属しているチャットルームの一覧を取得する
-    const joinedRooms = await this.chatService.findJoinedRooms(userId);
+    const joinedRooms = await this.chatService.findJoinedRooms(dto.userId);
 
     const roomsDiff = this.getChatroomDiff(viewableRooms, joinedRooms);
     const viewableAndNotJoinedRooms = viewableRooms.filter((item) => {
