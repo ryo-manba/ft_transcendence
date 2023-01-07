@@ -34,7 +34,7 @@ export const FriendSidebar = memo(function FriendSidebar({ socket }: Props) {
     <>
       {/* フレンド追加したら、リストを更新する */}
       <FriendAddButton setFriends={setFriends} />
-      <ChatBlockButton />
+      <ChatBlockButton socket={socket} />
       <List dense={false}>
         {friends &&
           friends.map((friend) => (
