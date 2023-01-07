@@ -29,6 +29,7 @@ import { AcceptInvitationDto } from './dto/accept-invitation.dto';
 import { JoinRoomDto } from './dto/join-room.dto';
 import { WatchGameDto } from './dto/watch-game.dto';
 import { PlayGameDto } from './dto/play-game.dto';
+import { UpdatePlayerPosDto } from './dto/update-player-pos.dto';
 
 // host側は同時に複数招待を送ることはできない
 class InvitationList {
@@ -499,7 +500,7 @@ export class GameGateway {
   @SubscribeMessage('barMove')
   async updatePlayerPos(
     @ConnectedSocket() socket: Socket,
-    @MessageBody() move: number,
+    @MessageBody() dto: UpdatePlayerPosDto,
   ) {
     let isGameOver = false;
 
@@ -529,7 +530,7 @@ export class GameGateway {
     const ballVec = room.ballVec;
 
     // Update player position using information received
-    const updatedHeight = player.height + move * room.barSpeed;
+    const updatedHeight = player.height + dto.move * room.barSpeed;
     if (updatedHeight < GameGateway.highestPos) {
       player.height = GameGateway.highestPos;
     } else if (GameGateway.lowestPos < updatedHeight) {
