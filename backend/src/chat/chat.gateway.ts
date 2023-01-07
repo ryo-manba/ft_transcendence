@@ -28,6 +28,7 @@ import { DeleteChatroomMemberDto } from './dto/delete-chatroom-member.dto';
 import { UpdateChatroomOwnerDto } from './dto/update-chatroom-owner.dto';
 import { OnGetRoomsDto } from './dto/on-get-rooms.dto';
 import { ChangeCurrentRoomDto } from './dto/change-current-room.dto';
+import { LeaveSocketDto } from './dto/leave-socket.dto';
 
 @WebSocketGateway({
   cors: {
@@ -191,15 +192,15 @@ export class ChatGateway {
   /**
    * ルームからソケットを退出させる
    * @param client
-   * @param roomId
+   * @param LeaveSocketDto
    */
   @SubscribeMessage('chat:leaveSocket')
   async leaveSocket(
     @ConnectedSocket() client: Socket,
-    @MessageBody() roomId: number,
+    @MessageBody() dto: LeaveSocketDto,
   ): Promise<void> {
-    this.logger.log(`chat:leaveSocket received -> ${roomId}`);
-    await client.leave(String(roomId));
+    this.logger.log(`chat:leaveSocket received -> ${dto.roomId}`);
+    await client.leave(String(dto.roomId));
   }
 
   /**
@@ -218,7 +219,7 @@ export class ChatGateway {
     if (!deletedMember) {
       return false;
     }
-    await this.leaveSocket(client, dto.chatroomId);
+    await this.leaveSocket(client, { roomId: dto.chatroomId });
 
     // チャットルームを抜けたことで入室者がいなくなる場合は削除する
     // BAN or MUTEのユーザーは無視する
