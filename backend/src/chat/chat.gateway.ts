@@ -27,6 +27,7 @@ import { CheckBanDto } from './dto/check-ban.dto';
 import { DeleteChatroomMemberDto } from './dto/delete-chatroom-member.dto';
 import { UpdateChatroomOwnerDto } from './dto/update-chatroom-owner.dto';
 import { OnGetRoomsDto } from './dto/on-get-rooms.dto';
+import { ChangeCurrentRoomDto } from './dto/change-current-room.dto';
 
 @WebSocketGateway({
   cors: {
@@ -127,9 +128,9 @@ export class ChatGateway {
   @SubscribeMessage('chat:changeCurrentRoom')
   async changeCurrentRoom(
     @ConnectedSocket() client: Socket,
-    @MessageBody() roomId: number,
+    @MessageBody() dto: ChangeCurrentRoomDto,
   ): Promise<Message[]> {
-    this.logger.log(`chat:changeCurrentRoom received -> ${roomId}`);
+    this.logger.log(`chat:changeCurrentRoom received -> ${dto.roomId}`);
 
     // 0番目には、socketのidが入っている
     if (client.rooms.size >= 2) {
@@ -137,11 +138,11 @@ export class ChatGateway {
       const target = Array.from(client.rooms)[1];
       await client.leave(target);
     }
-    await client.join(String(roomId));
+    await client.join(String(dto.roomId));
 
     // 既存のメッセージを取得する
     // TODO: limitで上限をつける
-    const messages = await this.chatService.findMessages({ id: roomId });
+    const messages = await this.chatService.findMessages({ id: dto.roomId });
 
     // 既存のメッセージを送り返す
     return messages;
