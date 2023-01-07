@@ -90,7 +90,7 @@ export const Watch = () => {
 
   const watchGame = (room: WatchInfo) => {
     const playerNames: [string, string] = [room.name1, room.name2];
-    socket.emit('watchGame', room.roomName);
+    socket.emit('watchGame', { roomName: room.roomName });
     updatePlayerNames(playerNames);
   };
 

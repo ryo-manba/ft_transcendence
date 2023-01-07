@@ -27,6 +27,7 @@ import { CancelInvitationDto } from './dto/cancel-invitation.dto';
 import { DenyInvitationDto } from './dto/deny-invitation.dto';
 import { AcceptInvitationDto } from './dto/accept-invitation.dto';
 import { JoinRoomDto } from './dto/join-room.dto';
+import { WatchGameDto } from './dto/watch-game.dto';
 
 // host側は同時に複数招待を送ることはできない
 class InvitationList {
@@ -389,18 +390,17 @@ export class GameGateway {
   @SubscribeMessage('watchGame')
   async watchGame(
     @ConnectedSocket() socket: Socket,
-    @MessageBody() data: string,
+    @MessageBody() dto: WatchGameDto,
   ) {
-    const roomName = data;
-    const room = this.gameRooms.find((r) => r.roomName === roomName);
+    const room = this.gameRooms.find((r) => r.roomName === dto.roomName);
     if (!room) {
       socket.emit('error');
 
       return;
     }
     room.supporters.push(socket);
-    this.logger.log(`${socket.id} joined to room ${roomName}`);
-    await socket.join(data);
+    this.logger.log(`${socket.id} joined to room ${dto.roomName}`);
+    await socket.join(dto.roomName);
     const gameSetting = room.gameState === 'Setting' ? null : room.gameSetting;
     socket.emit('joinGameRoom', room.gameState, gameSetting);
   }
