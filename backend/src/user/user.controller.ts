@@ -16,6 +16,7 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import { Request } from 'express';
 import { UserService } from './user.service';
+import { DeleteAvatarDto } from './dto/delete-avatar.dto';
 import { UpdateNameDto } from './dto/update-name.dto';
 import { User, UserStatus } from '@prisma/client';
 import { UpdateStatusDto } from './dto/update-status.dto';
@@ -124,11 +125,10 @@ export class UserController {
     return this.userService.getAvatarImage(id);
   }
 
-  @Patch('avatar/:id/:avatarPath')
+  @Patch('delete-avatar')
   deleteAvatar(
-    @Param('id') id: string,
-    @Param('avatarPath') avatarPath: string,
+    @Body() dto: DeleteAvatarDto,
   ): Promise<Omit<User, 'hashedPassword'>> {
-    return this.userService.deleteAvatar(Number(id), avatarPath);
+    return this.userService.deleteAvatar(dto);
   }
 }
