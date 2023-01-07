@@ -6,81 +6,21 @@ import {
   MessageBody,
   WebSocketServer,
 } from '@nestjs/websockets';
-import { Socket, Server, RemoteSocket } from 'socket.io';
+import { Socket, Server } from 'socket.io';
 import { RecordsService } from '../records/records.service';
 import { UserService } from '../user/user.service';
 import { v4 as uuidv4 } from 'uuid';
-import { DefaultEventsMap } from 'socket.io/dist/typed-events';
-
-type Player = {
-  name: string;
-  id: number;
-  point: number;
-  socket: Socket | RemoteSocket<DefaultEventsMap, undefined>;
-  height: number;
-  score: number;
-};
-
-type Ball = {
-  x: number;
-  y: number;
-  radius: number;
-};
-
-type BallVec = {
-  xVec: number;
-  yVec: number;
-  speed: number;
-};
-
-type DifficultyLevel = 'Easy' | 'Normal' | 'Hard';
-
-type GameSetting = {
-  difficulty: DifficultyLevel;
-  matchPoint: number;
-  player1Score: number;
-  player2Score: number;
-};
-
-type GameState = 'Setting' | 'Playing';
-
-type RoomInfo = {
-  roomName: string;
-  player1: Player;
-  player2: Player;
-  supporters: Socket[];
-  ball: Ball;
-  ballVec: BallVec;
-  isPlayer1Turn: boolean;
-  gameSetting: GameSetting;
-  barSpeed: number;
-  rewards: number;
-  gameState: GameState;
-};
-
-type GameInfo = {
-  height1: number;
-  height2: number;
-  ball: Ball;
-};
-
-type FinishedGameInfo = {
-  winnerName: string;
-  loserName: string;
-  winnerScore: number;
-  loserScore: number;
-};
-
-type Friend = {
-  id: number;
-  name: string;
-};
-
-type Invitation = {
-  guestId: number;
-  hostId: number;
-  hostSocketId: string;
-};
+import {
+  Player,
+  Ball,
+  BallVec,
+  GameSetting,
+  RoomInfo,
+  GameInfo,
+  FinishedGameInfo,
+  Friend,
+  Invitation,
+} from './types/game';
 
 // host側は同時に複数招待を送ることはできない
 class InvitationList {
