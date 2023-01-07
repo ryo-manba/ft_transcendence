@@ -25,6 +25,7 @@ type Props = {
   users: ChatUser[];
   open: boolean;
   onClose: () => void;
+  removeFriendById: (id: number) => void;
 };
 
 export type ChatroomJoinForm = {
@@ -36,6 +37,7 @@ export const ChatBlockDialog = memo(function ChatBlockDialog({
   users,
   open,
   onClose,
+  removeFriendById,
 }: Props) {
   const [selectedUser, setSelectedUser] = useState<ChatUser | undefined>(
     undefined,
@@ -70,6 +72,9 @@ export const ChatBlockDialog = memo(function ChatBlockDialog({
 
         return;
       }
+      // ブロックしたらフレンドリストから表示を消す
+      removeFriendById(selectedUser.id);
+      // TODO: ブロックした側への通知をどう行うか
       handleClose();
     });
 

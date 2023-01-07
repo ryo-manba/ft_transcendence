@@ -10,10 +10,12 @@ import { fetchUnblockedUsers } from 'api/chat/fetchUnblockedUsers';
 
 type Props = {
   socket: Socket;
+  removeFriendById: (id: number) => void;
 };
 
 export const ChatBlockButton = memo(function ChatBlockButton({
   socket,
+  removeFriendById,
 }: Props) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [users, setUsers] = useState<ChatUser[]>([]);
@@ -56,6 +58,7 @@ export const ChatBlockButton = memo(function ChatBlockButton({
         socket={socket}
         users={users}
         open={dialogOpen}
+        removeFriendById={removeFriendById}
         onClose={handleClose}
       />
     </>

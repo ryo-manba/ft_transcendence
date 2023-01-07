@@ -30,11 +30,17 @@ export const FriendSidebar = memo(function FriendSidebar({ socket }: Props) {
     void fetchFriends();
   }, []);
 
+  const handleRemoveFriendById = (removeId: number) => {
+    setFriends((friends) => friends.filter((friend) => friend.id !== removeId));
+  };
+
   return (
     <>
-      {/* フレンド追加したら、リストを更新する */}
       <FriendAddButton setFriends={setFriends} />
-      <ChatBlockButton socket={socket} />
+      <ChatBlockButton
+        socket={socket}
+        removeFriendById={handleRemoveFriendById}
+      />
       <List dense={false}>
         {friends &&
           friends.map((friend) => (
