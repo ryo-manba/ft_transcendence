@@ -4,6 +4,7 @@ export interface Msg {
 export interface Csrf {
   csrfToken: string;
 }
-export interface Jwt {
+export interface LoginInfo {
   accessToken: string;
+  has2fa: boolean;
 }

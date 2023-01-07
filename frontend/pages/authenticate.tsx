@@ -28,18 +28,15 @@ const Authenticate = () => {
               imageUrl = '';
             }
             const urlOauth = `${process.env.NEXT_PUBLIC_API_URL}/auth/oauth-login`;
-            await axios
-              .post(urlOauth, {
-                oAuthId: loginName,
-                imagePath: imageUrl,
-              })
-              .then((res) => {
-                console.log(res);
-                void router.push('/dashboard');
-              })
-              .catch((err) => {
-                console.log(err);
-              });
+            const { data } = await axios.post<boolean>(urlOauth, {
+              oAuthId: loginName,
+              imagePath: imageUrl,
+            });
+            if (data === true) {
+              void router.push('/dashboard');
+            } else {
+              void router.push('/validate2fa');
+            }
           }
         }
       }

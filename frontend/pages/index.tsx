@@ -65,21 +65,28 @@ const Home: NextPage = () => {
   });
   const { data: session, status } = useSession();
 
-  const onSubmit: SubmitHandler<AuthForm> = async (data: AuthForm) => {
+  const onSubmit: SubmitHandler<AuthForm> = async (formData: AuthForm) => {
     try {
       if (process.env.NEXT_PUBLIC_API_URL) {
         if (isRegister) {
           const url_signup = `${process.env.NEXT_PUBLIC_API_URL}/auth/signup`;
           await axios.post(url_signup, {
-            password: data.password,
-            username: data.username,
+            password: formData.password,
+            username: formData.username,
           });
         }
-        await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/auth/login`, {
-          username: data.username,
-          password: data.password,
-        });
-        await router.push('/dashboard');
+        const { data } = await axios.post<boolean>(
+          `${process.env.NEXT_PUBLIC_API_URL}/auth/login`,
+          {
+            username: formData.username,
+            password: formData.password,
+          },
+        );
+        if (data === true) {
+          await router.push('/dashboard');
+        } else {
+          await router.push('/validate2fa');
+        }
       }
     } catch (e) {
       if (axios.isAxiosError(e) && e.response && e.response.data) {
@@ -95,7 +102,6 @@ const Home: NextPage = () => {
     return <Loading fullHeight={true} />;
   } else if (status === 'authenticated') {
     if (session && session.user !== null && session.user !== undefined) {
-      // void signOut();
       void router.push('/authenticate');
     }
 

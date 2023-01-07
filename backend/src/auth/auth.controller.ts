@@ -38,18 +38,17 @@ export class AuthController {
   async login(
     @Body() dto: AuthDto,
     @Res({ passthrough: true }) res: Response,
-  ): Promise<Msg> {
-    const jwt = await this.authService.login(dto);
-    res.cookie('access_token', jwt.accessToken, {
+  ): Promise<boolean> {
+    const loginInfo = await this.authService.login(dto);
+    res.cookie('access_token', loginInfo.accessToken, {
       httpOnly: true,
       secure: true, //Postmanからアクセスするときはfalse
       sameSite: 'none',
       path: '/',
     });
 
-    return {
-      message: 'ok',
-    };
+    // ログイン完了ならtrue, 2FA確認がまだ必要ならfalse
+    return !loginInfo.has2fa;
   }
 
   @HttpCode(HttpStatus.OK)
@@ -78,18 +77,18 @@ export class AuthController {
   async oAuthLogin(
     @Body() dto: CreateOAuthDto,
     @Res({ passthrough: true }) res: Response,
-  ): Promise<Msg> {
-    const jwt = await this.authService.oauthlogin(dto);
-    res.cookie('access_token', jwt.accessToken, {
+  ): Promise<boolean> {
+    const loginInfo = await this.authService.oauthlogin(dto);
+
+    res.cookie('access_token', loginInfo.accessToken, {
       httpOnly: true,
       secure: true, //Postmanからアクセスするときはfalse
       sameSite: 'none',
       path: '/',
     });
 
-    return {
-      message: 'ok',
-    };
+    // ログイン完了ならtrue, 2FA確認がまだ必要ならfalse
+    return !loginInfo.has2fa;
   }
 
   //
@@ -105,23 +104,25 @@ export class AuthController {
     return this.authService.send2FACode(dto);
   }
 
-  @Get('has2fa')
-  has2FA(@Param('id', ParseIntPipe) id: number): Promise<boolean> {
-    return this.authService.has2FA(id);
-  }
-
-  @Post('validate2fa')
+  @Patch('validate2fa')
   async validate2FA(
     @Body() dto: Validate2FACodeDto,
     @Res({ passthrough: true }) res: Response,
   ): Promise<boolean> {
-    const jwt = await this.authService.validate2FA(dto);
-    res.cookie('access_token', jwt.accessToken, {
-      httpOnly: true,
-      secure: true, //Postmanからアクセスするときはfalse
-      sameSite: 'none',
-      path: '/',
-    });
+    try {
+      const accessToken = await this.authService.validate2FA(dto);
+      res.cookie('access_token', accessToken, {
+        httpOnly: true,
+        secure: true, //Postmanからアクセスするときはfalse
+        sameSite: 'none',
+        path: '/',
+      });
+    } catch {
+      console.log('validate Exception!');
+
+      return false;
+    }
+    console.log('validate OK!');
 
     return true;
   }
