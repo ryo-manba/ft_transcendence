@@ -28,6 +28,7 @@ import { DenyInvitationDto } from './dto/deny-invitation.dto';
 import { AcceptInvitationDto } from './dto/accept-invitation.dto';
 import { JoinRoomDto } from './dto/join-room.dto';
 import { WatchGameDto } from './dto/watch-game.dto';
+import { PlayGameDto } from './dto/play-game.dto';
 
 // host側は同時に複数招待を送ることはできない
 class InvitationList {
@@ -424,10 +425,7 @@ export class GameGateway {
   }
 
   @SubscribeMessage('completeSetting')
-  playGame(
-    @ConnectedSocket() socket: Socket,
-    @MessageBody() data: GameSetting,
-  ) {
+  playGame(@ConnectedSocket() socket: Socket, @MessageBody() dto: PlayGameDto) {
     const room = this.gameRooms.find(
       (r) =>
         r.player1.socket.id === socket.id || r.player2.socket.id === socket.id,
@@ -435,10 +433,10 @@ export class GameGateway {
     if (!room) {
       socket.emit('error');
     } else {
-      this.logger.log('completeSetting: ', data);
-      room.gameSetting = data;
-      room.rewards = 10 * data.matchPoint;
-      switch (data.difficulty) {
+      this.logger.log('completeSetting: ', dto);
+      room.gameSetting = dto as GameSetting;
+      room.rewards = 10 * dto.matchPoint;
+      switch (dto.difficulty) {
         case 'Normal':
           room.barSpeed = 20;
           room.ballVec.speed = 5;
@@ -453,7 +451,7 @@ export class GameGateway {
           break;
       }
       room.gameState = 'Playing';
-      this.server.to(room.roomName).emit('playStarted', data);
+      this.server.to(room.roomName).emit('playStarted', dto as GameSetting);
     }
   }
 
