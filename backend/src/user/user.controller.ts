@@ -108,9 +108,9 @@ export class UserController {
   )
   uploadAvatar(
     @UploadedFile() file: Express.Multer.File,
-    @Param('id') id: string,
+    @Param('id', ParseIntPipe) id: number,
   ): Promise<Omit<User, 'hashedPassword'>> {
-    return this.userService.updateAvatar(Number(id), {
+    return this.userService.updateAvatar(id, {
       avatarPath: file.filename,
     });
   }
