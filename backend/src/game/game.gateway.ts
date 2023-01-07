@@ -21,6 +21,7 @@ import {
   Friend,
   Invitation,
 } from './types/game';
+import { GetInvitedListDto } from './dto/get-invited-list.dto';
 
 // host側は同時に複数招待を送ることはできない
 class InvitationList {
@@ -165,16 +166,16 @@ export class GameGateway {
   @SubscribeMessage('getInvitedLlist')
   async getInvitedList(
     @ConnectedSocket() socket: Socket,
-    @MessageBody() data: number,
+    @MessageBody() dto: GetInvitedListDto,
   ): Promise<Friend[]> {
     // userIdとsocketIdをつなげる
-    const socketIds = this.userSocketMap.get(data);
+    const socketIds = this.userSocketMap.get(dto.userId);
     if (socketIds === undefined)
-      this.userSocketMap.set(data, new Set([socket.id]));
+      this.userSocketMap.set(dto.userId, new Set([socket.id]));
     else socketIds.add(socket.id);
 
     // 招待を送ったhostの一覧を返す
-    const hostIds = this.invitationList.findHosts(data);
+    const hostIds = this.invitationList.findHosts(dto.userId);
     if (hostIds === undefined) return [];
     else {
       const hosts = await this.user.findAll({

@@ -28,9 +28,13 @@ export const Layout: FC<Props> = ({ children, title = 'Next.js' }) => {
       gameSocket.connect();
     }
     if (showGuestPaths.includes(router.pathname)) {
-      gameSocket.emit('getInvitedLlist', user.id, (newHosts: Friend[]) => {
-        setHosts([...hosts, ...newHosts]);
-      });
+      gameSocket.emit(
+        'getInvitedLlist',
+        { userId: user.id },
+        (newHosts: Friend[]) => {
+          setHosts([...hosts, ...newHosts]);
+        },
+      );
     }
   }, [user]);
 
