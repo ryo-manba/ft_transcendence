@@ -85,12 +85,11 @@ export class UserController {
     return this.userService.findOne(id);
   }
 
-  @Patch('point/:id')
+  @Patch('update-point')
   updatePoint(
-    @Param('id') id: string,
     @Body() dto: UpdatePointDto,
   ): Promise<Omit<User, 'hashedPassword'>> {
-    return this.userService.updatePoint(Number(id), dto);
+    return this.userService.updatePoint(dto);
   }
 
   @Patch('name/:id')

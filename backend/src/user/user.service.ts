@@ -81,23 +81,22 @@ export class UserService {
   }
 
   async updatePoint(
-    userId: number,
     dto: UpdatePointDto,
   ): Promise<Omit<User, 'hashedPassword'>> {
     try {
       const user = await this.prisma.user.update({
         where: {
-          id: userId,
+          id: dto.userId,
         },
         data: {
-          ...dto,
+          point: dto.point,
         },
       });
       delete user.hashedPassword;
 
       return user;
     } catch (error) {
-      console.log(error);
+      console.error(error);
       throw error;
     }
   }
