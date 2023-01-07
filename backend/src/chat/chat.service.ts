@@ -702,13 +702,13 @@ export class ChatService {
   }
 
   /**
-   * ユーザーをブロックする
-   * (BlockUserRelationに新しくデータを作成する)
-   * @param CreateBlockUserDto
+   * BlockRelationにデータを作成する
+   * @param CreateBlockRelationDto
    */
-  async blockUser(dto: CreateBlockRelationDto): Promise<BlockRelation> {
-    this.logger.log('blockUser: ', dto);
-
+  async createBlockRelation(
+    dto: CreateBlockRelationDto,
+  ): Promise<BlockRelation> {
+    this.logger.log('createBlockRelation: ', dto);
     try {
       const blockRelation = await this.prisma.blockRelation.create({
         data: {
@@ -718,10 +718,42 @@ export class ChatService {
 
       return blockRelation;
     } catch (error) {
-      this.logger.log('blockUser: ', error);
+      this.logger.log('createBlockRelation: : ', error);
 
       return undefined;
     }
+  }
+
+  /**
+   * 次のブロック処理を行う
+   * - BlockUserRelationにデータを作成する
+   * - ブロックしたユーザとのフレンド関係を削除する
+   * @param CreateBlockUserDto
+   */
+  async blockUser(dto: CreateBlockRelationDto): Promise<BlockRelation> {
+    this.logger.log('blockUser: ', dto);
+
+    const blockRelation = await this.createBlockRelation(dto);
+    if (!blockRelation) {
+      return undefined;
+    }
+
+    // ブロックしたユーザとのフレンド関係を削除する
+    const wheres = [
+      { followerId: dto.blockedByUserId, followingId: dto.blockingUserId },
+      { followerId: dto.blockingUserId, followingId: dto.blockedByUserId },
+    ];
+    try {
+      await this.prisma.friendRelation.deleteMany({
+        where: {
+          OR: [...wheres],
+        },
+      });
+    } catch (error) {
+      this.logger.log('blockUser: ', error);
+    }
+
+    return blockRelation;
   }
 
   /**
