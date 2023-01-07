@@ -23,6 +23,7 @@ import {
 } from './types/game';
 import { GetInvitedListDto } from './dto/get-invited-list.dto';
 import { InviteFriendDto } from './dto/invite-friend.dto';
+import { CancelInvitationDto } from './dto/cancel-invitation.dto';
 
 // host側は同時に複数招待を送ることはできない
 class InvitationList {
@@ -232,15 +233,15 @@ export class GameGateway {
    * @param data
    */
   @SubscribeMessage('cancelInvitation')
-  cancelInvitation(@MessageBody() data: Omit<Invitation, 'hostSocketId'>) {
-    const res = this.invitationList.delete(data.hostId);
+  cancelInvitation(@MessageBody() dto: CancelInvitationDto) {
+    const res = this.invitationList.delete(dto.hostId);
 
     // guest側にキャンセルを伝える
     if (res) {
-      const guestSocketIds = this.userSocketMap.get(data.guestId);
+      const guestSocketIds = this.userSocketMap.get(dto.guestId);
       if (guestSocketIds !== undefined) {
         guestSocketIds.forEach((socketId) => {
-          this.server.to(socketId).emit('cancelInvitation', data.hostId);
+          this.server.to(socketId).emit('cancelInvitation', dto.hostId);
         });
       }
     }
