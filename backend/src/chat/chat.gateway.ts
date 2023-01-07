@@ -30,6 +30,7 @@ import { OnGetRoomsDto } from './dto/on-get-rooms.dto';
 import { ChangeCurrentRoomDto } from './dto/change-current-room.dto';
 import { LeaveSocketDto } from './dto/leave-socket.dto';
 import { OnRoomJoinableDto } from './dto/on-room-joinable.dto';
+import { GetAdminsIdsDto } from './dto/get-admins-ids.dto';
 
 @WebSocketGateway({
   cors: {
@@ -349,16 +350,16 @@ export class ChatGateway {
 
   /**
    * チャットルームのadminId一覧を返す
-   * @param roomId
+   * @param GetAdminsIdsDto
    */
   @SubscribeMessage('chat:getAdminIds')
   async getAdminsIds(
     @ConnectedSocket() client: Socket,
-    @MessageBody() roomId: number,
+    @MessageBody() dto: GetAdminsIdsDto,
   ): Promise<number[]> {
-    this.logger.log(`chat:getAdmins received -> roomId: ${roomId}`);
+    this.logger.log(`chat:getAdmins received -> roomId: ${dto.roomId}`);
 
-    const admins = await this.chatService.findAdmins(roomId);
+    const admins = await this.chatService.findAdmins(dto.roomId);
     const res = admins.map((admin) => {
       return admin.userId;
     });

@@ -47,12 +47,16 @@ export const ChatroomListItem = memo(function ChatroomListItem({
     if (user === undefined) return;
 
     // adminかどうかを判定する
-    socket.emit('chat:getAdminIds', room.id, (adminIds: number[]) => {
-      console.log('adminIds', adminIds);
-      if (adminIds.includes(user.id)) {
-        setIsAdmin(true);
-      }
-    });
+    socket.emit(
+      'chat:getAdminIds',
+      { roomId: room.id },
+      (adminIds: number[]) => {
+        console.log('adminIds', adminIds);
+        if (adminIds.includes(user.id)) {
+          setIsAdmin(true);
+        }
+      },
+    );
   }, [user]);
 
   // ルームをクリックしたときの処理
