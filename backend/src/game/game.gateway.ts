@@ -24,6 +24,8 @@ import {
 import { GetInvitedListDto } from './dto/get-invited-list.dto';
 import { InviteFriendDto } from './dto/invite-friend.dto';
 import { CancelInvitationDto } from './dto/cancel-invitation.dto';
+import { DenyInvitationDto } from './dto/deny-invitation.dto';
+import { AcceptInvitationDto } from './dto/accept-invitation.dto';
 
 // host側は同時に複数招待を送ることはできない
 class InvitationList {
@@ -248,8 +250,8 @@ export class GameGateway {
   }
 
   @SubscribeMessage('denyInvitation')
-  denyInvitation(@MessageBody() data: Omit<Invitation, 'hostSocketId'>) {
-    const invitation = this.invitationList.find(data.hostId);
+  denyInvitation(@MessageBody() dto: DenyInvitationDto) {
+    const invitation = this.invitationList.find(dto.hostId);
     if (invitation === undefined) return;
 
     this.invitationList.delete(invitation.hostId);
@@ -264,9 +266,9 @@ export class GameGateway {
   @SubscribeMessage('acceptInvitation')
   async beginFriendMatch(
     @ConnectedSocket() socket: Socket,
-    @MessageBody() data: Omit<Invitation, 'hostSocketId'>,
+    @MessageBody() dto: AcceptInvitationDto,
   ) {
-    const invitation = this.invitationList.find(data.hostId);
+    const invitation = this.invitationList.find(dto.hostId);
     if (invitation === undefined) return;
 
     this.invitationList.delete(invitation.hostId);
@@ -277,15 +279,15 @@ export class GameGateway {
     if (hostSockets.length === 0) return;
 
     // ゲームを行うタブ以外には招待キャンセルする。
-    const guestSocketIds = this.userSocketMap.get(data.guestId);
+    const guestSocketIds = this.userSocketMap.get(dto.guestId);
     if (guestSocketIds !== undefined) {
       guestSocketIds.forEach((socketId) => {
         if (socketId !== socket.id)
-          this.server.to(socketId).emit('cancelInvitation', data.hostId);
+          this.server.to(socketId).emit('cancelInvitation', dto.hostId);
       });
     }
 
-    const user1 = await this.user.findOne(data.hostId);
+    const user1 = await this.user.findOne(dto.hostId);
     const player1: Player = {
       name: user1.name,
       id: user1.id,
@@ -294,7 +296,7 @@ export class GameGateway {
       height: GameGateway.initialHeight,
       score: 0,
     };
-    const user2 = await this.user.findOne(data.guestId);
+    const user2 = await this.user.findOne(dto.guestId);
     const player2: Player = {
       name: user2.name,
       id: user2.id,
