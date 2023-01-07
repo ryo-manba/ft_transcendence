@@ -54,17 +54,14 @@ export class UserService {
     });
   }
 
-  async updateName(
-    userId: number,
-    dto: UpdateNameDto,
-  ): Promise<Omit<User, 'hashedPassword'>> {
+  async updateName(dto: UpdateNameDto): Promise<Omit<User, 'hashedPassword'>> {
     try {
       const user = await this.prisma.user.update({
         where: {
-          id: userId,
+          id: dto.userId,
         },
         data: {
-          ...dto,
+          name: dto.name,
         },
       });
       delete user.hashedPassword;

@@ -92,12 +92,11 @@ export class UserController {
     return this.userService.updatePoint(dto);
   }
 
-  @Patch('name/:id')
+  @Patch('update-name')
   updateName(
-    @Param('id') id: string,
     @Body() dto: UpdateNameDto,
   ): Promise<Omit<User, 'hashedPassword'>> {
-    return this.userService.updateName(Number(id), dto);
+    return this.userService.updateName(dto);
   }
 
   @Post('avatar/:id')
