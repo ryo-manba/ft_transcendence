@@ -4,7 +4,7 @@ import AddCircleOutlineRounded from '@mui/icons-material/AddCircleOutlineRounded
 import { useQueryUser } from 'hooks/useQueryUser';
 import { FriendAddDialog } from 'components/chat/friend/FriendAddDialog';
 import { Loading } from 'components/common/Loading';
-import { fetchUnFollowingUsers } from 'api/friend/fetchUnFollowingUsers';
+import { fetchUnfollowingUsers } from 'api/friend/fetchUnfollowingUsers';
 import { Friend } from 'types/friend';
 
 type Props = {
@@ -21,27 +21,25 @@ export const FriendAddButton = memo(function FriendAddButton({
     return <Loading />;
   }
 
-  const reload = async () => {
-    const res = await fetchUnFollowingUsers({ userId: user.id });
+  const setupUnfollowingUsers = async () => {
+    const res = await fetchUnfollowingUsers({ userId: user.id });
 
     setUnFollowingUsers(res);
   };
 
   const handleOpen = useCallback(() => {
     // ボタンをクリックすると、まだフレンド追加していないUser情報を取得する
-    reload()
-      .then((res) => {
-        console.log(res);
-      })
-      .catch((err) => {
-        console.log(err);
-      });
+    void setupUnfollowingUsers();
     setDialogOpen(true);
   }, [dialogOpen]);
 
   const handleClose = useCallback(() => {
     setDialogOpen(false);
   }, [dialogOpen]);
+
+  const addFriends = (friend: Friend) => {
+    setFriends((prev) => [...prev, friend]);
+  };
 
   return (
     <>
@@ -61,7 +59,7 @@ export const FriendAddButton = memo(function FriendAddButton({
         users={unfollowingUsers}
         open={dialogOpen}
         onClose={handleClose}
-        setFriends={setFriends}
+        addFriends={addFriends}
       />
     </>
   );

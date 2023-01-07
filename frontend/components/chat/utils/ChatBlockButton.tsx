@@ -30,9 +30,9 @@ export const ChatBlockButton = memo(function ChatBlockButton({
     setUsers(res);
   };
 
-  const handleOpen = useCallback(async () => {
+  const handleOpen = useCallback(() => {
     // 自分以外のすべてのユーザーを取得する
-    await setupUsers(user.id);
+    void setupUsers(user.id);
     setDialogOpen(true);
   }, [dialogOpen]);
 
@@ -50,7 +50,7 @@ export const ChatBlockButton = memo(function ChatBlockButton({
         }
         fullWidth={true}
         style={{ justifyContent: 'flex-start' }}
-        onClick={handleOpen as VoidFunction}
+        onClick={handleOpen}
       >
         Block User
       </Button>
