@@ -122,7 +122,7 @@ export class ChatGateway {
 
   /**
    * ソケットを引数で受けとったルームにjoinさせる
-   * @param roomID
+   * @param ChangeCurrentRoomDto
    * @return チャットルームに対応したメッセージを取得して返す
    */
   @SubscribeMessage('chat:changeCurrentRoom')
