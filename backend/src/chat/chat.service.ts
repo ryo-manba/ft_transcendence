@@ -723,4 +723,20 @@ export class ChatService {
       return undefined;
     }
   }
+
+  /**
+   * ブロックされているユーザ一覧を返す
+   * @param Prisma.BlockRelationWhereInput
+   */
+  async findBlockedUsers(
+    where: Prisma.BlockRelationWhereInput,
+  ): Promise<BlockRelation[]> {
+    this.logger.log('findBlockedUsers: ', where);
+
+    const blockedUsers = await this.prisma.blockRelation.findMany({
+      where: where,
+    });
+
+    return blockedUsers;
+  }
 }
