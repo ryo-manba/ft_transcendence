@@ -26,6 +26,7 @@ import { InviteFriendDto } from './dto/invite-friend.dto';
 import { CancelInvitationDto } from './dto/cancel-invitation.dto';
 import { DenyInvitationDto } from './dto/deny-invitation.dto';
 import { AcceptInvitationDto } from './dto/accept-invitation.dto';
+import { JoinRoomDto } from './dto/join-room.dto';
 
 // host側は同時に複数招待を送ることはできない
 class InvitationList {
@@ -312,30 +313,30 @@ export class GameGateway {
   @SubscribeMessage('playStart')
   async joinRoom(
     @ConnectedSocket() socket: Socket,
-    @MessageBody() data: number,
+    @MessageBody() dto: JoinRoomDto,
   ) {
     const waitingUserIdx = this.waitingQueue.findIndex(
-      (item) => item.id !== data,
+      (item) => item.id !== dto.userId,
     );
     if (waitingUserIdx === -1) {
-      const user = await this.user.findOne(data);
+      const user = await this.user.findOne(dto.userId);
       if (user === null) return;
       this.waitingQueue.push({
         name: user.name,
-        id: data,
+        id: dto.userId,
         point: user.point,
         socket: socket,
         height: GameGateway.initialHeight,
         score: 0,
       });
     } else {
-      const user = await this.user.findOne(data);
+      const user = await this.user.findOne(dto.userId);
       if (user === null) return;
 
       const player1 = this.waitingQueue.splice(waitingUserIdx, 1)[0];
       const player2 = {
         name: user.name,
-        id: data,
+        id: dto.userId,
         point: user.point,
         socket: socket,
         height: GameGateway.initialHeight,
