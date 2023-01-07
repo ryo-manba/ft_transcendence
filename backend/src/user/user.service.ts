@@ -126,27 +126,31 @@ export class UserService {
       console.log(`${filePath} was deleted`);
     });
 
-    return this.updateAvatar(dto.userId, { avatarPath: null });
+    const updateDto: UpdateAvatarDto = {
+      userId: dto.userId,
+      avatarPath: null,
+    };
+
+    return this.updateAvatar(updateDto);
   }
 
   async updateAvatar(
-    userId: number,
     dto: UpdateAvatarDto,
   ): Promise<Omit<User, 'hashedPassword'>> {
     try {
       const user = await this.prisma.user.update({
         where: {
-          id: userId,
+          id: dto.userId,
         },
         data: {
-          ...dto,
+          avatarPath: dto.avatarPath,
         },
       });
       delete user.hashedPassword;
 
       return user;
     } catch (error) {
-      console.log(error);
+      console.error(error);
       throw error;
     }
   }

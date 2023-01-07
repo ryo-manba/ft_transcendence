@@ -25,6 +25,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { v4 as uuidv4 } from 'uuid';
 import * as path from 'path';
+import { UpdateAvatarDto } from './dto/update-avatar.dto';
 
 // FileInterceptorにわたすオプションを設定。
 // destination: ファイルの保存先。フォルダが無い場合には、バックエンドを起動したタイミングでフォルダが生成される
@@ -111,9 +112,12 @@ export class UserController {
     @UploadedFile() file: Express.Multer.File,
     @Param('id', ParseIntPipe) id: number,
   ): Promise<Omit<User, 'hashedPassword'>> {
-    return this.userService.updateAvatar(id, {
+    const dto: UpdateAvatarDto = {
+      userId: id,
       avatarPath: file.filename,
-    });
+    };
+
+    return this.userService.updateAvatar(dto);
   }
 
   // uniqueSuffixは実際には使わないが、Settingの画面でアバターを更新した際にコンポーネント
