@@ -219,7 +219,7 @@ export const ChatroomListItem = memo(function ChatroomListItem({
         setMessages([]);
         setCurrentRoomId(0);
         // 所属しているチャットルーム一覧を取得する
-        socket.emit('chat:getJoinedRooms', user.id);
+        socket.emit('chat:getJoinedRooms', { userId: user.id });
       } else {
         setError('Failed to leave room.');
       }

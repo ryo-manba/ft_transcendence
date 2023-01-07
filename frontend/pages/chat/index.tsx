@@ -51,7 +51,7 @@ const Chat: NextPage = () => {
       // socketの退出処理をする
       socket.emit('chat:leaveSocket');
       // 所属しているチャットルーム一覧を取得する
-      socket.emit('chat:getJoinedRooms', user.id);
+      socket.emit('chat:getJoinedRooms', { userId: user.id });
     });
 
     return () => {

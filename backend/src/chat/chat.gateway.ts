@@ -26,6 +26,7 @@ import { createDirectMessageDto } from './dto/create-direct-message.dto';
 import { CheckBanDto } from './dto/check-ban.dto';
 import { DeleteChatroomMemberDto } from './dto/delete-chatroom-member.dto';
 import { UpdateChatroomOwnerDto } from './dto/update-chatroom-owner.dto';
+import { OnGetRoomsDto } from './dto/on-get-rooms.dto';
 
 @WebSocketGateway({
   cors: {
@@ -69,16 +70,16 @@ export class ChatGateway {
 
   /**
    * 入室しているチャットルーム一覧を返す
-   * @param userId
+   * @param OnGetRoomsDto
    */
   @SubscribeMessage('chat:getJoinedRooms')
   async onGetRooms(
     @ConnectedSocket() client: Socket,
-    @MessageBody() userId: number,
+    @MessageBody() dto: OnGetRoomsDto,
   ) {
-    this.logger.log(`chat:getJoinedRooms: ${userId}`);
+    this.logger.log(`chat:getJoinedRooms: ${dto.userId}`);
     // ユーザーが入室しているチャットルームを取得する
-    const rooms = await this.chatService.findJoinedRooms(userId);
+    const rooms = await this.chatService.findJoinedRooms(dto.userId);
     // フロントエンドへ送り返す
     client.emit('chat:getJoinedRooms', rooms);
   }
