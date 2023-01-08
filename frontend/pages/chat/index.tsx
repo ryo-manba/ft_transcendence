@@ -25,36 +25,46 @@ const Chat: NextPage = () => {
   const { data: user } = useQueryUser();
 
   useEffect(() => {
+    let ignore = false;
     const temp = io('ws://localhost:3001/chat');
-    setSocket(temp);
+    if (!ignore) {
+      setSocket(temp);
+    }
 
     return () => {
+      ignore = true;
       temp.disconnect();
     };
   }, []);
 
   useEffect(() => {
+    let ignore = false;
     if (!socket || !user) return;
 
     // 他ユーザーからのメッセージを受け取る
     socket.on('chat:receiveMessage', (data: Message) => {
       console.log('chat:receiveMessage', data.message);
-      setMessages((prev) => [...prev, data]);
+      if (!ignore) {
+        setMessages((prev) => [...prev, data]);
+      }
     });
 
     // 現在所属しているチャットルームが削除された場合、表示されているチャット履歴を削除する
     socket.on('chat:deleteRoom', (deletedRoom: Chatroom) => {
       console.log('chat:deleteRoom', deletedRoom);
-      // 表示中のチャットを削除する
-      setMessages([]);
-      setCurrentRoomId(NOT_JOINED_ROOM);
       // socketの退出処理をする
       socket.emit('chat:leaveSocket');
       // 所属しているチャットルーム一覧を取得する
       socket.emit('chat:getJoinedRooms', user.id);
+      // 表示中のチャットを削除する
+      if (!ignore) {
+        setMessages([]);
+        setCurrentRoomId(NOT_JOINED_ROOM);
+      }
     });
 
     return () => {
+      ignore = true;
       socket.off('chat:receiveMessage');
       socket.off('chat:deleteRoom');
     };

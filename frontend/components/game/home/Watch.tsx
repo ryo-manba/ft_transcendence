@@ -42,16 +42,20 @@ export const Watch = () => {
   const [page, setPage] = useState(1);
 
   useEffect(() => {
+    let ignore = false;
     if (user === undefined) return;
 
     socket.emit('watchList');
     socket.on('watchListed', (data: WatchInfo[]) => {
-      setRooms(
-        data.filter(
-          (elem) => elem.name1 !== user.name && elem.name2 !== user.name,
-        ),
-      );
+      if (!ignore) {
+        setRooms(
+          data.filter(
+            (elem) => elem.name1 !== user.name && elem.name2 !== user.name,
+          ),
+        );
+      }
     });
+
     const intervalId = setInterval(() => {
       socket.emit('watchList');
     }, 2000);
@@ -82,6 +86,7 @@ export const Watch = () => {
     );
 
     return () => {
+      ignore = true;
       clearInterval(intervalId);
       socket.off('watchListed');
       socket.off('joinGameRoom');

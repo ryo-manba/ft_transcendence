@@ -21,6 +21,7 @@ export const Layout: FC<Props> = ({ children, title = 'Next.js' }) => {
   const showGuestPaths = ['/game/home', '/dashboard'];
 
   useEffect(() => {
+    let ignore = false;
     if (user === undefined) return;
 
     if (gameSocket.disconnected) {
@@ -29,22 +30,34 @@ export const Layout: FC<Props> = ({ children, title = 'Next.js' }) => {
     }
     if (showGuestPaths.includes(router.pathname)) {
       gameSocket.emit('getInvitedLlist', user.id, (newHosts: Friend[]) => {
-        setHosts([...hosts, ...newHosts]);
+        if (!ignore) {
+          setHosts([...hosts, ...newHosts]);
+        }
       });
     }
+
+    return () => {
+      ignore = true;
+    };
   }, [user]);
 
   useEffect(() => {
+    let ignore = false;
     if (!showGuestPaths.includes(router.pathname)) return;
 
     gameSocket.on('inviteFriend', (data: Friend) => {
-      setHosts([...hosts.filter((elem) => elem.id !== data.id), data]);
+      if (!ignore) {
+        setHosts([...hosts.filter((elem) => elem.id !== data.id), data]);
+      }
     });
     gameSocket.on('cancelInvitation', (data: number) => {
-      setHosts(hosts.filter((elem) => elem.id !== data));
+      if (!ignore) {
+        setHosts(hosts.filter((elem) => elem.id !== data));
+      }
     });
 
     return () => {
+      ignore = true;
       gameSocket.off('inviteFriend');
       gameSocket.off('cancelInvitation');
     };

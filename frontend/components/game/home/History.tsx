@@ -32,24 +32,39 @@ export const History = ({ userId }: Props) => {
   const [page, setPage] = useState(1);
 
   useEffect(() => {
-    const updateRecordsNUser = async () => {
+    let ignore = false;
+
+    const updateRecordsNUser = async (ignore: boolean) => {
       await getRecordsById({ userId })
         .then((res) => {
-          setRecords(res);
+          if (!ignore) {
+            setRecords(res);
+          }
         })
         .catch((err) => {
-          setRecordsError(err as Error);
+          if (!ignore) {
+            setRecordsError(err as Error);
+          }
         });
+
       await getUserById({ userId })
         .then((res) => {
-          setUser(res);
+          if (!ignore) {
+            setUser(res);
+          }
         })
         .catch((err) => {
-          setUserError(err as Error);
+          if (!ignore) {
+            setUserError(err as Error);
+          }
         });
     };
 
-    void updateRecordsNUser();
+    void updateRecordsNUser(ignore);
+
+    return () => {
+      ignore = true;
+    };
   }, []);
 
   if (userError !== undefined || recordsError !== undefined) {

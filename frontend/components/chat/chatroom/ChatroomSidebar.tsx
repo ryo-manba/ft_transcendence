@@ -23,11 +23,14 @@ export const ChatroomSidebar = memo(function ChatroomSidebar({
   const [rooms, setRooms] = useState<Chatroom[]>([]);
 
   useEffect(() => {
+    let ignore = false;
     if (!socket || !user) return;
     // 入室しているルーム一覧を受け取る
     socket.on('chat:getJoinedRooms', (data: Chatroom[]) => {
       console.log('chat:getJoinedRooms', data);
-      setRooms(data);
+      if (!ignore) {
+        setRooms(data);
+      }
     });
     // サイドバーのチャットルームを更新する
     socket.on('chat:updateSideBarRooms', () => {
@@ -37,13 +40,15 @@ export const ChatroomSidebar = memo(function ChatroomSidebar({
     // 現在所属しているチャットルームが削除された場合、表示されているチャット履歴を削除する
     socket.on('chat:deleteRoom', (deletedRoom: Chatroom) => {
       console.log('chat:deleteRoom', deletedRoom);
-      // 表示中のメッセージを削除する
-      setMessages([]);
-      setCurrentRoomId(0);
       // socketの退出処理をする
       socket.emit('chat:leaveSocket');
       // 所属しているチャットルーム一覧を取得する
       socket.emit('chat:getJoinedRooms', user.id);
+      // 表示中のメッセージを削除する
+      if (!ignore) {
+        setMessages([]);
+        setCurrentRoomId(0);
+      }
     });
 
     // setupが終わったら
@@ -51,6 +56,7 @@ export const ChatroomSidebar = memo(function ChatroomSidebar({
     socket.emit('chat:getJoinedRooms', user.id);
 
     return () => {
+      ignore = true;
       socket.off('chat:getJoinedRooms');
       socket.off('chat:updateSideBarRooms');
     };
