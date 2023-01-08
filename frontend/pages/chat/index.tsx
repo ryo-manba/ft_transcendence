@@ -87,9 +87,9 @@ const Chat: NextPage = () => {
       message: text,
     };
 
-    socket.emit('chat:sendMessage', message, (res: boolean) => {
-      if (!res) {
-        setError('You can not send a message.');
+    socket.emit('chat:sendMessage', message, (res: string) => {
+      if (res !== 'ok') {
+        setError(res);
       }
     });
     setText('');

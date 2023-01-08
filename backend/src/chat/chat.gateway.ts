@@ -93,7 +93,7 @@ export class ChatGateway {
   async onMessage(
     @ConnectedSocket() client: Socket,
     @MessageBody() createMessageDto: CreateMessageDto,
-  ): Promise<boolean> {
+  ): Promise<string> {
     this.logger.log(
       `chat:sendMessage received -> ${createMessageDto.chatroomId}`,
     );
@@ -106,18 +106,52 @@ export class ChatGateway {
       },
     });
     if (userInfo.status !== ChatroomMembersStatus.NORMAL) {
-      return false;
+      if (userInfo.status === ChatroomMembersStatus.BAN) {
+        return 'You are banned.';
+      }
+      if (userInfo.status === ChatroomMembersStatus.MUTE) {
+        return 'You are muted.';
+      }
+    }
+
+    const chatroom = await this.prisma.chatroom.findUnique({
+      where: {
+        id: createMessageDto.chatroomId,
+      },
+      include: {
+        members: true,
+      },
+    });
+    // DMの場合はBlockしている or されていないことを確認する
+    if (chatroom.type === ChatroomType.DM) {
+      const membersId = chatroom.members.map((member) => member.userId);
+      const where = [
+        { blockingUserId: membersId[0], blockedByUserId: membersId[1] },
+        { blockingUserId: membersId[1], blockedByUserId: membersId[0] },
+      ];
+      const blockRelations = await this.prisma.blockRelation.findMany({
+        where: {
+          OR: [...where],
+        },
+      });
+      if (blockRelations.length > 0) {
+        if (blockRelations[0].blockedByUserId === createMessageDto.userId) {
+          return 'You blocked this user.';
+        } else {
+          return 'This user blocked you.';
+        }
+      }
     }
 
     const res = await this.chatService.addMessage(createMessageDto);
     if (res === undefined) {
-      return false;
+      return 'Failed to send message.';
     }
     this.server
       .to(String(createMessageDto.chatroomId))
       .emit('chat:receiveMessage', createMessageDto);
 
-    return true;
+    return 'ok';
   }
 
   /**
