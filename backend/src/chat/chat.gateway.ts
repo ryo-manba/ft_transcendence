@@ -27,6 +27,7 @@ import { CheckBanDto } from './dto/check-ban.dto';
 import { DeleteChatroomMemberDto } from './dto/delete-chatroom-member.dto';
 import { UpdateChatroomOwnerDto } from './dto/update-chatroom-owner.dto';
 import { CreateBlockRelationDto } from './dto/create-block-relation.dto';
+import { IsBlockedByUserIdDto } from './dto/is-blocked-by-user-id.dto';
 
 @WebSocketGateway({
   cors: {
@@ -478,6 +479,28 @@ export class ChatGateway {
     this.logger.log('chat:blockUser received', dto);
 
     const res = await this.chatService.blockUser(dto);
+
+    return !!res;
+  }
+
+  /**
+   * ユーザーがブロックされているかを確認する
+   * @param IsBlockedByUserIdDto
+   */
+  @SubscribeMessage('chat:isBlockedByUserId')
+  async isBlockedByUserId(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() dto: IsBlockedByUserIdDto,
+  ): Promise<boolean> {
+    this.logger.log('chat:isBlockedByUserId received', dto);
+
+    const res = await this.prisma.blockRelation.findUnique({
+      where: {
+        blockingUserId_blockedByUserId: {
+          ...dto,
+        },
+      },
+    });
 
     return !!res;
   }
