@@ -25,13 +25,17 @@ export const FriendSidebar = memo(function FriendSidebar({ socket }: Props) {
   };
 
   useEffect(() => {
-    const setupFriends = async () => {
+    let ignore = false;
+
+    const setupFriends = async (ignore: boolean) => {
       const res = await fetchFollowingUsers({ userId: user.id });
 
-      setFriends(res);
+      if (!ignore) {
+        setFriends(res);
+      }
     };
 
-    void setupFriends();
+    void setupFriends(ignore);
 
     socket.on('chat:blocked', (blockedByUserId: number) => {
       console.log('chat:blocked', blockedByUserId);
@@ -40,6 +44,7 @@ export const FriendSidebar = memo(function FriendSidebar({ socket }: Props) {
 
     return () => {
       socket.off('chat:blocked');
+      ignore = true;
     };
   }, []);
 

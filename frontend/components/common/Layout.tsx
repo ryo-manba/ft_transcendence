@@ -21,6 +21,7 @@ export const Layout: FC<Props> = ({ children, title = 'Next.js' }) => {
   const showGuestPaths = ['/game/home', '/dashboard'];
 
   useEffect(() => {
+    let ignore = false;
     if (user === undefined) return;
 
     if (gameSocket.disconnected) {
@@ -29,9 +30,15 @@ export const Layout: FC<Props> = ({ children, title = 'Next.js' }) => {
     }
     if (showGuestPaths.includes(router.pathname)) {
       gameSocket.emit('getInvitedLlist', user.id, (newHosts: Friend[]) => {
-        setHosts([...hosts, ...newHosts]);
+        if (!ignore) {
+          setHosts([...hosts, ...newHosts]);
+        }
       });
     }
+
+    return () => {
+      ignore = true;
+    };
   }, [user]);
 
   useEffect(() => {
