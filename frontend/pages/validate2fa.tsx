@@ -8,6 +8,9 @@ import axios from 'axios';
 import { useForm, SubmitHandler, Controller } from 'react-hook-form';
 import { TwoAuthForm } from 'types/setting';
 import { Loading } from 'components/common/Loading';
+import { useQueryClient } from '@tanstack/react-query';
+import { logout } from 'api/auth/logout';
+import { useSession } from 'next-auth/react';
 
 const Validate2FA: NextPage = () => {
   const router = useRouter();
@@ -19,7 +22,9 @@ const Validate2FA: NextPage = () => {
     clearErrors,
   } = useForm<TwoAuthForm>();
   const { data: user } = useQueryUser();
+  const { data: session } = useSession();
   const [openSnack, setOpenSnack] = useState('');
+  const queryClient = useQueryClient();
 
   const handleClose = () => {
     setOpenSnack('');
@@ -104,18 +109,30 @@ const Validate2FA: NextPage = () => {
                 >
                   VALIDATE
                 </Button>
-                <Snackbar
-                  open={openSnack == 'ERROR'}
-                  autoHideDuration={6000}
-                  onClose={handleClose}
-                >
-                  <Alert onClose={handleClose} severity="error">
-                    Code is invalid! Try Again.
-                  </Alert>
-                </Snackbar>
               </Grid>
             </Grid>
           </form>
+          <Snackbar
+            open={openSnack == 'ERROR'}
+            autoHideDuration={6000}
+            onClose={handleClose}
+          >
+            <Alert onClose={handleClose} severity="error">
+              Code is invalid! Try Again.
+            </Alert>
+          </Snackbar>
+          {/* ログインへ戻るボタン */}
+          <Grid item>
+            <Button
+              variant="text"
+              onClick={() => {
+                clearErrors();
+                logout(queryClient, router, session);
+              }}
+            >
+              Back To Login
+            </Button>
+          </Grid>
         </Grid>
       </Grid>
     </Layout>
