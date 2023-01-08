@@ -42,22 +42,16 @@ export const Layout: FC<Props> = ({ children, title = 'Next.js' }) => {
   }, [user]);
 
   useEffect(() => {
-    let ignore = false;
     if (!showGuestPaths.includes(router.pathname)) return;
 
     gameSocket.on('inviteFriend', (data: Friend) => {
-      if (!ignore) {
-        setHosts([...hosts.filter((elem) => elem.id !== data.id), data]);
-      }
+      setHosts([...hosts.filter((elem) => elem.id !== data.id), data]);
     });
     gameSocket.on('cancelInvitation', (data: number) => {
-      if (!ignore) {
-        setHosts(hosts.filter((elem) => elem.id !== data));
-      }
+      setHosts(hosts.filter((elem) => elem.id !== data));
     });
 
     return () => {
-      ignore = true;
       gameSocket.off('inviteFriend');
       gameSocket.off('cancelInvitation');
     };
