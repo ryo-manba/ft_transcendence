@@ -516,6 +516,8 @@ export class ChatGateway {
     const res = await this.chatService.blockUser(dto);
 
     if (res) {
+      // ブロックされたユーザーのフレンド一覧から
+      // ブロックしたユーザーの表示を消すために通知を送る
       this.server
         .to('user' + String(dto.blockingUserId))
         .emit('chat:blocked', dto.blockedByUserId);
