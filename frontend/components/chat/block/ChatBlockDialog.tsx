@@ -63,7 +63,7 @@ export const ChatBlockDialog = memo(function ChatBlockDialog({
       blockedByUserId: user.id,
     };
 
-    // ユーザーのブロック状況を反転させる
+    // TODO: ユーザーのブロック状況を反転させる
     // 通常のユーザー      -> ブロック
     // ブロック中のユーザー -> ブロック解除
     socket.emit('chat:blockUser', blockUserDto, (res: boolean) => {
@@ -72,9 +72,7 @@ export const ChatBlockDialog = memo(function ChatBlockDialog({
 
         return;
       }
-      // ブロックしたらフレンドリストから表示を消す
       removeFriendById(selectedUser.id);
-      // TODO: ブロックした側への通知をどう行うか
       handleClose();
     });
   };

@@ -36,6 +36,8 @@ const Chat: NextPage = () => {
   useEffect(() => {
     if (!socket || !user) return;
 
+    socket.emit('chat:joinMyRoom', user.id);
+
     // 他ユーザーからのメッセージを受け取る
     socket.on('chat:receiveMessage', (data: Message) => {
       console.log('chat:receiveMessage', data.message);

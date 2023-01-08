@@ -132,10 +132,11 @@ export class ChatGateway {
   ): Promise<Message[]> {
     this.logger.log(`chat:changeCurrentRoom received -> ${roomId}`);
 
-    // 0番目には、socketのidが入っている
-    if (client.rooms.size >= 2) {
+    // index[0]には、socketのidが入っている
+    // index[1]には、他のソケットと通信するようのルームがある
+    if (client.rooms.size >= 3) {
       // roomに入っている場合は退出する
-      const target = Array.from(client.rooms)[1];
+      const target = Array.from(client.rooms)[2];
       await client.leave(target);
     }
     await client.join(String(roomId));
@@ -480,6 +481,12 @@ export class ChatGateway {
 
     const res = await this.chatService.blockUser(dto);
 
+    if (res) {
+      this.server
+        .to('user' + String(dto.blockingUserId))
+        .emit('chat:blocked', dto.blockedByUserId);
+    }
+
     return !!res;
   }
 
@@ -503,5 +510,22 @@ export class ChatGateway {
     });
 
     return !!res;
+  }
+
+  /**
+   * 他のソケットと通信するようのルームに入室する
+   * @param userId
+   */
+  @SubscribeMessage('chat:joinMyRoom')
+  async joinMyRoom(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() userId: number,
+  ): Promise<void> {
+    this.logger.log('chat:joinMyRoom received', userId);
+
+    // index[0]には、socketのidが入っている
+    if (client.rooms.size === 1) {
+      await client.join('user' + String(userId));
+    }
   }
 }

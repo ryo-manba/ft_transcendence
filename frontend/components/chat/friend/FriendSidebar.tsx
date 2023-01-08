@@ -20,19 +20,28 @@ export const FriendSidebar = memo(function FriendSidebar({ socket }: Props) {
     return <Loading fullHeight />;
   }
 
+  const handleRemoveFriendById = (removeId: number) => {
+    setFriends((friends) => friends.filter((friend) => friend.id !== removeId));
+  };
+
   useEffect(() => {
-    const fetchFriends = async () => {
+    const setupFriends = async () => {
       const res = await fetchFollowingUsers({ userId: user.id });
 
       setFriends(res);
     };
 
-    void fetchFriends();
-  }, []);
+    void setupFriends();
 
-  const handleRemoveFriendById = (removeId: number) => {
-    setFriends((friends) => friends.filter((friend) => friend.id !== removeId));
-  };
+    socket.on('chat:blocked', (blockedByUserId: number) => {
+      console.log('chat:blocked', blockedByUserId);
+      handleRemoveFriendById(blockedByUserId);
+    });
+
+    return () => {
+      socket.off('chat:blocked');
+    };
+  }, []);
 
   return (
     <>

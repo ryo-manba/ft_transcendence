@@ -35,7 +35,6 @@ export const FriendListItem = memo(function FriendListItem({
   const { data: user } = useQueryUser();
   const [error, setError] = useState('');
   const { socket: gameSocket } = useSocketStore();
-  const [isBlocked, setIsBlocked] = useState<boolean>(false);
   const updateInvitedFriendState = useInvitedFriendStateStore(
     (store) => store.updateInvitedFriendState,
   );
@@ -54,18 +53,6 @@ export const FriendListItem = memo(function FriendListItem({
     updateStatus().catch((err) => {
       console.error(err);
     });
-
-    const isBlockedByFriend = () => {
-      const info = {
-        blockingUserId: user.id,
-        blockedByUserId: friend.id,
-      };
-      socket.emit('chat:isBlockedByUserId', info, (res: boolean) => {
-        setIsBlocked(res);
-      });
-    };
-
-    isBlockedByFriend();
   }, []);
 
   const inviteGame = async (friend: Friend) => {
@@ -113,13 +100,7 @@ export const FriendListItem = memo(function FriendListItem({
   };
 
   const handleClickOpen = () => {
-    // NOTE: ブロックされた側がチャット画面を開いていた場合にアクセスできなくするための処理
-    //       リロードするとフレンド欄から削除される
-    if (isBlocked) {
-      setError(`${friend.name} blocked you.`);
-    } else {
-      setOpen(true);
-    }
+    setOpen(true);
   };
 
   const handleClose = () => {
