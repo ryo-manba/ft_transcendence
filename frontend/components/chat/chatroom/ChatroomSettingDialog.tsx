@@ -112,68 +112,83 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
   //   }
   // });
 
-  const fetchFriends = async (userId: number) => {
+  const fetchFriends = async (userId: number, ignore: boolean) => {
     const res = await fetchJoinableFriends({
       userId: userId,
       roomId: room.id,
     });
-    setFriends(res);
+    if (!ignore) {
+      setFriends(res);
+    }
   };
 
-  const fetchCanSetAdminUsers = async () => {
+  const fetchCanSetAdminUsers = async (ignore: boolean) => {
     const notAdminUsers = await fetchChatroomNormalUsers({
       roomId: room.id,
     });
-    setNotAdminUsers(notAdminUsers);
+    if (!ignore) {
+      setNotAdminUsers(notAdminUsers);
+    }
   };
 
-  const fetchCanBanUsers = async () => {
+  const fetchCanBanUsers = async (ignore: boolean) => {
     const notBannedUsers = await fetchChatroomNormalUsers({
       roomId: room.id,
     });
-    setNotBannedUsers(notBannedUsers);
+    if (!ignore) {
+      setNotBannedUsers(notBannedUsers);
+    }
   };
 
-  const fetchCanMuteUsers = async () => {
+  const fetchCanMuteUsers = async (ignore: boolean) => {
     const notMutedUsers = await fetchChatroomNormalUsers({
       roomId: room.id,
     });
-    setNotMutedUsers(notMutedUsers);
+    if (!ignore) {
+      setNotMutedUsers(notMutedUsers);
+    }
   };
 
-  const fetchCanSetOwnerUsers = async () => {
+  const fetchCanSetOwnerUsers = async (ignore: boolean) => {
     const activeUsers = await fetchActiveUsers({
       roomId: room.id,
     });
     const activeNotOwnerUsers = activeUsers.filter(
       (user) => user.id !== room.ownerId,
     );
-    setActiveUsers(activeNotOwnerUsers);
+    if (!ignore) {
+      setActiveUsers(activeNotOwnerUsers);
+    }
   };
 
   // 設定項目を選択した時に対応するユーザ一覧を取得する
   useEffect(() => {
+    let ignore = false;
     if (user === undefined) return;
     switch (selectedRoomSetting) {
       case ChatroomSetting.ADD_FRIEND:
-        void fetchFriends(user.id);
+        void fetchFriends(user.id, ignore);
         break;
       case ChatroomSetting.SET_ADMIN:
-        void fetchCanSetAdminUsers();
+        void fetchCanSetAdminUsers(ignore);
         break;
       case ChatroomSetting.BAN_USER:
-        void fetchCanBanUsers();
+        void fetchCanBanUsers(ignore);
         break;
       case ChatroomSetting.MUTE_USER:
-        void fetchCanMuteUsers();
+        void fetchCanMuteUsers(ignore);
         break;
       case ChatroomSetting.LEAVE_ROOM:
         if (user.id === room.ownerId) {
-          void fetchCanSetOwnerUsers();
+          void fetchCanSetOwnerUsers(ignore);
         }
         break;
       default:
     }
+
+    return () => {
+      ignore = true;
+    };
   }, [selectedRoomSetting]);
 
   if (user === undefined) {

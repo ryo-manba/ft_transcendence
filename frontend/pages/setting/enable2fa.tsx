@@ -23,13 +23,15 @@ const Enable2FA: NextPage = () => {
   const [openSnack, setOpenSnack] = useState('');
 
   useEffect(() => {
-    const getQrcode = async () => {
+    let ignore = false;
+
+    const getQrcode = async (ignore: boolean) => {
       if (process.env.NEXT_PUBLIC_API_URL && user) {
         try {
           const response = await axios.get<string>(
             `${process.env.NEXT_PUBLIC_API_URL}/auth/qr2fa/${user.id}`,
           );
-          if (response) {
+          if (response && !ignore) {
             setQrCode(response.data);
           }
         } catch {
@@ -37,7 +39,12 @@ const Enable2FA: NextPage = () => {
         }
       }
     };
-    void getQrcode();
+
+    void getQrcode(ignore);
+
+    return () => {
+      ignore = true;
+    };
   }, []);
 
   const handleClose = () => {

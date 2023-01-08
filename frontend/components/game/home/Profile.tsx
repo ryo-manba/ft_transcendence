@@ -21,27 +21,40 @@ export const Profile = () => {
   const [ranking, setRanking] = useState<number | undefined>(undefined);
 
   useEffect(() => {
-    const updateRecords = async () => {
+    let ignore = false;
+
+    const updateRecords = async (ignore: boolean) => {
       if (user !== undefined) {
         await getRecordsById({ userId: user.id })
           .then((res) => {
-            setRecords(res);
+            if (!ignore) {
+              setRecords(res);
+            }
           })
           .catch((err) => {
-            setRecordsError(err as Error);
+            if (!ignore) {
+              setRecordsError(err as Error);
+            }
           });
       }
     };
-    const updateRanking = async () => {
+
+    const updateRanking = async (ignore: boolean) => {
       if (user === undefined) {
         return;
       }
       const currentRanking = await getUserRanking({ userId: user.id });
-      setRanking(currentRanking);
+      if (!ignore) {
+        setRanking(currentRanking);
+      }
     };
 
-    void updateRecords();
-    void updateRanking();
+    void updateRecords(ignore);
+    void updateRanking(ignore);
+
+    return () => {
+      ignore = true;
+    };
   }, [user]);
 
   if (recordsError !== undefined) {

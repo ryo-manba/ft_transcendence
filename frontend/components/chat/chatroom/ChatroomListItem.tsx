@@ -44,15 +44,22 @@ export const ChatroomListItem = memo(function ChatroomListItem({
   }
 
   useEffect(() => {
+    let ignore = false;
     if (user === undefined) return;
 
     // adminかどうかを判定する
     socket.emit('chat:getAdminIds', room.id, (adminIds: number[]) => {
       console.log('adminIds', adminIds);
       if (adminIds.includes(user.id)) {
-        setIsAdmin(true);
+        if (!ignore) {
+          setIsAdmin(true);
+        }
       }
     });
+
+    return () => {
+      ignore = true;
+    };
   }, [user]);
 
   // ルームをクリックしたときの処理
