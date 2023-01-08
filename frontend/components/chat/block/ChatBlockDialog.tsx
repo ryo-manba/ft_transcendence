@@ -77,8 +77,6 @@ export const ChatBlockDialog = memo(function ChatBlockDialog({
       // TODO: ブロックした側への通知をどう行うか
       handleClose();
     });
-
-    // 友達を追加する処理(フォロー)に失敗したらエラーメッセージをセットする
   };
 
   const handleClickListItem = (user: ChatUser) => {

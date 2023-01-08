@@ -7,7 +7,7 @@ import { Loading } from 'components/common/Loading';
 import { useQueryUser } from 'hooks/useQueryUser';
 import { Friend } from 'types/friend';
 import { fetchFollowingUsers } from 'api/friend/fetchFollowingUsers';
-import { ChatBlockButton } from 'components/chat/utils/ChatBlockButton';
+import { ChatBlockButton } from 'components/chat/block/ChatBlockButton';
 
 type Props = {
   socket: Socket;

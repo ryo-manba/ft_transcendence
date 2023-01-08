@@ -4,7 +4,7 @@ import { Socket } from 'socket.io-client';
 import AddCircleOutlineRounded from '@mui/icons-material/AddCircleOutlineRounded';
 import { ChatUser } from 'types/chat';
 import { Loading } from 'components/common/Loading';
-import { ChatBlockDialog } from 'components/chat/utils/ChatBlockDialog';
+import { ChatBlockDialog } from 'components/chat/block/ChatBlockDialog';
 import { useQueryUser } from 'hooks/useQueryUser';
 import { fetchUnblockedUsers } from 'api/chat/fetchUnblockedUsers';
 
