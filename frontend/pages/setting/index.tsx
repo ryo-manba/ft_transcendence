@@ -34,6 +34,8 @@ import { useMutationHas2FA } from 'hooks/useMutationHas2FA';
 
 const usernameMaxLen = 50;
 
+const usernameMaxLen = 50;
+
 const schema = z.object({
   username: z
     .string()

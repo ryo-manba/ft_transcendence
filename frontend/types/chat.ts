@@ -21,9 +21,9 @@ export type JoinChatroomInfo = {
 };
 
 export type Message = {
-  ChatroomId: number;
-  userId: number;
-  message: string;
+  text: string;
+  userName: string;
+  createdAt: Date;
 };
 
 export const ChatroomType = {
