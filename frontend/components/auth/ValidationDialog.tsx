@@ -78,10 +78,10 @@ export const ValidationDialog: FC<Props> = ({
         await router.push('/dashboard');
         void handleClose(true);
       } else {
-        setOpenSnack('FAILURE');
+        setOpenSnack('ERROR');
       }
     } catch {
-      setOpenSnack('FAILURE');
+      setOpenSnack('ERROR');
     }
   };
 
@@ -125,7 +125,6 @@ export const ValidationDialog: FC<Props> = ({
                     // eslint-disable-next-line react/jsx-props-no-spreading
                     {...register('authCode')}
                     fullWidth
-                    required
                     id="auth-code"
                     label="6 digit code"
                     InputLabelProps={{ shrink: true }}
@@ -144,7 +143,7 @@ export const ValidationDialog: FC<Props> = ({
             </Grid>
           </Grid>
           <Snackbar
-            open={openSnack == 'FAILURE'}
+            open={openSnack == 'ERROR'}
             autoHideDuration={6000}
             onClose={handleSnackClose}
           >

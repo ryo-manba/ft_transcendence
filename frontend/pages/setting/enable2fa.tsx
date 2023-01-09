@@ -99,12 +99,11 @@ const Enable2FA: NextPage = () => {
                       // eslint-disable-next-line react/jsx-props-no-spreading
                       {...register('authCode')}
                       fullWidth
-                      required
                       id="auth-code"
-                      label="Enter Code from Your Apps"
-                      autoComplete="new-password"
+                      label="6 digit code"
+                      InputLabelProps={{ shrink: true }}
+                      autoComplete="off"
                       error={errors.authCode ? true : false}
-                      helperText={errors.authCode?.message}
                       sx={{ my: 2 }}
                     />
                   )}
@@ -127,7 +126,7 @@ const Enable2FA: NextPage = () => {
                   onClose={handleClose}
                 >
                   <Alert onClose={handleClose} severity="error">
-                    Code is invalid! Try Again.
+                    Authorization Code Is Wrong!
                   </Alert>
                 </Snackbar>
               </Grid>
