@@ -1,11 +1,11 @@
 import { IsNotEmpty, IsNumber } from 'class-validator';
 
-export class UpdatePointDto {
+export class AcceptInvitationDto {
   @IsNumber()
   @IsNotEmpty()
-  userId: number;
+  guestId: number;
 
   @IsNumber()
   @IsNotEmpty()
-  point: number;
+  hostId: number;
 }

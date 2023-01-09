@@ -1,4 +1,10 @@
-import { Controller, Get, Param, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Param,
+  ParseIntPipe,
+  UseGuards,
+} from '@nestjs/common';
 import { RecordsService } from './records.service';
 import { AuthGuard } from '@nestjs/passport';
 import { GameRecordWithUserName } from './interfaces/records.interface';
@@ -10,16 +16,16 @@ export class RecordsController {
 
   @Get(':id')
   async getRecordsById(
-    @Param('id') id: string,
+    @Param('id', ParseIntPipe) id: number,
   ): Promise<GameRecordWithUserName[]> {
     return this.recordsService.gameRecords({
       where: {
         OR: [
           {
-            winnerId: Number(id),
+            winnerId: id,
           },
           {
-            loserId: Number(id),
+            loserId: id,
           },
         ],
       },

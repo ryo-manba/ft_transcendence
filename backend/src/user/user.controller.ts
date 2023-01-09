@@ -16,13 +16,16 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import { Request } from 'express';
 import { UserService } from './user.service';
+import { DeleteAvatarDto } from './dto/delete-avatar.dto';
 import { UpdateNameDto } from './dto/update-name.dto';
 import { User, UserStatus } from '@prisma/client';
+import { UpdateStatusDto } from './dto/update-status.dto';
 import { UpdatePointDto } from './dto/update-point.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { v4 as uuidv4 } from 'uuid';
 import * as path from 'path';
+import { UpdateAvatarDto } from './dto/update-avatar.dto';
 
 // FileInterceptorにわたすオプションを設定。
 // destination: ファイルの保存先。フォルダが無い場合には、バックエンドを起動したタイミングでフォルダが生成される
@@ -70,12 +73,11 @@ export class UserController {
     return await this.userService.getRanking(id);
   }
 
-  @Patch('status/:id/:newStatus')
+  @Patch('update-status')
   updateStatus(
-    @Param('id', ParseIntPipe) id: number,
-    @Param('newStatus') status: UserStatus,
+    @Body() dto: UpdateStatusDto,
   ): Promise<Omit<User, 'hashedPassword'>> {
-    return this.userService.updateStatus(id, status);
+    return this.userService.updateStatus(dto);
   }
 
   @Get(':id')
@@ -85,20 +87,18 @@ export class UserController {
     return this.userService.findOne(id);
   }
 
-  @Patch('point/:id')
+  @Patch('update-point')
   updatePoint(
-    @Param('id') id: string,
     @Body() dto: UpdatePointDto,
   ): Promise<Omit<User, 'hashedPassword'>> {
-    return this.userService.updatePoint(Number(id), dto);
+    return this.userService.updatePoint(dto);
   }
 
-  @Patch('name/:id')
+  @Patch('update-name')
   updateName(
-    @Param('id') id: string,
     @Body() dto: UpdateNameDto,
   ): Promise<Omit<User, 'hashedPassword'>> {
-    return this.userService.updateName(Number(id), dto);
+    return this.userService.updateName(dto);
   }
 
   @Post('avatar/:id')
@@ -110,11 +110,14 @@ export class UserController {
   )
   uploadAvatar(
     @UploadedFile() file: Express.Multer.File,
-    @Param('id') id: string,
+    @Param('id', ParseIntPipe) id: number,
   ): Promise<Omit<User, 'hashedPassword'>> {
-    return this.userService.updateAvatar(Number(id), {
+    const dto: UpdateAvatarDto = {
+      userId: id,
       avatarPath: file.filename,
-    });
+    };
+
+    return this.userService.updateAvatar(dto);
   }
 
   // uniqueSuffixは実際には使わないが、Settingの画面でアバターを更新した際にコンポーネント
@@ -126,11 +129,10 @@ export class UserController {
     return this.userService.getAvatarImage(id);
   }
 
-  @Patch('avatar/:id/:avatarPath')
+  @Patch('delete-avatar')
   deleteAvatar(
-    @Param('id') id: string,
-    @Param('avatarPath') avatarPath: string,
+    @Body() dto: DeleteAvatarDto,
   ): Promise<Omit<User, 'hashedPassword'>> {
-    return this.userService.deleteAvatar(Number(id), avatarPath);
+    return this.userService.deleteAvatar(dto);
   }
 }

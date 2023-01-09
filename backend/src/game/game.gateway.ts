@@ -6,81 +6,30 @@ import {
   MessageBody,
   WebSocketServer,
 } from '@nestjs/websockets';
-import { Socket, Server, RemoteSocket } from 'socket.io';
+import { Socket, Server } from 'socket.io';
 import { RecordsService } from '../records/records.service';
 import { UserService } from '../user/user.service';
 import { v4 as uuidv4 } from 'uuid';
-import { DefaultEventsMap } from 'socket.io/dist/typed-events';
-
-type Player = {
-  name: string;
-  id: number;
-  point: number;
-  socket: Socket | RemoteSocket<DefaultEventsMap, undefined>;
-  height: number;
-  score: number;
-};
-
-type Ball = {
-  x: number;
-  y: number;
-  radius: number;
-};
-
-type BallVec = {
-  xVec: number;
-  yVec: number;
-  speed: number;
-};
-
-type DifficultyLevel = 'Easy' | 'Normal' | 'Hard';
-
-type GameSetting = {
-  difficulty: DifficultyLevel;
-  matchPoint: number;
-  player1Score: number;
-  player2Score: number;
-};
-
-type GameState = 'Setting' | 'Playing';
-
-type RoomInfo = {
-  roomName: string;
-  player1: Player;
-  player2: Player;
-  supporters: Socket[];
-  ball: Ball;
-  ballVec: BallVec;
-  isPlayer1Turn: boolean;
-  gameSetting: GameSetting;
-  barSpeed: number;
-  rewards: number;
-  gameState: GameState;
-};
-
-type GameInfo = {
-  height1: number;
-  height2: number;
-  ball: Ball;
-};
-
-type FinishedGameInfo = {
-  winnerName: string;
-  loserName: string;
-  winnerScore: number;
-  loserScore: number;
-};
-
-type Friend = {
-  id: number;
-  name: string;
-};
-
-type Invitation = {
-  guestId: number;
-  hostId: number;
-  hostSocketId: string;
-};
+import {
+  Player,
+  Ball,
+  BallVec,
+  GameSetting,
+  RoomInfo,
+  GameInfo,
+  FinishedGameInfo,
+  Friend,
+  Invitation,
+} from './types/game';
+import { GetInvitedListDto } from './dto/get-invited-list.dto';
+import { InviteFriendDto } from './dto/invite-friend.dto';
+import { CancelInvitationDto } from './dto/cancel-invitation.dto';
+import { DenyInvitationDto } from './dto/deny-invitation.dto';
+import { AcceptInvitationDto } from './dto/accept-invitation.dto';
+import { JoinRoomDto } from './dto/join-room.dto';
+import { WatchGameDto } from './dto/watch-game.dto';
+import { PlayGameDto } from './dto/play-game.dto';
+import { UpdatePlayerPosDto } from './dto/update-player-pos.dto';
 
 // host側は同時に複数招待を送ることはできない
 class InvitationList {
@@ -225,16 +174,16 @@ export class GameGateway {
   @SubscribeMessage('getInvitedLlist')
   async getInvitedList(
     @ConnectedSocket() socket: Socket,
-    @MessageBody() data: number,
+    @MessageBody() dto: GetInvitedListDto,
   ): Promise<Friend[]> {
     // userIdとsocketIdをつなげる
-    const socketIds = this.userSocketMap.get(data);
+    const socketIds = this.userSocketMap.get(dto.userId);
     if (socketIds === undefined)
-      this.userSocketMap.set(data, new Set([socket.id]));
+      this.userSocketMap.set(dto.userId, new Set([socket.id]));
     else socketIds.add(socket.id);
 
     // 招待を送ったhostの一覧を返す
-    const hostIds = this.invitationList.findHosts(data);
+    const hostIds = this.invitationList.findHosts(dto.userId);
     if (hostIds === undefined) return [];
     else {
       const hosts = await this.user.findAll({
@@ -259,19 +208,19 @@ export class GameGateway {
   @SubscribeMessage('inviteFriend')
   async inviteFriend(
     @ConnectedSocket() socket: Socket,
-    @MessageBody() data: Omit<Invitation, 'hostSocketId'>,
+    @MessageBody() dto: InviteFriendDto,
   ): Promise<boolean> {
     const newInvitation: Invitation = {
-      guestId: data.guestId,
-      hostId: data.hostId,
+      guestId: dto.guestId,
+      hostId: dto.hostId,
       hostSocketId: socket.id,
     };
     const res = this.invitationList.insert(newInvitation);
 
     if (res) {
-      const host = await this.user.findOne(data.hostId);
+      const host = await this.user.findOne(dto.hostId);
 
-      const guestSocketIds = this.userSocketMap.get(data.guestId);
+      const guestSocketIds = this.userSocketMap.get(dto.guestId);
       if (guestSocketIds !== undefined) {
         guestSocketIds.forEach((socketId) => {
           this.server.to(socketId).emit('inviteFriend', {
@@ -290,23 +239,23 @@ export class GameGateway {
    * @param data
    */
   @SubscribeMessage('cancelInvitation')
-  cancelInvitation(@MessageBody() data: Omit<Invitation, 'hostSocketId'>) {
-    const res = this.invitationList.delete(data.hostId);
+  cancelInvitation(@MessageBody() dto: CancelInvitationDto) {
+    const res = this.invitationList.delete(dto.hostId);
 
     // guest側にキャンセルを伝える
     if (res) {
-      const guestSocketIds = this.userSocketMap.get(data.guestId);
+      const guestSocketIds = this.userSocketMap.get(dto.guestId);
       if (guestSocketIds !== undefined) {
         guestSocketIds.forEach((socketId) => {
-          this.server.to(socketId).emit('cancelInvitation', data.hostId);
+          this.server.to(socketId).emit('cancelInvitation', dto.hostId);
         });
       }
     }
   }
 
   @SubscribeMessage('denyInvitation')
-  denyInvitation(@MessageBody() data: Omit<Invitation, 'hostSocketId'>) {
-    const invitation = this.invitationList.find(data.hostId);
+  denyInvitation(@MessageBody() dto: DenyInvitationDto) {
+    const invitation = this.invitationList.find(dto.hostId);
     if (invitation === undefined) return;
 
     this.invitationList.delete(invitation.hostId);
@@ -321,9 +270,9 @@ export class GameGateway {
   @SubscribeMessage('acceptInvitation')
   async beginFriendMatch(
     @ConnectedSocket() socket: Socket,
-    @MessageBody() data: Omit<Invitation, 'hostSocketId'>,
+    @MessageBody() dto: AcceptInvitationDto,
   ) {
-    const invitation = this.invitationList.find(data.hostId);
+    const invitation = this.invitationList.find(dto.hostId);
     if (invitation === undefined) return;
 
     this.invitationList.delete(invitation.hostId);
@@ -334,15 +283,15 @@ export class GameGateway {
     if (hostSockets.length === 0) return;
 
     // ゲームを行うタブ以外には招待キャンセルする。
-    const guestSocketIds = this.userSocketMap.get(data.guestId);
+    const guestSocketIds = this.userSocketMap.get(dto.guestId);
     if (guestSocketIds !== undefined) {
       guestSocketIds.forEach((socketId) => {
         if (socketId !== socket.id)
-          this.server.to(socketId).emit('cancelInvitation', data.hostId);
+          this.server.to(socketId).emit('cancelInvitation', dto.hostId);
       });
     }
 
-    const user1 = await this.user.findOne(data.hostId);
+    const user1 = await this.user.findOne(dto.hostId);
     const player1: Player = {
       name: user1.name,
       id: user1.id,
@@ -351,7 +300,7 @@ export class GameGateway {
       height: GameGateway.initialHeight,
       score: 0,
     };
-    const user2 = await this.user.findOne(data.guestId);
+    const user2 = await this.user.findOne(dto.guestId);
     const player2: Player = {
       name: user2.name,
       id: user2.id,
@@ -367,30 +316,30 @@ export class GameGateway {
   @SubscribeMessage('playStart')
   async joinRoom(
     @ConnectedSocket() socket: Socket,
-    @MessageBody() data: number,
+    @MessageBody() dto: JoinRoomDto,
   ) {
     const waitingUserIdx = this.waitingQueue.findIndex(
-      (item) => item.id !== data,
+      (item) => item.id !== dto.userId,
     );
     if (waitingUserIdx === -1) {
-      const user = await this.user.findOne(data);
+      const user = await this.user.findOne(dto.userId);
       if (user === null) return;
       this.waitingQueue.push({
         name: user.name,
-        id: data,
+        id: dto.userId,
         point: user.point,
         socket: socket,
         height: GameGateway.initialHeight,
         score: 0,
       });
     } else {
-      const user = await this.user.findOne(data);
+      const user = await this.user.findOne(dto.userId);
       if (user === null) return;
 
       const player1 = this.waitingQueue.splice(waitingUserIdx, 1)[0];
       const player2 = {
         name: user.name,
-        id: data,
+        id: dto.userId,
         point: user.point,
         socket: socket,
         height: GameGateway.initialHeight,
@@ -443,18 +392,17 @@ export class GameGateway {
   @SubscribeMessage('watchGame')
   async watchGame(
     @ConnectedSocket() socket: Socket,
-    @MessageBody() data: string,
+    @MessageBody() dto: WatchGameDto,
   ) {
-    const roomName = data;
-    const room = this.gameRooms.find((r) => r.roomName === roomName);
+    const room = this.gameRooms.find((r) => r.roomName === dto.roomName);
     if (!room) {
       socket.emit('error');
 
       return;
     }
     room.supporters.push(socket);
-    this.logger.log(`${socket.id} joined to room ${roomName}`);
-    await socket.join(data);
+    this.logger.log(`${socket.id} joined to room ${dto.roomName}`);
+    await socket.join(dto.roomName);
     const gameSetting = room.gameState === 'Setting' ? null : room.gameSetting;
     socket.emit('joinGameRoom', room.gameState, gameSetting);
   }
@@ -478,10 +426,7 @@ export class GameGateway {
   }
 
   @SubscribeMessage('completeSetting')
-  playGame(
-    @ConnectedSocket() socket: Socket,
-    @MessageBody() data: GameSetting,
-  ) {
+  playGame(@ConnectedSocket() socket: Socket, @MessageBody() dto: PlayGameDto) {
     const room = this.gameRooms.find(
       (r) =>
         r.player1.socket.id === socket.id || r.player2.socket.id === socket.id,
@@ -489,10 +434,10 @@ export class GameGateway {
     if (!room) {
       socket.emit('error');
     } else {
-      this.logger.log('completeSetting: ', data);
-      room.gameSetting = data;
-      room.rewards = 10 * data.matchPoint;
-      switch (data.difficulty) {
+      this.logger.log('completeSetting: ', dto);
+      room.gameSetting = dto as GameSetting;
+      room.rewards = 10 * dto.matchPoint;
+      switch (dto.difficulty) {
         case 'Normal':
           room.barSpeed = 20;
           room.ballVec.speed = 5;
@@ -507,7 +452,7 @@ export class GameGateway {
           break;
       }
       room.gameState = 'Playing';
-      this.server.to(room.roomName).emit('playStarted', data);
+      this.server.to(room.roomName).emit('playStarted', dto as GameSetting);
     }
   }
 
@@ -555,7 +500,7 @@ export class GameGateway {
   @SubscribeMessage('barMove')
   async updatePlayerPos(
     @ConnectedSocket() socket: Socket,
-    @MessageBody() move: number,
+    @MessageBody() dto: UpdatePlayerPosDto,
   ) {
     let isGameOver = false;
 
@@ -585,7 +530,7 @@ export class GameGateway {
     const ballVec = room.ballVec;
 
     // Update player position using information received
-    const updatedHeight = player.height + move * room.barSpeed;
+    const updatedHeight = player.height + dto.move * room.barSpeed;
     if (updatedHeight < GameGateway.highestPos) {
       player.height = GameGateway.highestPos;
     } else if (GameGateway.lowestPos < updatedHeight) {
