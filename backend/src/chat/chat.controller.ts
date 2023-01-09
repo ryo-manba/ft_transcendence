@@ -65,7 +65,7 @@ export class ChatController {
    * @return すべてのユーザーを取得する
    */
   @Get('all-users')
-  async findAllUsers(): Promise<ChatUser[]> {
+  async findAllChatUsers(): Promise<ChatUser[]> {
     const users = await this.userService.findAll({
       orderBy: {
         createdAt: 'desc',
@@ -87,10 +87,10 @@ export class ChatController {
    * @param userId
    */
   @Get('unblocked-users')
-  async findUnblockedUsers(
+  async findUnblockedChatUsers(
     @Query('userId', ParseIntPipe) userId: number,
   ): Promise<ChatUser[]> {
-    const chatUsers = await this.findAllUsers();
+    const chatUsers = await this.findAllChatUsers();
 
     const blockedUsers = await this.chatService.findBlockedUsers({
       blockedByUserId: userId,
