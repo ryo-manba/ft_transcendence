@@ -1,4 +1,14 @@
-import { memo, useState, useEffect, Dispatch, SetStateAction } from 'react';
+import {
+  memo,
+  useRef,
+  useState,
+  useEffect,
+  useMemo,
+  useCallback,
+  Dispatch,
+  SetStateAction,
+  MutableRefObject,
+} from 'react';
 import { Socket } from 'socket.io-client';
 import { TextField, IconButton, Box, Collapse, Paper } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
@@ -7,8 +17,10 @@ import { useQueryUser } from 'hooks/useQueryUser';
 import { Loading } from 'components/common/Loading';
 import { ChatErrorAlert } from 'components/chat/utils/ChatErrorAlert';
 import { MessageLeft } from 'components/chat/chatroom/ChatroomMessage';
-import InfiniteScroll from 'react-infinite-scroll-component';
 import { fetchMessages } from 'api/chat/fetchMessages';
+
+import { Virtuoso } from 'react-virtuoso';
+// import { loremIpsum } from 'lorem-ipsum';
 
 type Props = {
   socket: Socket;
@@ -17,6 +29,79 @@ type Props = {
   messages: Message[];
   setMessages: Dispatch<SetStateAction<Message[]>>;
 };
+
+type MessagesListProps = {
+  chatId: number;
+  startIndex: number;
+  messages: Message[];
+  virtuoso: MutableRefObject<null>;
+  startReached: () => void;
+};
+
+function MessagesList({
+  chatId,
+  startIndex,
+  messages,
+  virtuoso,
+  startReached,
+}: MessagesListProps) {
+  // messageが500件あったら500がfirstItemIndexになる
+  // そこから0に向かって進んでいく
+  const [firstItemIndex, setFirstItemIndex] = useState(
+    startIndex - messages.length,
+  );
+
+  console.log('MessagesList: Starting firstItemIndex', firstItemIndex);
+  console.log('MessagesList: Starting messages length', messages.length);
+  console.log('chatId:', chatId);
+
+  // 次のメッセージの先頭を更新してからmessageのリストを返す
+  const internalMessages = useMemo(() => {
+    const nextFirstItemIndex = startIndex - messages.length;
+    setFirstItemIndex(nextFirstItemIndex);
+
+    return messages;
+  }, [messages]);
+
+  // 取得したmessageをmapで表示する
+  const itemContent = useCallback(
+    (index: number, item: Message) => (
+      <MessageLeft
+        key={index}
+        message={item.message}
+        timestamp={'MM/DD 00:00'}
+        photoURL="nourl"
+        displayName=""
+      />
+    ),
+    [],
+  );
+  const followOutput = 'smooth';
+
+  return (
+    <div
+      style={{
+        display: 'flex',
+        flexFlow: 'column',
+        height: '100vh',
+        marginBottom: '15px',
+        // width: '350px',
+      }}
+    >
+      {/* <div style={{ flex: '0 1 auto' }}> Messages for Chat {chatId} </div> */}
+      <Virtuoso
+        ref={virtuoso}
+        initialTopMostItemIndex={internalMessages.length - 1}
+        firstItemIndex={Math.max(0, firstItemIndex)}
+        itemContent={itemContent}
+        data={internalMessages}
+        startReached={startReached}
+        followOutput={followOutput}
+        style={{ flex: '1 1 auto', overscrollBehavior: 'contain' }}
+      />
+    </div>
+  );
+}
 
 export const ChatroomDisplay = memo(function ChatroomDisplay({
   currentRoomId,
@@ -29,7 +114,7 @@ export const ChatroomDisplay = memo(function ChatroomDisplay({
   const [error, setError] = useState<string>('');
   const { data: user } = useQueryUser();
   const [page, setPage] = useState(1); // ページ番号を保持するstate
-  const [isLoading, setIsLoading] = useState(true);
+  const [startIndex, setStartIndex] = useState(0);
 
   if (user === undefined) {
     return <Loading />;
@@ -50,6 +135,24 @@ export const ChatroomDisplay = memo(function ChatroomDisplay({
     });
     setText('');
   };
+
+  // WIP: ランダムメッセージを追加する
+  // useEffect(() => {
+  //   const initialMessages = Array.from({ length: 30 }, loremIpsum);
+  //   for (let i = 0; i < initialMessages.length; i++) {
+  //     const message = {
+  //       userId: user.id,
+  //       chatroomId: currentRoomId,
+  //       message: initialMessages[i],
+  //     };
+
+  //     socket.emit('chat:sendMessage', message, (res: boolean) => {
+  //       if (!res) {
+  //         setError('You can not send a message.');
+  //       }
+  //     });
+  //   }
+  // }, [currentRoomId]);
 
   useEffect(() => {
     if (!socket || !user) return;
@@ -79,32 +182,24 @@ export const ChatroomDisplay = memo(function ChatroomDisplay({
   }, [socket, user]);
 
   useEffect(() => {
-    setIsLoading(true);
+    setPage(1);
+
+    const getMessagesCountInfo = {
+      chatroomId: currentRoomId,
+    };
+    socket.emit(
+      'chat:getMessagesCount',
+      getMessagesCountInfo,
+      (count: number) => {
+        console.log('count: ', count);
+        setStartIndex(count);
+      },
+    );
   }, [currentRoomId]);
 
   if (user === undefined) {
     return <Loading fullHeight />;
   }
-
-  // const getMessages = () => {
-  //   console.log('getMessages');
-  //   if (currentRoomId === 0) {
-  //     return;
-  //   }
-
-  //   // ページ番号をインクリメント
-  //   setPage((prev) => prev + 1);
-
-  //   const data = {
-  //     chatroomId: currentRoomId,
-  //     skip: page,
-  //   };
-  //   socket.emit('chat:getMessages', data, (res: Message[]) => {
-  //     console.log('res:', res);
-  //     setMessages([...messages, ...res]);
-  //     setIsLoading(false);
-  //   });
-  // };
 
   const fetchData = async (roomId: number, skip: number) => {
     // ページ番号をインクリメント
@@ -114,27 +209,18 @@ export const ChatroomDisplay = memo(function ChatroomDisplay({
     const res = await fetchMessages({ roomId: roomId, skip: skip });
     // 全て取得済みの場合、もう読み込まないようにする
     if (res.length === 0) {
-      setIsLoading(false);
     } else {
       setMessages((prev) => [...prev, ...res]);
     }
   };
 
-  const fetchMoreData = () => {
-    console.log('fetchMoreData');
-    if (currentRoomId === 0) {
-      setIsLoading(false);
-
-      return;
-    } else {
-      setIsLoading(true);
-    }
-
+  const virtuoso = useRef(null);
+  const startReached = useCallback(() => {
+    const timeout = 500;
     setTimeout(() => {
       void fetchData(currentRoomId, page);
-    }, 1500);
-    // setIsLoading(false);
-  };
+    }, timeout);
+  }, [messages]);
 
   const appBarHeight = '64px';
 
@@ -157,29 +243,14 @@ export const ChatroomDisplay = memo(function ChatroomDisplay({
             flexGrow: 1,
           }}
         >
-          <InfiniteScroll
-            dataLength={messages.length}
-            next={fetchMoreData}
-            hasMore={isLoading}
-            loader={<Loading />}
-            endMessage={
-              <p>
-                <b>Yay! You have seen it all</b>
-              </p>
-            }
-          >
-            {messages.map((item, i) => (
-              <MessageLeft
-                key={i}
-                message={item.message}
-                timestamp={'MM/DD 00:00'}
-                photoURL="nourl"
-                displayName=""
-              />
-            ))}
-          </InfiniteScroll>
+          <MessagesList
+            chatId={currentRoomId}
+            messages={messages}
+            startReached={startReached}
+            virtuoso={virtuoso}
+            startIndex={startIndex}
+          />
         </div>
-
         <Box sx={{ width: '100%' }}>
           <Collapse in={error !== ''}>
             <ChatErrorAlert error={error} setError={setError} />
@@ -220,7 +291,6 @@ export const ChatroomDisplay = memo(function ChatroomDisplay({
           />
         </form>
       </Paper>
-      {/* </div> */}
     </>
   );
 });
