@@ -20,6 +20,8 @@ import { MessageLeft } from 'components/chat/chatroom/ChatroomMessage';
 import { fetchMessages } from 'api/chat/fetchMessages';
 
 import { Virtuoso } from 'react-virtuoso';
+
+const PAGE_SIZE = 10;
 // import { loremIpsum } from 'lorem-ipsum';
 
 type Props = {
@@ -68,10 +70,10 @@ function MessagesList({
     (index: number, item: Message) => (
       <MessageLeft
         key={index}
-        message={item.message}
-        timestamp={'MM/DD 00:00'}
+        message={item.text}
+        timestamp={item.createdAt}
         photoURL="nourl"
-        displayName=""
+        displayName={item.userName}
       />
     ),
     [],
@@ -120,6 +122,8 @@ export const ChatroomDisplay = memo(function ChatroomDisplay({
     return <Loading />;
   }
 
+  console.log('chatDisplay:', currentRoomId);
+
   // send a message to the server
   const sendMessage = () => {
     const message = {
@@ -159,7 +163,7 @@ export const ChatroomDisplay = memo(function ChatroomDisplay({
 
     // 他ユーザーからのメッセージを受け取る
     socket.on('chat:receiveMessage', (data: Message) => {
-      console.log('chat:receiveMessage', data.message);
+      console.log('chat:receiveMessage', data.text);
       setMessages((prev) => [...prev, data]);
     });
 
@@ -197,22 +201,28 @@ export const ChatroomDisplay = memo(function ChatroomDisplay({
     );
   }, [currentRoomId]);
 
-  if (user === undefined) {
-    return <Loading fullHeight />;
-  }
-
   const fetchData = async (roomId: number, skip: number) => {
     // ページ番号をインクリメント
-    console.log('page:', page);
+    console.log('fetchData page:', page);
     setPage((prev) => prev + 1);
 
-    const res = await fetchMessages({ roomId: roomId, skip: skip });
+    const chatMessages = await fetchMessages({
+      roomId: roomId,
+      skip: skip,
+      pageSize: PAGE_SIZE,
+    });
+    console.log('chatMessages: ', chatMessages);
     // 全て取得済みの場合、もう読み込まないようにする
-    if (res.length === 0) {
+    if (chatMessages.length === 0) {
     } else {
-      setMessages((prev) => [...prev, ...res]);
+      setMessages((prev) => [...prev, ...chatMessages]);
     }
   };
+
+  useEffect(() => {
+    setMessages([]);
+    void fetchData(currentRoomId, page);
+  }, [currentRoomId]);
 
   const virtuoso = useRef(null);
   const startReached = useCallback(() => {
@@ -221,6 +231,10 @@ export const ChatroomDisplay = memo(function ChatroomDisplay({
       void fetchData(currentRoomId, page);
     }, timeout);
   }, [messages]);
+
+  if (user === undefined) {
+    return <Loading fullHeight />;
+  }
 
   const appBarHeight = '64px';
 

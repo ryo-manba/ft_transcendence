@@ -5,12 +5,7 @@ import {
   WebSocketServer,
   ConnectedSocket,
 } from '@nestjs/websockets';
-import {
-  Chatroom,
-  ChatroomType,
-  ChatroomMembersStatus,
-  Message,
-} from '@prisma/client';
+import { Chatroom, ChatroomType, ChatroomMembersStatus } from '@prisma/client';
 import { Server, Socket } from 'socket.io';
 import { Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
@@ -24,7 +19,6 @@ import { updatePasswordDto } from './dto/update-password.dto';
 import { updateMemberStatusDto } from './dto/update-member-status.dto';
 import { createDirectMessageDto } from './dto/create-direct-message.dto';
 import { CheckBanDto } from './dto/check-ban.dto';
-import { GetMessagesDto } from './dto/get-messages.dto';
 import { DeleteChatroomMemberDto } from './dto/delete-chatroom-member.dto';
 import { UpdateChatroomOwnerDto } from './dto/update-chatroom-owner.dto';
 import { OnGetRoomsDto } from './dto/on-get-rooms.dto';
@@ -134,7 +128,7 @@ export class ChatGateway {
   async changeCurrentRoom(
     @ConnectedSocket() client: Socket,
     @MessageBody() dto: ChangeCurrentRoomDto,
-  ): Promise<Message[]> {
+  ): Promise<void> {
     this.logger.log(`chat:changeCurrentRoom received -> ${dto.roomId}`);
 
     // 0番目には、socketのidが入っている
@@ -144,17 +138,6 @@ export class ChatGateway {
       await client.leave(target);
     }
     await client.join(String(dto.roomId));
-
-    const findInfo: GetMessagesDto = {
-      chatroomId: dto.roomId,
-      skip: 0,
-    };
-    // 既存のメッセージを取得する
-    // TODO: limitで上限をつける
-    const messages = await this.chatService.findMessages(findInfo);
-
-    // 既存のメッセージを送り返す
-    return messages;
   }
 
   /**
@@ -417,21 +400,6 @@ export class ChatGateway {
     const res = await this.chatService.updateMemberStatus(dto);
 
     return res ? true : false;
-  }
-
-  /**
-   * メッセージを取得する
-   * @param
-   * @param 指定した数字番目を取得する
-   */
-  @SubscribeMessage('chat:getMessages')
-  async getMessages(
-    @ConnectedSocket() client: Socket,
-    @MessageBody() dto: GetMessagesDto,
-  ): Promise<Message[]> {
-    this.logger.log(`chat:getMessages received -> roomId: ${dto.chatroomId}`);
-
-    return await this.chatService.findMessages(dto);
   }
 
   /*

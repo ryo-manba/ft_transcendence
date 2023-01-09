@@ -14,7 +14,7 @@ import { CreateChatroomDto } from './dto/create-chatroom.dto';
 import { CreateMessageDto } from './dto/create-message.dto';
 import { CreateAdminDto } from './dto/create-admin.dto';
 import { JoinChatroomDto } from './dto/join-chatroom.dto';
-import type { ChatUser } from './types/chat';
+import type { ChatUser, ChatMessage } from './types/chat';
 import { updatePasswordDto } from './dto/update-password.dto';
 import { updateMemberStatusDto } from './dto/update-member-status.dto';
 import { GetMessagesDto } from './dto/get-messages.dto';
@@ -177,19 +177,34 @@ export class ChatService {
    * chatroomに紐づいたメッセージを取得する
    * @param GetMessagesDto
    */
-  async findMessages(dto: GetMessagesDto): Promise<Message[]> {
-    const PAGE_SIZE = 10;
-
+  async findChatMessages(dto: GetMessagesDto): Promise<ChatMessage[]> {
     const messages = await this.prisma.message.findMany({
       where: {
         chatroomId: dto.chatroomId,
       },
-      skip: PAGE_SIZE * dto.skip,
-      take: PAGE_SIZE,
+      skip: dto.pageSize * dto.skip,
+      take: dto.pageSize,
       orderBy: { createdAt: 'desc' },
+      include: {
+        user: {
+          select: {
+            name: true,
+          },
+        },
+      },
     });
 
-    return messages;
+    const chatMessages = messages.map((message) => {
+      return {
+        text: message.message,
+        userName: message.user.name,
+        createdAt: message.createdAt,
+      };
+    });
+
+    console.log(chatMessages);
+
+    return chatMessages;
   }
 
   async findAdmins(id: number): Promise<ChatroomAdmin[] | null> {

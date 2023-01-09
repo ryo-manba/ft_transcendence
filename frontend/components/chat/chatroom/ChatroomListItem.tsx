@@ -83,13 +83,7 @@ export const ChatroomListItem = memo(function ChatroomListItem({
         setMessages([]);
       } else {
         // 入室に成功したら、既存のメッセージを受け取る
-        socket.emit(
-          'chat:changeCurrentRoom',
-          { roomId },
-          (messages: Message[]) => {
-            setMessages(messages);
-          },
-        );
+        socket.emit('chat:changeCurrentRoom', { roomId });
         setCurrentRoomId(roomId);
       }
     });

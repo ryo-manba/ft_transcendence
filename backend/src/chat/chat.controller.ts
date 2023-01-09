@@ -1,7 +1,6 @@
 import { Query, Controller, Get, ParseIntPipe } from '@nestjs/common';
 import { ChatService } from './chat.service';
-import type { ChatUser } from './types/chat';
-import type { Message } from '@prisma/client';
+import type { ChatUser, ChatMessage } from './types/chat';
 
 @Controller('chat')
 export class ChatController {
@@ -52,14 +51,18 @@ export class ChatController {
    * @return Message[]
    */
   @Get('messages')
-  async findMessages(
+  async findChatMessages(
     @Query('roomId', ParseIntPipe) roomId: number,
     @Query('skip', ParseIntPipe) skip: number,
-  ): Promise<Message[]> {
-    return await this.chatService.findMessages({
+    @Query('pageSize', ParseIntPipe) pageSize: number,
+  ): Promise<ChatMessage[]> {
+    const chatMessages = await this.chatService.findChatMessages({
       chatroomId: roomId,
       skip: skip,
+      pageSize: pageSize,
     });
+
+    return chatMessages;
   }
 
   /**
