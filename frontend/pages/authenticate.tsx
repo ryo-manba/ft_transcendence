@@ -1,13 +1,16 @@
 import axios from 'axios';
 import { useRouter } from 'next/router';
-import { useEffect } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useSession, signOut } from 'next-auth/react';
-import { Loading } from 'components/common/Loading';
 import { LoginResult } from '../types';
+import { ValidationDialog } from 'components/auth/ValidationDialog';
 
 const Authenticate = () => {
   const router = useRouter();
   const { data: session, status } = useSession();
+  const [openValidationDialog, setOpenValidationDialog] = useState(false);
+  const [validationUserId, setValidationUserId] = useState(0);
+
   useEffect(() => {
     const oauthLogin = async () => {
       if (status === 'authenticated') {
@@ -36,14 +39,11 @@ const Authenticate = () => {
             if (data.res === 'SUCCESS') {
               await router.push('/dashboard');
             } else if (data.res === 'NEED2FA' && data.userId !== undefined) {
-              await router.push({
-                pathname: '/validate2fa',
-                query: { userId: data.userId },
-              });
+              setValidationUserId(data.userId);
+              setOpenValidationDialog(true);
             } else {
               // ログイン失敗、signOutしてログインに戻る
-              await signOut();
-              await router.push('/');
+              void signOut({ callbackUrl: `http://localhost:3000/` });
             }
           }
         }
@@ -52,7 +52,34 @@ const Authenticate = () => {
     void oauthLogin();
   }, []);
 
-  return <Loading fullHeight={true} />;
+  if (status === 'unauthenticated') {
+    void router.push('/');
+  }
+
+  // ValidateのDialogから戻ってきたら呼ばれる
+  const handleClose = useCallback(
+    (validation: boolean) => {
+      // ダイアログを閉じる
+      setOpenValidationDialog(false);
+      setValidationUserId(0);
+      console.log(validation);
+      if (validation) {
+        void router.push('/dashboard');
+      } else {
+        // 検証失敗時は、signOutしてログイン画面に戻る
+        void signOut({ callbackUrl: `http://localhost:3000/` });
+      }
+    },
+    [setOpenValidationDialog, setValidationUserId],
+  );
+
+  return (
+    <ValidationDialog
+      open={openValidationDialog}
+      userId={validationUserId}
+      onClose={handleClose}
+    />
+  );
 };
 
 export default Authenticate;
