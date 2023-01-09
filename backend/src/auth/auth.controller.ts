@@ -147,11 +147,8 @@ export class AuthController {
         path: '/',
       });
     } catch {
-      console.log('validate Exception!');
-
       return false;
     }
-    console.log('validate OK!');
 
     return true;
   }
