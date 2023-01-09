@@ -2,15 +2,29 @@ import axios, { AxiosError } from 'axios';
 import { useQueryClient, useMutation } from '@tanstack/react-query';
 import { User } from '@prisma/client';
 
+type PropsForUpdate = {
+  userId: number;
+  updatedAvatarFile: FormData;
+};
+
+type PropsForDeletion = {
+  userId: number;
+  avatarPath: string;
+};
+
+const endpointForDeletion = `${
+  process.env.NEXT_PUBLIC_API_URL as string
+}/user/delete-avatar`;
+
 export const useMutationAvatar = () => {
   const queryClient = useQueryClient();
 
   const updateAvatarMutation = useMutation<
     Omit<User, 'hashedPassword'>,
     AxiosError,
-    { userId: number; updatedAvatarFile: FormData }
+    PropsForUpdate
   >(
-    async ({ userId, updatedAvatarFile }) => {
+    async ({ userId, updatedAvatarFile }: PropsForUpdate) => {
       const { data } = await axios.post<Omit<User, 'hashedPassword'>>(
         `${process.env.NEXT_PUBLIC_API_URL as string}/user/avatar/${userId}`,
         updatedAvatarFile,
@@ -28,7 +42,7 @@ export const useMutationAvatar = () => {
         }
       },
       onError: (err: AxiosError) => {
-        console.log(err);
+        console.error(err);
         throw err;
       },
     },
@@ -37,14 +51,16 @@ export const useMutationAvatar = () => {
   const deleteAvatarMutation = useMutation<
     Omit<User, 'hashedPassword'>,
     AxiosError,
-    { userId: number; avatarPath: string }
+    PropsForDeletion
   >(
     // Backend側でuserIdからいちいちavatarPathを取得してくる手間を省くためにavatarPathも送信
-    async ({ userId, avatarPath }) => {
+    async ({ userId, avatarPath }: PropsForDeletion) => {
       const { data } = await axios.patch<Omit<User, 'hashedPassword'>>(
-        `${
-          process.env.NEXT_PUBLIC_API_URL as string
-        }/user/avatar/${userId}/${avatarPath}`,
+        endpointForDeletion,
+        {
+          userId,
+          avatarPath,
+        },
       );
 
       return data;
@@ -59,7 +75,7 @@ export const useMutationAvatar = () => {
         }
       },
       onError: (err: AxiosError) => {
-        console.log(err);
+        console.error(err);
       },
     },
   );

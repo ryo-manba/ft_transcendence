@@ -105,7 +105,7 @@ export const ChatroomJoinDialog = memo(function ChatroomJoinDialog({
       if (joinedRoom) {
         handleClose();
         // サイドバーを更新する
-        socket.emit('chat:getJoinedRooms', user.id);
+        socket.emit('chat:getJoinedRooms', { userId: user.id });
       } else {
         setError('Incorrect password.');
         reset();

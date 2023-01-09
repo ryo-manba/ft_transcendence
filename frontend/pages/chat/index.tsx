@@ -46,9 +46,9 @@ const Chat: NextPage = () => {
     socket.on('chat:deleteRoom', (deletedRoom: Chatroom) => {
       console.log('chat:deleteRoom', deletedRoom);
       // socketの退出処理をする
-      socket.emit('chat:leaveSocket');
+      socket.emit('chat:leaveSocket', { roomId: deletedRoom.id });
       // 所属しているチャットルーム一覧を取得する
-      socket.emit('chat:getJoinedRooms', user.id);
+      socket.emit('chat:getJoinedRooms', { userId: user.id });
       // 表示中のチャットを削除する
       setMessages([]);
       setCurrentRoomId(NOT_JOINED_ROOM);
