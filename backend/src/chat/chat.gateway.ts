@@ -32,6 +32,7 @@ import { ChangeCurrentRoomDto } from './dto/change-current-room.dto';
 import { LeaveSocketDto } from './dto/leave-socket.dto';
 import { OnRoomJoinableDto } from './dto/on-room-joinable.dto';
 import { GetAdminsIdsDto } from './dto/get-admins-ids.dto';
+import { GetMessagesCountDto } from './dto/get-messages-count.dto';
 
 @WebSocketGateway({
   cors: {
@@ -488,5 +489,28 @@ export class ChatGateway {
     }
 
     return true;
+  }
+
+  /**
+   * チャットルームのメッセージの合計値を返す
+   * @param GetMessagesCountDto
+   */
+  @SubscribeMessage('chat:getMessagesCount')
+  async getMessagesCount(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() dto: GetMessagesCountDto,
+  ): Promise<number> {
+    this.logger.log('chat:getMessagesCount', dto);
+
+    // https://www.prisma.io/docs/reference/api-reference/prisma-client-reference#count
+    const count = await this.prisma.message.count({
+      where: {
+        chatroomId: dto.chatroomId,
+      },
+    });
+
+    this.logger.log('chat:getMessagesCount', count);
+
+    return count;
   }
 }
