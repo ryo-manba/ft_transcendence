@@ -1,6 +1,6 @@
 /* eslint-disable react/jsx-props-no-spreading */
 import type { NextPage } from 'next';
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useRouter } from 'next/router';
 import axios from 'axios';
 import { IconDatabase } from '@tabler/icons';
@@ -26,6 +26,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Loading } from 'components/common/Loading';
 import Head from 'next/head';
+import { ValidationDialog } from 'components/auth/ValidationDialog';
 
 const usernameMaxLen = 50;
 const passwordMinLen = 5;
@@ -48,6 +49,8 @@ const Home: NextPage = () => {
   const [isRegister, setIsRegister] = useState(false);
   const [error, setError] = useState<string[]>([]);
   const [showPassword, setShowPassword] = useState(false);
+  const [openValidationDialog, setOpenValidationDialog] = useState(false);
+  const [validationUserId, setValidationUserId] = useState(0);
 
   const {
     control,
@@ -85,10 +88,8 @@ const Home: NextPage = () => {
         if (data.res === 'SUCCESS') {
           await router.push('/dashboard');
         } else if (data.res === 'NEED2FA' && data.userId !== undefined) {
-          await router.push({
-            pathname: '/validate2fa',
-            query: { userId: data.userId },
-          });
+          setValidationUserId(data.userId);
+          setOpenValidationDialog(true);
         } else {
           const messages = ['Login Failure'];
           setError(messages);
@@ -103,6 +104,25 @@ const Home: NextPage = () => {
       }
     }
   };
+
+  // ValidateのDialogから戻ってきたら呼ばれる
+  const handleClose = useCallback(
+    (validation: boolean) => {
+      // ダイアログを閉じる
+      setOpenValidationDialog(false);
+      setValidationUserId(0);
+
+      // 実際にはここでアプリ固有の処理を行う★
+      if (validation) {
+        void router.push('/dashboard');
+      } else {
+        // TODO: validation失敗のSnackBar出しても良いかな。
+        // await signOut();
+        void router.push('/');
+      }
+    },
+    [setOpenValidationDialog, setValidationUserId],
+  );
 
   if (status === 'loading') {
     return <Loading fullHeight={true} />;
@@ -260,6 +280,11 @@ const Home: NextPage = () => {
               </Button>
             </Grid>
           </Grid>
+          <ValidationDialog
+            open={openValidationDialog}
+            userId={validationUserId}
+            onClose={handleClose}
+          />
         </Grid>
       </main>
     </div>
