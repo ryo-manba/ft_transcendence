@@ -6,9 +6,11 @@ import {
   TextField,
   IconButton,
   Grid,
+  Alert,
+  Snackbar,
 } from '@mui/material';
 import { useRouter } from 'next/router';
-import { FC, useCallback } from 'react';
+import { FC, useCallback, useState } from 'react';
 import axios from 'axios';
 import { useForm, SubmitHandler, Controller } from 'react-hook-form';
 import { TwoAuthForm } from 'types/setting';
@@ -37,6 +39,7 @@ export const ValidationDialog: FC<Props> = ({
   onClose,
 }: Props) => {
   const router = useRouter();
+  const [openSnack, setOpenSnack] = useState('');
   const {
     control,
     register,
@@ -49,9 +52,14 @@ export const ValidationDialog: FC<Props> = ({
   const handleClose = useCallback(
     (validation: boolean) => {
       onClose?.(validation);
+      setOpenSnack('');
     },
     [onClose],
   );
+
+  const handleSnackClose = () => {
+    setOpenSnack('');
+  };
 
   const onSubmit: SubmitHandler<TwoAuthForm> = async (
     inputData: TwoAuthForm,
@@ -70,12 +78,10 @@ export const ValidationDialog: FC<Props> = ({
         await router.push('/dashboard');
         void handleClose(true);
       } else {
-        console.log('path Failure');
-        void handleClose(false);
+        setOpenSnack('FAILURE');
       }
     } catch {
-      console.log('Exception');
-      void handleClose(false);
+      setOpenSnack('FAILURE');
     }
   };
 
@@ -85,7 +91,7 @@ export const ValidationDialog: FC<Props> = ({
   return (
     <Dialog open={open} onClose={() => handleClose(false)}>
       <DialogTitle sx={{ m: 0, p: 2 }}>
-        認証コードの入力
+        Enter Authorization Code
         <IconButton
           aria-label="close"
           onClick={() => handleClose(false)}
@@ -121,10 +127,10 @@ export const ValidationDialog: FC<Props> = ({
                     fullWidth
                     required
                     id="auth-code"
-                    label="Enter Code from Your Apps"
-                    autoComplete="new-password"
+                    label="6 digit code"
+                    InputLabelProps={{ shrink: true }}
+                    autoComplete="off"
                     error={errors.authCode ? true : false}
-                    helperText={errors.authCode?.message}
                     sx={{ my: 2 }}
                   />
                 )}
@@ -137,6 +143,15 @@ export const ValidationDialog: FC<Props> = ({
               </Button>
             </Grid>
           </Grid>
+          <Snackbar
+            open={openSnack == 'FAILURE'}
+            autoHideDuration={6000}
+            onClose={handleSnackClose}
+          >
+            <Alert onClose={handleSnackClose} severity="error">
+              Authorization Code Is Wrong!
+            </Alert>
+          </Snackbar>
         </form>
       </DialogContent>
     </Dialog>
