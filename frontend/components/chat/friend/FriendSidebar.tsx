@@ -20,13 +20,21 @@ export const FriendSidebar = memo(function FriendSidebar({ socket }: Props) {
   }
 
   useEffect(() => {
-    const fetchFriends = async () => {
+    let ignore = false;
+
+    const fetchFriends = async (ignore: boolean) => {
       const res = await fetchFollowingUsers({ userId: user.id });
 
-      setFriends(res);
+      if (!ignore) {
+        setFriends(res);
+      }
     };
 
-    void fetchFriends();
+    void fetchFriends(ignore);
+
+    return () => {
+      ignore = true;
+    };
   }, []);
 
   return (

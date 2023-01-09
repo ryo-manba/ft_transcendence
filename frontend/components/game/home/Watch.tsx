@@ -52,6 +52,7 @@ export const Watch = () => {
         ),
       );
     });
+
     const intervalId = setInterval(() => {
       socket.emit('watchList');
     }, 2000);

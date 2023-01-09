@@ -37,13 +37,13 @@ export const ChatroomSidebar = memo(function ChatroomSidebar({
     // 現在所属しているチャットルームが削除された場合、表示されているチャット履歴を削除する
     socket.on('chat:deleteRoom', (deletedRoom: Chatroom) => {
       console.log('chat:deleteRoom', deletedRoom);
-      // 表示中のメッセージを削除する
-      setMessages([]);
-      setCurrentRoomId(0);
       // socketの退出処理をする
       socket.emit('chat:leaveSocket', { roomId: deletedRoom.id });
       // 所属しているチャットルーム一覧を取得する
       socket.emit('chat:getJoinedRooms', { userId: user.id });
+      // 表示中のメッセージを削除する
+      setMessages([]);
+      setCurrentRoomId(0);
     });
 
     // setupが終わったら
