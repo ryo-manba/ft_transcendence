@@ -1,8 +1,9 @@
 import axios from 'axios';
 import { useRouter } from 'next/router';
 import { useEffect } from 'react';
-import { useSession } from 'next-auth/react';
+import { useSession, signOut } from 'next-auth/react';
 import { Loading } from 'components/common/Loading';
+import { LoginResult } from '../types';
 
 const Authenticate = () => {
   const router = useRouter();
@@ -28,14 +29,21 @@ const Authenticate = () => {
               imageUrl = '';
             }
             const urlOauth = `${process.env.NEXT_PUBLIC_API_URL}/auth/oauth-login`;
-            const { data } = await axios.post<boolean>(urlOauth, {
+            const { data } = await axios.post<LoginResult>(urlOauth, {
               oAuthId: loginName,
               imagePath: imageUrl,
             });
-            if (data === true) {
-              void router.push('/dashboard');
+            if (data.res === 'SUCCESS') {
+              await router.push('/dashboard');
+            } else if (data.res === 'NEED2FA' && data.userId !== undefined) {
+              await router.push({
+                pathname: '/validate2fa',
+                query: { userId: data.userId },
+              });
             } else {
-              void router.push('/validate2fa');
+              // ログイン失敗、signOutしてログインに戻る
+              await signOut();
+              await router.push('/');
             }
           }
         }

@@ -17,7 +17,7 @@ import { AuthDto } from './dto/auth.dto';
 import { CreateOAuthDto } from './dto/create-oauth.dto';
 import { Validate2FACodeDto } from './dto/validate-2FACode.dto';
 import { LogoutDto } from './dto/logout.dto';
-import { Csrf, Msg } from './interfaces/auth.interface';
+import { Csrf, Msg, LoginResult } from './interfaces/auth.interface';
 
 @Controller('auth')
 export class AuthController {
@@ -38,17 +38,32 @@ export class AuthController {
   async login(
     @Body() dto: AuthDto,
     @Res({ passthrough: true }) res: Response,
-  ): Promise<boolean> {
-    const loginInfo = await this.authService.login(dto);
-    res.cookie('access_token', loginInfo.accessToken, {
-      httpOnly: true,
-      secure: true, //Postmanからアクセスするときはfalse
-      sameSite: 'none',
-      path: '/',
-    });
+  ): Promise<LoginResult> {
+    try {
+      const loginInfo = await this.authService.login(dto);
+      if (loginInfo.has2fa) {
+        return {
+          res: 'NEED2FA',
+          userId: loginInfo.userId,
+        };
+      }
+      res.cookie('access_token', loginInfo.accessToken, {
+        httpOnly: true,
+        secure: true, //Postmanからアクセスするときはfalse
+        sameSite: 'none',
+        path: '/',
+      });
 
-    // ログイン完了ならtrue, 2FA確認がまだ必要ならfalse
-    return !loginInfo.has2fa;
+      return {
+        res: 'SUCCESS',
+        userId: undefined,
+      };
+    } catch {
+      return {
+        res: 'FAILURE',
+        userId: undefined,
+      };
+    }
   }
 
   @HttpCode(HttpStatus.OK)
@@ -77,18 +92,32 @@ export class AuthController {
   async oAuthLogin(
     @Body() dto: CreateOAuthDto,
     @Res({ passthrough: true }) res: Response,
-  ): Promise<boolean> {
-    const loginInfo = await this.authService.oauthlogin(dto);
+  ): Promise<LoginResult> {
+    try {
+      const loginInfo = await this.authService.oauthlogin(dto);
+      if (loginInfo.has2fa) {
+        return {
+          res: 'NEED2FA',
+          userId: loginInfo.userId,
+        };
+      }
+      res.cookie('access_token', loginInfo.accessToken, {
+        httpOnly: true,
+        secure: true, //Postmanからアクセスするときはfalse
+        sameSite: 'none',
+        path: '/',
+      });
 
-    res.cookie('access_token', loginInfo.accessToken, {
-      httpOnly: true,
-      secure: true, //Postmanからアクセスするときはfalse
-      sameSite: 'none',
-      path: '/',
-    });
-
-    // ログイン完了ならtrue, 2FA確認がまだ必要ならfalse
-    return !loginInfo.has2fa;
+      return {
+        res: 'SUCCESS',
+        userId: undefined,
+      };
+    } catch {
+      return {
+        res: 'FAILURE',
+        userId: undefined,
+      };
+    }
   }
 
   //

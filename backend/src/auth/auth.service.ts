@@ -81,7 +81,7 @@ export class AuthService {
 
     const jwtToken = await this.generateJwt(user.id, user.name);
 
-    return { accessToken: jwtToken, has2fa: user.has2FA };
+    return { accessToken: jwtToken, has2fa: user.has2FA, userId: user.id };
   }
 
   async logout(dto: LogoutDto) {
@@ -166,11 +166,6 @@ export class AuthService {
         data,
       });
     }
-    // if (user.has2FA) {
-    //   UserManager.instance.twoFAlist.push(new TwoFAUser(user.id));
-
-    //   return user.toResponseUser(false, true);
-    // }
 
     // ここのupdateは上の処理で絶対に存在しているuser.idが入るはずなのでエラー処理不要
     await this.prisma.user.update({
@@ -183,7 +178,7 @@ export class AuthService {
     });
     const jwtToken = await this.generateJwt(user.id, user.name);
 
-    return { accessToken: jwtToken, has2fa: user.has2FA };
+    return { accessToken: jwtToken, has2fa: user.has2FA, userId: user.id };
   }
 
   async generateQrCode(userId: number): Promise<string> {

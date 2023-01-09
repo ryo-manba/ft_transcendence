@@ -7,7 +7,7 @@ import { IconDatabase } from '@tabler/icons';
 import Image from 'next/image';
 import GppGoodIcon from '@mui/icons-material/GppGood';
 import { useForm, SubmitHandler, Controller } from 'react-hook-form';
-import { AuthForm, AxiosErrorResponse } from '../types';
+import { AuthForm, AxiosErrorResponse, LoginResult } from '../types';
 import {
   Grid,
   IconButton,
@@ -75,17 +75,23 @@ const Home: NextPage = () => {
             username: formData.username,
           });
         }
-        const { data } = await axios.post<boolean>(
+        const { data } = await axios.post<LoginResult>(
           `${process.env.NEXT_PUBLIC_API_URL}/auth/login`,
           {
             username: formData.username,
             password: formData.password,
           },
         );
-        if (data === true) {
+        if (data.res === 'SUCCESS') {
           await router.push('/dashboard');
+        } else if (data.res === 'NEED2FA' && data.userId !== undefined) {
+          await router.push({
+            pathname: '/validate2fa',
+            query: { userId: data.userId },
+          });
         } else {
-          await router.push('/validate2fa');
+          const messages = ['Login Failure'];
+          setError(messages);
         }
       }
     } catch (e) {
