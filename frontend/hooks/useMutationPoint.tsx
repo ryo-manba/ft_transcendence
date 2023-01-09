@@ -2,23 +2,28 @@ import axios from 'axios';
 import { useQueryClient, useMutation } from '@tanstack/react-query';
 import { User } from '@prisma/client';
 
+type Props = {
+  userId: number;
+  updatedPoint: number;
+};
+
+const endpoint = `${
+  process.env.NEXT_PUBLIC_API_URL as string
+}/user/update-point`;
+
 export const useMutationPoint = () => {
   const queryClient = useQueryClient();
 
   const updatePointMutation = useMutation<
     Omit<User, 'hashedPassword'>,
     Error,
-    { userId: number; updatedPoint: number }
+    Props
   >(
-    async ({ userId, updatedPoint }) => {
-      if (Number.isNaN(userId) || Number.isNaN(updatedPoint)) throw new Error();
-
+    async ({ userId, updatedPoint }: Props) => {
       const { data } = await axios.patch<Omit<User, 'hashedPassword'>>(
-        `${process.env.NEXT_PUBLIC_API_URL as string}/user/point/${userId}`,
-        { point: updatedPoint },
+        endpoint,
+        { userId, point: updatedPoint },
       );
-
-      if (Object.keys(data).length === 0) throw new Error();
 
       return data;
     },
@@ -32,7 +37,7 @@ export const useMutationPoint = () => {
         }
       },
       onError: (err: Error) => {
-        console.log(err);
+        console.error(err);
       },
     },
   );

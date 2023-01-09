@@ -18,7 +18,7 @@ export const ChatroomJoinButton = memo(function ChatroomJoinButton({
   const [rooms, setRooms] = useState<Chatroom[]>([]);
 
   const getJoinableRooms = useCallback(() => {
-    socket.emit('chat:getJoinableRooms', user.id);
+    socket.emit('chat:getJoinableRooms', { userId: user.id });
   }, [socket]);
 
   const handleOpen = useCallback(() => {

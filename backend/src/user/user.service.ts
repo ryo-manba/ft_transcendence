@@ -7,10 +7,12 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { UpdateNameDto } from './dto/update-name.dto';
 import { Prisma, User, UserStatus } from '@prisma/client';
+import { UpdateStatusDto } from './dto/update-status.dto';
 import { UpdatePointDto } from './dto/update-point.dto';
 import { UpdateAvatarDto } from './dto/update-avatar.dto';
 import { createReadStream, unlink } from 'node:fs';
 import * as path from 'path';
+import { DeleteAvatarDto } from './dto/delete-avatar.dto';
 
 @Injectable()
 export class UserService {
@@ -53,17 +55,14 @@ export class UserService {
     });
   }
 
-  async updateName(
-    userId: number,
-    dto: UpdateNameDto,
-  ): Promise<Omit<User, 'hashedPassword'>> {
+  async updateName(dto: UpdateNameDto): Promise<Omit<User, 'hashedPassword'>> {
     try {
       const user = await this.prisma.user.update({
         where: {
-          id: userId,
+          id: dto.userId,
         },
         data: {
-          ...dto,
+          name: dto.name,
         },
       });
       delete user.hashedPassword;
@@ -80,23 +79,22 @@ export class UserService {
   }
 
   async updatePoint(
-    userId: number,
     dto: UpdatePointDto,
   ): Promise<Omit<User, 'hashedPassword'>> {
     try {
       const user = await this.prisma.user.update({
         where: {
-          id: userId,
+          id: dto.userId,
         },
         data: {
-          ...dto,
+          point: dto.point,
         },
       });
       delete user.hashedPassword;
 
       return user;
     } catch (error) {
-      console.log(error);
+      console.error(error);
       throw error;
     }
   }
@@ -116,40 +114,43 @@ export class UserService {
   }
 
   async deleteAvatar(
-    userId: number,
-    avatarPath: string,
+    dto: DeleteAvatarDto,
   ): Promise<Omit<User, 'hashedPassword'>> {
     const filePath = path.join(
       process.cwd(),
       process.env.AVATAR_IMAGE_DIR,
-      avatarPath,
+      dto.avatarPath,
     );
     unlink(filePath, (err) => {
       if (err) throw err;
       console.log(`${filePath} was deleted`);
     });
 
-    return this.updateAvatar(userId, { avatarPath: null });
+    const updateDto: UpdateAvatarDto = {
+      userId: dto.userId,
+      avatarPath: null,
+    };
+
+    return this.updateAvatar(updateDto);
   }
 
   async updateAvatar(
-    userId: number,
     dto: UpdateAvatarDto,
   ): Promise<Omit<User, 'hashedPassword'>> {
     try {
       const user = await this.prisma.user.update({
         where: {
-          id: userId,
+          id: dto.userId,
         },
         data: {
-          ...dto,
+          avatarPath: dto.avatarPath,
         },
       });
       delete user.hashedPassword;
 
       return user;
     } catch (error) {
-      console.log(error);
+      console.error(error);
       throw error;
     }
   }
@@ -162,16 +163,15 @@ export class UserService {
   }
 
   async updateStatus(
-    userId: number,
-    status: UserStatus,
+    dto: UpdateStatusDto,
   ): Promise<Omit<User, 'hashedPassword'>> {
     try {
       const user = await this.prisma.user.update({
         where: {
-          id: userId,
+          id: dto.userId,
         },
         data: {
-          status: status,
+          status: dto.status,
         },
       });
       delete user.hashedPassword;

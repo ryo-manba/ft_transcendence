@@ -1,10 +1,14 @@
-import { IsNotEmpty, IsString, IsUUID, IsNumberString } from 'class-validator';
+import {
+  IsNumber,
+  IsNotEmpty,
+  IsString,
+  IsNumberString,
+} from 'class-validator';
 
 export class Validate2FACodeDto {
-  @IsString()
+  @IsNumber()
   @IsNotEmpty()
-  @IsUUID()
-  userId: string;
+  userId: number;
 
   @IsString()
   @IsNotEmpty()

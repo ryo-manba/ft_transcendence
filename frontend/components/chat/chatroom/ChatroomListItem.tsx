@@ -44,15 +44,26 @@ export const ChatroomListItem = memo(function ChatroomListItem({
   }
 
   useEffect(() => {
+    let ignore = false;
     if (user === undefined) return;
 
     // adminかどうかを判定する
-    socket.emit('chat:getAdminIds', room.id, (adminIds: number[]) => {
-      console.log('adminIds', adminIds);
-      if (adminIds.includes(user.id)) {
-        setIsAdmin(true);
-      }
-    });
+    socket.emit(
+      'chat:getAdminIds',
+      { roomId: room.id },
+      (adminIds: number[]) => {
+        console.log('adminIds', adminIds);
+        if (adminIds.includes(user.id)) {
+          if (!ignore) {
+            setIsAdmin(true);
+          }
+        }
+      },
+    );
+
+    return () => {
+      ignore = true;
+    };
   }, [user]);
 
   // ルームをクリックしたときの処理
@@ -72,9 +83,13 @@ export const ChatroomListItem = memo(function ChatroomListItem({
         setMessages([]);
       } else {
         // 入室に成功したら、既存のメッセージを受け取る
-        socket.emit('chat:changeCurrentRoom', roomId, (messages: Message[]) => {
-          setMessages(messages);
-        });
+        socket.emit(
+          'chat:changeCurrentRoom',
+          { roomId },
+          (messages: Message[]) => {
+            setMessages(messages);
+          },
+        );
         setCurrentRoomId(roomId);
       }
     });
@@ -219,7 +234,7 @@ export const ChatroomListItem = memo(function ChatroomListItem({
         setMessages([]);
         setCurrentRoomId(0);
         // 所属しているチャットルーム一覧を取得する
-        socket.emit('chat:getJoinedRooms', user.id);
+        socket.emit('chat:getJoinedRooms', { userId: user.id });
       } else {
         setError('Failed to leave room.');
       }

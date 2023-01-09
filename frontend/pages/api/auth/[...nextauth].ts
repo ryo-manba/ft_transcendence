@@ -24,7 +24,7 @@ export default NextAuth({
     jwt({ token, account }) {
       // async jwt({ token, user, account, profile, isNewUser }) {
       if (account?.accessToken) {
-        token.accessToken = account.accessToken;
+        token.accessToken = account.accessToken as string;
       }
 
       return token;

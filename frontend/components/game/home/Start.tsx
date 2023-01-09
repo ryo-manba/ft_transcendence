@@ -13,7 +13,7 @@ export const Start = () => {
   if (user === undefined) return <Loading />;
 
   const start = () => {
-    socket.emit('playStart', user.id);
+    socket.emit('playStart', { userId: user.id });
     updatePlayState(PlayState.stateWaiting);
   };
 

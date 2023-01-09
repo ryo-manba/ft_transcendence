@@ -27,6 +27,11 @@ import { CheckBanDto } from './dto/check-ban.dto';
 import { GetMessagesDto } from './dto/get-messages.dto';
 import { DeleteChatroomMemberDto } from './dto/delete-chatroom-member.dto';
 import { UpdateChatroomOwnerDto } from './dto/update-chatroom-owner.dto';
+import { OnGetRoomsDto } from './dto/on-get-rooms.dto';
+import { ChangeCurrentRoomDto } from './dto/change-current-room.dto';
+import { LeaveSocketDto } from './dto/leave-socket.dto';
+import { OnRoomJoinableDto } from './dto/on-room-joinable.dto';
+import { GetAdminsIdsDto } from './dto/get-admins-ids.dto';
 
 @WebSocketGateway({
   cors: {
@@ -70,16 +75,16 @@ export class ChatGateway {
 
   /**
    * 入室しているチャットルーム一覧を返す
-   * @param userId
+   * @param OnGetRoomsDto
    */
   @SubscribeMessage('chat:getJoinedRooms')
   async onGetRooms(
     @ConnectedSocket() client: Socket,
-    @MessageBody() userId: number,
+    @MessageBody() dto: OnGetRoomsDto,
   ) {
-    this.logger.log(`chat:getJoinedRooms: ${userId}`);
+    this.logger.log(`chat:getJoinedRooms: ${dto.userId}`);
     // ユーザーが入室しているチャットルームを取得する
-    const rooms = await this.chatService.findJoinedRooms(userId);
+    const rooms = await this.chatService.findJoinedRooms(dto.userId);
     // フロントエンドへ送り返す
     client.emit('chat:getJoinedRooms', rooms);
   }
@@ -121,15 +126,15 @@ export class ChatGateway {
 
   /**
    * ソケットを引数で受けとったルームにjoinさせる
-   * @param roomID
+   * @param ChangeCurrentRoomDto
    * @return チャットルームに対応したメッセージを取得して返す
    */
   @SubscribeMessage('chat:changeCurrentRoom')
   async changeCurrentRoom(
     @ConnectedSocket() client: Socket,
-    @MessageBody() roomId: number,
+    @MessageBody() dto: ChangeCurrentRoomDto,
   ): Promise<Message[]> {
-    this.logger.log(`chat:changeCurrentRoom received -> ${roomId}`);
+    this.logger.log(`chat:changeCurrentRoom received -> ${dto.roomId}`);
 
     // 0番目には、socketのidが入っている
     if (client.rooms.size >= 2) {
@@ -137,10 +142,10 @@ export class ChatGateway {
       const target = Array.from(client.rooms)[1];
       await client.leave(target);
     }
-    await client.join(String(roomId));
+    await client.join(String(dto.roomId));
 
     const findInfo: GetMessagesDto = {
-      chatroomId: roomId,
+      chatroomId: dto.roomId,
       skip: 0,
     };
     // 既存のメッセージを取得する
@@ -194,15 +199,15 @@ export class ChatGateway {
   /**
    * ルームからソケットを退出させる
    * @param client
-   * @param roomId
+   * @param LeaveSocketDto
    */
   @SubscribeMessage('chat:leaveSocket')
   async leaveSocket(
     @ConnectedSocket() client: Socket,
-    @MessageBody() roomId: number,
+    @MessageBody() dto: LeaveSocketDto,
   ): Promise<void> {
-    this.logger.log(`chat:leaveSocket received -> ${roomId}`);
-    await client.leave(String(roomId));
+    this.logger.log(`chat:leaveSocket received -> ${dto.roomId}`);
+    await client.leave(String(dto.roomId));
   }
 
   /**
@@ -221,7 +226,7 @@ export class ChatGateway {
     if (!deletedMember) {
       return false;
     }
-    await this.leaveSocket(client, dto.chatroomId);
+    await this.leaveSocket(client, { roomId: dto.chatroomId });
 
     // チャットルームを抜けたことで入室者がいなくなる場合は削除する
     // BAN or MUTEのユーザーは無視する
@@ -298,14 +303,14 @@ export class ChatGateway {
 
   /**
    * 入室可能な部屋の一覧を返す
-   * @param userId
+   * @param OnRoomJoinableDto
    */
   @SubscribeMessage('chat:getJoinableRooms')
   async onRoomJoinable(
     @ConnectedSocket() client: Socket,
-    @MessageBody() userId: number,
+    @MessageBody() dto: OnRoomJoinableDto,
   ): Promise<any> {
-    this.logger.log(`chat:getJoinableRooms received -> roomId: ${userId}`);
+    this.logger.log(`chat:getJoinableRooms received -> roomId: ${dto.userId}`);
 
     // Private以外のチャットルームに絞る
     const notPrivate = {
@@ -320,7 +325,7 @@ export class ChatGateway {
     const viewableRooms = await this.chatService.findAll(notPrivate);
 
     // userが所属しているチャットルームの一覧を取得する
-    const joinedRooms = await this.chatService.findJoinedRooms(userId);
+    const joinedRooms = await this.chatService.findJoinedRooms(dto.userId);
 
     const roomsDiff = this.getChatroomDiff(viewableRooms, joinedRooms);
     const viewableAndNotJoinedRooms = viewableRooms.filter((item) => {
@@ -350,16 +355,16 @@ export class ChatGateway {
 
   /**
    * チャットルームのadminId一覧を返す
-   * @param roomId
+   * @param GetAdminsIdsDto
    */
   @SubscribeMessage('chat:getAdminIds')
   async getAdminsIds(
     @ConnectedSocket() client: Socket,
-    @MessageBody() roomId: number,
+    @MessageBody() dto: GetAdminsIdsDto,
   ): Promise<number[]> {
-    this.logger.log(`chat:getAdmins received -> roomId: ${roomId}`);
+    this.logger.log(`chat:getAdmins received -> roomId: ${dto.roomId}`);
 
-    const admins = await this.chatService.findAdmins(roomId);
+    const admins = await this.chatService.findAdmins(dto.roomId);
     const res = admins.map((admin) => {
       return admin.userId;
     });
