@@ -27,6 +27,7 @@ import { LeaveSocketDto } from './dto/leave-socket.dto';
 import { OnRoomJoinableDto } from './dto/on-room-joinable.dto';
 import { GetAdminsIdsDto } from './dto/get-admins-ids.dto';
 import { GetMessagesCountDto } from './dto/get-messages-count.dto';
+import type { ChatMessage } from './types/chat';
 
 @WebSocketGateway({
   cors: {
@@ -112,9 +113,15 @@ export class ChatGateway {
     if (res === undefined) {
       return false;
     }
+    const chatMessage: ChatMessage = {
+      text: res.message,
+      userName: createMessageDto.userName,
+      createdAt: res.createdAt,
+    };
+
     this.server
       .to(String(createMessageDto.chatroomId))
-      .emit('chat:receiveMessage', createMessageDto);
+      .emit('chat:receiveMessage', chatMessage);
 
     return true;
   }

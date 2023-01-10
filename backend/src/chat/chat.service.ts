@@ -138,12 +138,16 @@ export class ChatService {
     try {
       const message = await this.prisma.message.create({
         data: {
-          ...createMessageDto,
+          userId: createMessageDto.userId,
+          chatroomId: createMessageDto.chatroomId,
+          message: createMessageDto.message,
         },
       });
 
       return message;
-    } catch (err) {
+    } catch (error) {
+      this.logger.log('addMessage', error);
+
       return undefined;
     }
   }
@@ -201,8 +205,6 @@ export class ChatService {
         createdAt: message.createdAt,
       };
     });
-
-    console.log(chatMessages);
 
     return chatMessages;
   }
