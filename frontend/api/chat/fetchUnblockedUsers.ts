@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { Friend } from 'types/friend';
+import { ChatUser } from 'types/chat';
 
 type Props = {
   userId: number;
@@ -7,12 +7,12 @@ type Props = {
 
 const endpoint = `${
   process.env.NEXT_PUBLIC_API_URL as string
-}/friends/unfollowings`;
+}/chat/unblocked-users`;
 
-export const fetchUnFollowingUsers = async ({ userId }: Props) => {
+export const fetchUnblockedUsers = async ({ userId }: Props) => {
   try {
-    const response = await axios.get<Friend[]>(endpoint, {
-      params: { id: userId },
+    const response = await axios.get<ChatUser[]>(endpoint, {
+      params: { userId: userId },
     });
 
     return response.data;

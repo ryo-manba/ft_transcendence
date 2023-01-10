@@ -9,6 +9,7 @@ import {
   Message,
   Prisma,
   ChatroomMembersStatus,
+  BlockRelation,
 } from '@prisma/client';
 import { CreateChatroomDto } from './dto/create-chatroom.dto';
 import { CreateMessageDto } from './dto/create-message.dto';
@@ -20,6 +21,7 @@ import { updateMemberStatusDto } from './dto/update-member-status.dto';
 import { createDirectMessageDto } from './dto/create-direct-message.dto';
 import { DeleteChatroomDto } from './dto/delete-chatroom.dto';
 import { DeleteChatroomMemberDto } from './dto/delete-chatroom-member.dto';
+import { CreateBlockRelationDto } from './dto/create-block-relation.dto';
 
 // 2の12乗回の演算が必要という意味
 const saltRounds = 12;
@@ -590,7 +592,7 @@ export class ChatService {
   /**
    * user1 と user2 が含まれているDMルームがすでに存在するかを確認する
    * @return 既にある -> true
-   * @teturn ない -> false
+   * @return ない -> false
    */
   async isCreatedDMRoom(userId1: number, userId2: number): Promise<boolean> {
     const DMRooms = await this.prisma.chatroom.findMany({
@@ -697,5 +699,76 @@ export class ChatService {
 
       return false;
     }
+  }
+
+  /**
+   * BlockRelationにデータを作成する
+   * @param CreateBlockRelationDto
+   */
+  async createBlockRelation(
+    dto: CreateBlockRelationDto,
+  ): Promise<BlockRelation> {
+    this.logger.log('createBlockRelation: ', dto);
+    try {
+      const blockRelation = await this.prisma.blockRelation.create({
+        data: {
+          ...dto,
+        },
+      });
+
+      return blockRelation;
+    } catch (error) {
+      this.logger.log('createBlockRelation: : ', error);
+
+      return undefined;
+    }
+  }
+
+  /**
+   * 次のブロック処理を行う
+   * - BlockUserRelationにデータを作成する
+   * - ブロックしたユーザとのフレンド関係を削除する
+   * @param CreateBlockUserDto
+   */
+  async blockUser(dto: CreateBlockRelationDto): Promise<BlockRelation> {
+    this.logger.log('blockUser: ', dto);
+
+    const blockRelation = await this.createBlockRelation(dto);
+    if (!blockRelation) {
+      return undefined;
+    }
+
+    // ブロックしたユーザとのフレンド関係を削除する
+    const wheres = [
+      { followerId: dto.blockedByUserId, followingId: dto.blockingUserId },
+      { followerId: dto.blockingUserId, followingId: dto.blockedByUserId },
+    ];
+    try {
+      await this.prisma.friendRelation.deleteMany({
+        where: {
+          OR: [...wheres],
+        },
+      });
+    } catch (error) {
+      this.logger.log('blockUser: ', error);
+    }
+
+    return blockRelation;
+  }
+
+  /**
+   * ブロックされているユーザ一覧を返す
+   * @param Prisma.BlockRelationWhereInput
+   */
+  async findBlockedUsers(
+    where: Prisma.BlockRelationWhereInput,
+  ): Promise<BlockRelation[]> {
+    this.logger.log('findBlockedUsers: ', where);
+
+    const blockedUsers = await this.prisma.blockRelation.findMany({
+      where: where,
+    });
+
+    return blockedUsers;
   }
 }

@@ -46,7 +46,7 @@ export class FriendsService {
    * - フォローしていないユーザーのID
    * - フォローしていないユーザーの名前
    */
-  async findUnFollowingUsers(userId: number): Promise<Friend[]> {
+  async findUnfollowingUsers(userId: number): Promise<Friend[]> {
     // フォローしているユーザー一覧を取得する
     const followingUsers = await this.findFollowingUsers(userId);
     // idのみの配列に変換する
@@ -54,27 +54,32 @@ export class FriendsService {
       return user.id;
     });
 
-    // 自分自身を含めないためにフォローしてるユーザーに追加する
-    followingUserIds.push(userId);
-
-    // 全ユーザーからフォローしているユーザーを除いて取得する
+    // 全ユーザーの中からフォローしているユーザーと自分自身をを除いて取得する
     const unfollowingUsers = await this.userService.findAll({
       where: {
-        NOT: {
-          id: { in: followingUserIds },
-        },
+        AND: [
+          {
+            NOT: {
+              id: { in: followingUserIds },
+            },
+          },
+          {
+            NOT: {
+              id: userId,
+            },
+          },
+        ],
       },
     });
 
-    // 名前とidのみに絞る(他のデータは不要なため)
-    const res = unfollowingUsers.map((user) => {
+    const userNameAndIdArray = unfollowingUsers.map((user) => {
       return {
         id: user.id,
         name: user.name,
       };
     });
 
-    return res;
+    return userNameAndIdArray;
   }
 
   /**
@@ -134,7 +139,25 @@ export class FriendsService {
    * Friendリレーションを作成することでUserのフォロー処理を行う
    */
   async follow(dto: CreateFriendDto): Promise<Msg> {
+    const where = [
+      { blockedByUserId: dto.followerId, blockingUserId: dto.followingId },
+      { blockedByUserId: dto.followingId, blockingUserId: dto.followerId },
+    ];
     // TODO: ブロックされてたら友達追加できないようにする?
+    const blockRelations = await this.prisma.blockRelation.findMany({
+      where: {
+        OR: [...where],
+      },
+    });
+
+    if (blockRelations.length > 0) {
+      // 自分がブロックしている場合
+      if (blockRelations[0].blockedByUserId === dto.followerId) {
+        return { message: 'You blocked this user.' };
+      } else {
+        return { message: 'This user blocked you.' };
+      }
+    }
 
     // フォロー処理を行う
     const res = await this.create(dto);
@@ -142,6 +165,6 @@ export class FriendsService {
       return { message: 'ok' };
     }
 
-    return { message: 'Error: can not followed' };
+    return { message: 'Failed to follow user.' };
   }
 }

@@ -49,7 +49,6 @@ export const FriendListItem = memo(function FriendListItem({
 
     const updateStatus = async (ignore: boolean) => {
       const fetchedStatus = await getUserStatusById({ userId: friend.id });
-      console.log(fetchedStatus);
       if (!ignore) {
         setFriendStatus(fetchedStatus);
       }
@@ -99,7 +98,6 @@ export const FriendListItem = memo(function FriendListItem({
       name1: user.name,
       name2: friend.name,
     };
-    console.log('chat:directMessage %o', DMInfo);
     socket.emit('chat:directMessage', DMInfo, (res: boolean) => {
       if (!res) {
         setError('Failed to start direct messages.');

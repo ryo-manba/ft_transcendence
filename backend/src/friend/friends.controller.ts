@@ -37,11 +37,11 @@ export class FriendsController {
    * - フォローしていないユーザーの名前
    */
   @Get('unfollowings')
-  async findUnFollowingUsers(
+  async findUnfollowingUsers(
     @Req() req: Request,
     @Query('id', ParseIntPipe) id: number,
   ): Promise<Friend[]> {
-    return await this.friendsService.findUnFollowingUsers(id);
+    return await this.friendsService.findUnfollowingUsers(id);
   }
 
   /**

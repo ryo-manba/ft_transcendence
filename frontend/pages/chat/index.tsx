@@ -36,6 +36,8 @@ const Chat: NextPage = () => {
   useEffect(() => {
     if (!socket || !user) return;
 
+    socket.emit('chat:joinMyRoom', user.id);
+
     // 他ユーザーからのメッセージを受け取る
     socket.on('chat:receiveMessage', (data: Message) => {
       console.log('chat:receiveMessage', data.message);
@@ -85,9 +87,9 @@ const Chat: NextPage = () => {
       message: text,
     };
 
-    socket.emit('chat:sendMessage', message, (res: boolean) => {
-      if (!res) {
-        setError('You can not send a message.');
+    socket.emit('chat:sendMessage', message, (res: string) => {
+      if (res !== 'ok') {
+        setError(res);
       }
     });
     setText('');

@@ -1,4 +1,5 @@
 import { useState, memo, useCallback } from 'react';
+import { useRouter } from 'next/router';
 import {
   Button,
   Dialog,
@@ -11,8 +12,8 @@ import {
   MenuItem,
   FormControl,
 } from '@mui/material';
+import { blue } from '@mui/material/colors';
 import { Friend } from 'types/friend';
-import { useRouter } from 'next/router';
 
 type Props = {
   friend: Friend;
@@ -83,9 +84,9 @@ export const FriendInfoDialog = memo(function FriendInfoDialog({
 
   return (
     <Dialog open={open} onClose={handleClose}>
-      <DialogTitle>{friend.name}</DialogTitle>
-      <DialogContent>
-        <FormControl sx={{ m: 1, minWidth: 120 }}>
+      <DialogTitle sx={{ bgcolor: blue[100] }}>{friend.name}</DialogTitle>
+      <DialogContent sx={{ minWidth: 360, maxHeight: 360 }}>
+        <FormControl sx={{ m: 2, minWidth: 240 }}>
           <InputLabel id="action-type-select-label">Action</InputLabel>
           <Select
             labelId="action-type-select-label"
@@ -102,7 +103,9 @@ export const FriendInfoDialog = memo(function FriendInfoDialog({
       </DialogContent>
       <DialogActions>
         <Button onClick={handleClose}>Cancel</Button>
-        <Button onClick={handleSubmit}>Submit</Button>
+        <Button onClick={handleSubmit} variant="contained">
+          Submit
+        </Button>
       </DialogActions>
     </Dialog>
   );

@@ -285,6 +285,9 @@ export const ChatroomListItem = memo(function ChatroomListItem({
         }
         divider
         button
+        onClick={() => {
+          changeCurrentRoom(room.id);
+        }}
       >
         <ListItemAvatar>
           {room.type === ChatroomType.DM ? (
@@ -310,9 +313,6 @@ export const ChatroomListItem = memo(function ChatroomListItem({
         />
         <ListItemText
           primary={room.name}
-          onClick={() => {
-            changeCurrentRoom(room.id);
-          }}
           style={{
             overflow: 'hidden',
           }}
