@@ -8,3 +8,8 @@ export type AxiosErrorResponse = {
   message: string[] | string;
   error: string;
 };
+
+export type LoginResult = {
+  res: string;
+  userId: number | undefined;
+};
