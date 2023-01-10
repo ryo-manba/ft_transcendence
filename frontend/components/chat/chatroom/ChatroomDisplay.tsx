@@ -10,14 +10,14 @@ import {
   MutableRefObject,
 } from 'react';
 import { Socket } from 'socket.io-client';
-import { TextField, IconButton, Box, Collapse, Paper } from '@mui/material';
-import SendIcon from '@mui/icons-material/Send';
+import { Box, Collapse, Paper } from '@mui/material';
 import { Chatroom, Message } from 'types/chat';
 import { useQueryUser } from 'hooks/useQueryUser';
 import { Loading } from 'components/common/Loading';
 import { ChatErrorAlert } from 'components/chat/utils/ChatErrorAlert';
 import { MessageLeft } from 'components/chat/chatroom/ChatroomMessage';
 import { fetchMessages } from 'api/chat/fetchMessages';
+import { ChatroomTextInput } from 'components/chat/chatroom/ChatroomTextInput';
 
 import { Virtuoso } from 'react-virtuoso';
 
@@ -40,13 +40,13 @@ type MessagesListProps = {
   startReached: () => void;
 };
 
-function MessagesList({
+const MessagesList = ({
   chatId,
   startIndex,
   messages,
   virtuoso,
   startReached,
-}: MessagesListProps) {
+}: MessagesListProps) => {
   // messageが500件あったら500がfirstItemIndexになる
   // そこから0に向かって進んでいく
   const [firstItemIndex, setFirstItemIndex] = useState(
@@ -103,7 +103,7 @@ function MessagesList({
       />
     </div>
   );
-}
+};
 
 export const ChatroomDisplay = memo(function ChatroomDisplay({
   currentRoomId,
@@ -112,7 +112,6 @@ export const ChatroomDisplay = memo(function ChatroomDisplay({
   setMessages,
   socket,
 }: Props) {
-  const [text, setText] = useState('');
   const [error, setError] = useState<string>('');
   const { data: user } = useQueryUser();
   const [page, setPage] = useState(1); // ページ番号を保持するstate
@@ -124,10 +123,11 @@ export const ChatroomDisplay = memo(function ChatroomDisplay({
 
   console.log('chatDisplay:', currentRoomId);
 
-  // send a message to the server
-  const sendMessage = () => {
+  const sendMessage = (text: string) => {
+    console.log('sendMessage');
     const message = {
       userId: user.id,
+      userName: user.name,
       chatroomId: currentRoomId,
       message: text,
     };
@@ -137,33 +137,13 @@ export const ChatroomDisplay = memo(function ChatroomDisplay({
         setError('You can not send a message.');
       }
     });
-    setText('');
   };
-
-  // WIP: ランダムメッセージを追加する
-  // useEffect(() => {
-  //   const initialMessages = Array.from({ length: 30 }, loremIpsum);
-  //   for (let i = 0; i < initialMessages.length; i++) {
-  //     const message = {
-  //       userId: user.id,
-  //       chatroomId: currentRoomId,
-  //       message: initialMessages[i],
-  //     };
-
-  //     socket.emit('chat:sendMessage', message, (res: boolean) => {
-  //       if (!res) {
-  //         setError('You can not send a message.');
-  //       }
-  //     });
-  //   }
-  // }, [currentRoomId]);
 
   useEffect(() => {
     if (!socket || !user) return;
 
     // 他ユーザーからのメッセージを受け取る
     socket.on('chat:receiveMessage', (data: Message) => {
-      console.log('chat:receiveMessage', data.text);
       setMessages((prev) => [...prev, data]);
     });
 
@@ -242,8 +222,6 @@ export const ChatroomDisplay = memo(function ChatroomDisplay({
     <>
       <Paper
         style={{
-          // padding: '0px',
-          // position: 'relative',
           display: 'flex',
           flexDirection: 'column',
           height: `calc(100vh - ${appBarHeight})`,
@@ -271,38 +249,7 @@ export const ChatroomDisplay = memo(function ChatroomDisplay({
           </Collapse>
         </Box>
         <form style={{ display: 'flex', alignItems: 'center', padding: '2px' }}>
-          <TextField
-            autoFocus
-            fullWidth
-            style={{
-              flexGrow: 1,
-              bottom: 15,
-              marginLeft: 5,
-              marginRight: 5,
-            }}
-            label="Message"
-            id="Message"
-            type="text"
-            variant="standard"
-            size="small"
-            value={text}
-            placeholder={`#roomへメッセージを送信`}
-            onKeyPress={(e) => {
-              if (e.key === 'Enter') {
-                sendMessage();
-              }
-            }}
-            onChange={(e) => {
-              setText(e.target.value);
-            }}
-            InputProps={{
-              endAdornment: (
-                <IconButton onClick={sendMessage}>
-                  <SendIcon />
-                </IconButton>
-              ),
-            }}
-          />
+          <ChatroomTextInput sendMessage={sendMessage} />
         </form>
       </Paper>
     </>
