@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { useQueryClient, useMutation } from '@tanstack/react-query';
 import { User, UserStatus } from '@prisma/client';
+import Debug from 'debug';
 
 type Props = {
   userId: number;
@@ -10,6 +11,7 @@ type Props = {
 const endpoint = `${process.env.NEXT_PUBLIC_API_URL as string}/user/status`;
 
 export const useMutationStatus = () => {
+  const debug = Debug('user');
   const queryClient = useQueryClient();
 
   const updateStatusMutation = useMutation<
@@ -39,7 +41,7 @@ export const useMutationStatus = () => {
         }
       },
       onError: (err: Error) => {
-        console.error(err);
+        debug(err);
         throw err;
       },
     },

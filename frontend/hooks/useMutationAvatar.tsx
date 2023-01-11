@@ -1,8 +1,10 @@
 import axios, { AxiosError } from 'axios';
 import { useQueryClient, useMutation } from '@tanstack/react-query';
 import { User } from '@prisma/client';
+import Debug from 'debug';
 
 export const useMutationAvatar = () => {
+  const debug = Debug('user');
   const queryClient = useQueryClient();
 
   const updateAvatarMutation = useMutation<
@@ -28,7 +30,7 @@ export const useMutationAvatar = () => {
         }
       },
       onError: (err: AxiosError) => {
-        console.log(err);
+        debug(err);
         throw err;
       },
     },
@@ -59,7 +61,7 @@ export const useMutationAvatar = () => {
         }
       },
       onError: (err: AxiosError) => {
-        console.log(err);
+        debug(err);
       },
     },
   );

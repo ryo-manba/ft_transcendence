@@ -3,8 +3,10 @@ import { useRouter } from 'next/router';
 import { useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { Loading } from 'components/common/Loading';
+import Debug from 'debug';
 
 const Authenticate = () => {
+  const debug = Debug('authenticate');
   const router = useRouter();
   const { data: session, status } = useSession();
   useEffect(() => {
@@ -14,7 +16,7 @@ const Authenticate = () => {
           if (session && session.user !== undefined && session.user !== null) {
             let loginName = '';
             let imageUrl = '';
-            console.log(session);
+            debug.log(session);
             if (
               session.user.email &&
               session.user.email.indexOf('gmail.com') !== -1
@@ -34,11 +36,11 @@ const Authenticate = () => {
                 imagePath: imageUrl,
               })
               .then((res) => {
-                console.log(res);
+                debug(res);
                 void router.push('/dashboard');
               })
               .catch((err) => {
-                console.log(err);
+                debug(err);
               });
           }
         }

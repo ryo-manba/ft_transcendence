@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { User } from '@prisma/client';
+import Debug from 'debug';
 
 type Props = {
   userId: number;
@@ -10,6 +11,7 @@ const endpoint = `${process.env.NEXT_PUBLIC_API_URL as string}/user`;
 export const getUserById = async ({
   userId,
 }: Props): Promise<Omit<User, 'hashedPassword'>> => {
+  const debug = Debug('user');
   try {
     if (Number.isNaN(userId)) throw new Error('UserId is invalid');
 
@@ -24,7 +26,7 @@ export const getUserById = async ({
 
     return data;
   } catch (error) {
-    console.error(error);
+    debug(error);
 
     throw error;
   }

@@ -6,6 +6,7 @@ import { FriendAddDialog } from 'components/chat/friend/FriendAddDialog';
 import { Loading } from 'components/common/Loading';
 import { fetchUnFollowingUsers } from 'api/friend/fetchUnFollowingUsers';
 import { Friend } from 'types/friend';
+import Debug from 'debug';
 
 type Props = {
   setFriends: Dispatch<SetStateAction<Friend[]>>;
@@ -14,6 +15,7 @@ type Props = {
 export const FriendAddButton = memo(function FriendAddButton({
   setFriends,
 }: Props) {
+  const debug = Debug('friend');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [unfollowingUsers, setUnFollowingUsers] = useState<Friend[]>([]);
   const { data: user } = useQueryUser();
@@ -31,10 +33,10 @@ export const FriendAddButton = memo(function FriendAddButton({
     // ボタンをクリックすると、まだフレンド追加していないUser情報を取得する
     reload()
       .then((res) => {
-        console.log(res);
+        debug(res);
       })
       .catch((err) => {
-        console.log(err);
+        debug(err);
       });
     setDialogOpen(true);
   }, [dialogOpen]);

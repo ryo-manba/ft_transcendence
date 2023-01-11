@@ -24,6 +24,7 @@ import { useQueryUser } from 'hooks/useQueryUser';
 import { Loading } from 'components/common/Loading';
 import { ChatErrorAlert } from 'components/chat/utils/ChatErrorAlert';
 import { ChatPasswordForm } from 'components/chat/utils/ChatPasswordForm';
+import Debug from 'debug';
 
 type Props = {
   socket: Socket;
@@ -39,6 +40,7 @@ export const ChatroomCreateButton = memo(function ChatroomCreateButton({
   socket,
   setRooms,
 }: Props) {
+  const debug = Debug('chat');
   const [open, setOpen] = useState(false);
   const [roomType, setRoomType] = useState<ChatroomType>(ChatroomType.PUBLIC);
   const [error, setError] = useState('');
@@ -112,7 +114,7 @@ export const ChatroomCreateButton = memo(function ChatroomCreateButton({
       ownerId: user.id,
       password: roomType === ChatroomType.PROTECTED ? data.password : undefined,
     };
-    console.log('create chatroom: %o', room);
+    debug('create chatroom: %o', room);
     createChatroom(room);
     getJoinedRooms();
     handleClose();

@@ -20,6 +20,7 @@ import { useRouter } from 'next/router';
 import { Invitation } from 'types/game';
 import { BadgedAvatar } from 'components/common/BadgedAvatar';
 import { ChatErrorAlert } from 'components/chat/utils/ChatErrorAlert';
+import Debug from 'debug';
 
 type Props = {
   friend: Friend;
@@ -30,6 +31,7 @@ export const FriendListItem = memo(function FriendListItem({
   friend,
   socket,
 }: Props) {
+  const debug = Debug('friend');
   const [open, setOpen] = useState(false);
   const [friendStatus, setFriendStatus] = useState<UserStatus>('OFFLINE');
   const { data: user } = useQueryUser();
@@ -47,12 +49,12 @@ export const FriendListItem = memo(function FriendListItem({
   useEffect(() => {
     const updateStatus = async () => {
       const fetchedStatus = await getUserStatusById({ userId: friend.id });
-      console.log(fetchedStatus);
+      debug(fetchedStatus);
       setFriendStatus(fetchedStatus);
     };
 
     updateStatus().catch((err) => {
-      console.error(err);
+      debug(err);
     });
   }, []);
 
@@ -91,7 +93,7 @@ export const FriendListItem = memo(function FriendListItem({
       name1: user.name,
       name2: friend.name,
     };
-    console.log('chat:directMessage %o', DMInfo);
+    debug('chat:directMessage %o', DMInfo);
     socket.emit('chat:directMessage', DMInfo, (res: boolean) => {
       if (!res) {
         setError('Failed to start direct messages.');

@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { UserStatus } from '@prisma/client';
+import Debug from 'debug';
 
 type Props = {
   userId: number;
@@ -8,6 +9,7 @@ type Props = {
 const endpoint = `${process.env.NEXT_PUBLIC_API_URL as string}/user/status`;
 
 export const getUserStatusById = async ({ userId }: Props) => {
+  const debug = Debug('user');
   try {
     if (Number.isNaN(userId)) throw new Error('UserId is invalid');
     const { data } = await axios.get<UserStatus>(endpoint, {
@@ -18,7 +20,7 @@ export const getUserStatusById = async ({ userId }: Props) => {
 
     return data;
   } catch (error) {
-    console.error(error);
+    debug(error);
 
     return 'OFFLINE';
   }

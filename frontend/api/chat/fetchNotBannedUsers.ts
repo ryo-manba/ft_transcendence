@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { ChatUser } from 'types/chat';
+import Debug from 'debug';
 
 type Props = {
   roomId: number;
@@ -8,6 +9,7 @@ type Props = {
 const endpoint = `${process.env.NEXT_PUBLIC_API_URL as string}/chat/non-banned`;
 
 export const fetchNotBannedUsers = async ({ roomId }: Props) => {
+  const debug = Debug('chat');
   try {
     const response = await axios.get<ChatUser[]>(endpoint, {
       params: { roomId: roomId },
@@ -15,7 +17,7 @@ export const fetchNotBannedUsers = async ({ roomId }: Props) => {
 
     return response.data;
   } catch (error) {
-    console.log(error);
+    debug(error);
 
     return [];
   }

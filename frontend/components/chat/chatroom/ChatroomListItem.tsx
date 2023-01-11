@@ -19,6 +19,7 @@ import { useQueryUser } from 'hooks/useQueryUser';
 import { Loading } from 'components/common/Loading';
 import { ChatroomSettingDialog } from 'components/chat/chatroom/ChatroomSettingDialog';
 import { ChatErrorAlert } from 'components/chat/utils/ChatErrorAlert';
+import Debug from 'debug';
 
 type Props = {
   room: Chatroom;
@@ -33,6 +34,7 @@ export const ChatroomListItem = memo(function ChatroomListItem({
   setCurrentRoomId,
   setMessages,
 }: Props) {
+  const debug = Debug('chat');
   const [open, setOpen] = useState(false);
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
@@ -48,7 +50,7 @@ export const ChatroomListItem = memo(function ChatroomListItem({
 
     // adminかどうかを判定する
     socket.emit('chat:getAdminIds', room.id, (adminIds: number[]) => {
-      console.log('adminIds', adminIds);
+      debug('adminIds %o', adminIds);
       if (adminIds.includes(user.id)) {
         setIsAdmin(true);
       }
@@ -57,7 +59,7 @@ export const ChatroomListItem = memo(function ChatroomListItem({
 
   // ルームをクリックしたときの処理
   const changeCurrentRoom = (roomId: number) => {
-    console.log('changeCurrentRoom:', roomId);
+    debug('changeCurrentRoom: %d', roomId);
 
     const checkBanInfo = {
       userId: user.id,
@@ -65,7 +67,7 @@ export const ChatroomListItem = memo(function ChatroomListItem({
     };
     // banされていないかチェックする
     socket.emit('chat:isBannedUser', checkBanInfo, (isBanned: boolean) => {
-      console.log('chat:isBannedUser', isBanned);
+      debug('chat:isBannedUser %d', isBanned);
       if (isBanned) {
         setError('You were banned.');
         setCurrentRoomId(0);

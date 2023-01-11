@@ -12,10 +12,12 @@ import { Loading } from 'components/common/Loading';
 import { NextPage } from 'next';
 import { Layout } from 'components/common/Layout';
 import { ChatErrorAlert } from 'components/chat/utils/ChatErrorAlert';
+import Debug from 'debug';
 
 const appBarHeight = '64px';
 
 const Chat: NextPage = () => {
+  const debug = Debug('chat');
   const [text, setText] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
   const NOT_JOINED_ROOM = 0;
@@ -38,13 +40,13 @@ const Chat: NextPage = () => {
 
     // 他ユーザーからのメッセージを受け取る
     socket.on('chat:receiveMessage', (data: Message) => {
-      console.log('chat:receiveMessage', data.message);
+      debug('chat:receiveMessage %s', data.message);
       setMessages((prev) => [...prev, data]);
     });
 
     // 現在所属しているチャットルームが削除された場合、表示されているチャット履歴を削除する
     socket.on('chat:deleteRoom', (deletedRoom: Chatroom) => {
-      console.log('chat:deleteRoom', deletedRoom);
+      debug('chat:deleteRoom %o', deletedRoom);
       // 表示中のチャットを削除する
       setMessages([]);
       setCurrentRoomId(NOT_JOINED_ROOM);
