@@ -8,7 +8,9 @@ type Props = {
   status: UserStatus;
 };
 
-const endpoint = `${process.env.NEXT_PUBLIC_API_URL as string}/user/status`;
+const endpoint = `${
+  process.env.NEXT_PUBLIC_API_URL as string
+}/user/update-status`;
 
 export const useMutationStatus = () => {
   const debug = Debug('user');
@@ -20,10 +22,12 @@ export const useMutationStatus = () => {
     Props
   >(
     async ({ userId, status }: Props) => {
-      const endpointWithParams =
-        endpoint + '/' + String(userId) + '/' + String(status);
       const { data } = await axios.patch<Omit<User, 'hashedPassword'>>(
-        endpointWithParams,
+        endpoint,
+        {
+          userId,
+          status,
+        },
       );
 
       return data;

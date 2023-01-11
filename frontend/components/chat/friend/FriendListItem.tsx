@@ -47,15 +47,22 @@ export const FriendListItem = memo(function FriendListItem({
   }
 
   useEffect(() => {
-    const updateStatus = async () => {
+    let ignore = false;
+
+    const updateStatus = async (ignore: boolean) => {
       const fetchedStatus = await getUserStatusById({ userId: friend.id });
-      debug(fetchedStatus);
-      setFriendStatus(fetchedStatus);
+      if (!ignore) {
+        setFriendStatus(fetchedStatus);
+      }
     };
 
-    updateStatus().catch((err) => {
+    updateStatus(ignore).catch((err) => {
       debug(err);
     });
+
+    return () => {
+      ignore = true;
+    };
   }, []);
 
   const inviteGame = async (friend: Friend) => {
@@ -93,7 +100,6 @@ export const FriendListItem = memo(function FriendListItem({
       name1: user.name,
       name2: friend.name,
     };
-    debug('chat:directMessage %o', DMInfo);
     socket.emit('chat:directMessage', DMInfo, (res: boolean) => {
       if (!res) {
         setError('Failed to start direct messages.');

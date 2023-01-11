@@ -249,7 +249,7 @@ export const Play = ({ updateFinishedGameInfo }: Props) => {
             move = -1;
           }
         }
-        socket.emit('barMove', move);
+        socket.emit('barMove', { move });
       }
     };
     const intervalId =

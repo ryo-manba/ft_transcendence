@@ -23,7 +23,7 @@ import { useForm, SubmitHandler, Controller } from 'react-hook-form';
 import { SettingForm } from 'types/setting';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { ChangeEventHandler, useState } from 'react';
+import { ChangeEventHandler, useEffect, useState } from 'react';
 import { useMutationAvatar } from 'hooks/useMutationAvatar';
 import { Loading } from 'components/common/Loading';
 import { AxiosError } from 'axios';
@@ -48,6 +48,9 @@ const Setting: NextPage = () => {
   const [error, setError] = useState<string[]>([]);
   const [openSnack, setOpenSnack] = useState('none');
   const [openConfirm, setOpenConfirm] = useState(false);
+  const [avatarImageUrl, setAvatarImageUrl] = useState<string | undefined>(
+    undefined,
+  );
   const {
     control,
     register,
@@ -64,10 +67,15 @@ const Setting: NextPage = () => {
   const { changeHas2FAMutation } = useMutationHas2FA();
   const router = useRouter();
 
+  useEffect(() => {
+    if (user === undefined) {
+      return;
+    }
+    setAvatarImageUrl(getAvatarImageUrl(user.id));
+  }, [user]);
+
   if (user === undefined || router.isReady === false)
     return <Loading fullHeight />;
-
-  const avatarImageUrl = getAvatarImageUrl(user.id);
 
   const onNameMutationError = (error: AxiosError) => {
     if (error.response && error.response.data) {
@@ -124,10 +132,20 @@ const Setting: NextPage = () => {
   const onDeleteAvatar = () => {
     setError([]);
     if (user.avatarPath !== null) {
-      deleteAvatarMutation.mutate({
-        userId: user.id,
-        avatarPath: user.avatarPath,
-      });
+      deleteAvatarMutation.mutate(
+        {
+          userId: user.id,
+          avatarPath: user.avatarPath,
+        },
+        {
+          onSuccess: () => {
+            setAvatarImageUrl(undefined);
+          },
+          onError: () => {
+            setError(['Failed to delete avatar']);
+          },
+        },
+      );
     }
   };
 

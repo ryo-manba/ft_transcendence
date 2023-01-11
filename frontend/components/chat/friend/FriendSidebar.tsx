@@ -7,6 +7,7 @@ import { Loading } from 'components/common/Loading';
 import { useQueryUser } from 'hooks/useQueryUser';
 import { Friend } from 'types/friend';
 import { fetchFollowingUsers } from 'api/friend/fetchFollowingUsers';
+import { ChatBlockButton } from 'components/chat/block/ChatBlockButton';
 
 type Props = {
   socket: Socket;
@@ -19,20 +20,41 @@ export const FriendSidebar = memo(function FriendSidebar({ socket }: Props) {
     return <Loading fullHeight />;
   }
 
+  const handleRemoveFriendById = (removeId: number) => {
+    setFriends((friends) => friends.filter((friend) => friend.id !== removeId));
+  };
+
   useEffect(() => {
-    const fetchFriends = async () => {
+    let ignore = false;
+
+    const setupFriends = async (ignore: boolean) => {
       const res = await fetchFollowingUsers({ userId: user.id });
 
-      setFriends(res);
+      if (!ignore) {
+        setFriends(res);
+      }
     };
 
-    void fetchFriends();
+    void setupFriends(ignore);
+
+    socket.on('chat:blocked', (blockedByUserId: number) => {
+      console.log('chat:blocked', blockedByUserId);
+      handleRemoveFriendById(blockedByUserId);
+    });
+
+    return () => {
+      socket.off('chat:blocked');
+      ignore = true;
+    };
   }, []);
 
   return (
     <>
-      {/* フレンド追加したら、リストを更新する */}
       <FriendAddButton setFriends={setFriends} />
+      <ChatBlockButton
+        socket={socket}
+        removeFriendById={handleRemoveFriendById}
+      />
       <List dense={false}>
         {friends &&
           friends.map((friend) => (

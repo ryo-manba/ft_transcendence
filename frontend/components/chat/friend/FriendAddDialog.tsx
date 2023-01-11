@@ -1,4 +1,4 @@
-import { memo, useState, Dispatch, SetStateAction } from 'react';
+import { memo, useState } from 'react';
 import {
   Avatar,
   Box,
@@ -24,7 +24,7 @@ import { ChatErrorAlert } from 'components/chat/utils/ChatErrorAlert';
 type Props = {
   open: boolean;
   users: Friend[];
-  setFriends: Dispatch<SetStateAction<Friend[]>>;
+  addFriends: (friend: Friend) => void;
   onClose: () => void;
 };
 
@@ -36,10 +36,12 @@ type FollowProps = {
 export const FriendAddDialog = memo(function FriendAddDialog({
   open,
   users,
-  setFriends,
+  addFriends,
   onClose,
 }: Props) {
-  const [selectedUser, setSelectedUser] = useState<Friend | null>(null);
+  const [selectedUser, setSelectedUser] = useState<Friend | undefined>(
+    undefined,
+  );
   const [error, setError] = useState('');
 
   const { data: user } = useQueryUser();
@@ -48,7 +50,7 @@ export const FriendAddDialog = memo(function FriendAddDialog({
   }
 
   const handleClose = () => {
-    setSelectedUser(null);
+    setSelectedUser(undefined);
     setError('');
     onClose();
   };
@@ -66,7 +68,7 @@ export const FriendAddDialog = memo(function FriendAddDialog({
    */
   const handleSubmit = () => {
     const addFriend = async () => {
-      if (selectedUser === null) return;
+      if (!selectedUser) return;
 
       const followProps: FollowProps = {
         followerId: user.id,
@@ -76,7 +78,7 @@ export const FriendAddDialog = memo(function FriendAddDialog({
       const res = await followUser(followProps);
       // 成功したら既存のfriendのリストを更新する
       if (res.message === 'ok') {
-        setFriends((prev) => [...prev, selectedUser]);
+        addFriends(selectedUser);
         handleClose();
       } else {
         // 友達を追加する処理(フォロー)に失敗したらエラーメッセージをセットする
@@ -90,16 +92,16 @@ export const FriendAddDialog = memo(function FriendAddDialog({
   return (
     <Dialog onClose={handleClose} open={open}>
       <DialogTitle sx={{ bgcolor: blue[100] }}>Users</DialogTitle>
-      <DialogContent>
+      <DialogContent sx={{ minWidth: 360, maxHeight: 360 }}>
         <Box sx={{ width: '100%', maxWidth: 360, bgcolor: 'background.paper' }}>
           <List sx={{ pt: 0 }}>
             {users.length === 0 ? (
               <div className="pt-4">No users are available.</div>
             ) : (
-              users.map((user, i) => (
+              users.map((user) => (
                 <ListItem
                   onClick={() => handleListItemClick(user)}
-                  key={i}
+                  key={user.id}
                   divider
                   button
                 >
@@ -113,8 +115,8 @@ export const FriendAddDialog = memo(function FriendAddDialog({
           </List>
         </Box>
       </DialogContent>
-      {users.length !== 0 && (
-        <p className="flex justify-center">Selected: {selectedUser?.name}</p>
+      {selectedUser && (
+        <p className="text-center">Selected: {selectedUser.name}</p>
       )}
       <Box sx={{ width: '100%' }}>
         <Collapse in={error !== ''}>
@@ -123,7 +125,11 @@ export const FriendAddDialog = memo(function FriendAddDialog({
       </Box>
       <DialogActions>
         <Button onClick={handleClose}>Cancel</Button>
-        <Button onClick={handleSubmit} disabled={!selectedUser}>
+        <Button
+          onClick={handleSubmit}
+          disabled={!selectedUser}
+          variant="contained"
+        >
           Add
         </Button>
       </DialogActions>

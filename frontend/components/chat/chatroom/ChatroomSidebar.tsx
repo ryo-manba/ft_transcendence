@@ -33,24 +33,24 @@ export const ChatroomSidebar = memo(function ChatroomSidebar({
     });
     // サイドバーのチャットルームを更新する
     socket.on('chat:updateSideBarRooms', () => {
-      socket.emit('chat:getJoinedRooms', user.id);
+      socket.emit('chat:getJoinedRooms', { userId: user.id });
     });
 
     // 現在所属しているチャットルームが削除された場合、表示されているチャット履歴を削除する
     socket.on('chat:deleteRoom', (deletedRoom: Chatroom) => {
       debug('chat:deleteRoom %o', deletedRoom);
+      // socketの退出処理をする
+      socket.emit('chat:leaveSocket', { roomId: deletedRoom.id });
+      // 所属しているチャットルーム一覧を取得する
+      socket.emit('chat:getJoinedRooms', { userId: user.id });
       // 表示中のメッセージを削除する
       setMessages([]);
       setCurrentRoomId(0);
-      // socketの退出処理をする
-      socket.emit('chat:leaveSocket');
-      // 所属しているチャットルーム一覧を取得する
-      socket.emit('chat:getJoinedRooms', user.id);
     });
 
     // setupが終わったら
     // 入室中のチャットルーム一覧を取得する
-    socket.emit('chat:getJoinedRooms', user.id);
+    socket.emit('chat:getJoinedRooms', { userId: user.id });
 
     return () => {
       socket.off('chat:getJoinedRooms');

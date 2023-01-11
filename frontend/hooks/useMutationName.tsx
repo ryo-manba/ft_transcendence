@@ -3,6 +3,15 @@ import { useQueryClient, useMutation } from '@tanstack/react-query';
 import { User } from '@prisma/client';
 import Debug from 'debug';
 
+type Props = {
+  userId: number;
+  updatedName: string;
+};
+
+const endpoint = `${
+  process.env.NEXT_PUBLIC_API_URL as string
+}/user/update-name`;
+
 export const useMutationName = () => {
   const debug = Debug('user');
   const queryClient = useQueryClient();
@@ -10,12 +19,12 @@ export const useMutationName = () => {
   const updateNameMutation = useMutation<
     Omit<User, 'hashedPassword'>,
     AxiosError,
-    { userId: number; updatedName: string }
+    Props
   >(
-    async ({ userId, updatedName }) => {
+    async ({ userId, updatedName }: Props) => {
       const { data } = await axios.patch<Omit<User, 'hashedPassword'>>(
-        `${process.env.NEXT_PUBLIC_API_URL as string}/user/name/${userId}`,
-        { name: updatedName },
+        endpoint,
+        { userId, name: updatedName },
       );
 
       return data;

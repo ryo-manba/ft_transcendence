@@ -29,39 +29,63 @@ const Profile: NextPage = () => {
   const [ranking, setRanking] = useState<number | undefined>(undefined);
 
   useEffect(() => {
-    const updateRanking = async () => {
+    let ignore = false;
+
+    const updateRanking = async (ignore: boolean) => {
       if (user === undefined) {
         return;
       }
       const currentRanking = await getUserRanking({ userId: user.id });
-      setRanking(currentRanking);
+      if (!ignore) {
+        setRanking(currentRanking);
+      }
     };
 
-    void updateRanking();
+    void updateRanking(ignore);
+
+    return () => {
+      ignore = true;
+    };
   }, [user]);
 
   useEffect(() => {
-    const updateRecordsNUser = async () => {
+    let ignore = false;
+
+    const updateRecordsNUser = async (ignore: boolean) => {
       if (router.isReady) {
         const userId = Number(router.query.userId);
+
         await getRecordsById({ userId })
           .then((res) => {
-            setRecords(res);
+            if (!ignore) {
+              setRecords(res);
+            }
           })
           .catch((err) => {
-            setRecordsError(err as Error);
+            if (!ignore) {
+              setRecordsError(err as Error);
+            }
           });
+
         await getUserById({ userId })
           .then((res) => {
-            setUser(res);
+            if (!ignore) {
+              setUser(res);
+            }
           })
           .catch((err) => {
-            setUserError(err as Error);
+            if (!ignore) {
+              setUserError(err as Error);
+            }
           });
       }
     };
 
-    void updateRecordsNUser();
+    void updateRecordsNUser(ignore);
+
+    return () => {
+      ignore = true;
+    };
   }, [router]);
 
   if (userError !== undefined || recordsError !== undefined) {

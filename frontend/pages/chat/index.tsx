@@ -38,6 +38,8 @@ const Chat: NextPage = () => {
   useEffect(() => {
     if (!socket || !user) return;
 
+    socket.emit('chat:joinMyRoom', user.id);
+
     // 他ユーザーからのメッセージを受け取る
     socket.on('chat:receiveMessage', (data: Message) => {
       debug('chat:receiveMessage %s', data.message);
@@ -50,10 +52,6 @@ const Chat: NextPage = () => {
       // 表示中のチャットを削除する
       setMessages([]);
       setCurrentRoomId(NOT_JOINED_ROOM);
-      // socketの退出処理をする
-      socket.emit('chat:leaveSocket');
-      // 所属しているチャットルーム一覧を取得する
-      socket.emit('chat:getJoinedRooms', user.id);
     });
 
     return () => {
@@ -87,9 +85,9 @@ const Chat: NextPage = () => {
       message: text,
     };
 
-    socket.emit('chat:sendMessage', message, (res: boolean) => {
-      if (!res) {
-        setError('You can not send a message.');
+    socket.emit('chat:sendMessage', message, (res: string) => {
+      if (res !== 'ok') {
+        setError(res);
       }
     });
     setText('');
