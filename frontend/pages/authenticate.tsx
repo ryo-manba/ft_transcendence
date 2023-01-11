@@ -59,22 +59,14 @@ const Authenticate = () => {
     void router.push('/');
   }
 
-  // ValidateのDialogから戻ってきたら呼ばれる
-  const handleClose = useCallback(
-    (validation: boolean) => {
-      // ダイアログを閉じる
-      setOpenValidationDialog(false);
-      setValidationUserId(0);
-      console.log(validation);
-      if (validation) {
-        void router.push('/dashboard');
-      } else {
-        // 検証失敗時は、signOutしてログイン画面に戻る
-        void signOut({ callbackUrl: `http://localhost:3000/` });
-      }
-    },
-    [setOpenValidationDialog, setValidationUserId],
-  );
+  // ValidateのDialogに失敗したらよばれる
+  const handleClose = useCallback(() => {
+    // ダイアログを閉じる
+    setOpenValidationDialog(false);
+    setValidationUserId(0);
+    // 検証失敗したので、signOutしてログイン画面に戻る
+    void signOut({ callbackUrl: `http://localhost:3000/` });
+  }, [setOpenValidationDialog, setValidationUserId]);
 
   return (
     <ValidationDialog

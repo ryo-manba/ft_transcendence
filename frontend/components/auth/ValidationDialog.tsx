@@ -30,7 +30,7 @@ type Props = {
    *
    * 認証コードが正しく検証されたときは、validation の値が true となります。
    */
-  onClose: (validation: boolean) => void;
+  onClose: () => void;
 };
 
 export const ValidationDialog: FC<Props> = ({
@@ -49,13 +49,10 @@ export const ValidationDialog: FC<Props> = ({
   } = useForm<TwoAuthForm>();
 
   // ダイアログを閉じるときの処理（クライアント側へコールバックする）
-  const handleClose = useCallback(
-    (validation: boolean) => {
-      onClose?.(validation);
-      setOpenErrorSnackbar(false);
-    },
-    [onClose],
-  );
+  const handleClose = useCallback(() => {
+    onClose();
+    setOpenErrorSnackbar(false);
+  }, [onClose]);
 
   const handleSnackClose = () => {
     setOpenErrorSnackbar(false);
@@ -75,7 +72,6 @@ export const ValidationDialog: FC<Props> = ({
       );
 
       if (data == true) {
-        void handleClose(true);
         await router.push('/dashboard');
       } else {
         setOpenErrorSnackbar(true);
@@ -89,12 +85,12 @@ export const ValidationDialog: FC<Props> = ({
 
   //実行時にQRコードを取得
   return (
-    <Dialog open={open} onClose={() => handleClose(false)}>
+    <Dialog open={open} onClose={() => handleClose()}>
       <DialogTitle sx={{ m: 0, p: 2 }}>
         Enter Authorization Code
         <IconButton
           aria-label="close"
-          onClick={() => handleClose(false)}
+          onClick={() => handleClose()}
           sx={{
             position: 'absolute',
             right: 8,

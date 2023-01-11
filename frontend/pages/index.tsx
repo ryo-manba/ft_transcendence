@@ -113,24 +113,13 @@ const Home: NextPage = () => {
     }
   };
 
-  // ValidateのDialogから戻ってきたら呼ばれる
-  const handleClose = useCallback(
-    (validation: boolean) => {
-      // ダイアログを閉じる
-      setOpenValidationDialog(false);
-      setValidationUserId(0);
-
-      // 実際にはここでアプリ固有の処理を行う★
-      if (validation) {
-        void router.push('/dashboard');
-      } else {
-        // TODO: validation失敗のSnackBar出しても良いかな。
-        // await signOut();
-        void router.push('/');
-      }
-    },
-    [setOpenValidationDialog, setValidationUserId],
-  );
+  // ValidateのDialogが失敗したら呼ばれる
+  const handleClose = useCallback(() => {
+    // ダイアログを閉じる
+    setOpenValidationDialog(false);
+    setValidationUserId(0);
+    void router.push('/');
+  }, [setOpenValidationDialog, setValidationUserId]);
 
   if (status === 'loading') {
     return <Loading fullHeight={true} />;
