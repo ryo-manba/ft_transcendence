@@ -23,7 +23,7 @@ import { ChatErrorAlert } from 'components/chat/utils/ChatErrorAlert';
 type Props = {
   room: Chatroom;
   socket: Socket;
-  setCurrentRoomId: Dispatch<SetStateAction<number>>;
+  setCurrentRoomId: Dispatch<SetStateAction<number | undefined>>;
   setMessages: Dispatch<SetStateAction<Message[]>>;
 };
 
@@ -79,7 +79,7 @@ export const ChatroomListItem = memo(function ChatroomListItem({
       console.log('chat:isBannedUser', isBanned);
       if (isBanned) {
         setError('You were banned.');
-        setCurrentRoomId(0);
+        setCurrentRoomId(undefined);
         setMessages([]);
       } else {
         // 入室に成功したら、既存のメッセージを受け取る
@@ -226,7 +226,7 @@ export const ChatroomListItem = memo(function ChatroomListItem({
     socket.emit('chat:leaveRoom', leaveRoomInfo, (res: boolean) => {
       if (res) {
         setMessages([]);
-        setCurrentRoomId(0);
+        setCurrentRoomId(undefined);
         // 所属しているチャットルーム一覧を取得する
         socket.emit('chat:getJoinedRooms', { userId: user.id });
       } else {

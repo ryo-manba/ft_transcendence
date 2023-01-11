@@ -11,7 +11,7 @@ import {
 } from 'react';
 import { Socket } from 'socket.io-client';
 import { Box, Collapse, Paper } from '@mui/material';
-import { Chatroom, Message } from 'types/chat';
+import { Message } from 'types/chat';
 import { useQueryUser } from 'hooks/useQueryUser';
 import { Loading } from 'components/common/Loading';
 import { ChatErrorAlert } from 'components/chat/utils/ChatErrorAlert';
@@ -27,7 +27,6 @@ const PAGE_SIZE = 10;
 type Props = {
   socket: Socket;
   currentRoomId: number;
-  setCurrentRoomId: Dispatch<SetStateAction<number>>;
   messages: Message[];
   setMessages: Dispatch<SetStateAction<Message[]>>;
 };
@@ -53,8 +52,9 @@ const MessagesList = ({
     startIndex - messages.length,
   );
 
-  console.log('MessagesList: Starting firstItemIndex', firstItemIndex);
-  console.log('MessagesList: Starting messages length', messages.length);
+  console.log('MessagesList: startIndex', startIndex);
+  console.log('MessagesList: firstItemIndex', firstItemIndex);
+  console.log('MessagesList: messagesLength', messages.length);
   console.log('chatId:', chatId);
 
   // 次のメッセージの先頭を更新してからmessageのリストを返す
@@ -107,14 +107,13 @@ const MessagesList = ({
 
 export const ChatroomDisplay = memo(function ChatroomDisplay({
   currentRoomId,
-  setCurrentRoomId,
   messages,
   setMessages,
   socket,
 }: Props) {
   const [error, setError] = useState<string>('');
   const { data: user } = useQueryUser();
-  const [page, setPage] = useState(1); // ページ番号を保持するstate
+  const [page, setPage] = useState(0); // ページ番号を保持するstate
   const [startIndex, setStartIndex] = useState(0);
 
   if (user === undefined) {
@@ -140,30 +139,17 @@ export const ChatroomDisplay = memo(function ChatroomDisplay({
   };
 
   useEffect(() => {
-    if (!socket || !user) return;
+    if (!user) return;
 
     // 他ユーザーからのメッセージを受け取る
     socket.on('chat:receiveMessage', (data: Message) => {
       setMessages((prev) => [...prev, data]);
     });
 
-    // 現在所属しているチャットルームが削除された場合、表示されているチャット履歴を削除する
-    socket.on('chat:deleteRoom', (deletedRoom: Chatroom) => {
-      console.log('chat:deleteRoom', deletedRoom);
-      // 表示中のチャットを削除する
-      setMessages([]);
-      setCurrentRoomId(0);
-      // socketの退出処理をする
-      socket.emit('chat:leaveRoom');
-      // 所属しているチャットルーム一覧を取得する
-      socket.emit('chat:getJoinedRooms', user.id);
-    });
-
     return () => {
       socket.off('chat:receiveMessage');
-      socket.off('chat:deleteRoom');
     };
-  }, [socket, user]);
+  }, [user]);
 
   useEffect(() => {
     setPage(1);

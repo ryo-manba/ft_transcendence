@@ -14,8 +14,9 @@ const appBarHeight = '64px';
 const Chat: NextPage = () => {
   const [socket, setSocket] = useState<Socket>();
   const [messages, setMessages] = useState<Message[]>([]);
-  const NOT_JOINED_ROOM = 0;
-  const [currentRoomId, setCurrentRoomId] = useState(NOT_JOINED_ROOM);
+  const [currentRoomId, setCurrentRoomId] = useState<number | undefined>(
+    undefined,
+  );
 
   useEffect(() => {
     const temp = io('ws://localhost:3001/chat');
@@ -60,13 +61,14 @@ const Chat: NextPage = () => {
             borderBottom: '1px solid',
           }}
         >
-          <ChatroomDisplay
-            socket={socket}
-            currentRoomId={currentRoomId}
-            setCurrentRoomId={setCurrentRoomId}
-            messages={messages}
-            setMessages={setMessages}
-          />
+          {currentRoomId && (
+            <ChatroomDisplay
+              socket={socket}
+              currentRoomId={currentRoomId}
+              messages={messages}
+              setMessages={setMessages}
+            />
+          )}
         </Grid>
         <Grid
           xs={2}

@@ -10,7 +10,7 @@ import { Loading } from 'components/common/Loading';
 
 type Props = {
   socket: Socket;
-  setCurrentRoomId: Dispatch<SetStateAction<number>>;
+  setCurrentRoomId: Dispatch<SetStateAction<number | undefined>>;
   setMessages: Dispatch<SetStateAction<Message[]>>;
 };
 
@@ -43,7 +43,7 @@ export const ChatroomSidebar = memo(function ChatroomSidebar({
       socket.emit('chat:getJoinedRooms', { userId: user.id });
       // 表示中のメッセージを削除する
       setMessages([]);
-      setCurrentRoomId(0);
+      setCurrentRoomId(undefined);
     });
 
     // setupが終わったら
