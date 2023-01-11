@@ -13,3 +13,9 @@ export type LoginResult = {
   res: string;
   userId: number | undefined;
 };
+
+export const LoginResultStatus = {
+  SUCCESS: 'success',
+  NEED2FA: 'need2fa',
+  FAILURE: 'failure',
+} as const;

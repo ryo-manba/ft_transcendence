@@ -2,7 +2,7 @@ import axios from 'axios';
 import { useRouter } from 'next/router';
 import { useEffect, useState, useCallback } from 'react';
 import { useSession, signOut } from 'next-auth/react';
-import { LoginResult } from '../types';
+import { LoginResult, LoginResultStatus } from '../types';
 import { ValidationDialog } from 'components/auth/ValidationDialog';
 
 const Authenticate = () => {
@@ -36,9 +36,12 @@ const Authenticate = () => {
               oAuthId: loginName,
               imagePath: imageUrl,
             });
-            if (data.res === 'SUCCESS') {
+            if (data.res === LoginResultStatus.SUCCESS) {
               await router.push('/dashboard');
-            } else if (data.res === 'NEED2FA' && data.userId !== undefined) {
+            } else if (
+              data.res === LoginResultStatus.NEED2FA &&
+              data.userId !== undefined
+            ) {
               setValidationUserId(data.userId);
               setOpenValidationDialog(true);
             } else {

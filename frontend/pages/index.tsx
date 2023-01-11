@@ -7,7 +7,12 @@ import { IconDatabase } from '@tabler/icons';
 import Image from 'next/image';
 import GppGoodIcon from '@mui/icons-material/GppGood';
 import { useForm, SubmitHandler, Controller } from 'react-hook-form';
-import { AuthForm, AxiosErrorResponse, LoginResult } from '../types';
+import {
+  AuthForm,
+  AxiosErrorResponse,
+  LoginResult,
+  LoginResultStatus,
+} from '../types';
 import {
   Grid,
   IconButton,
@@ -72,8 +77,8 @@ const Home: NextPage = () => {
     try {
       if (process.env.NEXT_PUBLIC_API_URL) {
         if (isRegister) {
-          const url_signup = `${process.env.NEXT_PUBLIC_API_URL}/auth/signup`;
-          await axios.post(url_signup, {
+          const urlSignup = `${process.env.NEXT_PUBLIC_API_URL}/auth/signup`;
+          await axios.post(urlSignup, {
             password: formData.password,
             username: formData.username,
           });
@@ -85,9 +90,12 @@ const Home: NextPage = () => {
             password: formData.password,
           },
         );
-        if (data.res === 'SUCCESS') {
+        if (data.res === LoginResultStatus.SUCCESS) {
           await router.push('/dashboard');
-        } else if (data.res === 'NEED2FA' && data.userId !== undefined) {
+        } else if (
+          data.res === LoginResultStatus.NEED2FA &&
+          data.userId !== undefined
+        ) {
           setValidationUserId(data.userId);
           setOpenValidationDialog(true);
         } else {

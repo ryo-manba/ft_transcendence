@@ -19,6 +19,12 @@ import { Validate2FACodeDto } from './dto/validate-2FACode.dto';
 import { LogoutDto } from './dto/logout.dto';
 import { Csrf, Msg, LoginResult } from './interfaces/auth.interface';
 
+class LoginResultStatus {
+  static readonly SUCCESS = 'success';
+  static readonly NEED2FA = 'need2fa';
+  static readonly FAILURE = 'failure';
+}
+
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
@@ -43,7 +49,7 @@ export class AuthController {
       const loginInfo = await this.authService.login(dto);
       if (loginInfo.has2fa) {
         return {
-          res: 'NEED2FA',
+          res: LoginResultStatus.NEED2FA,
           userId: loginInfo.userId,
         };
       }
@@ -55,12 +61,12 @@ export class AuthController {
       });
 
       return {
-        res: 'SUCCESS',
+        res: LoginResultStatus.SUCCESS,
         userId: undefined,
       };
     } catch {
       return {
-        res: 'FAILURE',
+        res: LoginResultStatus.FAILURE,
         userId: undefined,
       };
     }
@@ -97,7 +103,7 @@ export class AuthController {
       const loginInfo = await this.authService.oauthlogin(dto);
       if (loginInfo.has2fa) {
         return {
-          res: 'NEED2FA',
+          res: LoginResultStatus.NEED2FA,
           userId: loginInfo.userId,
         };
       }
@@ -109,12 +115,12 @@ export class AuthController {
       });
 
       return {
-        res: 'SUCCESS',
+        res: LoginResultStatus.SUCCESS,
         userId: undefined,
       };
     } catch {
       return {
-        res: 'FAILURE',
+        res: LoginResultStatus.FAILURE,
         userId: undefined,
       };
     }

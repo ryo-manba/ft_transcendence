@@ -30,7 +30,7 @@ type Props = {
    *
    * 認証コードが正しく検証されたときは、validation の値が true となります。
    */
-  onClose?: (validation: boolean) => void;
+  onClose: (validation: boolean) => void;
 };
 
 export const ValidationDialog: FC<Props> = ({
@@ -39,7 +39,7 @@ export const ValidationDialog: FC<Props> = ({
   onClose,
 }: Props) => {
   const router = useRouter();
-  const [openSnack, setOpenSnack] = useState('');
+  const [openErrorSnackbar, setOpenErrorSnackbar] = useState(false);
   const {
     control,
     register,
@@ -52,13 +52,13 @@ export const ValidationDialog: FC<Props> = ({
   const handleClose = useCallback(
     (validation: boolean) => {
       onClose?.(validation);
-      setOpenSnack('');
+      setOpenErrorSnackbar(false);
     },
     [onClose],
   );
 
   const handleSnackClose = () => {
-    setOpenSnack('');
+    setOpenErrorSnackbar(false);
   };
 
   const onSubmit: SubmitHandler<TwoAuthForm> = async (
@@ -75,13 +75,13 @@ export const ValidationDialog: FC<Props> = ({
       );
 
       if (data == true) {
-        await router.push('/dashboard');
         void handleClose(true);
+        await router.push('/dashboard');
       } else {
-        setOpenSnack('ERROR');
+        setOpenErrorSnackbar(true);
       }
     } catch {
-      setOpenSnack('ERROR');
+      setOpenErrorSnackbar(true);
     }
   };
 
@@ -138,12 +138,12 @@ export const ValidationDialog: FC<Props> = ({
             {/* 検証ボタン */}
             <Grid item>
               <Button variant="contained" type="submit">
-                VALIDATE
+                VERIFY
               </Button>
             </Grid>
           </Grid>
           <Snackbar
-            open={openSnack == 'ERROR'}
+            open={openErrorSnackbar == true}
             autoHideDuration={6000}
             onClose={handleSnackClose}
           >
