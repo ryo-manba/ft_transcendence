@@ -15,9 +15,9 @@ import { Message } from 'types/chat';
 import { useQueryUser } from 'hooks/useQueryUser';
 import { Loading } from 'components/common/Loading';
 import { ChatErrorAlert } from 'components/chat/utils/ChatErrorAlert';
-import { MessageLeft } from 'components/chat/chatroom/ChatroomMessage';
+import { MessageLeft } from 'components/chat/message-exchange/ChatMessage';
 import { fetchMessages } from 'api/chat/fetchMessages';
-import { ChatroomTextInput } from 'components/chat/chatroom/ChatroomTextInput';
+import { ChatTextInput } from 'components/chat/message-exchange/ChatTextInput';
 
 import { Virtuoso } from 'react-virtuoso';
 
@@ -90,7 +90,7 @@ const MessagesList = ({
         // width: '350px',
       }}
     >
-      {/* <div style={{ flex: '0 1 auto' }}> Messages for Chat {chatId} </div> */}
+      <div style={{ flex: '0 1 auto' }}> Messages for Chat {chatId} </div>
       <Virtuoso
         ref={virtuoso}
         initialTopMostItemIndex={internalMessages.length - 1}
@@ -105,7 +105,7 @@ const MessagesList = ({
   );
 };
 
-export const ChatroomDisplay = memo(function ChatroomDisplay({
+export const ChatMessageExchange = memo(function ChatMessageExchange({
   currentRoomId,
   messages,
   setMessages,
@@ -151,22 +151,6 @@ export const ChatroomDisplay = memo(function ChatroomDisplay({
     };
   }, [user]);
 
-  useEffect(() => {
-    setPage(1);
-
-    const getMessagesCountInfo = {
-      chatroomId: currentRoomId,
-    };
-    socket.emit(
-      'chat:getMessagesCount',
-      getMessagesCountInfo,
-      (count: number) => {
-        console.log('count: ', count);
-        setStartIndex(count);
-      },
-    );
-  }, [currentRoomId]);
-
   const fetchData = async (roomId: number, skip: number) => {
     // ページ番号をインクリメント
     console.log('fetchData page:', page);
@@ -186,8 +170,22 @@ export const ChatroomDisplay = memo(function ChatroomDisplay({
   };
 
   useEffect(() => {
-    setMessages([]);
-    void fetchData(currentRoomId, page);
+    // setPage(1);
+
+    const getMessagesCountInfo = {
+      chatroomId: currentRoomId,
+    };
+    socket.emit(
+      'chat:getMessagesCount',
+      getMessagesCountInfo,
+      (count: number) => {
+        console.log('count: ', count);
+        setStartIndex(count);
+      },
+    );
+
+    // setMessages([]);
+    // void fetchData(currentRoomId, page);
   }, [currentRoomId]);
 
   const virtuoso = useRef(null);
@@ -235,7 +233,7 @@ export const ChatroomDisplay = memo(function ChatroomDisplay({
           </Collapse>
         </Box>
         <form style={{ display: 'flex', alignItems: 'center', padding: '2px' }}>
-          <ChatroomTextInput sendMessage={sendMessage} />
+          <ChatTextInput sendMessage={sendMessage} />
         </form>
       </Paper>
     </>

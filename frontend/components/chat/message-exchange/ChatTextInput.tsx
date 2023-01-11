@@ -6,7 +6,7 @@ type Props = {
   sendMessage: (text: string) => void;
 };
 
-export const ChatroomTextInput = memo(function ChatroomTextInput({
+export const ChatTextInput = memo(function ChatTextInput({
   sendMessage,
 }: Props) {
   const [text, setText] = useState('');

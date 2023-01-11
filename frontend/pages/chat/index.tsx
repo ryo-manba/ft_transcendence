@@ -7,7 +7,7 @@ import { FriendSidebar } from 'components/chat/friend/FriendSidebar';
 import { Message } from 'types/chat';
 import { NextPage } from 'next';
 import { Layout } from 'components/common/Layout';
-import { ChatroomDisplay } from 'components/chat/chatroom/ChatroomDisplay';
+import { ChatMessageExchange } from 'components/chat/message-exchange/ChatMessageExchange';
 
 const appBarHeight = '64px';
 
@@ -62,7 +62,7 @@ const Chat: NextPage = () => {
           }}
         >
           {currentRoomId && (
-            <ChatroomDisplay
+            <ChatMessageExchange
               socket={socket}
               currentRoomId={currentRoomId}
               messages={messages}
