@@ -16,7 +16,7 @@ const Authenticate = () => {
           if (session && session.user !== undefined && session.user !== null) {
             let loginName = '';
             let imageUrl = '';
-            debug.log(session);
+            debug(session);
             if (
               session.user.email &&
               session.user.email.indexOf('gmail.com') !== -1
