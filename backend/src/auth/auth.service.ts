@@ -13,7 +13,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { AuthDto } from './dto/auth.dto';
 import { CreateOAuthDto } from './dto/create-oauth.dto';
 import { Validate2FACodeDto } from './dto/validate-2FACode.dto';
-import { Msg, Jwt } from './interfaces/auth.interface';
+import { Msg, LoginInfo } from './interfaces/auth.interface';
 import * as qrcode from 'qrcode';
 import * as speakeasy from 'speakeasy';
 import { LogoutDto } from './dto/logout.dto';
@@ -58,7 +58,7 @@ export class AuthService {
     }
   }
 
-  async login(dto: AuthDto): Promise<Jwt> {
+  async login(dto: AuthDto): Promise<LoginInfo> {
     const user = await this.prisma.user.findUnique({
       where: {
         name: dto.username,
@@ -79,7 +79,9 @@ export class AuthService {
       },
     });
 
-    return this.generateJwt(user.id, user.name);
+    const jwtToken = await this.generateJwt(user.id, user.name);
+
+    return { accessToken: jwtToken, has2fa: user.has2FA, userId: user.id };
   }
 
   async logout(dto: LogoutDto) {
@@ -97,7 +99,7 @@ export class AuthService {
     }
   }
 
-  async generateJwt(userId: number, username: string): Promise<Jwt> {
+  async generateJwt(userId: number, username: string): Promise<string> {
     const payload = {
       sub: userId,
       username,
@@ -107,9 +109,7 @@ export class AuthService {
       secret: secret,
     });
 
-    return {
-      accessToken: token,
-    };
+    return token;
   }
 
   async downloadImage(imagePath: string) {
@@ -131,7 +131,7 @@ export class AuthService {
     }
   }
 
-  async oauthlogin(dto: CreateOAuthDto): Promise<Jwt> {
+  async oauthlogin(dto: CreateOAuthDto): Promise<LoginInfo> {
     let user = await this.prisma.user.findUnique({
       where: {
         oAuthId: dto.oAuthId,
@@ -166,11 +166,6 @@ export class AuthService {
         data,
       });
     }
-    // if (user.has2FA) {
-    //   UserManager.instance.twoFAlist.push(new TwoFAUser(user.id));
-
-    //   return user.toResponseUser(false, true);
-    // }
 
     // ここのupdateは上の処理で絶対に存在しているuser.idが入るはずなのでエラー処理不要
     await this.prisma.user.update({
@@ -181,8 +176,9 @@ export class AuthService {
         status: 'ONLINE',
       },
     });
+    const jwtToken = await this.generateJwt(user.id, user.name);
 
-    return this.generateJwt(user.id, user.name);
+    return { accessToken: jwtToken, has2fa: user.has2FA, userId: user.id };
   }
 
   async generateQrCode(userId: number): Promise<string> {
@@ -236,20 +232,7 @@ export class AuthService {
     return true;
   }
 
-  async has2FA(userId: number): Promise<boolean> {
-    const user = await this.prisma.user.findUnique({
-      where: {
-        id: userId,
-      },
-    });
-    if (user.has2FA) {
-      return true;
-    } else {
-      return false;
-    }
-  }
-
-  async validate2FA(data: Validate2FACodeDto): Promise<Jwt> {
+  async validate2FA(data: Validate2FACodeDto): Promise<string> {
     const user = await this.prisma.user.findUnique({
       where: {
         id: data.userId,
