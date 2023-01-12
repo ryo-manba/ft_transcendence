@@ -17,7 +17,13 @@ import { AuthDto } from './dto/auth.dto';
 import { CreateOAuthDto } from './dto/create-oauth.dto';
 import { Validate2FACodeDto } from './dto/validate-2FACode.dto';
 import { LogoutDto } from './dto/logout.dto';
-import { Csrf, Msg } from './interfaces/auth.interface';
+import { Csrf, Msg, LoginResult } from './interfaces/auth.interface';
+
+class LoginResultStatus {
+  static readonly SUCCESS = 'success';
+  static readonly NEED2FA = 'need2fa';
+  static readonly FAILURE = 'failure';
+}
 
 @Controller('auth')
 export class AuthController {
@@ -38,18 +44,32 @@ export class AuthController {
   async login(
     @Body() dto: AuthDto,
     @Res({ passthrough: true }) res: Response,
-  ): Promise<Msg> {
-    const jwt = await this.authService.login(dto);
-    res.cookie('access_token', jwt.accessToken, {
-      httpOnly: true,
-      secure: true, //Postmanからアクセスするときはfalse
-      sameSite: 'none',
-      path: '/',
-    });
+  ): Promise<LoginResult> {
+    try {
+      const loginInfo = await this.authService.login(dto);
+      if (loginInfo.has2fa) {
+        return {
+          res: LoginResultStatus.NEED2FA,
+          userId: loginInfo.userId,
+        };
+      }
+      res.cookie('access_token', loginInfo.accessToken, {
+        httpOnly: true,
+        secure: true, //Postmanからアクセスするときはfalse
+        sameSite: 'none',
+        path: '/',
+      });
 
-    return {
-      message: 'ok',
-    };
+      return {
+        res: LoginResultStatus.SUCCESS,
+        userId: undefined,
+      };
+    } catch {
+      return {
+        res: LoginResultStatus.FAILURE,
+        userId: undefined,
+      };
+    }
   }
 
   @HttpCode(HttpStatus.OK)
@@ -78,18 +98,32 @@ export class AuthController {
   async oAuthLogin(
     @Body() dto: CreateOAuthDto,
     @Res({ passthrough: true }) res: Response,
-  ): Promise<Msg> {
-    const jwt = await this.authService.oauthlogin(dto);
-    res.cookie('access_token', jwt.accessToken, {
-      httpOnly: true,
-      secure: true, //Postmanからアクセスするときはfalse
-      sameSite: 'none',
-      path: '/',
-    });
+  ): Promise<LoginResult> {
+    try {
+      const loginInfo = await this.authService.oauthlogin(dto);
+      if (loginInfo.has2fa) {
+        return {
+          res: LoginResultStatus.NEED2FA,
+          userId: loginInfo.userId,
+        };
+      }
+      res.cookie('access_token', loginInfo.accessToken, {
+        httpOnly: true,
+        secure: true, //Postmanからアクセスするときはfalse
+        sameSite: 'none',
+        path: '/',
+      });
 
-    return {
-      message: 'ok',
-    };
+      return {
+        res: LoginResultStatus.SUCCESS,
+        userId: undefined,
+      };
+    } catch {
+      return {
+        res: LoginResultStatus.FAILURE,
+        userId: undefined,
+      };
+    }
   }
 
   //
@@ -105,23 +139,22 @@ export class AuthController {
     return this.authService.send2FACode(dto);
   }
 
-  @Get('has2fa')
-  has2FA(@Param('id', ParseIntPipe) id: number): Promise<boolean> {
-    return this.authService.has2FA(id);
-  }
-
-  @Post('validate2fa')
+  @Patch('validate2fa')
   async validate2FA(
     @Body() dto: Validate2FACodeDto,
     @Res({ passthrough: true }) res: Response,
   ): Promise<boolean> {
-    const jwt = await this.authService.validate2FA(dto);
-    res.cookie('access_token', jwt.accessToken, {
-      httpOnly: true,
-      secure: true, //Postmanからアクセスするときはfalse
-      sameSite: 'none',
-      path: '/',
-    });
+    try {
+      const accessToken = await this.authService.validate2FA(dto);
+      res.cookie('access_token', accessToken, {
+        httpOnly: true,
+        secure: true, //Postmanからアクセスするときはfalse
+        sameSite: 'none',
+        path: '/',
+      });
+    } catch {
+      return false;
+    }
 
     return true;
   }
