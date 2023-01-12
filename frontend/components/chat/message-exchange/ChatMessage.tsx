@@ -8,25 +8,26 @@ type Props = {
 };
 
 const truncateDate = (date: Date): string => {
-  const year = date.getFullYear();
-  const month = date.getMonth() + 1;
-  const day = date.getDate();
-  const hour = date.getHours();
-  const minute = date.getMinutes();
-  const res = `${year}/${month}/${day} ${hour}:${minute}`;
+  const res = date.toLocaleString('ja-JP', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
 
   return res;
 };
 
 //avatarが左にあるメッセージ（他人）
-export const MessageLeft = (props: Props) => {
-  const message = props.message ? props.message : 'no message';
-  const timestamp = props.timestamp
-    ? truncateDate(new Date(props.timestamp))
-    : '';
-  // const timestamp = props.timestamp ? props.timestamp : '';
-  const photoURL = props.photoURL ? props.photoURL : 'dummy.js';
-  const displayName = props.displayName ? props.displayName : '名無しさん';
+export const MessageLeft = ({
+  message,
+  timestamp,
+  photoURL,
+  displayName,
+}: Props) => {
+  // 表示用に時間を変換する
+  const displayTimestamp = truncateDate(new Date(timestamp));
 
   return (
     <>
@@ -40,7 +41,7 @@ export const MessageLeft = (props: Props) => {
               color: 'silver',
             }}
           >
-            {`${displayName} ${timestamp}`}
+            {`${displayName} ${displayTimestamp}`}
           </div>
           <div>
             <p
