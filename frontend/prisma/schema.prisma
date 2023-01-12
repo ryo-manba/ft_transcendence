@@ -94,6 +94,8 @@ model User {
   has2FA          Boolean           @default(false)
   oAuthId         String?           @unique
   secret2FA       String            @default("")
+  blockedByUsers  BlockRelation[]   @relation("blockedBy")
+  blockingUsers   BlockRelation[]   @relation("blocking")
   Chatroom        Chatroom[]
   ChatroomAdmin   ChatroomAdmin[]
   ChatroomMembers ChatroomMembers[]
@@ -102,6 +104,18 @@ model User {
   loseGameRecord  GameRecord[]      @relation("Loser")
   winGameRecord   GameRecord[]      @relation("Winner")
   Message         Message[]
+}
+
+model BlockRelation {
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @default(now()) @updatedAt
+  blockingUserId  Int
+  blockedByUserId Int
+  blockedBy       User     @relation("blockedBy", fields: [blockedByUserId], references: [id], onDelete: Cascade)
+  blocking        User     @relation("blocking", fields: [blockingUserId], references: [id], onDelete: Cascade)
+
+  @@id([blockingUserId, blockedByUserId])
+  @@unique([blockingUserId, blockedByUserId])
 }
 
 enum ChatroomType {

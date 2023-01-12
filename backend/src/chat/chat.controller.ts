@@ -1,11 +1,14 @@
-import { Query, Controller, Get, ParseIntPipe, Logger } from '@nestjs/common';
+import { Query, Controller, Get, ParseIntPipe } from '@nestjs/common';
 import { ChatService } from './chat.service';
+import { UserService } from '../user/user.service';
 import type { ChatUser, ChatMessage } from './types/chat';
 
 @Controller('chat')
 export class ChatController {
-  constructor(private readonly chatService: ChatService) {}
-  private logger: Logger = new Logger('ChatController');
+  constructor(
+    private readonly chatService: ChatService,
+    private readonly userService: UserService,
+  ) {}
 
   /**
    * @param roomId
@@ -57,12 +60,6 @@ export class ChatController {
     @Query('skip', ParseIntPipe) skip: number,
     @Query('pageSize', ParseIntPipe) pageSize: number,
   ): Promise<ChatMessage[]> {
-    this.logger.log(`findChatMessages: {
-                        roomId:   ${roomId}
-                        skip:     ${skip}
-                        pageSize: ${pageSize}
-                    }`);
-
     const chatMessages = await this.chatService.findChatMessages({
       chatroomId: roomId,
       skip: skip,
@@ -85,5 +82,50 @@ export class ChatController {
     @Query('roomId', ParseIntPipe) roomId: number,
   ): Promise<ChatUser[]> {
     return await this.chatService.findChatroomActiveUsers(roomId);
+  }
+
+  /**
+   * @return すべてのユーザーを取得する
+   */
+  @Get('all-users')
+  async findAllChatUsers(): Promise<ChatUser[]> {
+    const users = await this.userService.findAll({
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
+    const chatUsers = users.map((user) => {
+      return {
+        id: user.id,
+        name: user.name,
+      };
+    });
+
+    return chatUsers;
+  }
+
+  /**
+   * @return ブロックされていないユーザ一覧を返す
+   * @param userId
+   */
+  @Get('unblocked-users')
+  async findUnblockedChatUsers(
+    @Query('userId', ParseIntPipe) userId: number,
+  ): Promise<ChatUser[]> {
+    const chatUsers = await this.findAllChatUsers();
+
+    const blockedUsers = await this.chatService.findBlockedUsers({
+      blockedByUserId: userId,
+    });
+    console.log(blockedUsers);
+    const blockingUserIds = blockedUsers.map((user) => user.blockingUserId);
+
+    // すべてのユーザーからブロックされているユーザーを除去する
+    const unblockedUsers = chatUsers.filter(
+      (user) => !blockingUserIds.includes(user.id),
+    );
+
+    return unblockedUsers;
   }
 }

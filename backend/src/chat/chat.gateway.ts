@@ -21,6 +21,8 @@ import { createDirectMessageDto } from './dto/create-direct-message.dto';
 import { CheckBanDto } from './dto/check-ban.dto';
 import { DeleteChatroomMemberDto } from './dto/delete-chatroom-member.dto';
 import { UpdateChatroomOwnerDto } from './dto/update-chatroom-owner.dto';
+import { CreateBlockRelationDto } from './dto/create-block-relation.dto';
+import { IsBlockedByUserIdDto } from './dto/is-blocked-by-user-id.dto';
 import { OnGetRoomsDto } from './dto/on-get-rooms.dto';
 import { ChangeCurrentRoomDto } from './dto/change-current-room.dto';
 import { LeaveSocketDto } from './dto/leave-socket.dto';
@@ -93,7 +95,7 @@ export class ChatGateway {
   async onMessage(
     @ConnectedSocket() client: Socket,
     @MessageBody() createMessageDto: CreateMessageDto,
-  ): Promise<boolean> {
+  ): Promise<string> {
     this.logger.log(
       `chat:sendMessage received -> ${createMessageDto.chatroomId}`,
     );
@@ -106,12 +108,46 @@ export class ChatGateway {
       },
     });
     if (userInfo.status !== ChatroomMembersStatus.NORMAL) {
-      return false;
+      if (userInfo.status === ChatroomMembersStatus.BAN) {
+        return 'You are banned.';
+      }
+      if (userInfo.status === ChatroomMembersStatus.MUTE) {
+        return 'You are muted.';
+      }
+    }
+
+    const chatroom = await this.prisma.chatroom.findUnique({
+      where: {
+        id: createMessageDto.chatroomId,
+      },
+      include: {
+        members: true,
+      },
+    });
+    // DMの場合はBlockしている or されていないことを確認する
+    if (chatroom.type === ChatroomType.DM) {
+      const membersId = chatroom.members.map((member) => member.userId);
+      const where = [
+        { blockingUserId: membersId[0], blockedByUserId: membersId[1] },
+        { blockingUserId: membersId[1], blockedByUserId: membersId[0] },
+      ];
+      const blockRelations = await this.prisma.blockRelation.findMany({
+        where: {
+          OR: [...where],
+        },
+      });
+      if (blockRelations.length > 0) {
+        if (blockRelations[0].blockedByUserId === createMessageDto.userId) {
+          return 'You blocked this user.';
+        } else {
+          return 'This user blocked you.';
+        }
+      }
     }
 
     const res = await this.chatService.addMessage(createMessageDto);
     if (res === undefined) {
-      return false;
+      return 'Failed to send message.';
     }
     const chatMessage: ChatMessage = {
       text: res.message,
@@ -123,7 +159,7 @@ export class ChatGateway {
       .to(String(createMessageDto.chatroomId))
       .emit('chat:receiveMessage', chatMessage);
 
-    return true;
+    return 'ok';
   }
 
   /**
@@ -138,10 +174,11 @@ export class ChatGateway {
   ): Promise<void> {
     this.logger.log(`chat:changeCurrentRoom received -> ${dto.roomId}`);
 
-    // 0番目には、socketのidが入っている
-    if (client.rooms.size >= 2) {
+    // index[0]には、socketのidが入っている
+    // index[1]には、他のソケットと通信するようのルームがある
+    if (client.rooms.size >= 3) {
       // roomに入っている場合は退出する
-      const target = Array.from(client.rooms)[1];
+      const target = Array.from(client.rooms)[2];
       await client.leave(target);
     }
     await client.join(String(dto.roomId));
@@ -487,5 +524,68 @@ export class ChatGateway {
     this.logger.log('chat:getMessagesCount', count);
 
     return count;
+  }
+
+  /*
+   * ユーザーをブロックする
+   * @param CreateBlockRelationDto
+   */
+  @SubscribeMessage('chat:blockUser')
+  async blockUser(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() dto: CreateBlockRelationDto,
+  ): Promise<boolean> {
+    this.logger.log('chat:blockUser received', dto);
+
+    const res = await this.chatService.blockUser(dto);
+
+    if (res) {
+      // ブロックされたユーザーのフレンド一覧から
+      // ブロックしたユーザーの表示を消すために通知を送る
+      this.server
+        .to('user' + String(dto.blockingUserId))
+        .emit('chat:blocked', dto.blockedByUserId);
+    }
+
+    return !!res;
+  }
+
+  /**
+   * ユーザーがブロックされているかを確認する
+   * @param IsBlockedByUserIdDto
+   */
+  @SubscribeMessage('chat:isBlockedByUserId')
+  async isBlockedByUserId(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() dto: IsBlockedByUserIdDto,
+  ): Promise<boolean> {
+    this.logger.log('chat:isBlockedByUserId received', dto);
+
+    const res = await this.prisma.blockRelation.findUnique({
+      where: {
+        blockingUserId_blockedByUserId: {
+          ...dto,
+        },
+      },
+    });
+
+    return !!res;
+  }
+
+  /**
+   * 他のソケットと通信するようのルームに入室する
+   * @param userId
+   */
+  @SubscribeMessage('chat:joinMyRoom')
+  async joinMyRoom(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() userId: number,
+  ): Promise<void> {
+    this.logger.log('chat:joinMyRoom received', userId);
+
+    // index[0]には、socketのidが入っている
+    if (client.rooms.size === 1) {
+      await client.join('user' + String(userId));
+    }
   }
 }
