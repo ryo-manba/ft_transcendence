@@ -1,10 +1,11 @@
-import { Query, Controller, Get, ParseIntPipe } from '@nestjs/common';
+import { Query, Controller, Get, ParseIntPipe, Logger } from '@nestjs/common';
 import { ChatService } from './chat.service';
 import type { ChatUser, ChatMessage } from './types/chat';
 
 @Controller('chat')
 export class ChatController {
   constructor(private readonly chatService: ChatService) {}
+  private logger: Logger = new Logger('ChatController');
 
   /**
    * @param roomId
@@ -56,13 +57,23 @@ export class ChatController {
     @Query('skip', ParseIntPipe) skip: number,
     @Query('pageSize', ParseIntPipe) pageSize: number,
   ): Promise<ChatMessage[]> {
+    this.logger.log(`findChatMessages: {
+                        roomId:   ${roomId}
+                        skip:     ${skip}
+                        pageSize: ${pageSize}
+                    }`);
+
     const chatMessages = await this.chatService.findChatMessages({
       chatroomId: roomId,
       skip: skip,
       pageSize: pageSize,
     });
 
-    return chatMessages;
+    /**
+     * 新しい順にpageSize取得したものを古い順に並び替えることでTimelineの並び順にする
+     * 新 -> 古 を 古 -> 新 にする
+     */
+    return chatMessages.reverse();
   }
 
   /**
