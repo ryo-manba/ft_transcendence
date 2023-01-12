@@ -88,7 +88,6 @@ export const ChatMessageList = memo(function ChatMessageList({
       key={index}
       message={item.text}
       timestamp={item.createdAt}
-      photoURL=""
       displayName={item.userName}
     />
   );

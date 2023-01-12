@@ -3,10 +3,13 @@ import { Avatar } from '@mui/material';
 type Props = {
   message: string;
   timestamp: Date;
-  photoURL: string;
   displayName: string;
 };
 
+/**
+ * Dateオブジェクトを次の形式に変換する
+ * 2023/01/01 12:00
+ */
 const truncateDate = (date: Date): string => {
   const res = date.toLocaleString('ja-JP', {
     year: 'numeric',
@@ -19,20 +22,48 @@ const truncateDate = (date: Date): string => {
   return res;
 };
 
-//avatarが左にあるメッセージ（他人）
-export const MessageLeft = ({
-  message,
-  timestamp,
-  photoURL,
-  displayName,
-}: Props) => {
-  // 表示用に時間を変換する
+/**
+ * DOCS: https://mui.com/material-ui/react-avatar/#letter-avatars
+ * 名前によって背景色を変更する
+ */
+const stringToColor = (string: string) => {
+  let hash = 0;
+  let i;
+
+  for (i = 0; i < string.length; i += 1) {
+    hash = string.charCodeAt(i) + ((hash << 5) - hash);
+  }
+
+  let color = '#';
+
+  for (i = 0; i < 3; i += 1) {
+    const value = (hash >> (i * 8)) & 0xff;
+    color += `00${value.toString(16)}`.slice(-2);
+  }
+
+  return color;
+};
+
+const stringAvatar = (name: string) => {
+  return {
+    sx: {
+      bgcolor: stringToColor(name),
+    },
+    children: name[0],
+  };
+};
+
+export const MessageLeft = ({ message, timestamp, displayName }: Props) => {
+  // 時間を表示用に変換する
   const displayTimestamp = truncateDate(new Date(timestamp));
 
   return (
     <>
       <div style={{ display: 'flex', margin: '10px' }}>
-        <Avatar alt={displayName} src={photoURL}></Avatar>
+        <Avatar
+          // eslint-disable-next-line react/jsx-props-no-spreading
+          {...stringAvatar(displayName)}
+        />
         <div>
           <div
             style={{
