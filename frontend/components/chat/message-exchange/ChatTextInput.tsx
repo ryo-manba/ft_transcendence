@@ -38,6 +38,8 @@ export const ChatTextInput = memo(function ChatTextInput({
       placeholder={`#roomへメッセージを送信`}
       onKeyPress={(e) => {
         if (e.key === 'Enter') {
+          // formのdefaultEventで画面がリロードされるのを防ぐ
+          e.preventDefault();
           handleClick();
         }
       }}
