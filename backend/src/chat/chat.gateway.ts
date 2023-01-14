@@ -432,6 +432,21 @@ export class ChatGateway {
   }
 
   /**
+   * ユーザーをUNBANする
+   * @param updateMemberStatusDto
+   */
+  @SubscribeMessage('chat:unbanUser')
+  async unbanUser(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() dto: updateMemberStatusDto,
+  ): Promise<boolean> {
+    this.logger.log(`chat:unbanUser received -> roomId: ${dto.chatroomId}`);
+    const res = await this.chatService.updateMemberStatus(dto);
+
+    return res ? true : false;
+  }
+
+  /**
    * ユーザーをMUTEする
    * @param updateChatMemberStatusDto
    */
@@ -441,6 +456,21 @@ export class ChatGateway {
     @MessageBody() dto: updateMemberStatusDto,
   ): Promise<boolean> {
     this.logger.log(`chat:muteUser received -> roomId: ${dto.chatroomId}`);
+    const res = await this.chatService.updateMemberStatus(dto);
+
+    return res ? true : false;
+  }
+
+  /**
+   * ユーザーをUNMUTEする
+   * @param updateChatMemberStatusDto
+   */
+  @SubscribeMessage('chat:unmuteUser')
+  async unmuteUser(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() dto: updateMemberStatusDto,
+  ): Promise<boolean> {
+    this.logger.log(`chat:unmuteUser received -> roomId: ${dto.chatroomId}`);
     const res = await this.chatService.updateMemberStatus(dto);
 
     return res ? true : false;

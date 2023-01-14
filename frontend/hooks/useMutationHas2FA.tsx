@@ -35,7 +35,7 @@ export const useMutationHas2FA = () => {
     },
     {
       onSuccess: (res) => {
-        if (res == true) {
+        if (res === true) {
           queryClient.removeQueries(['user']);
           void router.push('/setting'); //登録が成功したらsettingに戻る
         } else {

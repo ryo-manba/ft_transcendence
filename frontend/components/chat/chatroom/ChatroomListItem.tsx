@@ -188,6 +188,22 @@ export const ChatroomListItem = memo(function ChatroomListItem({
     });
   };
 
+  const unbanUser = (userId: number) => {
+    const unbanUserInfo = {
+      chatroomId: room.id,
+      userId: userId,
+      status: ChatroomMembersStatus.NORMAL,
+    };
+
+    socket.emit('chat:unbanUser', unbanUserInfo, (res: boolean) => {
+      if (res) {
+        setSuccess('User has been unbanned successfully.');
+      } else {
+        setError('Failed to unban user.');
+      }
+    });
+  };
+
   const muteUser = (userId: number) => {
     const muteUserInfo = {
       chatroomId: room.id,
@@ -200,6 +216,22 @@ export const ChatroomListItem = memo(function ChatroomListItem({
         setSuccess('User has been muted successfully.');
       } else {
         setError('Failed to mute user.');
+      }
+    });
+  };
+
+  const unmuteUser = (userId: number) => {
+    const unmuteUserInfo = {
+      chatroomId: room.id,
+      userId: userId,
+      status: ChatroomMembersStatus.NORMAL,
+    };
+
+    socket.emit('chat:unmuteUser', unmuteUserInfo, (res: boolean) => {
+      if (res) {
+        setSuccess('User has been unmuted successfully.');
+      } else {
+        setError('Failed to unmute user.');
       }
     });
   };
@@ -305,7 +337,9 @@ export const ChatroomListItem = memo(function ChatroomListItem({
           addAdmin={addAdmin}
           changePassword={changePassword}
           banUser={banUser}
+          unbanUser={unbanUser}
           muteUser={muteUser}
+          unmuteUser={unmuteUser}
         />
         <ListItemText
           primary={room.name}
