@@ -34,6 +34,9 @@ import { LeaveSocketDto } from './dto/leave-socket.dto';
 import { OnRoomJoinableDto } from './dto/on-room-joinable.dto';
 import { GetAdminsIdsDto } from './dto/get-admins-ids.dto';
 
+type SocketManager = Map<number, SocketIds>;
+type SocketIds = Set<string>;
+
 @WebSocketGateway({
   cors: {
     origin: '*',
@@ -57,6 +60,12 @@ export class ChatGateway {
   handleDisconnect(socket: Socket) {
     this.logger.log(`Disconnect: ${socket.id}`);
   }
+
+  /**
+   * Key：ユーザーID
+   * Value：入室中のルームごとのソケットID（自分自身を指すソケットも管理する）
+   */
+  socketManager: SocketManager = new Map();
 
   /**
    * チャットルームを作成する
@@ -210,6 +219,22 @@ export class ChatGateway {
     return userInfo.status === ChatroomMembersStatus.BAN;
   }
 
+  // /**
+  //  * チャットルームに招待する
+  //  * @param client
+  //  * @param userId
+  //  */
+  // @SubscribeMessage('chat:inviteRoom')
+  // async inviteRoom(
+  //   @ConnectedSocket() client: Socket,
+  //   @MessageBody() number: userId,
+  // ): Promise<boolean> {
+  //   this.logger.log(`chat:inviteRoom received -> ${userId}`);
+
+  //   const inviteUser = 'user' + String(userId);
+  //   await this.server.to(inviteUser).emit('chat:inviteRoom')
+  // }
+
   /**
    * チャットルームに入室する
    * @param client
@@ -219,13 +244,21 @@ export class ChatGateway {
   async onRoomJoin(
     @ConnectedSocket() client: Socket,
     @MessageBody() dto: JoinChatroomDto,
-  ): Promise<any> {
+  ): Promise<boolean> {
     this.logger.log(`chat:joinRoom received -> ${dto.userId}`);
 
     const joinedRoom = await this.chatService.joinRoom(dto);
 
-    // 入室したルーム or undefinedをクライアントに送信する
-    client.emit('chat:joinRoom', joinedRoom);
+    if (joinedRoom) {
+      // 管理対象に追加する
+      const socketIds = this.socketManager.get(dto.userId);
+      const room = 'room' + String(joinedRoom.id);
+      socketIds.add(room);
+
+      client.emit('chat:joinRoom', joinedRoom);
+    }
+
+    return !!joinedRoom;
   }
 
   /**
@@ -564,9 +597,24 @@ export class ChatGateway {
   ): Promise<void> {
     this.logger.log('chat:joinMyRoom received', userId);
 
-    // index[0]には、socketのidが入っている
-    if (client.rooms.size === 1) {
-      await client.join('user' + String(userId));
+    // サーバーサイドでソケットを管理する
+    if (!this.socketManager.has(userId)) {
+      // 自分単体に通知するようのルームに入室する
+      const myRoom = 'user' + String(userId);
+      await client.join(myRoom);
+
+      const socketIds: SocketIds = new Set<string>();
+      socketIds.add(myRoom);
+
+      // すでに入室中のチャットルームも通知を受け取れるようにする
+      const rooms = await this.chatService.findJoinedRooms(userId);
+      rooms.map(async (room) => {
+        const joinedRoom = 'room' + String(room.id);
+        await client.join(joinedRoom);
+        socketIds.add(joinedRoom);
+      });
+
+      this.socketManager.set(userId, socketIds);
     }
   }
 }
