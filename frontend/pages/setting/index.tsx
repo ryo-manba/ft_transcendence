@@ -345,7 +345,7 @@ const Setting: NextPage = () => {
 
             {/* Snackbarの中身を三項演算子で書くと、SUCCESSのSnackbarが消えた後に一瞬ErrorのSnackbarが表示されてしまうため、別のコンポーネントとして併記 */}
             <Snackbar
-              open={openSnack === 'SUCCESS'}
+              open={openSnack === OpenSnackState.SUCCESS}
               autoHideDuration={6000}
               onClose={handleSnackClose}
             >
@@ -354,7 +354,7 @@ const Setting: NextPage = () => {
               </Alert>
             </Snackbar>
             <Snackbar
-              open={openSnack === 'ERROR'}
+              open={openSnack === OpenSnackState.ERROR}
               autoHideDuration={6000}
               onClose={handleSnackClose}
             >

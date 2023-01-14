@@ -132,7 +132,7 @@ const Enable2FA: NextPage = () => {
                   REGISTER
                 </Button>
                 <Snackbar
-                  open={openSnack === 'ERROR'}
+                  open={openSnack === OpenSnackState.ERROR}
                   autoHideDuration={6000}
                   onClose={handleClose}
                 >
