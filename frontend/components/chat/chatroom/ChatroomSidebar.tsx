@@ -58,6 +58,10 @@ export const ChatroomSidebar = memo(function ChatroomSidebar({
     };
   }, []);
 
+  const addRooms = (room: Chatroom) => {
+    setRooms((prev) => [...prev, room]);
+  };
+
   if (user === undefined) {
     return <Loading />;
   }
@@ -65,7 +69,7 @@ export const ChatroomSidebar = memo(function ChatroomSidebar({
   return (
     <>
       <ChatroomCreateButton socket={socket} setRooms={setRooms} />
-      <ChatroomJoinButton socket={socket} user={user} />
+      <ChatroomJoinButton socket={socket} addRooms={addRooms} />
       <List dense={false}>
         {rooms &&
           rooms.map((room, i) => (

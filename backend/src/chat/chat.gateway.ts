@@ -31,8 +31,8 @@ import { GetAdminsIdsDto } from './dto/get-admins-ids.dto';
 import { GetMessagesCountDto } from './dto/get-messages-count.dto';
 import type { ChatMessage } from './types/chat';
 
-type SocketManager = Map<number, SocketIds>;
-type SocketIds = Set<string>;
+type SocketManager = Map<number, SocketRooms>;
+type SocketRooms = Set<string>;
 
 @WebSocketGateway({
   cors: {
@@ -240,21 +240,19 @@ export class ChatGateway {
   async onRoomJoin(
     @ConnectedSocket() client: Socket,
     @MessageBody() dto: JoinChatroomDto,
-  ): Promise<boolean> {
+  ): Promise<Chatroom> {
     this.logger.log(`chat:joinRoom received -> ${dto.userId}`);
 
     const joinedRoom = await this.chatService.joinRoom(dto);
 
     if (joinedRoom) {
       // 管理対象に追加する
-      const socketIds = this.socketManager.get(dto.userId);
+      const socketRooms = this.socketManager.get(dto.userId);
       const room = 'room' + String(joinedRoom.id);
-      socketIds.add(room);
-
-      client.emit('chat:joinRoom', joinedRoom);
+      socketRooms.add(room);
     }
 
-    return !!joinedRoom;
+    return joinedRoom;
   }
 
   /**
@@ -370,7 +368,7 @@ export class ChatGateway {
   async onRoomJoinable(
     @ConnectedSocket() client: Socket,
     @MessageBody() dto: OnRoomJoinableDto,
-  ): Promise<any> {
+  ): Promise<Chatroom[]> {
     this.logger.log(`chat:getJoinableRooms received -> roomId: ${dto.userId}`);
 
     // Private以外のチャットルームに絞る
@@ -393,8 +391,7 @@ export class ChatGateway {
       return roomsDiff.includes(item.id);
     });
 
-    // フロントエンドへ送信し返す
-    client.emit('chat:getJoinableRooms', viewableAndNotJoinedRooms);
+    return viewableAndNotJoinedRooms;
   }
 
   /**
@@ -622,18 +619,18 @@ export class ChatGateway {
       const myRoom = 'user' + String(userId);
       await client.join(myRoom);
 
-      const socketIds: SocketIds = new Set<string>();
-      socketIds.add(myRoom);
+      const socketRooms: SocketRooms = new Set<string>();
+      socketRooms.add(myRoom);
 
       // すでに入室中のチャットルームも通知を受け取れるようにする
       const rooms = await this.chatService.findJoinedRooms(userId);
       rooms.map(async (room) => {
         const joinedRoom = 'room' + String(room.id);
         await client.join(joinedRoom);
-        socketIds.add(joinedRoom);
+        socketRooms.add(joinedRoom);
       });
 
-      this.socketManager.set(userId, socketIds);
+      this.socketManager.set(userId, socketRooms);
     }
   }
 }
