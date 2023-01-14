@@ -77,6 +77,11 @@ export const ChatroomSettingItems = memo(function ChatroomSettingItems({
         </MenuItem>
       )}
       {(isAdmin || isOwner) && (
+        <MenuItem value={ChatroomSetting.UNMUTE_USER}>
+          {ChatroomSetting.UNMUTE_USER}
+        </MenuItem>
+      )}
+      {(isAdmin || isOwner) && (
         <MenuItem value={ChatroomSetting.BAN_USER}>
           {ChatroomSetting.BAN_USER}
         </MenuItem>
