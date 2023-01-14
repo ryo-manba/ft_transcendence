@@ -9,6 +9,7 @@ import { useEffect, useState } from 'react';
 import { GameRecordWithUserName } from 'types/game';
 import { getRecordsById } from 'api/records/getRecordsById';
 import { getUserRanking } from 'api/user/getUserRanking';
+import { getAvatarImageUrl } from 'api/user/getAvatarImageUrl';
 
 export const Profile = () => {
   const { data: user } = useQueryUser();
@@ -70,10 +71,7 @@ export const Profile = () => {
     return <Loading />;
   }
 
-  const avatarImageUrl =
-    user.avatarPath !== null
-      ? `${process.env.NEXT_PUBLIC_API_URL as string}/user/${user.avatarPath}`
-      : '';
+  const avatarImageUrl = getAvatarImageUrl(user.id);
   const numOfWins =
     records !== undefined
       ? records.filter((r) => r.winnerName === user.name).length
