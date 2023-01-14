@@ -21,7 +21,9 @@ const Enable2FA: NextPage = () => {
   const { data: user } = useQueryUser();
   const [qrCode, setQrCode] = useState('');
   const { changeHas2FAMutation } = useMutationHas2FA();
-  const [openSnack, setOpenSnack] = useState<OpenSnackState>('NONE');
+  const [openSnack, setOpenSnack] = useState<OpenSnackState>(
+    OpenSnackState.NONE,
+  );
   const [qrCodeFetchingError, setQrCodeFetchingError] = useState(false);
 
   useEffect(() => {
@@ -50,11 +52,11 @@ const Enable2FA: NextPage = () => {
   }, []);
 
   const handleClose = () => {
-    setOpenSnack('NONE');
+    setOpenSnack(OpenSnackState.NONE);
   };
 
   const on2FAMutationEnableError = () => {
-    setOpenSnack('ERROR');
+    setOpenSnack(OpenSnackState.ERROR);
   };
 
   const onSubmit: SubmitHandler<TwoAuthForm> = (data: TwoAuthForm) => {

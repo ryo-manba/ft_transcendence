@@ -6,6 +6,10 @@ export type TwoAuthForm = {
   authCode: string;
 };
 
-const openSnackState: readonly string[] = ['NONE', 'SUCCESS', 'ERROR'] as const;
+export const OpenSnackState = {
+  NONE: 'NONE',
+  SUCCESS: 'SUCCESS',
+  ERROR: 'ERROR',
+} as const;
 
-export type OpenSnackState = typeof openSnackState[number];
+export type OpenSnackState = typeof OpenSnackState[keyof typeof OpenSnackState];

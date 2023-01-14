@@ -46,7 +46,9 @@ const schema = z.object({
 const Setting: NextPage = () => {
   const { data: user } = useQueryUser();
   const [error, setError] = useState<string[]>([]);
-  const [openSnack, setOpenSnack] = useState<OpenSnackState>('NONE');
+  const [openSnack, setOpenSnack] = useState<OpenSnackState>(
+    OpenSnackState.NONE,
+  );
   const [openConfirm, setOpenConfirm] = useState(false);
   const [avatarImageUrl, setAvatarImageUrl] = useState<string | undefined>(
     undefined,
@@ -149,15 +151,9 @@ const Setting: NextPage = () => {
     }
   };
 
-  const handleSnackClose = () =>
-    // event?: React.SyntheticEvent | Event,
-    // reason?: string,
-    {
-      // if (reason === 'clickaway') {
-      //   return;
-      // }
-      setOpenSnack('NONE');
-    };
+  const handleSnackClose = () => {
+    setOpenSnack(OpenSnackState.NONE);
+  };
 
   const handleDialogClose = (result: string) => {
     setOpenConfirm(false);
@@ -170,10 +166,10 @@ const Setting: NextPage = () => {
         },
         {
           onSuccess: () => {
-            setOpenSnack('SUCCESS');
+            setOpenSnack(OpenSnackState.SUCCESS);
           },
           onError: () => {
-            setOpenSnack('ERROR');
+            setOpenSnack(OpenSnackState.ERROR);
           },
         },
       );
