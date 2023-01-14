@@ -42,6 +42,7 @@ export const ChatroomSetting = {
   CHANGE_PASSWORD: 'Change Password', // protected room
   SET_ADMIN: 'Set Admin',
   MUTE_USER: 'Mute User',
+  UNMUTE_USER: 'Unmute User',
   BAN_USER: 'Ban User',
 } as const;
 

@@ -451,6 +451,21 @@ export class ChatGateway {
   }
 
   /**
+   * ユーザーをUNMUTEする
+   * @param updateChatMemberStatusDto
+   */
+  @SubscribeMessage('chat:unmuteUser')
+  async unmuteUser(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() dto: updateMemberStatusDto,
+  ): Promise<boolean> {
+    this.logger.log(`chat:unmuteUser received -> roomId: ${dto.chatroomId}`);
+    const res = await this.chatService.updateMemberStatus(dto);
+
+    return res ? true : false;
+  }
+
+  /**
    * ダイレクトメッセージを始める
    * - チャットルーム作成
    * - 自分と相手をチャットルームに追加する

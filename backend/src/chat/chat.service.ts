@@ -472,6 +472,33 @@ export class ChatService {
   }
 
   /**
+   * statusがMUTEなユーザ一覧を返す
+   * @param roomId
+   */
+  async findMutedUsers(roomId: number): Promise<ChatUser[]> {
+    const mutedUsersInfo = await this.prisma.chatroomMembers.findMany({
+      where: {
+        AND: {
+          chatroomId: roomId,
+          status: ChatroomMembersStatus.MUTE,
+        },
+      },
+      include: {
+        user: true,
+      },
+    });
+
+    const mutedUsers: ChatUser[] = mutedUsersInfo.map((info) => {
+      return {
+        id: info.user.id,
+        name: info.user.name,
+      };
+    });
+
+    return mutedUsers;
+  }
+
+  /**
    * チャットルームのadminを作成する
    * @param CreateAdminDto
    */
