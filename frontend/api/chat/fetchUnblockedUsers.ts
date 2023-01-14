@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { ChatUser } from 'types/chat';
+import Debug from 'debug';
 
 type Props = {
   userId: number;
@@ -10,6 +11,7 @@ const endpoint = `${
 }/chat/unblocked-users`;
 
 export const fetchUnblockedUsers = async ({ userId }: Props) => {
+  const debug = Debug('chat');
   try {
     const response = await axios.get<ChatUser[]>(endpoint, {
       params: { userId: userId },
@@ -17,7 +19,7 @@ export const fetchUnblockedUsers = async ({ userId }: Props) => {
 
     return response.data;
   } catch (error) {
-    console.log(error);
+    debug(error);
 
     return [];
   }

@@ -33,6 +33,7 @@ function MyApp({
   axios.defaults.withCredentials = true; // Cookieのやりとりする時に必要
   const router = useRouter();
   useEffect(() => {
+    localStorage.debug = process.env.NEXT_PUBLIC_DEBUG as string;
     // ロードされた時にCsrfトークンを取得するのでここで定義
     // ヘッダに自動的に付与される
     const getCsrfToken = async () => {

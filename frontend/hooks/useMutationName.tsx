@@ -1,6 +1,7 @@
 import axios, { AxiosError } from 'axios';
 import { useQueryClient, useMutation } from '@tanstack/react-query';
 import { User } from '@prisma/client';
+import Debug from 'debug';
 
 type Props = {
   userId: number;
@@ -12,6 +13,7 @@ const endpoint = `${
 }/user/update-name`;
 
 export const useMutationName = () => {
+  const debug = Debug('user');
   const queryClient = useQueryClient();
 
   const updateNameMutation = useMutation<
@@ -37,7 +39,7 @@ export const useMutationName = () => {
         }
       },
       onError: (err: AxiosError) => {
-        console.error(err);
+        debug(err);
       },
     },
   );

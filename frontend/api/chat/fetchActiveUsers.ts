@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { ChatUser } from 'types/chat';
+import Debug from 'debug';
 
 type Props = {
   roomId: number;
@@ -10,6 +11,7 @@ const endpoint = `${
 }/chat/active-users`;
 
 export const fetchActiveUsers = async ({ roomId }: Props) => {
+  const debug = Debug('chat');
   try {
     const response = await axios.get<ChatUser[]>(endpoint, {
       params: { roomId: roomId },
@@ -17,7 +19,7 @@ export const fetchActiveUsers = async ({ roomId }: Props) => {
 
     return response.data;
   } catch (error) {
-    console.log(error);
+    debug(error);
 
     return [];
   }

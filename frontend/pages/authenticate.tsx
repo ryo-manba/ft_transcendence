@@ -4,8 +4,10 @@ import { useEffect, useState, useCallback } from 'react';
 import { useSession, signOut } from 'next-auth/react';
 import { LoginResult, LoginResultStatus } from '../types';
 import { ValidationDialog } from 'components/auth/ValidationDialog';
+import Debug from 'debug';
 
 const Authenticate = () => {
+  const debug = Debug('authenticate');
   const router = useRouter();
   const { data: session, status } = useSession();
   const [openValidationDialog, setOpenValidationDialog] = useState(false);
@@ -18,7 +20,7 @@ const Authenticate = () => {
           if (session && session.user !== undefined && session.user !== null) {
             let loginName = '';
             let imageUrl = '';
-            console.log(session);
+            debug(session);
             if (
               session.user.email &&
               session.user.email.indexOf('gmail.com') !== -1
@@ -32,6 +34,7 @@ const Authenticate = () => {
               imageUrl = '';
             }
             const urlOauth = `${process.env.NEXT_PUBLIC_API_URL}/auth/oauth-login`;
+
             const { data } = await axios.post<LoginResult>(urlOauth, {
               oAuthId: loginName,
               imagePath: imageUrl,

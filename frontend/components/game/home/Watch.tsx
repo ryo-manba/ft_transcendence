@@ -60,7 +60,6 @@ export const Watch = () => {
     socket.on(
       'joinGameRoom',
       (gameState: GameState, gameSetting: GameSetting) => {
-        console.log('joinGameRoom');
         if (user === undefined) {
           return;
         }

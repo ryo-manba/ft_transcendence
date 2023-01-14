@@ -7,6 +7,7 @@ import { ChatroomJoinButton } from 'components/chat/chatroom/ChatroomJoinButton'
 import { Chatroom, Message } from 'types/chat';
 import { useQueryUser } from 'hooks/useQueryUser';
 import { Loading } from 'components/common/Loading';
+import Debug from 'debug';
 
 type Props = {
   socket: Socket;
@@ -19,6 +20,7 @@ export const ChatroomSidebar = memo(function ChatroomSidebar({
   setCurrentRoomId,
   setMessages,
 }: Props) {
+  const debug = Debug('chat');
   const { data: user } = useQueryUser();
   const [rooms, setRooms] = useState<Chatroom[]>([]);
 
@@ -26,7 +28,7 @@ export const ChatroomSidebar = memo(function ChatroomSidebar({
     if (!socket || !user) return;
     // 入室しているルーム一覧を受け取る
     socket.on('chat:getJoinedRooms', (data: Chatroom[]) => {
-      console.log('chat:getJoinedRooms', data);
+      debug('chat:getJoinedRooms %o', data);
       setRooms(data);
     });
     // サイドバーのチャットルームを更新する
@@ -36,7 +38,7 @@ export const ChatroomSidebar = memo(function ChatroomSidebar({
 
     // 現在所属しているチャットルームが削除された場合、表示されているチャット履歴を削除する
     socket.on('chat:deleteRoom', (deletedRoom: Chatroom) => {
-      console.log('chat:deleteRoom', deletedRoom);
+      debug('chat:deleteRoom %o', deletedRoom);
       // socketの退出処理をする
       socket.emit('chat:leaveSocket', { roomId: deletedRoom.id });
       // 所属しているチャットルーム一覧を取得する

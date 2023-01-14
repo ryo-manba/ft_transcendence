@@ -94,8 +94,8 @@ model User {
   has2FA          Boolean           @default(false)
   oAuthId         String?           @unique
   secret2FA       String            @default("")
-  blockingUsers   BlockRelation[]   @relation("blocking")
   blockedByUsers  BlockRelation[]   @relation("blockedBy")
+  blockingUsers   BlockRelation[]   @relation("blocking")
   Chatroom        Chatroom[]
   ChatroomAdmin   ChatroomAdmin[]
   ChatroomMembers ChatroomMembers[]
@@ -109,10 +109,10 @@ model User {
 model BlockRelation {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @default(now()) @updatedAt
-  blocking        User     @relation("blocking", fields: [blockingUserId], references: [id], onDelete: Cascade)
   blockingUserId  Int
-  blockedBy       User     @relation("blockedBy", fields: [blockedByUserId], references: [id], onDelete: Cascade)
   blockedByUserId Int
+  blockedBy       User     @relation("blockedBy", fields: [blockedByUserId], references: [id], onDelete: Cascade)
+  blocking        User     @relation("blocking", fields: [blockingUserId], references: [id], onDelete: Cascade)
 
   @@id([blockingUserId, blockedByUserId])
   @@unique([blockingUserId, blockedByUserId])
