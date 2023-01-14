@@ -1,4 +1,4 @@
-FROM node:16.18.0-alpine
+FROM --platform=linux/amd64 node:16.18.0-alpine
 
 EXPOSE 3000
 
