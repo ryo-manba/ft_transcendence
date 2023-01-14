@@ -1,15 +1,21 @@
-import { memo, useState } from 'react';
+import { memo, useEffect, useState } from 'react';
 import { TextField, IconButton } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
 
 type Props = {
+  roomName: string;
   sendMessage: (text: string) => void;
 };
 
 export const ChatTextInput = memo(function ChatTextInput({
+  roomName,
   sendMessage,
 }: Props) {
   const [text, setText] = useState('');
+
+  useEffect(() => {
+    setText('');
+  }, [roomName]);
 
   const handleClick = () => {
     if (text === '') {
@@ -35,7 +41,7 @@ export const ChatTextInput = memo(function ChatTextInput({
       variant="standard"
       size="small"
       value={text}
-      placeholder={`#roomへメッセージを送信`}
+      placeholder={`Message #${roomName}`}
       onKeyPress={(e) => {
         if (e.key === 'Enter') {
           // formのdefaultEventで画面がリロードされるのを防ぐ

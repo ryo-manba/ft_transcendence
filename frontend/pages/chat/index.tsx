@@ -1,20 +1,20 @@
+import { NextPage } from 'next';
 import { useState, useEffect } from 'react';
 import { io, Socket } from 'socket.io-client';
 import Grid from '@mui/material/Unstable_Grid2';
 import { Header } from 'components/common/Header';
 import { ChatroomSidebar } from 'components/chat/chatroom/ChatroomSidebar';
 import { FriendSidebar } from 'components/chat/friend/FriendSidebar';
-import { Message } from 'types/chat';
-import { NextPage } from 'next';
 import { Layout } from 'components/common/Layout';
 import { ChatMessageExchange } from 'components/chat/message-exchange/ChatMessageExchange';
+import { Message, CurrentRoom } from 'types/chat';
 
 const appBarHeight = '64px';
 
 const Chat: NextPage = () => {
   const [socket, setSocket] = useState<Socket>();
   const [messages, setMessages] = useState<Message[]>([]);
-  const [currentRoomId, setCurrentRoomId] = useState<number | undefined>(
+  const [currentRoom, setCurrentRoom] = useState<CurrentRoom | undefined>(
     undefined,
   );
 
@@ -51,7 +51,7 @@ const Chat: NextPage = () => {
         >
           <ChatroomSidebar
             socket={socket}
-            setCurrentRoomId={setCurrentRoomId}
+            setCurrentRoom={setCurrentRoom}
             setMessages={setMessages}
           />
         </Grid>
@@ -62,10 +62,10 @@ const Chat: NextPage = () => {
             borderBottom: '1px solid',
           }}
         >
-          {currentRoomId && (
+          {currentRoom && (
             <ChatMessageExchange
               socket={socket}
-              currentRoomId={currentRoomId}
+              currentRoom={currentRoom}
               messages={messages}
               setMessages={setMessages}
             />

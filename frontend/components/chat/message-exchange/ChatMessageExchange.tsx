@@ -1,7 +1,7 @@
 import { memo, useState, useEffect, Dispatch, SetStateAction } from 'react';
 import { Socket } from 'socket.io-client';
 import { Box, Collapse, Paper } from '@mui/material';
-import { Message } from 'types/chat';
+import { Message, CurrentRoom } from 'types/chat';
 import { useQueryUser } from 'hooks/useQueryUser';
 import { Loading } from 'components/common/Loading';
 import { ChatErrorAlert } from 'components/chat/utils/ChatErrorAlert';
@@ -10,16 +10,16 @@ import { ChatMessageList } from 'components/chat/message-exchange/ChatMessageLis
 
 type Props = {
   socket: Socket;
-  currentRoomId: number;
+  currentRoom: CurrentRoom;
   messages: Message[];
   setMessages: Dispatch<SetStateAction<Message[]>>;
 };
 
 export const ChatMessageExchange = memo(function ChatMessageExchange({
-  currentRoomId,
+  socket,
+  currentRoom,
   messages,
   setMessages,
-  socket,
 }: Props) {
   const [error, setError] = useState('');
   const { data: user } = useQueryUser();
@@ -45,7 +45,7 @@ export const ChatMessageExchange = memo(function ChatMessageExchange({
     const message = {
       userId: user.id,
       userName: user.name,
-      chatroomId: currentRoomId,
+      chatroomId: currentRoom.id,
       message: text,
     };
 
@@ -77,7 +77,7 @@ export const ChatMessageExchange = memo(function ChatMessageExchange({
           }}
         >
           <ChatMessageList
-            currentRoomId={currentRoomId}
+            currentRoomId={currentRoom.id}
             messages={messages}
             setMessages={setMessages}
             socket={socket}
@@ -89,7 +89,10 @@ export const ChatMessageExchange = memo(function ChatMessageExchange({
           </Collapse>
         </Box>
         <form style={{ display: 'flex', alignItems: 'center', padding: '2px' }}>
-          <ChatTextInput sendMessage={sendMessage} />
+          <ChatTextInput
+            roomName={currentRoom.name}
+            sendMessage={sendMessage}
+          />
         </form>
       </Paper>
     </>
