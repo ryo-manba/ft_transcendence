@@ -71,7 +71,7 @@ export const ValidationDialog: FC<Props> = ({
         },
       );
 
-      if (data == true) {
+      if (data === true) {
         await router.push('/dashboard');
       } else {
         setOpenErrorSnackbar(true);
@@ -139,7 +139,7 @@ export const ValidationDialog: FC<Props> = ({
             </Grid>
           </Grid>
           <Snackbar
-            open={openErrorSnackbar == true}
+            open={openErrorSnackbar === true}
             autoHideDuration={6000}
             onClose={handleSnackClose}
           >

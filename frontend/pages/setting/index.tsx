@@ -20,7 +20,7 @@ import { useMutationName } from 'hooks/useMutationName';
 import { useQueryUser } from 'hooks/useQueryUser';
 import type { NextPage } from 'next';
 import { useForm, SubmitHandler, Controller } from 'react-hook-form';
-import { SettingForm } from 'types/setting';
+import { SettingForm, OpenSnackState } from 'types/setting';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { ChangeEventHandler, useEffect, useState } from 'react';
@@ -46,7 +46,7 @@ const schema = z.object({
 const Setting: NextPage = () => {
   const { data: user } = useQueryUser();
   const [error, setError] = useState<string[]>([]);
-  const [openSnack, setOpenSnack] = useState('none');
+  const [openSnack, setOpenSnack] = useState<OpenSnackState>('NONE');
   const [openConfirm, setOpenConfirm] = useState(false);
   const [avatarImageUrl, setAvatarImageUrl] = useState<string | undefined>(
     undefined,
@@ -149,25 +149,34 @@ const Setting: NextPage = () => {
     }
   };
 
-  const handleSnackClose = (
-    event?: React.SyntheticEvent | Event,
-    reason?: string,
-  ) => {
-    if (reason === 'clickaway') {
-      return;
-    }
-    setOpenSnack('none');
-  };
+  const handleSnackClose = () =>
+    // event?: React.SyntheticEvent | Event,
+    // reason?: string,
+    {
+      // if (reason === 'clickaway') {
+      //   return;
+      // }
+      setOpenSnack('NONE');
+    };
 
   const handleDialogClose = (result: string) => {
     setOpenConfirm(false);
-    if (result == 'agree') {
-      changeHas2FAMutation.mutate({
-        isEnable: false,
-        userId: user.id,
-        authCode: '',
-      });
-      setOpenSnack('OK');
+    if (result === 'agree') {
+      changeHas2FAMutation.mutate(
+        {
+          isEnable: false,
+          userId: user.id,
+          authCode: '',
+        },
+        {
+          onSuccess: () => {
+            setOpenSnack('SUCCESS');
+          },
+          onError: () => {
+            setOpenSnack('ERROR');
+          },
+        },
+      );
     }
   };
 
@@ -338,13 +347,23 @@ const Setting: NextPage = () => {
               </DialogActions>
             </Dialog>
 
+            {/* Snackbarの中身を三項演算子で書くと、SUCCESSのSnackbarが消えた後に一瞬ErrorのSnackbarが表示されてしまうため、別のコンポーネントとして併記 */}
             <Snackbar
-              open={openSnack == 'OK'}
+              open={openSnack === 'SUCCESS'}
               autoHideDuration={6000}
               onClose={handleSnackClose}
             >
               <Alert onClose={handleSnackClose} severity="success">
-                2 Factor Auth is disabled!
+                2 Factor Auth is successfully disabled!
+              </Alert>
+            </Snackbar>
+            <Snackbar
+              open={openSnack === 'ERROR'}
+              autoHideDuration={6000}
+              onClose={handleSnackClose}
+            >
+              <Alert onClose={handleSnackClose} severity="error">
+                Failed to disable 2 Factor Auth!
               </Alert>
             </Snackbar>
           </Grid>

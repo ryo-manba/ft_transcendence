@@ -6,8 +6,9 @@ import { useState, useEffect } from 'react';
 import { useQueryUser } from 'hooks/useQueryUser';
 import axios from 'axios';
 import { useForm, SubmitHandler, Controller } from 'react-hook-form';
-import { TwoAuthForm } from 'types/setting';
+import { TwoAuthForm, OpenSnackState } from 'types/setting';
 import { useMutationHas2FA } from 'hooks/useMutationHas2FA';
+import Error from 'next/error';
 
 const Enable2FA: NextPage = () => {
   const {
@@ -20,7 +21,8 @@ const Enable2FA: NextPage = () => {
   const { data: user } = useQueryUser();
   const [qrCode, setQrCode] = useState('');
   const { changeHas2FAMutation } = useMutationHas2FA();
-  const [openSnack, setOpenSnack] = useState('');
+  const [openSnack, setOpenSnack] = useState<OpenSnackState>('NONE');
+  const [qrCodeFetchingError, setQrCodeFetchingError] = useState(false);
 
   useEffect(() => {
     let ignore = false;
@@ -35,7 +37,7 @@ const Enable2FA: NextPage = () => {
             setQrCode(response.data);
           }
         } catch {
-          throw new Error('Can not get QR Code Exception.');
+          setQrCodeFetchingError(true);
         }
       }
     };
@@ -48,7 +50,7 @@ const Enable2FA: NextPage = () => {
   }, []);
 
   const handleClose = () => {
-    setOpenSnack('');
+    setOpenSnack('NONE');
   };
 
   const on2FAMutationEnableError = () => {
@@ -70,6 +72,10 @@ const Enable2FA: NextPage = () => {
       );
     }
   };
+
+  if (qrCodeFetchingError) {
+    return <Error statusCode={500} />;
+  }
 
   //実行時にQRコードを取得
   return (
@@ -128,7 +134,7 @@ const Enable2FA: NextPage = () => {
                   REGISTER
                 </Button>
                 <Snackbar
-                  open={openSnack == 'ERROR'}
+                  open={openSnack === 'ERROR'}
                   autoHideDuration={6000}
                   onClose={handleClose}
                 >
