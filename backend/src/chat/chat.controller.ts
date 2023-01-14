@@ -1,7 +1,7 @@
 import { Query, Controller, Get, ParseIntPipe } from '@nestjs/common';
 import { ChatService } from './chat.service';
 import { UserService } from '../user/user.service';
-import type { ChatUser } from './types/chat';
+import type { ChatUser, ChatMessage } from './types/chat';
 
 @Controller('chat')
 export class ChatController {
@@ -61,6 +61,29 @@ export class ChatController {
     @Query('roomId', ParseIntPipe) roomId: number,
   ): Promise<ChatUser[]> {
     return await this.chatService.findChatroomNormalUsers(roomId);
+  }
+
+  /**
+   * @param roomId
+   * @return Message[]
+   */
+  @Get('messages')
+  async findChatMessages(
+    @Query('roomId', ParseIntPipe) roomId: number,
+    @Query('skip', ParseIntPipe) skip: number,
+    @Query('pageSize', ParseIntPipe) pageSize: number,
+  ): Promise<ChatMessage[]> {
+    const chatMessages = await this.chatService.findChatMessages({
+      chatroomId: roomId,
+      skip: skip,
+      pageSize: pageSize,
+    });
+
+    /**
+     * 新しい順にpageSize取得したものを古い順に並び替えることでTimelineの並び順にする
+     * 新 -> 古 を 古 -> 新 にする
+     */
+    return chatMessages.reverse();
   }
 
   /**
