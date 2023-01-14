@@ -76,6 +76,7 @@ export const ChatMessageExchange = memo(function ChatMessageExchange({
             flexGrow: 1,
           }}
         >
+          <h3 className="my-2 ml-1 underline">#{currentRoom.name}</h3>
           <ChatMessageList
             currentRoomId={currentRoom.id}
             messages={messages}
