@@ -125,8 +125,7 @@ export const ChatroomListItem = memo(function ChatroomListItem({
       type: room.type,
     };
 
-    // TODO:フレンドを入室させたあとのgatewayからのレスポンス対応は今後行う
-    socket.emit('chat:joinRoom', joinRoomInfo);
+    socket.emit('chat:joinRoomFromOtherUser', joinRoomInfo);
   };
 
   const addAdmin = (userId: number) => {

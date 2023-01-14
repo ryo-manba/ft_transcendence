@@ -100,6 +100,19 @@ export const ChatroomJoinDialog = memo(function ChatroomJoinDialog({
     setSelectedRoom(room);
   };
 
+  const joinRoom = (joinRoomInfo: JoinChatroomInfo) => {
+    socket.emit('chat:joinRoom', joinRoomInfo, (joinedRoom: Chatroom) => {
+      // 入室に成功したらダイアログを閉じる
+      if (joinedRoom) {
+        handleClose();
+        // 入室済みのルーム一覧に追加する
+        addRooms(joinedRoom);
+      } else {
+        setError('Failed to join room.');
+      }
+    });
+  };
+
   const onSubmit: SubmitHandler<ChatroomJoinForm> = ({
     password,
   }: ChatroomJoinForm) => {
@@ -112,16 +125,7 @@ export const ChatroomJoinDialog = memo(function ChatroomJoinDialog({
       password: isProtected(selectedRoom) ? password : undefined,
     };
 
-    socket.emit('chat:joinRoom', joinRoomInfo, (joinedRoom: Chatroom) => {
-      // 入室に成功したらダイアログを閉じる
-      if (joinedRoom) {
-        handleClose();
-        // 入室済みのルーム一覧に追加する
-        addRooms(joinedRoom);
-      } else {
-        setError('Failed to join room.');
-      }
-    });
+    joinRoom(joinRoomInfo);
   };
 
   return (

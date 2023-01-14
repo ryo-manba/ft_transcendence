@@ -31,6 +31,7 @@ export const ChatroomSidebar = memo(function ChatroomSidebar({
       debug('chat:getJoinedRooms %o', data);
       setRooms(data);
     });
+
     // サイドバーのチャットルームを更新する
     socket.on('chat:updateSideBarRooms', () => {
       socket.emit('chat:getJoinedRooms', { userId: user.id });
@@ -48,6 +49,23 @@ export const ChatroomSidebar = memo(function ChatroomSidebar({
       setCurrentRoom(undefined);
     });
 
+    // 他のユーザーによってチャットルームに入室させられたときの処理
+    socket.on('chat:joinRoomFromOtherUser', (joinedRoom: Chatroom) => {
+      debug('joinRoomFromOtherUser:', joinedRoom);
+
+      // 通知を受け取れるようソケットをjoinさせる
+      socket.emit(
+        'chat:socketJoinRoom',
+        { roomId: joinedRoom.id },
+        (res: boolean) => {
+          if (res) {
+            // サイドバーにチャットルームを追加する
+            setRooms((prev) => [...prev, joinedRoom]);
+          }
+        },
+      );
+    });
+
     // setupが終わったら
     // 入室中のチャットルーム一覧を取得する
     socket.emit('chat:getJoinedRooms', { userId: user.id });
@@ -55,6 +73,7 @@ export const ChatroomSidebar = memo(function ChatroomSidebar({
     return () => {
       socket.off('chat:getJoinedRooms');
       socket.off('chat:updateSideBarRooms');
+      socket.off('chat:joinRoomFromOtherUser');
     };
   }, []);
 
