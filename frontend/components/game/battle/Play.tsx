@@ -11,6 +11,7 @@ import { Loading } from 'components/common/Loading';
 import { useGameSettingStore } from 'store/game/GameSetting';
 import { useMutationStatus } from 'hooks/useMutationStatus';
 import { useRouter } from 'next/router';
+import Debug from 'debug';
 
 type Props = {
   updateFinishedGameInfo: (newInfo: FinishedGameInfo) => void;
@@ -84,6 +85,7 @@ const getGameParameters = (canvasWidth: number) => {
 };
 
 export const Play = ({ updateFinishedGameInfo }: Props) => {
+  const debug = Debug('game');
   // function to get window width
   const getWindowWidth = () => {
     const { innerWidth, innerHeight } = window;
@@ -319,7 +321,7 @@ export const Play = ({ updateFinishedGameInfo }: Props) => {
           });
         }
       } catch (error) {
-        console.error(error);
+        debug(error);
       }
       updatePlayState(PlayState.stateNothing);
     });

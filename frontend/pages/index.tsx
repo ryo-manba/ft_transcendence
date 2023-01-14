@@ -1,13 +1,18 @@
 /* eslint-disable react/jsx-props-no-spreading */
 import type { NextPage } from 'next';
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useRouter } from 'next/router';
 import axios from 'axios';
 import { IconDatabase } from '@tabler/icons';
 import Image from 'next/image';
 import GppGoodIcon from '@mui/icons-material/GppGood';
 import { useForm, SubmitHandler, Controller } from 'react-hook-form';
-import { AuthForm, AxiosErrorResponse } from '../types';
+import {
+  AuthForm,
+  AxiosErrorResponse,
+  LoginResult,
+  LoginResultStatus,
+} from '../types';
 import {
   Grid,
   IconButton,
@@ -26,6 +31,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Loading } from 'components/common/Loading';
 import Head from 'next/head';
+import { ValidationDialog } from 'components/auth/ValidationDialog';
 
 const usernameMaxLen = 50;
 const passwordMinLen = 5;
@@ -48,6 +54,8 @@ const Home: NextPage = () => {
   const [isRegister, setIsRegister] = useState(false);
   const [error, setError] = useState<string[]>([]);
   const [showPassword, setShowPassword] = useState(false);
+  const [openValidationDialog, setOpenValidationDialog] = useState(false);
+  const [validationUserId, setValidationUserId] = useState(0);
 
   const {
     control,
@@ -65,21 +73,35 @@ const Home: NextPage = () => {
   });
   const { data: session, status } = useSession();
 
-  const onSubmit: SubmitHandler<AuthForm> = async (data: AuthForm) => {
+  const onSubmit: SubmitHandler<AuthForm> = async (formData: AuthForm) => {
     try {
       if (process.env.NEXT_PUBLIC_API_URL) {
         if (isRegister) {
-          const url_signup = `${process.env.NEXT_PUBLIC_API_URL}/auth/signup`;
-          await axios.post(url_signup, {
-            password: data.password,
-            username: data.username,
+          const urlSignup = `${process.env.NEXT_PUBLIC_API_URL}/auth/signup`;
+          await axios.post(urlSignup, {
+            password: formData.password,
+            username: formData.username,
           });
         }
-        await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/auth/login`, {
-          username: data.username,
-          password: data.password,
-        });
-        await router.push('/dashboard');
+        const { data } = await axios.post<LoginResult>(
+          `${process.env.NEXT_PUBLIC_API_URL}/auth/login`,
+          {
+            username: formData.username,
+            password: formData.password,
+          },
+        );
+        if (data.res === LoginResultStatus.SUCCESS) {
+          await router.push('/dashboard');
+        } else if (
+          data.res === LoginResultStatus.NEED2FA &&
+          data.userId !== undefined
+        ) {
+          setValidationUserId(data.userId);
+          setOpenValidationDialog(true);
+        } else {
+          const messages = ['Login Failure'];
+          setError(messages);
+        }
       }
     } catch (e) {
       if (axios.isAxiosError(e) && e.response && e.response.data) {
@@ -91,11 +113,18 @@ const Home: NextPage = () => {
     }
   };
 
+  // ValidateのDialogが失敗したら呼ばれる
+  const handleClose = useCallback(() => {
+    // ダイアログを閉じる
+    setOpenValidationDialog(false);
+    setValidationUserId(0);
+    void router.push('/');
+  }, [setOpenValidationDialog, setValidationUserId]);
+
   if (status === 'loading') {
     return <Loading fullHeight={true} />;
   } else if (status === 'authenticated') {
     if (session && session.user !== null && session.user !== undefined) {
-      // void signOut();
       void router.push('/authenticate');
     }
 
@@ -248,6 +277,11 @@ const Home: NextPage = () => {
               </Button>
             </Grid>
           </Grid>
+          <ValidationDialog
+            open={openValidationDialog}
+            userId={validationUserId}
+            onClose={handleClose}
+          />
         </Grid>
       </main>
     </div>

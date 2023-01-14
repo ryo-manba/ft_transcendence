@@ -21,6 +21,7 @@ const Chat: NextPage = () => {
   useEffect(() => {
     const temp = io('ws://localhost:3001/chat');
     setSocket(temp);
+    if (temp.disconnected) temp.connect();
 
     return () => {
       temp.disconnect();

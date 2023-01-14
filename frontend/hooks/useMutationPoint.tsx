@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { useQueryClient, useMutation } from '@tanstack/react-query';
 import { User } from '@prisma/client';
+import Debug from 'debug';
 
 type Props = {
   userId: number;
@@ -12,6 +13,7 @@ const endpoint = `${
 }/user/update-point`;
 
 export const useMutationPoint = () => {
+  const debug = Debug('user');
   const queryClient = useQueryClient();
 
   const updatePointMutation = useMutation<
@@ -37,7 +39,7 @@ export const useMutationPoint = () => {
         }
       },
       onError: (err: Error) => {
-        console.error(err);
+        debug(err);
       },
     },
   );

@@ -20,6 +20,7 @@ import { useRouter } from 'next/router';
 import { Invitation } from 'types/game';
 import { BadgedAvatar } from 'components/common/BadgedAvatar';
 import { ChatErrorAlert } from 'components/chat/utils/ChatErrorAlert';
+import Debug from 'debug';
 
 type Props = {
   friend: Friend;
@@ -30,6 +31,7 @@ export const FriendListItem = memo(function FriendListItem({
   friend,
   socket,
 }: Props) {
+  const debug = Debug('friend');
   const [open, setOpen] = useState(false);
   const [friendStatus, setFriendStatus] = useState<UserStatus>('OFFLINE');
   const { data: user } = useQueryUser();
@@ -55,7 +57,7 @@ export const FriendListItem = memo(function FriendListItem({
     };
 
     updateStatus(ignore).catch((err) => {
-      console.error(err);
+      debug(err);
     });
 
     return () => {

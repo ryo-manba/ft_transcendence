@@ -1,6 +1,7 @@
 import axios, { AxiosError } from 'axios';
 import { useQueryClient, useMutation } from '@tanstack/react-query';
 import { User } from '@prisma/client';
+import Debug from 'debug';
 
 type PropsForUpdate = {
   userId: number;
@@ -17,6 +18,7 @@ const endpointForDeletion = `${
 }/user/delete-avatar`;
 
 export const useMutationAvatar = () => {
+  const debug = Debug('user');
   const queryClient = useQueryClient();
 
   const updateAvatarMutation = useMutation<
@@ -42,7 +44,7 @@ export const useMutationAvatar = () => {
         }
       },
       onError: (err: AxiosError) => {
-        console.error(err);
+        debug(err);
         throw err;
       },
     },
@@ -75,7 +77,7 @@ export const useMutationAvatar = () => {
         }
       },
       onError: (err: AxiosError) => {
-        console.error(err);
+        debug(err);
       },
     },
   );

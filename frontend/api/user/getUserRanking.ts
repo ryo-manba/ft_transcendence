@@ -1,4 +1,5 @@
 import axios from 'axios';
+import Debug from 'debug';
 
 type Props = {
   userId: number;
@@ -7,6 +8,7 @@ type Props = {
 const endpoint = `${process.env.NEXT_PUBLIC_API_URL as string}/user/ranking`;
 
 export const getUserRanking = async ({ userId }: Props) => {
+  const debug = Debug('user');
   try {
     const { data: ranking } = await axios.get<number>(endpoint, {
       params: { id: userId },
@@ -14,7 +16,7 @@ export const getUserRanking = async ({ userId }: Props) => {
 
     return ranking;
   } catch (error) {
-    console.error(error);
+    debug(error);
 
     return undefined;
   }

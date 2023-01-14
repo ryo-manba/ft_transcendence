@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { Friend } from 'types/friend';
+import Debug from 'debug';
 
 type Props = {
   userId: number;
@@ -10,6 +11,7 @@ const endpoint = `${
 }/friends/followings`;
 
 export const fetchFollowingUsers = async ({ userId }: Props) => {
+  const debug = Debug('friend');
   try {
     const response = await axios.get<Friend[]>(endpoint, {
       params: { id: userId },
@@ -17,7 +19,7 @@ export const fetchFollowingUsers = async ({ userId }: Props) => {
 
     return response.data;
   } catch (error) {
-    console.log(error);
+    debug(error);
 
     return [];
   }

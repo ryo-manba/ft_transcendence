@@ -8,12 +8,14 @@ import { useQueryUser } from 'hooks/useQueryUser';
 import { Friend } from 'types/friend';
 import { fetchFollowingUsers } from 'api/friend/fetchFollowingUsers';
 import { ChatBlockButton } from 'components/chat/block/ChatBlockButton';
+import Debug from 'debug';
 
 type Props = {
   socket: Socket;
 };
 
 export const FriendSidebar = memo(function FriendSidebar({ socket }: Props) {
+  const debug = Debug('friend');
   const [friends, setFriends] = useState<Friend[]>([]);
   const { data: user } = useQueryUser();
   if (user === undefined) {
@@ -38,7 +40,7 @@ export const FriendSidebar = memo(function FriendSidebar({ socket }: Props) {
     void setupFriends(ignore);
 
     socket.on('chat:blocked', (blockedByUserId: number) => {
-      console.log('chat:blocked', blockedByUserId);
+      debug('chat:blocked %d', blockedByUserId);
       handleRemoveFriendById(blockedByUserId);
     });
 

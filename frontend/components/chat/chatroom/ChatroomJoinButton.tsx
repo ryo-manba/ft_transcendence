@@ -4,6 +4,7 @@ import { Button } from '@mui/material';
 import AddCircleOutlineRounded from '@mui/icons-material/AddCircleOutlineRounded';
 import { User, Chatroom } from '@prisma/client';
 import { ChatroomJoinDialog } from 'components/chat/chatroom/ChatroomJoinDialog';
+import Debug from 'debug';
 
 type Props = {
   socket: Socket;
@@ -14,6 +15,7 @@ export const ChatroomJoinButton = memo(function ChatroomJoinButton({
   user,
   socket,
 }: Props) {
+  const debug = Debug('chat');
   const [open, setOpen] = useState(false);
   const [rooms, setRooms] = useState<Chatroom[]>([]);
 
@@ -33,7 +35,7 @@ export const ChatroomJoinButton = memo(function ChatroomJoinButton({
 
   useEffect(() => {
     socket.on('chat:getJoinableRooms', (joinableRooms: Chatroom[]) => {
-      console.log('chat:getJoinableRooms -> receive', joinableRooms);
+      debug('chat:getJoinableRooms -> receive %o', joinableRooms);
       setRooms(joinableRooms);
     });
 
