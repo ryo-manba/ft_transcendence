@@ -23,6 +23,7 @@ import { ChatroomSettingDetailDialog } from 'components/chat/chatroom/ChatroomSe
 import { ChatroomSettingItems } from 'components/chat/chatroom/ChatroomSettingItems';
 import { ChatPasswordForm } from 'components/chat/utils/ChatPasswordForm';
 import { fetchChatroomMutedUsers } from 'api/chat/fetchChatroomMutedUsers';
+import { fetchChatroomBannedUsers } from 'api/chat/fetchChatroomBannedUsers';
 
 type Props = {
   room: Chatroom;
@@ -39,6 +40,7 @@ type Props = {
     checkPassword: string,
   ) => void;
   banUser: (userId: number) => void;
+  unbanUser: (userId: number) => void;
   muteUser: (userId: number) => void;
   unmuteUser: (userId: number) => void;
 };
@@ -60,6 +62,7 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
   addAdmin,
   changePassword,
   banUser,
+  unbanUser,
   muteUser,
   unmuteUser,
 }: Props) {
@@ -79,6 +82,7 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
   const [selectedUserId, setSelectedUserId] = useState('');
   const [notAdminUsers, setNotAdminUsers] = useState<ChatUser[]>([]);
   const [notBannedUsers, setNotBannedUsers] = useState<ChatUser[]>([]);
+  const [bannedUsers, setBannedUsers] = useState<ChatUser[]>([]);
   const [notMutedUsers, setNotMutedUsers] = useState<ChatUser[]>([]);
   const [mutedUsers, setMutedUsers] = useState<ChatUser[]>([]);
   const [friends, setFriends] = useState<Friend[]>([]);
@@ -144,6 +148,15 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
     }
   };
 
+  const fetchCanUnbanUsers = async (ignore: boolean) => {
+    const bannedUsers = await fetchChatroomBannedUsers({
+      roomId: room.id,
+    });
+    if (!ignore) {
+      setBannedUsers(bannedUsers);
+    }
+  };
+
   const fetchCanMuteUsers = async (ignore: boolean) => {
     const notMutedUsers = await fetchChatroomNormalUsers({
       roomId: room.id,
@@ -187,6 +200,9 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
         break;
       case ChatroomSetting.BAN_USER:
         void fetchCanBanUsers(ignore);
+        break;
+      case ChatroomSetting.UNBAN_USER:
+        void fetchCanUnbanUsers(ignore);
         break;
       case ChatroomSetting.MUTE_USER:
         void fetchCanMuteUsers(ignore);
@@ -281,6 +297,9 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
       case ChatroomSetting.BAN_USER:
         banUser(Number(selectedUserId));
         break;
+      case ChatroomSetting.UNBAN_USER:
+        unbanUser(Number(selectedUserId));
+        break;
     }
     handleClose();
   };
@@ -309,6 +328,8 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
       case ChatroomSetting.UNMUTE_USER:
         return !isSelectTarget();
       case ChatroomSetting.BAN_USER:
+        return !isSelectTarget();
+      case ChatroomSetting.UNBAN_USER:
         return !isSelectTarget();
     }
   };
@@ -391,6 +412,14 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
         {selectedRoomSetting === ChatroomSetting.BAN_USER && (
           <ChatroomSettingDetailDialog
             users={notBannedUsers}
+            labelTitle="User"
+            selectedValue={selectedUserId}
+            onChange={handleChangeUserId}
+          />
+        )}
+        {selectedRoomSetting === ChatroomSetting.UNBAN_USER && (
+          <ChatroomSettingDetailDialog
+            users={bannedUsers}
             labelTitle="User"
             selectedValue={selectedUserId}
             onChange={handleChangeUserId}

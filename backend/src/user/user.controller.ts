@@ -34,11 +34,8 @@ const storage = {
   storage: diskStorage({
     destination: process.env.AVATAR_IMAGE_DIR,
     filename: (req, file, cb) => {
-      // ファイル名に空白があれば削除して、末尾にuuidを追加したあとに拡張子を付与することで
-      // 複数ユーザーからimage.jpgみたいなありがちな名前のファイルがアップロードされた場合
-      // にもファイルが上書き保存されないようにしている
-      const filename: string =
-        path.parse(file.originalname).name.replace(/\s/g, '') + uuidv4();
+      // ファイル名は拡張子のみ保持して、ファイル名自体はuuidに置換
+      const filename: string = uuidv4();
       const extension: string = path.parse(file.originalname).ext;
       // cbはコールバックの頭文字っぽい。第一引数はエラー、第二引数はファイル名を設定
       cb(null, `${filename}${extension}`);
