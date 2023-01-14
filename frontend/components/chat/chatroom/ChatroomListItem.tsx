@@ -14,7 +14,7 @@ import ChatIcon from '@mui/icons-material/Chat';
 import CloseIcon from '@mui/icons-material/Close';
 import { ChatroomMembersStatus, ChatroomType } from '@prisma/client';
 import { Socket } from 'socket.io-client';
-import { Chatroom, Message, JoinChatroomInfo } from 'types/chat';
+import { Chatroom, Message, JoinChatroomInfo, CurrentRoom } from 'types/chat';
 import { useQueryUser } from 'hooks/useQueryUser';
 import { Loading } from 'components/common/Loading';
 import { ChatroomSettingDialog } from 'components/chat/chatroom/ChatroomSettingDialog';
@@ -24,14 +24,14 @@ import Debug from 'debug';
 type Props = {
   room: Chatroom;
   socket: Socket;
-  setCurrentRoomId: Dispatch<SetStateAction<number>>;
+  setCurrentRoom: Dispatch<SetStateAction<CurrentRoom | undefined>>;
   setMessages: Dispatch<SetStateAction<Message[]>>;
 };
 
 export const ChatroomListItem = memo(function ChatroomListItem({
   room,
   socket,
-  setCurrentRoomId,
+  setCurrentRoom,
   setMessages,
 }: Props) {
   const debug = Debug('chat');
@@ -81,18 +81,12 @@ export const ChatroomListItem = memo(function ChatroomListItem({
       debug('chat:isBannedUser %d', isBanned);
       if (isBanned) {
         setError('You were banned.');
-        setCurrentRoomId(0);
+        setCurrentRoom(undefined);
         setMessages([]);
       } else {
         // 入室に成功したら、既存のメッセージを受け取る
-        socket.emit(
-          'chat:changeCurrentRoom',
-          { roomId },
-          (messages: Message[]) => {
-            setMessages(messages);
-          },
-        );
-        setCurrentRoomId(roomId);
+        socket.emit('chat:changeCurrentRoom', { roomId });
+        setCurrentRoom({ id: room.id, name: room.name });
       }
     });
   };
@@ -234,7 +228,7 @@ export const ChatroomListItem = memo(function ChatroomListItem({
     socket.emit('chat:leaveRoom', leaveRoomInfo, (res: boolean) => {
       if (res) {
         setMessages([]);
-        setCurrentRoomId(0);
+        setCurrentRoom(undefined);
         // 所属しているチャットルーム一覧を取得する
         socket.emit('chat:getJoinedRooms', { userId: user.id });
       } else {

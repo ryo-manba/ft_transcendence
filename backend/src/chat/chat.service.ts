@@ -15,9 +15,10 @@ import { CreateChatroomDto } from './dto/create-chatroom.dto';
 import { CreateMessageDto } from './dto/create-message.dto';
 import { CreateAdminDto } from './dto/create-admin.dto';
 import { JoinChatroomDto } from './dto/join-chatroom.dto';
-import type { ChatUser } from './types/chat';
+import type { ChatUser, ChatMessage } from './types/chat';
 import { updatePasswordDto } from './dto/update-password.dto';
 import { updateMemberStatusDto } from './dto/update-member-status.dto';
+import { GetMessagesDto } from './dto/get-messages.dto';
 import { createDirectMessageDto } from './dto/create-direct-message.dto';
 import { DeleteChatroomDto } from './dto/delete-chatroom.dto';
 import { DeleteChatroomMemberDto } from './dto/delete-chatroom-member.dto';
@@ -139,12 +140,16 @@ export class ChatService {
     try {
       const message = await this.prisma.message.create({
         data: {
-          ...createMessageDto,
+          userId: createMessageDto.userId,
+          chatroomId: createMessageDto.chatroomId,
+          message: createMessageDto.message,
         },
       });
 
       return message;
-    } catch (err) {
+    } catch (error) {
+      this.logger.log('addMessage', error);
+
       return undefined;
     }
   }
@@ -176,19 +181,34 @@ export class ChatService {
 
   /**
    * chatroomに紐づいたメッセージを取得する
-   * TODO: 引数に応じて取得する数を調整する
+   * @param GetMessagesDto
    */
-  async findMessages(
-    chatroomWhereUniqueInput: Prisma.ChatroomWhereUniqueInput,
-  ): Promise<Message[] | null> {
-    const res = await this.prisma.chatroom.findUnique({
-      where: chatroomWhereUniqueInput,
+  async findChatMessages(dto: GetMessagesDto): Promise<ChatMessage[]> {
+    const messages = await this.prisma.message.findMany({
+      where: {
+        chatroomId: dto.chatroomId,
+      },
+      skip: dto.pageSize * dto.skip,
+      take: dto.pageSize,
+      orderBy: { createdAt: 'desc' },
       include: {
-        messages: true,
+        user: {
+          select: {
+            name: true,
+          },
+        },
       },
     });
 
-    return res.messages;
+    const chatMessages = messages.map((message) => {
+      return {
+        text: message.message,
+        userName: message.user.name,
+        createdAt: message.createdAt,
+      };
+    });
+
+    return chatMessages;
   }
 
   async findAdmins(id: number): Promise<ChatroomAdmin[] | null> {

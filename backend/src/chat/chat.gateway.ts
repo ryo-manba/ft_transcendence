@@ -5,12 +5,7 @@ import {
   WebSocketServer,
   ConnectedSocket,
 } from '@nestjs/websockets';
-import {
-  Chatroom,
-  ChatroomType,
-  ChatroomMembersStatus,
-  Message,
-} from '@prisma/client';
+import { Chatroom, ChatroomType, ChatroomMembersStatus } from '@prisma/client';
 import { Server, Socket } from 'socket.io';
 import { Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
@@ -33,6 +28,8 @@ import { ChangeCurrentRoomDto } from './dto/change-current-room.dto';
 import { LeaveSocketDto } from './dto/leave-socket.dto';
 import { OnRoomJoinableDto } from './dto/on-room-joinable.dto';
 import { GetAdminsIdsDto } from './dto/get-admins-ids.dto';
+import { GetMessagesCountDto } from './dto/get-messages-count.dto';
+import type { ChatMessage } from './types/chat';
 
 @WebSocketGateway({
   cors: {
@@ -152,9 +149,15 @@ export class ChatGateway {
     if (res === undefined) {
       return 'Failed to send message.';
     }
+    const chatMessage: ChatMessage = {
+      text: res.message,
+      userName: createMessageDto.userName,
+      createdAt: res.createdAt,
+    };
+
     this.server
       .to(String(createMessageDto.chatroomId))
-      .emit('chat:receiveMessage', createMessageDto);
+      .emit('chat:receiveMessage', chatMessage);
 
     return 'ok';
   }
@@ -168,7 +171,7 @@ export class ChatGateway {
   async changeCurrentRoom(
     @ConnectedSocket() client: Socket,
     @MessageBody() dto: ChangeCurrentRoomDto,
-  ): Promise<Message[]> {
+  ): Promise<void> {
     this.logger.log(`chat:changeCurrentRoom received -> ${dto.roomId}`);
 
     // index[0]には、socketのidが入っている
@@ -179,13 +182,6 @@ export class ChatGateway {
       await client.leave(target);
     }
     await client.join(String(dto.roomId));
-
-    // 既存のメッセージを取得する
-    // TODO: limitで上限をつける
-    const messages = await this.chatService.findMessages({ id: dto.roomId });
-
-    // 既存のメッセージを送り返す
-    return messages;
   }
 
   /**
@@ -450,7 +446,7 @@ export class ChatGateway {
     return res ? true : false;
   }
 
-  /**
+  /*
    * ダイレクトメッセージを始める
    * - チャットルーム作成
    * - 自分と相手をチャットルームに追加する
@@ -508,6 +504,29 @@ export class ChatGateway {
   }
 
   /**
+   * チャットルームのメッセージの合計値を返す
+   * @param GetMessagesCountDto
+   */
+  @SubscribeMessage('chat:getMessagesCount')
+  async getMessagesCount(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() dto: GetMessagesCountDto,
+  ): Promise<number> {
+    this.logger.log('chat:getMessagesCount', dto);
+
+    // https://www.prisma.io/docs/reference/api-reference/prisma-client-reference#count
+    const count = await this.prisma.message.count({
+      where: {
+        chatroomId: dto.chatroomId,
+      },
+    });
+
+    this.logger.log('chat:getMessagesCount', count);
+
+    return count;
+  }
+
+  /*
    * ユーザーをブロックする
    * @param CreateBlockRelationDto
    */
