@@ -4,12 +4,16 @@ import {
   IsString,
   IsEnum,
   IsOptional,
+  MaxLength,
 } from 'class-validator';
 import { ChatroomType } from '@prisma/client';
+
+const maxChatroomNameLength = 100;
 
 export class CreateChatroomDto {
   @IsString()
   @IsNotEmpty()
+  @MaxLength(maxChatroomNameLength)
   name: string;
 
   @IsEnum(ChatroomType)

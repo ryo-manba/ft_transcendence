@@ -1,4 +1,6 @@
-import { IsNotEmpty, IsInt, IsString } from 'class-validator';
+import { IsNotEmpty, IsInt, IsString, MaxLength } from 'class-validator';
+
+const maxMessageLength = 2000;
 
 export class CreateMessageDto {
   @IsNotEmpty()
@@ -11,5 +13,6 @@ export class CreateMessageDto {
 
   @IsNotEmpty()
   @IsString()
+  @MaxLength(maxMessageLength)
   message: string;
 }
