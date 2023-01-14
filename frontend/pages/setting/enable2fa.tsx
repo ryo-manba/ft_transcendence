@@ -8,7 +8,6 @@ import axios from 'axios';
 import { useForm, SubmitHandler, Controller } from 'react-hook-form';
 import { TwoAuthForm, OpenSnackState } from 'types/setting';
 import { useMutationHas2FA } from 'hooks/useMutationHas2FA';
-import Error from 'next/error';
 
 const Enable2FA: NextPage = () => {
   const {
@@ -40,6 +39,7 @@ const Enable2FA: NextPage = () => {
           }
         } catch {
           setQrCodeFetchingError(true);
+          setOpenSnack(OpenSnackState.ERROR);
         }
       }
     };
@@ -74,10 +74,6 @@ const Enable2FA: NextPage = () => {
       );
     }
   };
-
-  if (qrCodeFetchingError) {
-    return <Error statusCode={500} />;
-  }
 
   //実行時にQRコードを取得
   return (
@@ -141,7 +137,9 @@ const Enable2FA: NextPage = () => {
                   onClose={handleClose}
                 >
                   <Alert onClose={handleClose} severity="error">
-                    Authorization Code Is Wrong!
+                    {qrCodeFetchingError
+                      ? 'Failed to generate QR code!'
+                      : 'Authorization Code Is Wrong!'}
                   </Alert>
                 </Snackbar>
               </Grid>
