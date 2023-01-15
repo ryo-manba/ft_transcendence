@@ -62,7 +62,7 @@ export class ChatGateway {
     return 'user' + String(userId);
   };
 
-  socketChatRoomName = (roomId: number) => {
+  generateSocketChatRoomName = (roomId: number) => {
     return 'room' + String(roomId);
   };
 
@@ -184,7 +184,7 @@ export class ChatGateway {
     };
 
     this.server
-      .to(this.socketChatRoomName(message.chatroomId))
+      .to(this.generateSocketChatRoomName(message.chatroomId))
       .emit('chat:receiveMessage', chatMessage);
 
     return 'ok';
@@ -248,7 +248,7 @@ export class ChatGateway {
     @MessageBody() dto: SocketJoinRoomDto,
   ): Promise<boolean> {
     this.logger.log(`chat:socketJoinRoom received -> ${dto.roomId}`);
-    await client.join(this.socketChatRoomName(dto.roomId));
+    await client.join(this.generateSocketChatRoomName(dto.roomId));
 
     // 戻り値がないとCallbackが反応しないためtrueを返してる
     return true;
@@ -269,7 +269,7 @@ export class ChatGateway {
     const joinedRoom = await this.chatService.joinRoom(dto);
 
     if (joinedRoom) {
-      const socketRoomName = this.socketChatRoomName(joinedRoom.id);
+      const socketRoomName = this.generateSocketChatRoomName(joinedRoom.id);
       // 他の人を入室させるときはjoinできない
       if (client) {
         await client.join(socketRoomName);
@@ -290,7 +290,7 @@ export class ChatGateway {
     @MessageBody() dto: LeaveSocketDto,
   ): Promise<void> {
     this.logger.log(`chat:leaveSocket received -> ${dto.roomId}`);
-    const socketRoomName = this.socketChatRoomName(dto.roomId);
+    const socketRoomName = this.generateSocketChatRoomName(dto.roomId);
     await client.leave(socketRoomName);
   }
 
@@ -307,7 +307,7 @@ export class ChatGateway {
       return false;
     }
 
-    const socketRoomName = this.socketChatRoomName(deletedRoom.id);
+    const socketRoomName = this.generateSocketChatRoomName(deletedRoom.id);
     this.server.to(socketRoomName).emit('chat:deleteRoom', deletedRoom);
 
     // 入室者をルームから退出させる
@@ -692,7 +692,7 @@ export class ChatGateway {
     // すでに入室中のチャットルームも通知を受け取れるようにする
     const rooms = await this.chatService.findJoinedRooms(userId);
     rooms.map(async (room) => {
-      await client.join(this.socketChatRoomName(room.id));
+      await client.join(this.generateSocketChatRoomName(room.id));
     });
   }
 }
