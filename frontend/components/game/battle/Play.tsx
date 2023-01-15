@@ -30,6 +30,7 @@ type GameInfo = {
 };
 
 type GameParameters = {
+  topLeftX: number;
   canvasWidth: number;
   canvasHeight: number;
   barWidth: number;
@@ -51,20 +52,26 @@ type GameParameters = {
 const convert2Int = (float: number) => float - (float % 1);
 
 const getGameParameters = (canvasWidth: number) => {
+  const { innerWidth } = window;
+  const topLeftX =
+    innerWidth === canvasWidth
+      ? 0
+      : convert2Int((innerWidth - canvasWidth) / 2);
   const gameParameters: GameParameters = {
+    topLeftX,
     canvasWidth,
     canvasHeight: convert2Int(canvasWidth * 0.6),
     barWidth: convert2Int(canvasWidth * 0.02),
     barLength: 0,
-    player1X: convert2Int(canvasWidth * 0.02),
-    player2X: convert2Int(canvasWidth * 0.96),
+    player1X: convert2Int(canvasWidth * 0.02 + topLeftX),
+    player2X: convert2Int(canvasWidth * 0.96 + topLeftX),
     highestPos: 0,
     lowestPos: 0,
-    sideBarLeft: convert2Int(canvasWidth * 0.05),
-    sideBarRight: convert2Int(canvasWidth * 0.95),
+    sideBarLeft: convert2Int(canvasWidth * 0.05 + topLeftX),
+    sideBarRight: convert2Int(canvasWidth * 0.95 + topLeftX),
     lineDashStyle: [20, 5],
     initialHeight: 0,
-    ballInitialX: convert2Int(canvasWidth / 2),
+    ballInitialX: convert2Int(canvasWidth / 2 + topLeftX),
     ballInitialY: 0,
     ballRadius: convert2Int(canvasWidth * 0.01),
     widthRatio: 0,
@@ -86,8 +93,8 @@ const getGameParameters = (canvasWidth: number) => {
 
 export const Play = ({ updateFinishedGameInfo }: Props) => {
   const debug = Debug('game');
-  // function to get window width
-  const getWindowWidth = () => {
+
+  const getCanvasWidth = () => {
     const { innerWidth, innerHeight } = window;
     const heightOfHeader = 80;
     const heightOfFooter = 25;
@@ -107,7 +114,7 @@ export const Play = ({ updateFinishedGameInfo }: Props) => {
     (store) => store.updateGameSetting,
   );
   const [gameParameters, setGameParameters] = useState(
-    getGameParameters(getWindowWidth()),
+    getGameParameters(getCanvasWidth()),
   );
   const [gameInfo, updateGameInfo] = useState<GameInfo>({
     height1: gameParameters.initialHeight,
@@ -136,7 +143,8 @@ export const Play = ({ updateFinishedGameInfo }: Props) => {
       gameInfo: GameInfo,
       params: GameParameters,
     ) => {
-      ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+      const { innerWidth, innerHeight } = window;
+      ctx.clearRect(0, 0, innerWidth, innerHeight);
       ctx.fillRect(
         params.player1X,
         gameInfo.height1,
@@ -164,15 +172,18 @@ export const Play = ({ updateFinishedGameInfo }: Props) => {
       // draw center line
       ctx.beginPath();
       ctx.setLineDash(params.lineDashStyle);
-      ctx.moveTo(params.canvasWidth / 2, params.highestPos);
-      ctx.lineTo(params.canvasWidth / 2, params.lowestPos + params.barLength);
+      ctx.moveTo(params.canvasWidth / 2 + params.topLeftX, params.highestPos);
+      ctx.lineTo(
+        params.canvasWidth / 2 + params.topLeftX,
+        params.lowestPos + params.barLength,
+      );
       ctx.stroke();
 
       // draw ball
       ctx.beginPath();
-      ctx.moveTo(gameInfo.ball.x, gameInfo.ball.y);
+      ctx.moveTo(gameInfo.ball.x + params.topLeftX, gameInfo.ball.y);
       ctx.arc(
-        gameInfo.ball.x,
+        gameInfo.ball.x + params.topLeftX,
         gameInfo.ball.y,
         gameInfo.ball.radius,
         0,
@@ -334,7 +345,7 @@ export const Play = ({ updateFinishedGameInfo }: Props) => {
 
   useEffect(() => {
     const handleWindowResize = () => {
-      setGameParameters(getGameParameters(getWindowWidth()));
+      setGameParameters(getGameParameters(getCanvasWidth()));
     };
 
     window.addEventListener('resize', handleWindowResize);
@@ -402,27 +413,18 @@ export const Play = ({ updateFinishedGameInfo }: Props) => {
           </Grid>
         )}
       <div>
+        <GameHeader left={playerNames[0]} center="VS" right={playerNames[1]} />
         <GameHeader
-          maxWidth={gameParameters.canvasWidth}
-          left={playerNames[0]}
-          center="VS"
-          right={playerNames[1]}
-        />
-        <GameHeader
-          maxWidth={gameParameters.canvasWidth}
           left={gameSetting.player1Score}
           center=":"
           right={gameSetting.player2Score}
         />
         <canvas
           ref={canvasRef}
-          width={gameParameters.canvasWidth}
+          width={window.innerWidth}
           height={gameParameters.canvasHeight}
         />
-        <Typography
-          align="center"
-          maxWidth={gameParameters.canvasWidth}
-        >{`Difficulty: ${gameSetting.difficulty} / Match Point: ${gameSetting.matchPoint}`}</Typography>
+        <Typography align="center">{`Difficulty: ${gameSetting.difficulty} / Match Point: ${gameSetting.matchPoint}`}</Typography>
       </div>
     </>
   );
