@@ -71,7 +71,7 @@ const Home: NextPage = () => {
       username: '',
     },
   });
-  const { data: session, status } = useSession();
+  const { status } = useSession();
 
   const onSubmit: SubmitHandler<AuthForm> = async (formData: AuthForm) => {
     try {
@@ -122,12 +122,6 @@ const Home: NextPage = () => {
   }, [setOpenValidationDialog, setValidationUserId]);
 
   if (status === 'loading') {
-    return <Loading fullHeight={true} />;
-  } else if (status === 'authenticated') {
-    if (session && session.user !== null && session.user !== undefined) {
-      void router.push('/authenticate');
-    }
-
     return <Loading fullHeight={true} />;
   }
 
@@ -254,7 +248,9 @@ const Home: NextPage = () => {
                   src="/images/ico-42-logo.jpg"
                   onClick={() => {
                     void (async () => {
-                      await signIn('42-school');
+                      await signIn('42-school', {
+                        callbackUrl: '/authenticate',
+                      });
                     })();
                   }}
                   width={50}
@@ -268,7 +264,7 @@ const Home: NextPage = () => {
                   src="/images/ico-google-logo-96.png"
                   onClick={() => {
                     void (async () => {
-                      await signIn('google');
+                      await signIn('google', { callbackUrl: '/authenticate' });
                     })();
                   }}
                   width={50}
