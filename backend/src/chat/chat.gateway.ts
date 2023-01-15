@@ -79,8 +79,8 @@ export class ChatGateway {
    * 作成者はそのまま入室する
    * @param CreateChatroomDto
    */
-  @SubscribeMessage('chat:createRoom')
-  async CreateRoom(
+  @SubscribeMessage('chat:createAndJoinRoom')
+  async CreateAndJoinRoom(
     @ConnectedSocket() client: Socket,
     @MessageBody() dto: CreateChatroomDto,
   ): Promise<Chatroom> {
@@ -239,14 +239,16 @@ export class ChatGateway {
   ): Promise<boolean> {
     this.logger.log(`chat:joinRoomFromOtherUser received -> ${dto.userId}`);
 
-    const joinRoom = await this.joinRoom(undefined, dto);
-    if (joinRoom === undefined) {
+    const joinedRoom = await this.joinRoom(undefined, dto);
+    if (joinedRoom === undefined) {
       return false;
     }
 
-    // 入室させたユーザーがオンラインだった場合は通知を送る
-    const joinUser = 'user' + String(dto.userId);
-    this.server.to(joinUser).emit('chat:joinRoomFromOtherUser', joinRoom);
+    // 入室させたユーザーに通知を送る（オンラインだった場合は、socket.joinを実行させる）
+    const joinedUserRoomName = this.socketUserRoomName(dto.userId);
+    this.server
+      .to(joinedUserRoomName)
+      .emit('chat:joinRoomFromOtherUser', joinedRoom);
 
     return true;
   }
@@ -276,7 +278,7 @@ export class ChatGateway {
    */
   @SubscribeMessage('chat:joinRoom')
   async joinRoom(
-    @ConnectedSocket() client: Socket,
+    @ConnectedSocket() client: Socket | undefined,
     @MessageBody() dto: JoinChatroomDto,
   ): Promise<Chatroom> {
     this.logger.log(`chat:joinRoom received -> ${dto.userId}`);
@@ -287,8 +289,14 @@ export class ChatGateway {
       // 管理対象に追加する
       const socketRooms = this.socketManager.get(dto.userId);
       const socketRoomName = this.socketChatRoomName(joinedRoom.id);
-      await client.join(socketRoomName);
-      socketRooms?.add(socketRoomName);
+      if (client) {
+        await client.join(socketRoomName);
+      }
+      this.logger.log(`chat:joinRoom socketRoom socketManager`);
+      console.log(this.socketManager);
+      this.logger.log(`chat:joinRoom socketRoom socketRooms`);
+      console.log(this.socketManager.get(dto.userId));
+      socketRooms.add(socketRoomName);
     }
 
     return joinedRoom;
@@ -532,18 +540,68 @@ export class ChatGateway {
   async startDirectMessage(
     @ConnectedSocket() client: Socket,
     @MessageBody() dto: createDirectMessageDto,
-  ): Promise<boolean> {
+  ): Promise<Chatroom> {
     this.logger.log('chat:directMessage received');
-    // TODO: 既にルームが存在する場合はそのルームに入室させる
-    const res = await this.chatService.startDirectMessage(dto);
 
-    if (res) {
-      const rooms = await this.chatService.findJoinedRooms(dto.userId1);
-      // フロントエンドへ送り返す
-      client.emit('chat:getJoinedRooms', rooms);
+    const isCreated = await this.chatService.isCreatedDMRoom(
+      dto.userId1,
+      dto.userId2,
+    );
+    // すでに作成されている場合（自分と相手がすでにチャットルームに入室している）
+    if (isCreated) {
+      return undefined;
+    }
+    const roomName = dto.name1 + '_' + dto.name2;
+    const createChatroomDto: CreateChatroomDto = {
+      name: roomName,
+      type: ChatroomType.DM,
+      ownerId: dto.userId1,
+    };
+    const createdRoom = await this.chatService.createRoom(createChatroomDto);
+    if (!createdRoom) {
+      this.logger.log('chat:directMessage failed to createRoom');
+
+      return undefined;
     }
 
-    return res ? true : false;
+    // DM実行者を入室させる
+    const joinChatroomDto1: JoinChatroomDto = {
+      userId: dto.userId1,
+      chatroomId: createdRoom.id,
+      type: createdRoom.type,
+    };
+
+    const joined = await this.joinRoom(client, joinChatroomDto1);
+    if (!joined) {
+      this.logger.log('chat:directMessage failed to joinRoom');
+
+      return undefined;
+    }
+
+    // DM相手を入室させる
+    const joinChatroomDto2: JoinChatroomDto = {
+      userId: dto.userId2,
+      chatroomId: createdRoom.id,
+      type: createdRoom.type,
+    };
+    const joinedOtherUser = await this.joinRoom(undefined, joinChatroomDto2);
+    if (!joinedOtherUser) {
+      this.logger.log('chat:directMessage failed to joinRoomFromOtherUser');
+
+      return undefined;
+    }
+
+    // 入室させたユーザーに通知を送る（オンラインだった場合は、socket.joinを実行させる）
+    const joinedUserRoomName = this.socketUserRoomName(dto.userId2);
+    this.server
+      .to(joinedUserRoomName)
+      .emit('chat:joinRoomFromOtherUser', createdRoom);
+
+    // DMを始めたユーザーのサイドバーを更新させる
+    // 直接Roomを返してサイドバーを更新させないのは、DMを実行するボタンがフレンド側に存在するため
+    client.emit('chat:updateSideBarRooms');
+
+    return createdRoom;
   }
 
   /**
@@ -675,5 +733,7 @@ export class ChatGateway {
     });
 
     this.socketManager.set(userId, socketRooms);
+    this.logger.log(`chat:joinMyRoom socketManager`);
+    console.log(this.socketManager.get(userId));
   }
 }

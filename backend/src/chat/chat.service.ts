@@ -19,7 +19,6 @@ import type { ChatUser, ChatMessage } from './types/chat';
 import { updatePasswordDto } from './dto/update-password.dto';
 import { updateMemberStatusDto } from './dto/update-member-status.dto';
 import { GetMessagesDto } from './dto/get-messages.dto';
-import { createDirectMessageDto } from './dto/create-direct-message.dto';
 import { DeleteChatroomDto } from './dto/delete-chatroom.dto';
 import { DeleteChatroomMemberDto } from './dto/delete-chatroom-member.dto';
 import { CreateBlockRelationDto } from './dto/create-block-relation.dto';
@@ -58,7 +57,7 @@ export class ChatService {
     });
   }
 
-  async create(dto: CreateChatroomDto): Promise<Chatroom> {
+  async createRoom(dto: CreateChatroomDto): Promise<Chatroom> {
     // Protectedの場合はパスワードをハッシュ化する
     const hashed =
       dto.type === ChatroomType.PROTECTED
@@ -78,7 +77,7 @@ export class ChatService {
       // 成功したチャットルームの情報を返す
       return chatroom;
     } catch (error) {
-      this.logger.log('create', error);
+      this.logger.log('createRoom', error);
 
       return undefined;
     }
@@ -328,7 +327,7 @@ export class ChatService {
 
   async createAndJoinRoom(dto: CreateChatroomDto): Promise<Chatroom> {
     // Chatroomを作成する
-    const createdRoom = await this.create(dto);
+    const createdRoom = await this.createRoom(dto);
     if (createdRoom === undefined) {
       return undefined;
     }
@@ -657,68 +656,6 @@ export class ChatService {
     }
 
     return false;
-  }
-
-  /**
-   * チャットルームに所属するユーザーのステータスを更新する
-   * @param createDirectMessageDto
-   */
-  async startDirectMessage(dto: createDirectMessageDto): Promise<boolean> {
-    this.logger.log('startDirectMessage: ', dto);
-
-    const isCreated = await this.isCreatedDMRoom(dto.userId1, dto.userId2);
-    this.logger.log('isCreated', isCreated);
-    if (isCreated) {
-      return false;
-    }
-
-    // 共通するRoom一覧を取得する
-    const roomName = dto.name1 + '_' + dto.name2;
-    const createChatroomDto: CreateChatroomDto = {
-      name: roomName,
-      type: ChatroomType.DM,
-      ownerId: dto.userId1,
-    };
-    try {
-      // チャットルームを作成する
-      const createdRoom = await this.create(createChatroomDto);
-
-      const joinChatroomDto1 = {
-        userId: dto.userId1,
-        chatroomId: createdRoom.id,
-      };
-      const joinChatroomDto2 = {
-        userId: dto.userId2,
-        chatroomId: createdRoom.id,
-      };
-
-      this.logger.log('members createMany', joinChatroomDto1, joinChatroomDto2);
-      // 入室処理を行う
-      await this.prisma.chatroomMembers.createMany({
-        data: [joinChatroomDto1, joinChatroomDto2],
-      });
-
-      const createAdminDto1: CreateAdminDto = {
-        userId: dto.userId1,
-        chatroomId: createdRoom.id,
-      };
-      const createAdminDto2: CreateAdminDto = {
-        userId: dto.userId2,
-        chatroomId: createdRoom.id,
-      };
-
-      this.logger.log('admins createMany', createAdminDto1, createAdminDto2);
-      // adminに追加する
-      await this.prisma.chatroomAdmin.createMany({
-        data: [createAdminDto1, createAdminDto2],
-      });
-
-      return true;
-    } catch (error) {
-      this.logger.log('startDirectMessage', error);
-
-      return false;
-    }
   }
 
   /**

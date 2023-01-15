@@ -98,7 +98,7 @@ export const ChatroomCreateButton = memo(function ChatroomCreateButton({
 
   const createChatroom = useCallback(
     (room: CreateChatroomInfo) => {
-      socket.emit('chat:createRoom', room, (res: Chatroom) => {
+      socket.emit('chat:createAndJoinRoom', room, (res: Chatroom) => {
         res === undefined
           ? setError('Failed to create room.')
           : setRooms((prev) => [...prev, res]);
