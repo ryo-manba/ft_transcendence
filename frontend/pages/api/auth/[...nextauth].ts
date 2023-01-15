@@ -16,18 +16,28 @@ export default NextAuth({
     // ...add more providers here
   ],
   callbacks: {
-    //    signIn({, account, profile, email, credentials}) {
     signIn() {
       // サインインした時に実施したい処理
       return true;
     },
+
     jwt({ token, account }) {
-      // async jwt({ token, user, account, profile, isNewUser }) {
-      if (account?.accessToken) {
-        token.accessToken = account.accessToken as string;
+      console.log('JWT');
+      if (account && account !== undefined) {
+        token.accessToken = account.access_token;
       }
 
       return token;
+    },
+
+    session({ session, token }) {
+      console.log('Session');
+      if (session && session.user !== undefined) {
+        session.user.id = token.sub;
+        session.user.accessToken = token.accessToken;
+      }
+
+      return session;
     },
   },
   secret: process.env.JWT_SECRET,

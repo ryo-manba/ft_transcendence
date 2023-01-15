@@ -29,26 +29,48 @@ const Authenticate = () => {
               loginName = session.user.email;
               if (session.user.image) imageUrl = session.user.image;
             } else if (session.user.email) {
-              // TODO: 42のアカウントでは、access_tokenからログインIDと画像を取得する必要がある。別PRで対応
-              loginName = session.user.email;
-              imageUrl = '';
+              // 42の場合、user情報を取得
+              type Image = {
+                link: string;
+              };
+              type UserInfo = {
+                login: string;
+                image: Image;
+              };
+              debug(session);
+              const urlGetdata =
+                'https://api.intra.42.fr/v2/users/' + String(session.user.id);
+              const response = await axios.get<UserInfo>(urlGetdata, {
+                headers: {
+                  Authorization: 'Bearer ' + String(session.user.accessToken),
+                },
+              });
+              debug(response);
+              loginName = response.data.login;
+              imageUrl = response.data.image.link;
             }
             const urlOauth = `${process.env.NEXT_PUBLIC_API_URL}/auth/oauth-login`;
-
             const { data } = await axios.post<LoginResult>(urlOauth, {
               oAuthId: loginName,
               imagePath: imageUrl,
             });
-            if (data.res === LoginResultStatus.SUCCESS) {
+            debug(data);
+            if (data && data.res === LoginResultStatus.SUCCESS) {
+              debug('login success');
               await router.push('/dashboard');
             } else if (
+              data &&
               data.res === LoginResultStatus.NEED2FA &&
               data.userId !== undefined
             ) {
+              // 2FAコード入力ダイアログを表示
               setValidationUserId(data.userId);
               setOpenValidationDialog(true);
             } else {
               // ログイン失敗、signOutしてログインに戻る
+              // TODO: 現在はOAuth認証後に2回/auth/oauth-loginを呼んでしまい、
+              // 2回目がfailureとなることで初回登録時はログインページに戻ってしまう。
+              debug('login failure');
               void signOut({ callbackUrl: `http://localhost:3000/` });
             }
           }
