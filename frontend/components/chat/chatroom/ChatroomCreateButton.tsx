@@ -96,16 +96,19 @@ export const ChatroomCreateButton = memo(function ChatroomCreateButton({
     socket.emit('chat:getJoinedRooms', { userId: user.id });
   }, [socket]);
 
-  const createChatroom = useCallback(
-    (room: CreateChatroomInfo) => {
-      socket.emit('chat:createAndJoinRoom', room, (res: Chatroom) => {
-        res === undefined
-          ? setError('Failed to create room.')
-          : setRooms((prev) => [...prev, res]);
-      });
-    },
-    [socket],
-  );
+  const createChatroom = (roomInfo: CreateChatroomInfo) => {
+    debug('chat:createAndJoinRoom: createdRoom start');
+    socket.emit('chat:createAndJoinRoom', roomInfo, (createdRoom: Chatroom) => {
+      debug('chat:createAndJoinRoom: createdRoom', createdRoom);
+
+      if (createdRoom === undefined) {
+        setError('Failed to create room.');
+
+        return;
+      }
+      setRooms((prev) => [...prev, createdRoom]);
+    });
+  };
 
   const onSubmit: SubmitHandler<ChatroomForm> = (data: ChatroomForm) => {
     const room: CreateChatroomInfo = {

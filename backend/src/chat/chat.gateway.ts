@@ -85,10 +85,26 @@ export class ChatGateway {
     @ConnectedSocket() client: Socket,
     @MessageBody() dto: CreateChatroomDto,
   ): Promise<Chatroom> {
-    this.logger.log(`chat:createRoom: ${dto.name}`);
+    this.logger.log(`chat:createAndRoom: ${dto.name}`);
 
-    // 作成と入室を行う
-    return await this.chatService.createAndJoinRoom(dto);
+    // チャットルームを作成する
+    const createdRoom = await this.chatService.createRoom(dto);
+    if (!createdRoom) {
+      return undefined;
+    }
+
+    // 作成者をチャットルームに入室させる
+    const joinChatroomDto: JoinChatroomDto = {
+      userId: dto.ownerId,
+      chatroomId: createdRoom.id,
+      type: createdRoom.type,
+    };
+    const res = await this.joinRoom(client, joinChatroomDto);
+    if (!res) {
+      return undefined;
+    }
+
+    return createdRoom;
   }
 
   /**
@@ -616,7 +632,7 @@ export class ChatGateway {
     @ConnectedSocket() client: Socket,
     @MessageBody() dto: GetMessagesCountDto,
   ): Promise<number> {
-    this.logger.log('chat:getMessagesCount', dto);
+    this.logger.log('chat:getMessagesCount', dto.chatroomId);
 
     // https://www.prisma.io/docs/reference/api-reference/prisma-client-reference#count
     const count = await this.prisma.message.count({

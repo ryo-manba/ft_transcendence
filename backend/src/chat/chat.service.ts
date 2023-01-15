@@ -326,26 +326,6 @@ export class ChatService {
     return chatroom;
   }
 
-  async createAndJoinRoom(dto: CreateChatroomDto): Promise<Chatroom> {
-    // Chatroomを作成する
-    const createdRoom = await this.createRoom(dto);
-    if (createdRoom === undefined) {
-      return undefined;
-    }
-
-    // 作成できた場合、チャットルームに入室する
-    const joinDto: JoinChatroomDto = {
-      userId: dto.ownerId,
-      type: dto.type,
-      chatroomId: createdRoom.id,
-      password: dto.password,
-    };
-    const isSuccess = await this.joinRoom(joinDto);
-
-    // 入室できたら作成したチャットルームの情報を返す
-    return isSuccess ? createdRoom : undefined;
-  }
-
   /**
    * チャットルームに所属している かつ adminではない かつ BANもMUTEもされていないユーザ一覧を返す
    * @param roomId
