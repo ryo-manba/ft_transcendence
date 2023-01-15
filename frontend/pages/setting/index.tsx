@@ -5,7 +5,6 @@ import {
   Stack,
   TextField,
   Alert,
-  AlertTitle,
   Typography,
   Snackbar,
   Dialog,
@@ -45,6 +44,7 @@ const schema = z.object({
 
 const Setting: NextPage = () => {
   const { data: user } = useQueryUser();
+  const [success, setSuccess] = useState<string>('');
   const [error, setError] = useState<string[]>([]);
   const [openSnack, setOpenSnack] = useState<OpenSnackState>(
     OpenSnackState.NONE,
@@ -79,23 +79,7 @@ const Setting: NextPage = () => {
   if (user === undefined || router.isReady === false)
     return <Loading fullHeight />;
 
-  const onNameMutationError = (error: AxiosError) => {
-    if (error.response && error.response.data) {
-      reset();
-      const messages = (error.response.data as AxiosErrorResponse).message;
-      if (Array.isArray(messages)) setError(messages);
-      else setError([messages]);
-    }
-  };
-
-  const onAvatarMutationError = () => {
-    setError([
-      'Unable to upload avatar',
-      'Please try again, or try with a different image',
-    ]);
-  };
-
-  const onSubmit: SubmitHandler<SettingForm> = (data: SettingForm) => {
+  const onChangeName: SubmitHandler<SettingForm> = (data: SettingForm) => {
     clearErrors();
     setError([]);
     updateNameMutation.mutate(
@@ -104,7 +88,20 @@ const Setting: NextPage = () => {
         updatedName: data.username,
       },
       {
-        onError: onNameMutationError,
+        onSuccess: () => {
+          setOpenSnack(OpenSnackState.SUCCESS);
+          setSuccess('Successfully changed username');
+        },
+        onError: (error: AxiosError) => {
+          if (error.response && error.response.data) {
+            reset();
+            setOpenSnack(OpenSnackState.ERROR);
+            const messages = (error.response.data as AxiosErrorResponse)
+              .message;
+            if (Array.isArray(messages)) setError(messages);
+            else setError([messages]);
+          }
+        },
       },
     );
   };
@@ -112,10 +109,18 @@ const Setting: NextPage = () => {
   const onChangeAvatar: ChangeEventHandler<HTMLInputElement> = (event) => {
     if (event.target.files === null) return;
     if (user.avatarPath !== null) {
-      deleteAvatarMutation.mutate({
-        userId: user.id,
-        avatarPath: user.avatarPath,
-      });
+      deleteAvatarMutation.mutate(
+        {
+          userId: user.id,
+          avatarPath: user.avatarPath,
+        },
+        {
+          onError: () => {
+            setOpenSnack(OpenSnackState.ERROR);
+            setError(['Failed to delete avatar']);
+          },
+        },
+      );
     }
     const newAvatarFile = event.target.files[0];
     const formData = new FormData();
@@ -126,7 +131,14 @@ const Setting: NextPage = () => {
         updatedAvatarFile: formData,
       },
       {
-        onError: onAvatarMutationError,
+        onSuccess: () => {
+          setOpenSnack(OpenSnackState.SUCCESS);
+          setSuccess('Successfully uploaded avatar');
+        },
+        onError: () => {
+          setOpenSnack(OpenSnackState.ERROR);
+          setError(['Unable to upload avatar']);
+        },
       },
     );
   };
@@ -142,8 +154,11 @@ const Setting: NextPage = () => {
         {
           onSuccess: () => {
             setAvatarImageUrl(undefined);
+            setOpenSnack(OpenSnackState.SUCCESS);
+            setSuccess('Successfully deleted avatar');
           },
           onError: () => {
+            setOpenSnack(OpenSnackState.ERROR);
             setError(['Failed to delete avatar']);
           },
         },
@@ -153,6 +168,8 @@ const Setting: NextPage = () => {
 
   const handleSnackClose = () => {
     setOpenSnack(OpenSnackState.NONE);
+    setError([]);
+    setSuccess('');
   };
 
   const handleDialogClose = (result: string) => {
@@ -167,9 +184,11 @@ const Setting: NextPage = () => {
         {
           onSuccess: () => {
             setOpenSnack(OpenSnackState.SUCCESS);
+            setSuccess('2FA has been successfully disabled');
           },
           onError: () => {
             setOpenSnack(OpenSnackState.ERROR);
+            setError(['Failed to disable 2FA']);
           },
         },
       );
@@ -189,29 +208,7 @@ const Setting: NextPage = () => {
   return (
     <Layout title="Setting">
       <Header title="Setting" />
-      <form onSubmit={handleSubmit(onSubmit) as VoidFunction}>
-        <Grid
-          container
-          alignItems="center"
-          justifyContent="center"
-          sx={{ p: 2 }}
-          spacing={5}
-        >
-          {error.length !== 0 && (
-            <Grid item xs={4}>
-              <Alert severity="error">
-                <>
-                  <AlertTitle>Setting Error</AlertTitle>
-                  {error.map((e, i) => (
-                    <Typography variant="body2" key={i}>
-                      {e}
-                    </Typography>
-                  ))}
-                </>
-              </Alert>
-            </Grid>
-          )}
-        </Grid>
+      <form onSubmit={handleSubmit(onChangeName) as VoidFunction}>
         <Grid
           container
           alignItems="center"
@@ -348,18 +345,24 @@ const Setting: NextPage = () => {
               open={openSnack === OpenSnackState.SUCCESS}
               autoHideDuration={6000}
               onClose={handleSnackClose}
+              anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
             >
               <Alert onClose={handleSnackClose} severity="success">
-                2 Factor Auth is successfully disabled!
+                {success}
               </Alert>
             </Snackbar>
             <Snackbar
               open={openSnack === OpenSnackState.ERROR}
               autoHideDuration={6000}
               onClose={handleSnackClose}
+              anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
             >
               <Alert onClose={handleSnackClose} severity="error">
-                Failed to disable 2 Factor Auth!
+                {error.map((e, i) => (
+                  <Typography variant="body2" key={i}>
+                    {e}
+                  </Typography>
+                ))}
               </Alert>
             </Snackbar>
           </Grid>
