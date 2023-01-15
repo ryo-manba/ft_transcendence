@@ -46,7 +46,6 @@ export const Wait = () => {
       }
     };
     socket.on('random:select', (playerNames: [string, string]) => {
-      console.log('HELLO');
       updatePlayerNames(playerNames);
       updatePlayState(PlayState.stateSelecting);
 
@@ -54,7 +53,6 @@ export const Wait = () => {
       void router.push('/game/battle');
     });
     socket.on('random:standBy', (playerNames: [string, string]) => {
-      console.log('HELLO');
       updatePlayerNames(playerNames);
       updatePlayState(PlayState.stateStandingBy);
 
