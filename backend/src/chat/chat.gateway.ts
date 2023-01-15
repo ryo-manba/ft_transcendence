@@ -553,17 +553,16 @@ export class ChatGateway {
       chatroomId: createdRoom.id,
       type: createdRoom.type,
     };
-    const joinedOtherUser = await this.joinRoom(undefined, joinChatroomDto2);
+    // 入室させたユーザーに通知を送る（オンラインだった場合は、socket.joinを実行させる）
+    const joinedOtherUser = await this.joinRoomFromOtherUser(
+      undefined,
+      joinChatroomDto2,
+    );
     if (!joinedOtherUser) {
       this.logger.log('chat:directMessage failed to joinRoom');
 
       return undefined;
     }
-
-    // 入室させたユーザーに通知を送る（オンラインだった場合は、socket.joinを実行させる）
-    this.server
-      .to(this.generateSocketUserRoomName(dto.userId2))
-      .emit('chat:joinRoomFromOtherUser', createdRoom);
 
     // DMを始めたユーザーのサイドバーを更新させる
     // 直接Roomを返してサイドバーを更新させないのは、DMを実行するボタンがフレンド側に存在するため

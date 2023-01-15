@@ -129,7 +129,11 @@ export const ChatroomListItem = memo(function ChatroomListItem({
       type: room.type,
     };
 
-    socket.emit('chat:joinRoomFromOtherUser', joinRoomInfo);
+    socket.emit('chat:joinRoomFromOtherUser', joinRoomInfo, (res: boolean) => {
+      if (!res) {
+        setError('Failed to add friend.');
+      }
+    });
   };
 
   const addAdmin = (userId: number) => {
