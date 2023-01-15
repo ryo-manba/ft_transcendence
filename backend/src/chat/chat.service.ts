@@ -23,13 +23,19 @@ import { createDirectMessageDto } from './dto/create-direct-message.dto';
 import { DeleteChatroomDto } from './dto/delete-chatroom.dto';
 import { DeleteChatroomMemberDto } from './dto/delete-chatroom-member.dto';
 import { CreateBlockRelationDto } from './dto/create-block-relation.dto';
+import { DeleteBlockRelationDto } from './dto/delete-block-relation.dto';
+import { UserService } from '../user/user.service';
 
 // 2の12乗回の演算が必要という意味
 const saltRounds = 12;
 
 @Injectable()
 export class ChatService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly userService: UserService,
+  ) {}
+
   private logger: Logger = new Logger('ChatService');
 
   async findOne(
@@ -833,18 +839,88 @@ export class ChatService {
   }
 
   /**
+   * ブロックを解除する
+   * @param CreateBlockUserDto
+   */
+  async unblockUser(dto: DeleteBlockRelationDto): Promise<BlockRelation> {
+    this.logger.log('unblockUser: ', dto);
+
+    try {
+      const blockRelation = await this.prisma.blockRelation.delete({
+        where: {
+          blockingUserId_blockedByUserId: {
+            ...dto,
+          },
+        },
+      });
+
+      return blockRelation;
+    } catch (error) {
+      this.logger.log('unblockUser: ', error);
+
+      return undefined;
+    }
+  }
+
+  /**
    * ブロックされているユーザ一覧を返す
    * @param Prisma.BlockRelationWhereInput
    */
   async findBlockedUsers(
     where: Prisma.BlockRelationWhereInput,
-  ): Promise<BlockRelation[]> {
+  ): Promise<ChatUser[]> {
     this.logger.log('findBlockedUsers: ', where);
 
     const blockedUsers = await this.prisma.blockRelation.findMany({
       where: where,
+      include: {
+        blocking: true,
+      },
     });
 
-    return blockedUsers;
+    const chatBlockedUsers: ChatUser[] = blockedUsers.map((user) => {
+      return {
+        id: user.blocking.id,
+        name: user.blocking.name,
+      };
+    });
+
+    return chatBlockedUsers;
   }
+
+  //   /**
+  //    * ブロックされていないユーザ一覧を返す
+  //    * @param Prisma.BlockRelationWhereInput
+  //    */
+  //   async findUnblockedUsers(
+  //     where: Prisma.BlockRelationWhereInput,
+  //   ): Promise<ChatUser[]> {
+  //     this.logger.log('findUnlockedUsers: ', where);
+
+  //     const blockedUsers = await this.prisma.blockRelation.findMany({
+  //       where: where,
+  //     });
+  //     const blockingUserIds = blockedUsers.map((user) => user.blockingUserId);
+
+  //     const users = await this.prisma.user.findMany({
+  //       where: {
+  //         AND: {
+  //           [
+  //           { id: { notIn: blockingUserIds } },
+  //           { id: { not: where.blockedByUserId.} }
+  //           ]
+  //           },
+  //         },
+  //       },
+  //     });
+
+  //     const chatBlockedUsers: ChatUser[] = blockedUsers.map((user) => {
+  //       return {
+  //         id: user.blocking.id,
+  //         name: user.blocking.name,
+  //       };
+  //     });
+
+  //     return chatBlockedUsers;
+  //   }
 }

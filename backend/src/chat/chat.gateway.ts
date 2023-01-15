@@ -22,6 +22,7 @@ import { CheckBanDto } from './dto/check-ban.dto';
 import { DeleteChatroomMemberDto } from './dto/delete-chatroom-member.dto';
 import { UpdateChatroomOwnerDto } from './dto/update-chatroom-owner.dto';
 import { CreateBlockRelationDto } from './dto/create-block-relation.dto';
+import { DeleteBlockRelationDto } from './dto/delete-block-relation.dto';
 import { IsBlockedByUserIdDto } from './dto/is-blocked-by-user-id.dto';
 import { OnGetRoomsDto } from './dto/on-get-rooms.dto';
 import { ChangeCurrentRoomDto } from './dto/change-current-room.dto';
@@ -576,6 +577,22 @@ export class ChatGateway {
         .to('user' + String(dto.blockingUserId))
         .emit('chat:blocked', dto.blockedByUserId);
     }
+
+    return !!res;
+  }
+
+  /*
+   * ユーザーのブロックを解除する
+   * @param CreateBlockRelationDto
+   */
+  @SubscribeMessage('chat:unblockUser')
+  async unblockUser(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() dto: DeleteBlockRelationDto,
+  ): Promise<boolean> {
+    this.logger.log('chat:unblockUser received', dto);
+
+    const res = await this.chatService.unblockUser(dto);
 
     return !!res;
   }

@@ -58,3 +58,11 @@ export type ChatUser = {
   id: number;
   name: string;
 };
+
+export const ChatBlockSetting = {
+  BLOCK_USER: 'Block User',
+  UNBLOCK_USER: 'Unblock User',
+} as const;
+
+export type ChatBlockSetting =
+  typeof ChatBlockSetting[keyof typeof ChatBlockSetting];
