@@ -97,6 +97,8 @@ export const GameGuest = ({ hosts, setHosts }: Props) => {
       updatePlayState(PlayState.stateSelecting);
 
       updateUserStatusPlaying();
+      // cancel random match
+      socket.emit('playCancel');
       void router.push('/game/battle');
     });
     socket.on('friend:standBy', (playerNames: [string, string]) => {
@@ -104,6 +106,8 @@ export const GameGuest = ({ hosts, setHosts }: Props) => {
       updatePlayState(PlayState.stateStandingBy);
 
       updateUserStatusPlaying();
+      // cancel random match
+      socket.emit('playCancel');
       void router.push('/game/battle');
     });
 

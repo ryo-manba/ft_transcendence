@@ -155,14 +155,14 @@ export class GameGateway {
   updatePlayerStatus(player1: Player, player2: Player, gameType: string) {
     const playerNames: [string, string] = [player1.name, player2.name];
     const select = gameType + ':select';
-    const standby = gameType + ':standBy';
+    const standBy = gameType + ':standBy';
 
     // if both players' points are equal, first player joining the que will select the rule
     if (player1.point <= player2.point) {
       player1.socket.emit(select, playerNames);
-      player2.socket.emit(standby, playerNames);
+      player2.socket.emit(standBy, playerNames);
     } else {
-      player1.socket.emit(standby, playerNames);
+      player1.socket.emit(standBy, playerNames);
       player2.socket.emit(select, playerNames);
     }
   }
