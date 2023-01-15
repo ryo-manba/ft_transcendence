@@ -4,7 +4,6 @@ import {
   Dialog,
   DialogActions,
   DialogTitle,
-  IconButton,
   List,
   ListItem,
   ListItemText,
@@ -123,15 +122,11 @@ export const GameGuest = ({ hosts, setHosts }: Props) => {
         action={
           <>
             <Button onClick={handleClick}>OPEN</Button>
-            <IconButton
-              aria-label="close"
-              sx={{ p: 0.5 }}
+            <CloseButton
               onClick={() => {
                 setOpenSnackbar(false);
               }}
-            >
-              <CloseButton />
-            </IconButton>
+            />
           </>
         }
       />
