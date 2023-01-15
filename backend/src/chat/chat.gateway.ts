@@ -53,6 +53,8 @@ export class ChatGateway {
 
   handleConnection(socket: Socket) {
     this.logger.log(`Connected: ${socket.id}`);
+    // やり取りを行うためにソケットの入室処理を行わせる
+    socket.emit('chat:handleConnection');
   }
 
   handleDisconnect(socket: Socket) {
@@ -678,12 +680,12 @@ export class ChatGateway {
    * 他のソケットと通信するようのルームに入室する
    * @param userId
    */
-  @SubscribeMessage('chat:joinMyRoom')
+  @SubscribeMessage('chat:initSocket')
   async joinMyRoom(
     @ConnectedSocket() client: Socket,
     @MessageBody() userId: number,
   ): Promise<void> {
-    this.logger.log('chat:joinMyRoom received -> userId:', userId);
+    this.logger.log('chat:initSocket received -> userId:', userId);
 
     // 自分単体に通知するようのルームに入室する
     const userRoomName = this.socketUserRoomName(userId);

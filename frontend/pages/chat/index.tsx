@@ -10,10 +10,12 @@ import { Layout } from 'components/common/Layout';
 import { ChatMessageExchange } from 'components/chat/message-exchange/ChatMessageExchange';
 import { Loading } from 'components/common/Loading';
 import { useQueryUser } from 'hooks/useQueryUser';
+import Debug from 'debug';
 
 const appBarHeight = '64px';
 
 const Chat: NextPage = () => {
+  const debug = Debug('chat');
   const [socket, setSocket] = useState<Socket>();
   const [messages, setMessages] = useState<Message[]>([]);
   const [currentRoom, setCurrentRoom] = useState<CurrentRoom | undefined>(
@@ -34,8 +36,11 @@ const Chat: NextPage = () => {
   useEffect(() => {
     if (!user || !socket) return;
 
-    // 通知用に自分のルームに入る
-    socket.emit('chat:joinMyRoom', user.id);
+    socket.on('chat:handleConnection', () => {
+      debug('handleConnection');
+      // 通知用に自分のルームに入る
+      socket.emit('chat:initSocket', user.id);
+    });
   }, [user, socket]);
 
   if (socket === undefined || user === undefined) {

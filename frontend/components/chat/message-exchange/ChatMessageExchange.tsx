@@ -7,6 +7,7 @@ import { Loading } from 'components/common/Loading';
 import { ChatErrorAlert } from 'components/chat/utils/ChatErrorAlert';
 import { ChatTextInput } from 'components/chat/message-exchange/ChatTextInput';
 import { ChatMessageList } from 'components/chat/message-exchange/ChatMessageList';
+import Debug from 'debug';
 
 type Props = {
   socket: Socket;
@@ -21,6 +22,7 @@ export const ChatMessageExchange = memo(function ChatMessageExchange({
   messages,
   setMessages,
 }: Props) {
+  const debug = Debug('chat');
   const [error, setError] = useState('');
   const { data: user } = useQueryUser();
 
@@ -29,8 +31,10 @@ export const ChatMessageExchange = memo(function ChatMessageExchange({
 
     // 他ユーザーからのメッセージを受け取る
     socket.on('chat:receiveMessage', (message: Message) => {
+      debug('chat:receiveMessage ', message, currentRoom);
+
       // 現在画面に表示しているルームのメッセージだった場合にのみ追加する
-      if (message.roomId === currentRoom.id) {
+      if (message.roomId === currentRoom?.id) {
         setMessages((prev) => [...prev, message]);
       }
     });
@@ -38,7 +42,7 @@ export const ChatMessageExchange = memo(function ChatMessageExchange({
     return () => {
       socket.off('chat:receiveMessage');
     };
-  }, [user]);
+  }, [user, currentRoom]);
 
   if (user === undefined) {
     return <Loading fullHeight />;
@@ -52,6 +56,7 @@ export const ChatMessageExchange = memo(function ChatMessageExchange({
       message: text,
     };
 
+    debug('chat:sendMessage ', message, currentRoom);
     socket.emit('chat:sendMessage', message, (res: boolean) => {
       if (!res) {
         setError('You can not send a message.');

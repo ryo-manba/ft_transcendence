@@ -69,7 +69,7 @@ export const ChatroomListItem = memo(function ChatroomListItem({
   }, [user]);
 
   // ルームをクリックしたときの処理
-  const changeCurrentRoom = (roomId: number) => {
+  const changeCurrentRoom = (roomId: number, roomName: string) => {
     debug('changeCurrentRoom: %d', roomId);
 
     const checkBanInfo = {
@@ -85,7 +85,12 @@ export const ChatroomListItem = memo(function ChatroomListItem({
         setMessages([]);
       } else {
         // currentRoomの変更をトリガーにmessageが自動取得される
-        setCurrentRoom({ id: room.id, name: room.name });
+        const newCurrentRoom = {
+          id: roomId,
+          name: roomName,
+        };
+        debug('chat:changeCurrentRoom ', newCurrentRoom);
+        setCurrentRoom(newCurrentRoom);
       }
     });
   };
@@ -280,7 +285,7 @@ export const ChatroomListItem = memo(function ChatroomListItem({
         divider
         button
         onClick={() => {
-          changeCurrentRoom(room.id);
+          changeCurrentRoom(room.id, room.name);
         }}
       >
         <ListItemAvatar>
