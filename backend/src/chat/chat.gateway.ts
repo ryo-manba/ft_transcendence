@@ -32,9 +32,6 @@ import { SocketJoinRoomDto } from './dto/socket-join-room.dto';
 
 import type { ChatMessage } from './types/chat';
 
-type SocketManager = Map<number, SocketRooms>;
-type SocketRooms = Set<string>;
-
 @WebSocketGateway({
   cors: {
     origin: '*',
@@ -61,13 +58,7 @@ export class ChatGateway {
     this.logger.log(`Disconnect: ${socket.id}`);
   }
 
-  /**
-   * Key：ユーザーID
-   * Value：入室中のルームごとのソケットID（自分自身を指すソケットも管理する）
-   */
-  socketManager: SocketManager = new Map();
-
-  socketUserRoomName = (userId: number) => {
+  generateSocketUserRoomName = (userId: number) => {
     return 'user' + String(userId);
   };
 
@@ -240,7 +231,7 @@ export class ChatGateway {
 
     // 入室させたユーザーに通知を送る（オンラインだった場合は、socket.joinを実行させる）
     this.server
-      .to(this.socketUserRoomName(dto.userId))
+      .to(this.generateSocketUserRoomName(dto.userId))
       .emit('chat:joinRoomFromOtherUser', joinedRoom);
 
     return true;
@@ -278,13 +269,11 @@ export class ChatGateway {
     const joinedRoom = await this.chatService.joinRoom(dto);
 
     if (joinedRoom) {
-      // 管理対象に追加する
-      const socketRooms = this.socketManager.get(dto.userId);
       const socketRoomName = this.socketChatRoomName(joinedRoom.id);
+      // 他の人を入室させるときはjoinできない
       if (client) {
         await client.join(socketRoomName);
       }
-      socketRooms.add(socketRoomName);
     }
 
     return joinedRoom;
@@ -303,11 +292,6 @@ export class ChatGateway {
     this.logger.log(`chat:leaveSocket received -> ${dto.roomId}`);
     const socketRoomName = this.socketChatRoomName(dto.roomId);
     await client.leave(socketRoomName);
-
-    // socket監視対象から外す
-    this.socketManager.get(dto.userId);
-    const socketRooms = this.socketManager.get(dto.userId);
-    socketRooms?.delete(socketRoomName);
   }
 
   /**
@@ -571,14 +555,14 @@ export class ChatGateway {
     };
     const joinedOtherUser = await this.joinRoom(undefined, joinChatroomDto2);
     if (!joinedOtherUser) {
-      this.logger.log('chat:directMessage failed to joinRoomFromOtherUser');
+      this.logger.log('chat:directMessage failed to joinRoom');
 
       return undefined;
     }
 
     // 入室させたユーザーに通知を送る（オンラインだった場合は、socket.joinを実行させる）
     this.server
-      .to(this.socketUserRoomName(dto.userId2))
+      .to(this.generateSocketUserRoomName(dto.userId2))
       .emit('chat:joinRoomFromOtherUser', createdRoom);
 
     // DMを始めたユーザーのサイドバーを更新させる
@@ -661,7 +645,7 @@ export class ChatGateway {
       // ブロックされたユーザーのフレンド一覧から
       // ブロックしたユーザーの表示を消すために通知を送る
       this.server
-        .to(this.socketUserRoomName(dto.blockingUserId))
+        .to(this.generateSocketUserRoomName(dto.blockingUserId))
         .emit('chat:blocked', dto.blockedByUserId);
     }
 
@@ -702,20 +686,13 @@ export class ChatGateway {
     this.logger.log('chat:initSocket received -> userId:', userId);
 
     // 自分単体に通知するようのルームに入室する
-    const userRoomName = this.socketUserRoomName(userId);
+    const userRoomName = this.generateSocketUserRoomName(userId);
     await client.join(userRoomName);
-
-    const socketRooms: SocketRooms = new Set<string>();
-    socketRooms.add(userRoomName);
 
     // すでに入室中のチャットルームも通知を受け取れるようにする
     const rooms = await this.chatService.findJoinedRooms(userId);
     rooms.map(async (room) => {
-      const chatRoomName = this.socketChatRoomName(room.id);
-      await client.join(chatRoomName);
-      socketRooms.add(chatRoomName);
+      await client.join(this.socketChatRoomName(room.id));
     });
-
-    this.socketManager.set(userId, socketRooms);
   }
 }
