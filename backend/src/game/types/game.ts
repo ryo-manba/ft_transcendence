@@ -1,9 +1,21 @@
 import { Socket, RemoteSocket } from 'socket.io';
 import { DefaultEventsMap } from 'socket.io/dist/typed-events';
 
-type GameState = 'Setting' | 'Playing';
+export const GameState = {
+  SETTING: 'Setting',
+  PLAYING: 'Playing',
+} as const;
 
-type DifficultyLevel = 'Easy' | 'Normal' | 'Hard';
+export type GameState = typeof GameState[keyof typeof GameState];
+
+export const DifficultyLevel = {
+  EASY: 'Easy',
+  NORMAL: 'Normal',
+  HARD: 'Hard',
+} as const;
+
+export type DifficultyLevel =
+  typeof DifficultyLevel[keyof typeof DifficultyLevel];
 
 export type Player = {
   name: string;
@@ -42,7 +54,10 @@ export type RoomInfo = {
   ballVec: BallVec;
   isPlayer1Turn: boolean;
   gameSetting: GameSetting;
+  barLength: number;
   barSpeed: number;
+  initialHeight: number;
+  lowestPos: number;
   rewards: number;
   gameState: GameState;
 };
