@@ -48,6 +48,7 @@ export type GameInfo = {
 };
 
 export type GameParameters = {
+  topLeftX: number;
   canvasWidth: number;
   canvasHeight: number;
   barWidth: number;
