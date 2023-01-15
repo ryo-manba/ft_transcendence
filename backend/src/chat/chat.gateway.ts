@@ -311,6 +311,28 @@ export class ChatGateway {
   }
 
   /**
+   * チャットルームを削除する
+   * @param client
+   * @param DeleteChatroomDto
+   */
+  @SubscribeMessage('chat:deleteRoom')
+  async deleteRoom(@MessageBody() dto: DeleteChatroomDto): Promise<boolean> {
+    this.logger.log(`chat:deleteRoom received -> roomId: ${dto.id}`);
+    const deletedRoom = await this.chatService.deleteRoom(dto);
+    if (!deletedRoom) {
+      return false;
+    }
+
+    const socketRoomName = this.socketChatRoomName(deletedRoom.id);
+    this.server.to(socketRoomName).emit('chat:deleteRoom', deletedRoom);
+
+    // 入室者をルームから退出させる
+    this.server.socketsLeave(socketRoomName);
+
+    return true;
+  }
+
+  /**
    * 退出処理を行う
    * @param client
    * @param DeleteChatroomMemberDto
@@ -346,37 +368,13 @@ export class ChatGateway {
         id: dto.chatroomId,
         userId: dto.userId,
       };
-      try {
-        await this.chatService.deleteRoom(deleteChatroomDto);
-      } catch (error) {
-        this.logger.log('chat:leaveRoom', error);
-
-        return false;
+      const deletedRoom = await this.deleteRoom(deleteChatroomDto);
+      if (!deletedRoom) {
+        this.logger.log('chat:leaveRoom failed to delete room');
       }
-    }
 
-    return true;
-  }
-
-  /**
-   * チャットルームを削除する
-   * @param client
-   * @param DeleteChatroomDto
-   */
-  @SubscribeMessage('chat:deleteRoom')
-  async onRoomDelete(
-    @ConnectedSocket() client: Socket,
-    @MessageBody() dto: DeleteChatroomDto,
-  ): Promise<boolean> {
-    this.logger.log(`chat:deleteRoom received -> roomId: ${dto.id}`);
-    const deletedRoom = await this.chatService.deleteRoom(dto);
-    if (!deletedRoom) {
       return false;
     }
-
-    this.server
-      .to(this.socketChatRoomName(deletedRoom.id))
-      .emit('chat:deleteRoom', deletedRoom);
 
     return true;
   }
