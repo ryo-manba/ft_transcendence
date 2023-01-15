@@ -32,7 +32,7 @@ export default NextAuth({
 
     session({ session, token }) {
       console.log('Session');
-      if (session && session.user !== undefined) {
+      if (token.sub != undefined) {
         session.user.id = token.sub;
         session.user.accessToken = token.accessToken;
       }
