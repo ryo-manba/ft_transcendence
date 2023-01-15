@@ -201,6 +201,7 @@ export class ChatService {
 
     const chatMessages = messages.map((message) => {
       return {
+        roomId: message.chatroomId,
         text: message.message,
         userName: message.user.name,
         createdAt: message.createdAt,

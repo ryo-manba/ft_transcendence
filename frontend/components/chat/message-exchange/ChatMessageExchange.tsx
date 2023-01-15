@@ -28,8 +28,11 @@ export const ChatMessageExchange = memo(function ChatMessageExchange({
     if (!user) return;
 
     // 他ユーザーからのメッセージを受け取る
-    socket.on('chat:receiveMessage', (data: Message) => {
-      setMessages((prev) => [...prev, data]);
+    socket.on('chat:receiveMessage', (message: Message) => {
+      // 現在画面に表示しているルームのメッセージだった場合にのみ追加する
+      if (message.roomId === currentRoom.id) {
+        setMessages((prev) => [...prev, message]);
+      }
     });
 
     return () => {

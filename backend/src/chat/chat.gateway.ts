@@ -24,7 +24,6 @@ import { UpdateChatroomOwnerDto } from './dto/update-chatroom-owner.dto';
 import { CreateBlockRelationDto } from './dto/create-block-relation.dto';
 import { IsBlockedByUserIdDto } from './dto/is-blocked-by-user-id.dto';
 import { OnGetRoomsDto } from './dto/on-get-rooms.dto';
-import { ChangeCurrentRoomDto } from './dto/change-current-room.dto';
 import { LeaveSocketDto } from './dto/leave-socket.dto';
 import { OnRoomJoinableDto } from './dto/on-room-joinable.dto';
 import { GetAdminsIdsDto } from './dto/get-admins-ids.dto';
@@ -164,45 +163,22 @@ export class ChatGateway {
       }
     }
 
-    const res = await this.chatService.addMessage(createMessageDto);
-    if (res === undefined) {
+    const message = await this.chatService.addMessage(createMessageDto);
+    if (message === undefined) {
       return 'Failed to send message.';
     }
     const chatMessage: ChatMessage = {
-      text: res.message,
+      roomId: message.chatroomId,
+      text: message.message,
       userName: createMessageDto.userName,
-      createdAt: res.createdAt,
+      createdAt: message.createdAt,
     };
 
     this.server
-      .to(String(createMessageDto.chatroomId))
+      .to(this.socketChatRoomName(message.chatroomId))
       .emit('chat:receiveMessage', chatMessage);
 
     return 'ok';
-  }
-
-  /**
-   * ソケットを引数で受けとったルームにjoinさせる
-   * @param ChangeCurrentRoomDto
-   * @return チャットルームに対応したメッセージを取得して返す
-   */
-  @SubscribeMessage('chat:changeCurrentRoom')
-  async changeCurrentRoom(
-    @ConnectedSocket() client: Socket,
-    @MessageBody() dto: ChangeCurrentRoomDto,
-  ): Promise<void> {
-    this.logger.log(`chat:changeCurrentRoom received -> ${dto.roomId}`);
-
-    // index[0]には、socketのidが入っている
-    // index[1]には、他のソケットと通信するようのルームがある
-    if (client.rooms.size >= 3) {
-      // roomに入っている場合は退出する
-      const target = Array.from(client.rooms)[2];
-      await client.leave(target);
-    }
-
-    const socketRoomName = this.socketChatRoomName(dto.roomId);
-    await client.join(socketRoomName);
   }
 
   /**
@@ -245,9 +221,8 @@ export class ChatGateway {
     }
 
     // 入室させたユーザーに通知を送る（オンラインだった場合は、socket.joinを実行させる）
-    const joinedUserRoomName = this.socketUserRoomName(dto.userId);
     this.server
-      .to(joinedUserRoomName)
+      .to(this.socketUserRoomName(dto.userId))
       .emit('chat:joinRoomFromOtherUser', joinedRoom);
 
     return true;
@@ -264,8 +239,7 @@ export class ChatGateway {
     @MessageBody() dto: SocketJoinRoomDto,
   ): Promise<boolean> {
     this.logger.log(`chat:socketJoinRoom received -> ${dto.roomId}`);
-    const socketRoomName = this.socketChatRoomName(dto.roomId);
-    await client.join(socketRoomName);
+    await client.join(this.socketChatRoomName(dto.roomId));
 
     // 戻り値がないとCallbackが反応しないためtrueを返してる
     return true;
@@ -292,10 +266,6 @@ export class ChatGateway {
       if (client) {
         await client.join(socketRoomName);
       }
-      this.logger.log(`chat:joinRoom socketRoom socketManager`);
-      console.log(this.socketManager);
-      this.logger.log(`chat:joinRoom socketRoom socketRooms`);
-      console.log(this.socketManager.get(dto.userId));
       socketRooms.add(socketRoomName);
     }
 
@@ -386,10 +356,9 @@ export class ChatGateway {
       return false;
     }
 
-    const room = 'room' + String(deletedRoom.id);
-    console.log('client:', client.rooms);
-    console.log(this.socketManager);
-    this.server.to(room).emit('chat:deleteRoom', deletedRoom);
+    this.server
+      .to(this.socketChatRoomName(deletedRoom.id))
+      .emit('chat:deleteRoom', deletedRoom);
 
     return true;
   }
@@ -592,9 +561,8 @@ export class ChatGateway {
     }
 
     // 入室させたユーザーに通知を送る（オンラインだった場合は、socket.joinを実行させる）
-    const joinedUserRoomName = this.socketUserRoomName(dto.userId2);
     this.server
-      .to(joinedUserRoomName)
+      .to(this.socketUserRoomName(dto.userId2))
       .emit('chat:joinRoomFromOtherUser', createdRoom);
 
     // DMを始めたユーザーのサイドバーを更新させる
@@ -677,7 +645,7 @@ export class ChatGateway {
       // ブロックされたユーザーのフレンド一覧から
       // ブロックしたユーザーの表示を消すために通知を送る
       this.server
-        .to('user' + String(dto.blockingUserId))
+        .to(this.socketUserRoomName(dto.blockingUserId))
         .emit('chat:blocked', dto.blockedByUserId);
     }
 
@@ -733,7 +701,5 @@ export class ChatGateway {
     });
 
     this.socketManager.set(userId, socketRooms);
-    this.logger.log(`chat:joinMyRoom socketManager`);
-    console.log(this.socketManager.get(userId));
   }
 }

@@ -25,6 +25,7 @@ export type JoinChatroomInfo = {
 };
 
 export type Message = {
+  roomId: number;
   text: string;
   userName: string;
   createdAt: Date;
