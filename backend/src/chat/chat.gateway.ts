@@ -509,7 +509,7 @@ export class ChatGateway {
   async startDirectMessage(
     @ConnectedSocket() client: Socket,
     @MessageBody() dto: createDirectMessageDto,
-  ): Promise<Chatroom> {
+  ): Promise<boolean> {
     this.logger.log('chat:directMessage received');
 
     const isCreated = await this.chatService.isCreatedDMRoom(
@@ -518,7 +518,7 @@ export class ChatGateway {
     );
     // すでに作成されている場合（自分と相手がすでにチャットルームに入室している）
     if (isCreated) {
-      return undefined;
+      return false;
     }
     const roomName = dto.name1 + '_' + dto.name2;
     const createChatroomDto: CreateChatroomDto = {
@@ -530,7 +530,7 @@ export class ChatGateway {
     if (!createdRoom) {
       this.logger.log('chat:directMessage failed to createRoom');
 
-      return undefined;
+      return false;
     }
 
     // DM実行者を入室させる
@@ -544,7 +544,7 @@ export class ChatGateway {
     if (!joined) {
       this.logger.log('chat:directMessage failed to joinRoom');
 
-      return undefined;
+      return false;
     }
 
     // DM相手を入室させる
@@ -561,14 +561,14 @@ export class ChatGateway {
     if (!joinedOtherUser) {
       this.logger.log('chat:directMessage failed to joinRoom');
 
-      return undefined;
+      return false;
     }
 
     // DMを始めたユーザーのサイドバーを更新させる
     // 直接Roomを返してサイドバーを更新させないのは、DMを実行するボタンがフレンド側に存在するため
     client.emit('chat:updateSideBarRooms');
 
-    return createdRoom;
+    return true;
   }
 
   /**
