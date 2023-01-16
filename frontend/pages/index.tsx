@@ -128,7 +128,7 @@ const Home: NextPage = () => {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center">
       <Head>
-        <title>Auth</title>
+        <title>ft_transcendence</title>
       </Head>
       <main className="flex w-screen flex-1 flex-col items-center justify-center">
         <Grid
