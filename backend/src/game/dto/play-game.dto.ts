@@ -1,9 +1,10 @@
 import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
+import { DifficultyLevel } from '../types/game';
 
 export class PlayGameDto {
   @IsString()
   @IsNotEmpty()
-  difficulty: string;
+  difficulty: DifficultyLevel;
 
   @IsNumber()
   @IsNotEmpty()

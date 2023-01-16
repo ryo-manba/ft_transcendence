@@ -14,7 +14,7 @@ import { useEffect, useState } from 'react';
 import { useSocketStore } from 'store/game/ClientSocket';
 import { useGameSettingStore } from 'store/game/GameSetting';
 import { PlayState, usePlayStateStore } from 'store/game/PlayState';
-import { DifficultyLevel, isDifficultyLevel, GameSetting } from 'types/game';
+import { DifficultyLevel, GameSetting } from 'types/game';
 
 export const Setting = () => {
   const { playState } = usePlayStateStore();
@@ -23,7 +23,9 @@ export const Setting = () => {
     (store) => store.updateGameSetting,
   );
   const { socket } = useSocketStore();
-  const [difficulty, setDifficulty] = useState<DifficultyLevel>('Easy');
+  const [difficulty, setDifficulty] = useState<DifficultyLevel>(
+    DifficultyLevel.EASY,
+  );
   const [matchPoint, setMatchPoint] = useState(3);
   const durationOfSettingInSec = 30;
   const timeoutIntervalInMilSec = 1000;
@@ -33,10 +35,8 @@ export const Setting = () => {
   const router = useRouter();
 
   const handleDifficultySetting = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value: unknown = e.target.value;
-    if (isDifficultyLevel(value)) {
-      setDifficulty(value);
-    }
+    const value: DifficultyLevel = e.target.value as DifficultyLevel;
+    setDifficulty(value);
   };
 
   const handleMatchPointSetting = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -162,23 +162,23 @@ export const Setting = () => {
               <RadioGroup
                 row
                 aria-labelledby="difficulty-radio-buttons-group-label"
-                defaultValue="Easy"
+                defaultValue={DifficultyLevel.EASY}
                 name="difficulty-buttons-group"
                 value={difficulty}
                 onChange={handleDifficultySetting}
               >
                 <FormControlLabel
-                  value="Easy"
+                  value={DifficultyLevel.EASY}
                   control={<Radio />}
                   label="Easy"
                 />
                 <FormControlLabel
-                  value="Normal"
+                  value={DifficultyLevel.NORMAL}
                   control={<Radio />}
                   label="Normal"
                 />
                 <FormControlLabel
-                  value="Hard"
+                  value={DifficultyLevel.HARD}
                   control={<Radio />}
                   label="Hard"
                 />

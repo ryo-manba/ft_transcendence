@@ -4,7 +4,12 @@ import { useSocketStore } from 'store/game/ClientSocket';
 import { usePlayerNamesStore } from 'store/game/PlayerNames';
 import { usePlayStateStore, PlayState } from 'store/game/PlayState';
 import { GameHeader } from 'components/game/battle/GameHeader';
-import { FinishedGameInfo } from 'types/game';
+import {
+  DifficultyLevel,
+  FinishedGameInfo,
+  GameInfo,
+  GameParameters,
+} from 'types/game';
 import { useMutationPoint } from 'hooks/useMutationPoint';
 import { useQueryUser } from 'hooks/useQueryUser';
 import { Loading } from 'components/common/Loading';
@@ -17,41 +22,30 @@ type Props = {
   updateFinishedGameInfo: (newInfo: FinishedGameInfo) => void;
 };
 
-type Ball = {
-  x: number;
-  y: number;
-  radius: number;
-};
-
-type GameInfo = {
-  height1: number;
-  height2: number;
-  ball: Ball;
-};
-
-type GameParameters = {
-  topLeftX: number;
-  canvasWidth: number;
-  canvasHeight: number;
-  barWidth: number;
-  barLength: number;
-  player1X: number;
-  player2X: number;
-  highestPos: number;
-  lowestPos: number;
-  sideBarLeft: number;
-  sideBarRight: number;
-  lineDashStyle: [number, number];
-  initialHeight: number;
-  ballInitialX: number;
-  ballInitialY: number;
-  ballRadius: number;
-  widthRatio: number;
-};
-
 const convert2Int = (float: number) => float - (float % 1);
 
-const getGameParameters = (canvasWidth: number) => {
+const DENOMINATOR_FOR_EASY = 6;
+const DENOMINATOR_FOR_NORMAL = 12;
+const DENOMINATOR_FOR_HARD = 30;
+
+const getBarLength = (
+  canvasHeight: number,
+  difficultyLevel: DifficultyLevel,
+) => {
+  switch (difficultyLevel) {
+    case DifficultyLevel.EASY:
+      return convert2Int(canvasHeight / DENOMINATOR_FOR_EASY);
+    case DifficultyLevel.NORMAL:
+      return convert2Int(canvasHeight / DENOMINATOR_FOR_NORMAL);
+    case DifficultyLevel.HARD:
+      return convert2Int(canvasHeight / DENOMINATOR_FOR_HARD);
+  }
+};
+
+const getGameParameters = (
+  canvasWidth: number,
+  difficultyLevel: DifficultyLevel,
+) => {
   const { innerWidth } = window;
   const topLeftX =
     innerWidth === canvasWidth
@@ -76,7 +70,10 @@ const getGameParameters = (canvasWidth: number) => {
     ballRadius: convert2Int(canvasWidth * 0.01),
     widthRatio: 0,
   };
-  gameParameters.barLength = convert2Int(gameParameters.canvasHeight / 6);
+  gameParameters.barLength = getBarLength(
+    gameParameters.canvasHeight,
+    difficultyLevel,
+  );
   gameParameters.highestPos = convert2Int(gameParameters.canvasHeight / 60);
   gameParameters.lowestPos =
     gameParameters.canvasHeight -
@@ -114,7 +111,7 @@ export const Play = ({ updateFinishedGameInfo }: Props) => {
     (store) => store.updateGameSetting,
   );
   const [gameParameters, setGameParameters] = useState(
-    getGameParameters(getCanvasWidth()),
+    getGameParameters(getCanvasWidth(), gameSetting.difficulty),
   );
   const [gameInfo, updateGameInfo] = useState<GameInfo>({
     height1: gameParameters.initialHeight,
@@ -345,7 +342,9 @@ export const Play = ({ updateFinishedGameInfo }: Props) => {
 
   useEffect(() => {
     const handleWindowResize = () => {
-      setGameParameters(getGameParameters(getCanvasWidth()));
+      setGameParameters(
+        getGameParameters(getCanvasWidth(), gameSetting.difficulty),
+      );
     };
 
     window.addEventListener('resize', handleWindowResize);
