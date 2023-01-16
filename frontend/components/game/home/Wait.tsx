@@ -45,14 +45,14 @@ export const Wait = () => {
         return;
       }
     };
-    socket.on('select', (playerNames: [string, string]) => {
+    socket.on('random:select', (playerNames: [string, string]) => {
       updatePlayerNames(playerNames);
       updatePlayState(PlayState.stateSelecting);
 
       updateUserStatusPlaying();
       void router.push('/game/battle');
     });
-    socket.on('standBy', (playerNames: [string, string]) => {
+    socket.on('random:standBy', (playerNames: [string, string]) => {
       updatePlayerNames(playerNames);
       updatePlayState(PlayState.stateStandingBy);
 
@@ -61,8 +61,8 @@ export const Wait = () => {
     });
 
     return () => {
-      socket.off('select');
-      socket.off('standBy');
+      socket.off('random:select');
+      socket.off('random:standBy');
     };
   }, [socket, user]);
 

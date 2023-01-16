@@ -91,24 +91,28 @@ export const GameGuest = ({ hosts, setHosts }: Props) => {
       }
     };
 
-    socket.on('select', (playerNames: [string, string]) => {
+    socket.on('friend:select', (playerNames: [string, string]) => {
       updatePlayerNames(playerNames);
       updatePlayState(PlayState.stateSelecting);
 
       updateUserStatusPlaying();
+      // cancel random match
+      socket.emit('playCancel');
       void router.push('/game/battle');
     });
-    socket.on('standBy', (playerNames: [string, string]) => {
+    socket.on('friend:standBy', (playerNames: [string, string]) => {
       updatePlayerNames(playerNames);
       updatePlayState(PlayState.stateStandingBy);
 
       updateUserStatusPlaying();
+      // cancel random match
+      socket.emit('playCancel');
       void router.push('/game/battle');
     });
 
     return () => {
-      socket.off('select');
-      socket.off('standBy');
+      socket.off('friend:select');
+      socket.off('friend:standBy');
     };
   });
 

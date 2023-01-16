@@ -152,16 +152,18 @@ export class GameGateway {
     return Math.random() * (Math.random() < 0.5 ? 1 : -1);
   }
 
-  updatePlayerStatus(player1: Player, player2: Player) {
+  updatePlayerStatus(player1: Player, player2: Player, gameType: string) {
     const playerNames: [string, string] = [player1.name, player2.name];
+    const select = gameType + ':select';
+    const standBy = gameType + ':standBy';
 
     // if both players' points are equal, first player joining the que will select the rule
     if (player1.point <= player2.point) {
-      player1.socket.emit('select', playerNames);
-      player2.socket.emit('standBy', playerNames);
+      player1.socket.emit(select, playerNames);
+      player2.socket.emit(standBy, playerNames);
     } else {
-      player1.socket.emit('standBy', playerNames);
-      player2.socket.emit('select', playerNames);
+      player1.socket.emit(standBy, playerNames);
+      player2.socket.emit(select, playerNames);
     }
   }
 
@@ -310,7 +312,7 @@ export class GameGateway {
       score: 0,
     };
 
-    void this.startGame(player1, player2);
+    void this.startGame(player1, player2, 'friend');
   }
 
   @SubscribeMessage('playStart')
@@ -345,11 +347,11 @@ export class GameGateway {
         height: GameGateway.initialHeight,
         score: 0,
       };
-      void this.startGame(player1, player2);
+      void this.startGame(player1, player2, 'random');
     }
   }
 
-  async startGame(player1: Player, player2: Player) {
+  async startGame(player1: Player, player2: Player, gameType: string) {
     const roomName = uuidv4();
 
     this.logger.log(`${player1.socket.id} joined to room ${roomName}`);
@@ -386,7 +388,7 @@ export class GameGateway {
 
     this.gameRooms.push(newRoom);
 
-    this.updatePlayerStatus(player1, player2);
+    this.updatePlayerStatus(player1, player2, gameType);
   }
 
   @SubscribeMessage('watchGame')
