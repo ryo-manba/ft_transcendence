@@ -49,9 +49,9 @@ export const ChatMessageExchange = memo(function ChatMessageExchange({
       message: text,
     };
 
-    socket.emit('chat:sendMessage', message, (res: boolean) => {
-      if (!res) {
-        setError('You can not send a message.');
+    socket.emit('chat:sendMessage', message, (err: string | undefined) => {
+      if (err) {
+        setError(err);
       }
     });
   };
