@@ -25,7 +25,6 @@ import { fetchUnblockedUsers } from 'api/chat/fetchUnblockedUsers';
 
 type Props = {
   socket: Socket;
-  users: ChatUser[];
   open: boolean;
   onClose: () => void;
   removeFriendById: (id: number) => void;
@@ -37,7 +36,6 @@ export type ChatroomJoinForm = {
 
 export const ChatBlockDialog = memo(function ChatBlockDialog({
   socket,
-  //  users,
   open,
   onClose,
   removeFriendById,
@@ -75,12 +73,13 @@ export const ChatBlockDialog = memo(function ChatBlockDialog({
     if (user === undefined || open === false) return;
 
     let ignore = false;
+    setSelectedUserId('');
     switch (selectedBlockSetting) {
       case ChatBlockSetting.BLOCK_USER:
-        void setupBlockedUsers(user.id, ignore);
+        void setupUnblockedUsers(user.id, ignore);
         break;
       case ChatBlockSetting.UNBLOCK_USER:
-        void setupUnblockedUsers(user.id, ignore);
+        void setupBlockedUsers(user.id, ignore);
         break;
       default:
     }
@@ -152,13 +151,14 @@ export const ChatBlockDialog = memo(function ChatBlockDialog({
       case ChatBlockSetting.UNBLOCK_USER:
         unblockUser();
         break;
+      default:
     }
   };
 
   return (
     <Dialog onClose={handleClose} open={open}>
       <DialogTitle sx={{ bgcolor: blue[100] }}>Block Setting</DialogTitle>
-      <DialogContent sx={{ minWidth: 360, maxHeight: 360 }}>
+      <DialogContent className="mt-2">
         <FormControl sx={{ mx: 3, my: 1, minWidth: 200 }}>
           <InputLabel id="room-setting-select-label">Setting</InputLabel>
           <Select

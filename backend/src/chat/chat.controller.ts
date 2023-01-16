@@ -106,29 +106,20 @@ export class ChatController {
     return await this.chatService.findChatroomActiveUsers(roomId);
   }
 
-  // /**
-  //  * @return ブロックされていないユーザ一覧を返す
-  //  * @param userId
-  //  */
-  // @Get('unblocked-users')
-  // async findUnblockedChatUsers(
-  //   @Query('userId', ParseIntPipe) userId: number,
-  // ): Promise<ChatUser[]> {
-  //   const chatUsers = await this.findAllChatUsers();
+  /**
+   * @return ブロックされていないユーザ一覧を返す
+   * @param userId
+   */
+  @Get('unblocked-users')
+  async findUnblockedChatUsers(
+    @Query('userId', ParseIntPipe) userId: number,
+  ): Promise<ChatUser[]> {
+    const unblockedUsers = this.chatService.findUnblockedUsers({
+      blockedByUserId: userId,
+    });
 
-  //   const blockedUsers = await this.chatService.findUnblockedUsers({
-  //     blockedByUserId: userId,
-  //   });
-
-  //   const blockingUserIds = blockedUsers.map((user) => user.id);
-
-  //   // すべてのユーザーからブロックされているユーザーを除去する
-  //   const unblockedUsers = chatUsers.filter(
-  //     (user) => !blockingUserIds.includes(user.id),
-  //   );
-
-  //   return unblockedUsers;
-  // }
+    return unblockedUsers;
+  }
 
   /**
    * @return ブロックされているユーザ一覧を返す
