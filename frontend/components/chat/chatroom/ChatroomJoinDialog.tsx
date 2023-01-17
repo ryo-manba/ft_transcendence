@@ -109,6 +109,7 @@ export const ChatroomJoinDialog = memo(function ChatroomJoinDialog({
         addRooms(joinedRoom);
       } else {
         setError('Failed to join room.');
+        reset();
       }
     });
   };
