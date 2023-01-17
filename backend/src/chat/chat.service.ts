@@ -367,6 +367,35 @@ export class ChatService {
   }
 
   /**
+   * チャットルームに所属している かつ BANされているユーザ一覧を返す
+   * @param roomId
+   */
+  async findChatroomBannedUsers(roomId: number): Promise<ChatUser[]> {
+    // ルームに所属している かつ statusがBAN以外のユーザーを取得する
+    const bannedUsersInfo = await this.prisma.chatroomMembers.findMany({
+      where: {
+        AND: {
+          chatroomId: roomId,
+          status: ChatroomMembersStatus.BAN,
+        },
+      },
+      include: {
+        user: true,
+      },
+    });
+
+    // idと名前の配列にする
+    const bannedUsers: ChatUser[] = bannedUsersInfo.map((info) => {
+      return {
+        id: info.user.id,
+        name: info.user.name,
+      };
+    });
+
+    return bannedUsers;
+  }
+
+  /**
    * チャットルームに所属している かつ BANされていない かつ adminではないユーザ一覧を返す
    * @param roomId
    */
@@ -469,6 +498,33 @@ export class ChatService {
     });
 
     return activeUsers;
+  }
+
+  /**
+   * statusがMUTEなユーザ一覧を返す
+   * @param roomId
+   */
+  async findMutedUsers(roomId: number): Promise<ChatUser[]> {
+    const mutedUsersInfo = await this.prisma.chatroomMembers.findMany({
+      where: {
+        AND: {
+          chatroomId: roomId,
+          status: ChatroomMembersStatus.MUTE,
+        },
+      },
+      include: {
+        user: true,
+      },
+    });
+
+    const mutedUsers: ChatUser[] = mutedUsersInfo.map((info) => {
+      return {
+        id: info.user.id,
+        name: info.user.name,
+      };
+    });
+
+    return mutedUsers;
   }
 
   /**

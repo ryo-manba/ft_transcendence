@@ -6,7 +6,7 @@ import { useState, useEffect } from 'react';
 import { useQueryUser } from 'hooks/useQueryUser';
 import axios from 'axios';
 import { useForm, SubmitHandler, Controller } from 'react-hook-form';
-import { TwoAuthForm } from 'types/setting';
+import { TwoAuthForm, OpenSnackState } from 'types/setting';
 import { useMutationHas2FA } from 'hooks/useMutationHas2FA';
 
 const Enable2FA: NextPage = () => {
@@ -20,7 +20,10 @@ const Enable2FA: NextPage = () => {
   const { data: user } = useQueryUser();
   const [qrCode, setQrCode] = useState('');
   const { changeHas2FAMutation } = useMutationHas2FA();
-  const [openSnack, setOpenSnack] = useState('');
+  const [openSnack, setOpenSnack] = useState<OpenSnackState>(
+    OpenSnackState.NONE,
+  );
+  const [qrCodeFetchingError, setQrCodeFetchingError] = useState(false);
 
   useEffect(() => {
     let ignore = false;
@@ -35,7 +38,8 @@ const Enable2FA: NextPage = () => {
             setQrCode(response.data);
           }
         } catch {
-          throw new Error('Can not get QR Code Exception.');
+          setQrCodeFetchingError(true);
+          setOpenSnack(OpenSnackState.ERROR);
         }
       }
     };
@@ -48,11 +52,11 @@ const Enable2FA: NextPage = () => {
   }, []);
 
   const handleClose = () => {
-    setOpenSnack('');
+    setOpenSnack(OpenSnackState.NONE);
   };
 
   const on2FAMutationEnableError = () => {
-    setOpenSnack('ERROR');
+    setOpenSnack(OpenSnackState.ERROR);
   };
 
   const onSubmit: SubmitHandler<TwoAuthForm> = (data: TwoAuthForm) => {
@@ -128,12 +132,14 @@ const Enable2FA: NextPage = () => {
                   REGISTER
                 </Button>
                 <Snackbar
-                  open={openSnack == 'ERROR'}
+                  open={openSnack === OpenSnackState.ERROR}
                   autoHideDuration={6000}
                   onClose={handleClose}
                 >
                   <Alert onClose={handleClose} severity="error">
-                    Authorization Code Is Wrong!
+                    {qrCodeFetchingError
+                      ? 'Failed to generate QR code!'
+                      : 'Authorization Code Is Wrong!'}
                   </Alert>
                 </Snackbar>
               </Grid>

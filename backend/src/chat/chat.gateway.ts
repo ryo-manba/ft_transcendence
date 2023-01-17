@@ -122,7 +122,7 @@ export class ChatGateway {
   async onMessage(
     @ConnectedSocket() client: Socket,
     @MessageBody() createMessageDto: CreateMessageDto,
-  ): Promise<string> {
+  ): Promise<string | undefined> {
     this.logger.log(
       `chat:sendMessage received -> ${createMessageDto.chatroomId}`,
     );
@@ -136,10 +136,10 @@ export class ChatGateway {
     });
     if (userInfo.status !== ChatroomMembersStatus.NORMAL) {
       if (userInfo.status === ChatroomMembersStatus.BAN) {
-        return 'You are banned.';
+        return 'You were banned.';
       }
       if (userInfo.status === ChatroomMembersStatus.MUTE) {
-        return 'You are muted.';
+        return 'You were muted.';
       }
     }
 
@@ -187,7 +187,7 @@ export class ChatGateway {
       .to(this.generateSocketChatRoomName(message.chatroomId))
       .emit('chat:receiveMessage', chatMessage);
 
-    return 'ok';
+    return undefined;
   }
 
   /**
@@ -485,6 +485,21 @@ export class ChatGateway {
   }
 
   /**
+   * ユーザーをUNBANする
+   * @param updateMemberStatusDto
+   */
+  @SubscribeMessage('chat:unbanUser')
+  async unbanUser(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() dto: updateMemberStatusDto,
+  ): Promise<boolean> {
+    this.logger.log(`chat:unbanUser received -> roomId: ${dto.chatroomId}`);
+    const res = await this.chatService.updateMemberStatus(dto);
+
+    return res ? true : false;
+  }
+
+  /**
    * ユーザーをMUTEする
    * @param updateChatMemberStatusDto
    */
@@ -494,6 +509,21 @@ export class ChatGateway {
     @MessageBody() dto: updateMemberStatusDto,
   ): Promise<boolean> {
     this.logger.log(`chat:muteUser received -> roomId: ${dto.chatroomId}`);
+    const res = await this.chatService.updateMemberStatus(dto);
+
+    return res ? true : false;
+  }
+
+  /**
+   * ユーザーをUNMUTEする
+   * @param updateChatMemberStatusDto
+   */
+  @SubscribeMessage('chat:unmuteUser')
+  async unmuteUser(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() dto: updateMemberStatusDto,
+  ): Promise<boolean> {
+    this.logger.log(`chat:unmuteUser received -> roomId: ${dto.chatroomId}`);
     const res = await this.chatService.updateMemberStatus(dto);
 
     return res ? true : false;
