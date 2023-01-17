@@ -155,6 +155,16 @@ export const ChatBlockDialog = memo(function ChatBlockDialog({
     }
   };
 
+  const generateButtonName = (type: ChatBlockSetting) => {
+    switch (type) {
+      case ChatBlockSetting.BLOCK_USER:
+        return 'Block';
+      case ChatBlockSetting.UNBLOCK_USER:
+        return 'Unblock';
+      default:
+    }
+  };
+
   return (
     <Dialog onClose={handleClose} open={open}>
       <DialogTitle sx={{ bgcolor: blue[100] }}>Block Setting</DialogTitle>
@@ -207,7 +217,7 @@ export const ChatBlockDialog = memo(function ChatBlockDialog({
           disabled={selectedUserId === ''}
           variant="contained"
         >
-          Block
+          {generateButtonName(selectedBlockSetting)}
         </Button>
       </DialogActions>
     </Dialog>
