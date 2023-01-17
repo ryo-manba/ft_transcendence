@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { useRouter } from 'next/router';
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { useSession, signOut } from 'next-auth/react';
 import { LoginResult, LoginResultStatus } from '../types';
 import { ValidationDialog } from 'components/auth/ValidationDialog';
@@ -13,62 +13,68 @@ const Authenticate = () => {
   const { data: session, status } = useSession();
   const [openValidationDialog, setOpenValidationDialog] = useState(false);
   const [validationUserId, setValidationUserId] = useState(0);
+  const didLoginRef = useRef(false);
 
   const oauthLogin = async () => {
-    if (process.env.NEXT_PUBLIC_API_URL) {
-      if (session && session.user !== undefined && session.user !== null) {
-        let loginName = '';
-        let imageUrl = '';
-        debug(session);
-        if (
-          session.user.email &&
-          session.user.email.indexOf('gmail.com') !== -1
-        ) {
-          // gmailでのログインの場合
-          loginName = session.user.email;
-          if (session.user.image) imageUrl = session.user.image;
-        } else if (session.user.email) {
-          // 42の場合、user情報を取得
-          type Image = {
-            link: string;
-          };
-          type UserInfo = {
-            login: string;
-            image: Image;
-          };
+    if (didLoginRef.current === false) {
+      didLoginRef.current = true; //ログイン実施中は他のログインを受け付けない
+      if (process.env.NEXT_PUBLIC_API_URL) {
+        if (session && session.user !== undefined && session.user !== null) {
+          let loginName = '';
+          let imageUrl = '';
           debug(session);
-          const urlGetdata =
-            'https://api.intra.42.fr/v2/users/' + String(session.user.id);
-          const response = await axios.get<UserInfo>(urlGetdata, {
-            headers: {
-              Authorization: 'Bearer ' + String(session.user.accessToken),
-            },
+          if (
+            session.user.email &&
+            session.user.email.indexOf('gmail.com') !== -1
+          ) {
+            // gmailでのログインの場合
+            loginName = session.user.email;
+            if (session.user.image) imageUrl = session.user.image;
+          } else if (session.user.email) {
+            // 42の場合、user情報を取得
+            type Image = {
+              link: string;
+            };
+            type UserInfo = {
+              login: string;
+              image: Image;
+            };
+            debug(session);
+            const urlGetdata =
+              'https://api.intra.42.fr/v2/users/' + String(session.user.id);
+            const response = await axios.get<UserInfo>(urlGetdata, {
+              headers: {
+                Authorization: 'Bearer ' + String(session.user.accessToken),
+              },
+            });
+            debug(response);
+            loginName = response.data.login;
+            imageUrl = response.data.image.link;
+          }
+          const urlOauth = `${process.env.NEXT_PUBLIC_API_URL}/auth/oauth-login`;
+          const { data } = await axios.post<LoginResult>(urlOauth, {
+            oAuthId: loginName,
+            imagePath: imageUrl,
           });
-          debug(response);
-          loginName = response.data.login;
-          imageUrl = response.data.image.link;
-        }
-        const urlOauth = `${process.env.NEXT_PUBLIC_API_URL}/auth/oauth-login`;
-        const { data } = await axios.post<LoginResult>(urlOauth, {
-          oAuthId: loginName,
-          imagePath: imageUrl,
-        });
-        debug(data);
-        if (data && data.res === LoginResultStatus.SUCCESS) {
-          debug('login success');
-          await router.push('/dashboard');
-        } else if (
-          data &&
-          data.res === LoginResultStatus.NEED2FA &&
-          data.userId !== undefined
-        ) {
-          // 2FAコード入力ダイアログを表示
-          setValidationUserId(data.userId);
-          setOpenValidationDialog(true);
-        } else {
-          // ログイン失敗、signOutしてログインに戻る
-          debug('login failure');
-          void signOut({ callbackUrl: '/' });
+          debug(data);
+          if (data) {
+            didLoginRef.current = false; //ログイン結果を取得したため、次回ログインの受付を再開する
+            if (data.res === LoginResultStatus.SUCCESS) {
+              debug('login success');
+              await router.push('/dashboard');
+            } else if (
+              data.res === LoginResultStatus.NEED2FA &&
+              data.userId !== undefined
+            ) {
+              // 2FAコード入力ダイアログを表示
+              setValidationUserId(data.userId);
+              setOpenValidationDialog(true);
+            } else {
+              // ログイン失敗、signOutしてログインに戻る
+              debug('login failure');
+              void signOut({ callbackUrl: '/' });
+            }
+          }
         }
       }
     }
