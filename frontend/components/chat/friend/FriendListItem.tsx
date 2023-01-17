@@ -103,15 +103,19 @@ export const FriendListItem = memo(function FriendListItem({
       name1: user.name,
       name2: friend.name,
     };
-    socket.emit('chat:directMessage', DMInfo, (res: CurrentRoom) => {
-      debug('chat:directMessage %o', res);
-      if (res) {
-        socket.emit('chat:changeCurrentRoom', { roomId: res.id });
-        setCurrentRoom(res);
-      } else {
-        setError('Failed to start direct messages.');
-      }
-    });
+    socket.emit(
+      'chat:directMessage',
+      DMInfo,
+      (res: { currentRoom: CurrentRoom | undefined }) => {
+        debug('chat:directMessage %o', res);
+        if (res.currentRoom) {
+          socket.emit('chat:changeCurrentRoom', { roomId: res.currentRoom.id });
+          setCurrentRoom(res.currentRoom);
+        } else {
+          setError('Failed to start direct messages.');
+        }
+      },
+    );
   };
 
   const handleClickOpen = () => {

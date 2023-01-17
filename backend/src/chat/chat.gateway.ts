@@ -486,7 +486,7 @@ export class ChatGateway {
   async startDirectMessage(
     @ConnectedSocket() client: Socket,
     @MessageBody() dto: createDirectMessageDto,
-  ): Promise<CurrentRoom> {
+  ): Promise<{ currentRoom: CurrentRoom | undefined }> {
     this.logger.log('chat:directMessage received');
     const directMessage = await this.chatService.startDirectMessage(dto);
 
@@ -499,9 +499,9 @@ export class ChatGateway {
         name: directMessage.name,
       };
 
-      return currentRoom;
+      return { currentRoom };
     } else {
-      return undefined;
+      return { currentRoom: undefined };
     }
   }
 
