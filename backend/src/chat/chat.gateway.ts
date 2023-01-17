@@ -334,7 +334,6 @@ export class ChatGateway {
     }
     await this.leaveSocket(client, {
       roomId: dto.chatroomId,
-      userId: dto.userId,
     });
 
     // チャットルームを抜けたことで入室者がいなくなる場合は削除する
