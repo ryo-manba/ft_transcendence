@@ -667,10 +667,14 @@ export class ChatService {
 
   /**
    * user1 と user2 が含まれているDMルームがすでに存在するかを確認する
-   * @return 既にある -> true
-   * @return ない -> false
+   * 存在する場合、そのDMルームを返す
+   * @return 既にある -> DMルーム
+   * @return ない -> undefined
    */
-  async isCreatedDMRoom(userId1: number, userId2: number): Promise<boolean> {
+  async findExistingDMRoom(
+    userId1: number,
+    userId2: number,
+  ): Promise<Chatroom> {
     const DMRooms = await this.prisma.chatroom.findMany({
       where: {
         type: 'DM',
@@ -698,6 +702,7 @@ export class ChatService {
         },
       },
     });
+    [0];
 
     const roomIds1 = rooms1.map((room) => {
       return room.chatroomId;
@@ -708,24 +713,34 @@ export class ChatService {
     const arr = this.getDuplicateIds(roomIds1, roomIds2);
     if (arr.length > 0) {
       this.logger.log('isCreatedDMRoom: already created');
+      const existingDMRoom = await this.prisma.chatroom.findUnique({
+        where: {
+          id: arr[0],
+        },
+      });
 
-      return true;
+      return existingDMRoom;
     }
 
-    return false;
+    return undefined;
   }
 
   /**
-   * チャットルームに所属するユーザーのステータスを更新する
+   * DM用のChatroomを作成し、作られたChatroomを返す
    * @param createDirectMessageDto
+   * @return 新規作成成功 or 既にある -> DMルーム
+   * @return 作成失敗 -> undefined
    */
-  async startDirectMessage(dto: createDirectMessageDto): Promise<boolean> {
+  async startDirectMessage(dto: createDirectMessageDto): Promise<Chatroom> {
     this.logger.log('startDirectMessage: ', dto);
 
-    const isCreated = await this.isCreatedDMRoom(dto.userId1, dto.userId2);
-    this.logger.log('isCreated', isCreated);
-    if (isCreated) {
-      return false;
+    const existingDMRoom = await this.findExistingDMRoom(
+      dto.userId1,
+      dto.userId2,
+    );
+    this.logger.log('existingDMRoom: ', existingDMRoom);
+    if (existingDMRoom) {
+      return existingDMRoom;
     }
 
     // 共通するRoom一覧を取得する
@@ -769,11 +784,11 @@ export class ChatService {
         data: [createAdminDto1, createAdminDto2],
       });
 
-      return true;
+      return createdRoom;
     } catch (error) {
       this.logger.log('startDirectMessage', error);
 
-      return false;
+      return undefined;
     }
   }
 

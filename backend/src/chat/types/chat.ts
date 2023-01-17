@@ -8,3 +8,8 @@ export type ChatMessage = {
   userName: string;
   createdAt: Date;
 };
+
+export type CurrentRoom = {
+  id: number;
+  name: string;
+};

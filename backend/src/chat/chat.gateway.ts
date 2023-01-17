@@ -29,7 +29,7 @@ import { LeaveSocketDto } from './dto/leave-socket.dto';
 import { OnRoomJoinableDto } from './dto/on-room-joinable.dto';
 import { GetAdminsIdsDto } from './dto/get-admins-ids.dto';
 import { GetMessagesCountDto } from './dto/get-messages-count.dto';
-import type { ChatMessage } from './types/chat';
+import type { ChatMessage, CurrentRoom } from './types/chat';
 
 @WebSocketGateway({
   cors: {
@@ -486,18 +486,23 @@ export class ChatGateway {
   async startDirectMessage(
     @ConnectedSocket() client: Socket,
     @MessageBody() dto: createDirectMessageDto,
-  ): Promise<boolean> {
+  ): Promise<CurrentRoom> {
     this.logger.log('chat:directMessage received');
-    // TODO: 既にルームが存在する場合はそのルームに入室させる
-    const res = await this.chatService.startDirectMessage(dto);
+    const directMessage = await this.chatService.startDirectMessage(dto);
 
-    if (res) {
+    if (directMessage) {
       const rooms = await this.chatService.findJoinedRooms(dto.userId1);
       // フロントエンドへ送り返す
       client.emit('chat:getJoinedRooms', rooms);
-    }
+      const currentRoom: CurrentRoom = {
+        id: directMessage.id,
+        name: directMessage.name,
+      };
 
-    return res ? true : false;
+      return currentRoom;
+    } else {
+      return undefined;
+    }
   }
 
   /**
