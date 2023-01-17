@@ -92,12 +92,7 @@ export const ChatroomCreateButton = memo(function ChatroomCreateButton({
     clearErrors();
   }, [open]);
 
-  const getJoinedRooms = useCallback(() => {
-    socket.emit('chat:getJoinedRooms', { userId: user.id });
-  }, [socket]);
-
   const createChatroom = (roomInfo: CreateChatroomInfo) => {
-    debug('chat:createAndJoinRoom: createdRoom start');
     socket.emit('chat:createAndJoinRoom', roomInfo, (createdRoom: Chatroom) => {
       debug('chat:createAndJoinRoom: createdRoom', createdRoom);
 
@@ -119,7 +114,6 @@ export const ChatroomCreateButton = memo(function ChatroomCreateButton({
     };
     debug('create chatroom: %o', room);
     createChatroom(room);
-    getJoinedRooms();
     handleClose();
   };
 

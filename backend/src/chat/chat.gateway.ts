@@ -89,6 +89,7 @@ export class ChatGateway {
       userId: dto.ownerId,
       chatroomId: createdRoom.id,
       type: createdRoom.type,
+      password: dto.password,
     };
     const res = await this.joinRoom(client, joinChatroomDto);
     if (!res) {
@@ -263,17 +264,16 @@ export class ChatGateway {
   async joinRoom(
     @ConnectedSocket() client: Socket | undefined,
     @MessageBody() dto: JoinChatroomDto,
-  ): Promise<Chatroom> {
+  ): Promise<Chatroom | undefined> {
     this.logger.log(`chat:joinRoom received -> ${dto.userId}`);
-
     const joinedRoom = await this.chatService.joinRoom(dto);
-
-    if (joinedRoom) {
+    if (!joinedRoom) {
+      return undefined;
+    }
+    if (client) {
       const socketRoomName = this.generateSocketChatRoomName(joinedRoom.id);
       // 他の人を入室させるときはjoinできない
-      if (client) {
-        await client.join(socketRoomName);
-      }
+      await client.join(socketRoomName);
     }
 
     return joinedRoom;

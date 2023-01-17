@@ -285,8 +285,7 @@ export class ChatService {
    * @param id
    * @return 入室したチャットルームを返す
    */
-  async joinRoom(dto: JoinChatroomDto): Promise<Chatroom> {
-    console.log('joinRoom: ', dto);
+  async joinRoom(dto: JoinChatroomDto): Promise<Chatroom | undefined> {
     // 入室するチャットルームを取得する
     const chatroom = await this.prisma.chatroom.findUnique({
       where: {
@@ -308,7 +307,7 @@ export class ChatService {
       }
     }
 
-    // 入室処理を行う
+    // ユーザーをチャットルームに追加する
     try {
       await this.prisma.chatroomMembers.create({
         data: {
