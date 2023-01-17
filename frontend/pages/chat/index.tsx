@@ -41,6 +41,10 @@ const Chat: NextPage = () => {
       // 通知用に自分のルームに入る
       socket.emit('chat:initSocket', user.id);
     });
+
+    return () => {
+      socket.off('chat:handleConnection');
+    };
   }, [user, socket]);
 
   if (socket === undefined || user === undefined) {
