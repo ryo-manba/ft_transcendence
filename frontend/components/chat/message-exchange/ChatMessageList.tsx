@@ -41,7 +41,7 @@ export const ChatMessageList = memo(function ChatMessageList({
   const loadingMessages = async (
     roomId: number,
     pageSize: number,
-    skip = 0,
+    skip: number,
   ) => {
     const chatMessages = await fetchMessages({
       roomId: roomId,
@@ -66,9 +66,17 @@ export const ChatMessageList = memo(function ChatMessageList({
       },
     );
 
-    setMessages([]);
-    setSkipPage(0);
-    void loadingMessages(currentRoomId, INITIAL_ITEM_COUNT);
+    const setupMessages = async () => {
+      const chatMessages = await fetchMessages({
+        roomId: currentRoomId,
+        skip: 0,
+        pageSize: INITIAL_ITEM_COUNT,
+      });
+      setMessages(chatMessages);
+    };
+    void setupMessages();
+
+    setSkipPage(1);
   }, [currentRoomId]);
 
   const prependMessages = useCallback(() => {
