@@ -249,7 +249,7 @@ const Home: NextPage = () => {
                   onClick={() => {
                     void (async () => {
                       await signIn('42-school', {
-                        callbackUrl: '/authenticate',
+                        callbackUrl: '/auth',
                       });
                     })();
                   }}
@@ -264,7 +264,7 @@ const Home: NextPage = () => {
                   src="/images/ico-google-logo-96.png"
                   onClick={() => {
                     void (async () => {
-                      await signIn('google', { callbackUrl: '/authenticate' });
+                      await signIn('google', { callbackUrl: '/auth' });
                     })();
                   }}
                   width={50}

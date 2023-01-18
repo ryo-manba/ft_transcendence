@@ -2,7 +2,7 @@ import axios from 'axios';
 import { useRouter } from 'next/router';
 import { useState, useCallback, useRef } from 'react';
 import { useSession, signOut } from 'next-auth/react';
-import { LoginResult, LoginResultStatus } from '../types';
+import { LoginResult, LoginResultStatus } from '../../types';
 import { ValidationDialog } from 'components/auth/ValidationDialog';
 import { Loading } from 'components/common/Loading';
 import Debug from 'debug';
