@@ -22,13 +22,16 @@ import { GetMessagesDto } from './dto/get-messages.dto';
 import { DeleteChatroomDto } from './dto/delete-chatroom.dto';
 import { DeleteChatroomMemberDto } from './dto/delete-chatroom-member.dto';
 import { CreateBlockRelationDto } from './dto/create-block-relation.dto';
+import { DeleteBlockRelationDto } from './dto/delete-block-relation.dto';
+import { GetUnblockedUsersDto } from './dto/get-unblocked-users.dto';
 
 // 2の12乗回の演算が必要という意味
 const saltRounds = 12;
 
 @Injectable()
 export class ChatService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) {}
+
   private logger: Logger = new Logger('ChatService');
 
   async findOne(
@@ -750,18 +753,85 @@ export class ChatService {
   }
 
   /**
+   * ブロックを解除する
+   * @param CreateBlockUserDto
+   */
+  async unblockUser(dto: DeleteBlockRelationDto): Promise<BlockRelation> {
+    this.logger.log('unblockUser: ', dto);
+
+    try {
+      const blockRelation = await this.prisma.blockRelation.delete({
+        where: {
+          blockingUserId_blockedByUserId: {
+            ...dto,
+          },
+        },
+      });
+
+      return blockRelation;
+    } catch (error) {
+      this.logger.log('unblockUser: ', error);
+
+      return undefined;
+    }
+  }
+
+  /**
    * ブロックされているユーザ一覧を返す
    * @param Prisma.BlockRelationWhereInput
    */
   async findBlockedUsers(
     where: Prisma.BlockRelationWhereInput,
-  ): Promise<BlockRelation[]> {
+  ): Promise<ChatUser[]> {
     this.logger.log('findBlockedUsers: ', where);
 
     const blockedUsers = await this.prisma.blockRelation.findMany({
       where: where,
+      include: {
+        blocking: true,
+      },
     });
 
-    return blockedUsers;
+    const chatBlockedUsers: ChatUser[] = blockedUsers.map((user) => {
+      return {
+        id: user.blocking.id,
+        name: user.blocking.name,
+      };
+    });
+
+    return chatBlockedUsers;
+  }
+
+  /**
+   * ブロックされていないユーザ一覧を返す
+   * @param Prisma.BlockRelationWhereInput
+   */
+  async findUnblockedUsers(dto: GetUnblockedUsersDto): Promise<ChatUser[]> {
+    this.logger.log('findUnlockedUsers: ', dto.blockedByUserId);
+
+    const blockedUsers = await this.prisma.blockRelation.findMany({
+      where: {
+        blockedByUserId: dto.blockedByUserId,
+      },
+    });
+    const blockingUserIds = blockedUsers.map((user) => user.blockingUserId);
+
+    const unblockedUsers = await this.prisma.user.findMany({
+      where: {
+        AND: [
+          { id: { not: dto.blockedByUserId } },
+          { id: { notIn: blockingUserIds } },
+        ],
+      },
+    });
+
+    const chatUnblockedUsers: ChatUser[] = unblockedUsers.map((user) => {
+      return {
+        id: user.id,
+        name: user.name,
+      };
+    });
+
+    return chatUnblockedUsers;
   }
 }

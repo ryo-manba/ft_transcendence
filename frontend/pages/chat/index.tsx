@@ -1,6 +1,7 @@
 import { NextPage } from 'next';
 import { useState, useEffect } from 'react';
 import { io, Socket } from 'socket.io-client';
+import Debug from 'debug';
 import Grid from '@mui/material/Unstable_Grid2';
 import { Message, CurrentRoom } from 'types/chat';
 import { Header } from 'components/common/Header';
@@ -10,9 +11,7 @@ import { Layout } from 'components/common/Layout';
 import { ChatMessageExchange } from 'components/chat/message-exchange/ChatMessageExchange';
 import { Loading } from 'components/common/Loading';
 import { useQueryUser } from 'hooks/useQueryUser';
-import Debug from 'debug';
-
-const appBarHeight = '64px';
+import { ChatHeightStyle } from 'components/chat/utils/ChatHeightStyle';
 
 const Chat: NextPage = () => {
   const debug = Debug('chat');
@@ -51,6 +50,8 @@ const Chat: NextPage = () => {
     return <Loading fullHeight />;
   }
 
+  const heightStyle = ChatHeightStyle();
+
   return (
     <Layout title="Chat">
       <Header title="Chatroom" />
@@ -59,7 +60,7 @@ const Chat: NextPage = () => {
         direction="row"
         justifyContent="center"
         alignItems="stretch"
-        style={{ height: `calc(100vh - ${appBarHeight})` }}
+        style={heightStyle}
       >
         <Grid
           xs={2}

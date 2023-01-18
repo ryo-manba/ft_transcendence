@@ -7,6 +7,7 @@ import { ChatroomJoinButton } from 'components/chat/chatroom/ChatroomJoinButton'
 import { Chatroom, CurrentRoom, Message } from 'types/chat';
 import { useQueryUser } from 'hooks/useQueryUser';
 import { Loading } from 'components/common/Loading';
+import { ChatHeightStyle } from 'components/chat/utils/ChatHeightStyle';
 import Debug from 'debug';
 
 type Props = {
@@ -85,23 +86,31 @@ export const ChatroomSidebar = memo(function ChatroomSidebar({
   if (user === undefined) {
     return <Loading />;
   }
+  const heightStyle = ChatHeightStyle();
 
   return (
     <>
-      <ChatroomCreateButton socket={socket} setRooms={setRooms} />
-      <ChatroomJoinButton socket={socket} addRooms={addRooms} />
-      <List dense={false}>
-        {rooms &&
-          rooms.map((room, i) => (
-            <ChatroomListItem
-              key={i}
-              room={room}
-              socket={socket}
-              setCurrentRoom={setCurrentRoom}
-              setMessages={setMessages}
-            />
-          ))}
-      </List>
+      <div
+        style={{
+          ...heightStyle,
+          overflow: 'scroll',
+        }}
+      >
+        <ChatroomCreateButton socket={socket} setRooms={setRooms} />
+        <ChatroomJoinButton socket={socket} addRooms={addRooms} />
+        <List dense={false}>
+          {rooms &&
+            rooms.map((room, i) => (
+              <ChatroomListItem
+                key={i}
+                room={room}
+                socket={socket}
+                setCurrentRoom={setCurrentRoom}
+                setMessages={setMessages}
+              />
+            ))}
+        </List>
+      </div>
     </>
   );
 });
