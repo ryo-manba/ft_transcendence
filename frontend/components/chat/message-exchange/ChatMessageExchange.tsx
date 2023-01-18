@@ -7,6 +7,7 @@ import { Loading } from 'components/common/Loading';
 import { ChatErrorAlert } from 'components/chat/utils/ChatErrorAlert';
 import { ChatTextInput } from 'components/chat/message-exchange/ChatTextInput';
 import { ChatMessageList } from 'components/chat/message-exchange/ChatMessageList';
+import { ChatHeightStyle } from 'components/chat/utils/ChatHeightStyle';
 
 type Props = {
   socket: Socket;
@@ -56,15 +57,15 @@ export const ChatMessageExchange = memo(function ChatMessageExchange({
     });
   };
 
-  const appBarHeight = '64px';
+  const heightStyle = ChatHeightStyle();
 
   return (
     <>
       <Paper
         style={{
+          ...heightStyle,
           display: 'flex',
           flexDirection: 'column',
-          height: `calc(100vh - ${appBarHeight})`,
         }}
       >
         <div

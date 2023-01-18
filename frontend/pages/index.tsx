@@ -32,6 +32,7 @@ import * as z from 'zod';
 import { Loading } from 'components/common/Loading';
 import Head from 'next/head';
 import { ValidationDialog } from 'components/auth/ValidationDialog';
+import { useQueryClient } from '@tanstack/react-query';
 
 const usernameMaxLen = 50;
 const passwordMinLen = 5;
@@ -56,6 +57,7 @@ const Home: NextPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [openValidationDialog, setOpenValidationDialog] = useState(false);
   const [validationUserId, setValidationUserId] = useState(0);
+  const queryClient = useQueryClient();
 
   const {
     control,
@@ -76,6 +78,7 @@ const Home: NextPage = () => {
   const onSubmit: SubmitHandler<AuthForm> = async (formData: AuthForm) => {
     try {
       if (process.env.NEXT_PUBLIC_API_URL) {
+        queryClient.removeQueries(['user']);
         if (isRegister) {
           const urlSignup = `${process.env.NEXT_PUBLIC_API_URL}/auth/signup`;
           await axios.post(urlSignup, {
@@ -134,7 +137,7 @@ const Home: NextPage = () => {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center">
       <Head>
-        <title>Auth</title>
+        <title>ft_transcendence</title>
       </Head>
       <main className="flex w-screen flex-1 flex-col items-center justify-center">
         <Grid

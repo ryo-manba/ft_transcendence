@@ -8,8 +8,7 @@ import { FriendSidebar } from 'components/chat/friend/FriendSidebar';
 import { Layout } from 'components/common/Layout';
 import { ChatMessageExchange } from 'components/chat/message-exchange/ChatMessageExchange';
 import { Message, CurrentRoom } from 'types/chat';
-
-const appBarHeight = '64px';
+import { ChatHeightStyle } from 'components/chat/utils/ChatHeightStyle';
 
 const Chat: NextPage = () => {
   const [socket, setSocket] = useState<Socket>();
@@ -32,6 +31,8 @@ const Chat: NextPage = () => {
     return null;
   }
 
+  const heightStyle = ChatHeightStyle();
+
   return (
     <Layout title="Chat">
       <Header title="Chatroom" />
@@ -40,7 +41,7 @@ const Chat: NextPage = () => {
         direction="row"
         justifyContent="center"
         alignItems="stretch"
-        style={{ height: `calc(100vh - ${appBarHeight})` }}
+        style={heightStyle}
       >
         <Grid
           xs={2}
