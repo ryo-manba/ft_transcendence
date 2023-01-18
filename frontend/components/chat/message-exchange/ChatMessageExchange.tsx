@@ -56,11 +56,15 @@ export const ChatMessageExchange = memo(function ChatMessageExchange({
       message: text,
     };
 
-    socket.emit('chat:sendMessage', message, (err: string | undefined) => {
-      if (err) {
-        setError(err);
-      }
-    });
+    socket.emit(
+      'chat:sendMessage',
+      message,
+      (res: { error: string | undefined }) => {
+        if (res.error) {
+          setError(res.error);
+        }
+      },
+    );
   };
 
   const appBarHeight = '64px';
