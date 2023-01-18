@@ -75,13 +75,13 @@ export class ChatGateway {
   async CreateAndJoinRoom(
     @ConnectedSocket() client: Socket,
     @MessageBody() dto: CreateChatroomDto,
-  ): Promise<Chatroom> {
-    this.logger.log(`chat:createAndRoom: ${dto.name}`);
+  ): Promise<{ createdRoom: Chatroom | undefined }> {
+    this.logger.log(`chat:createAndJoinRoom: ${dto.name}`);
 
     // チャットルームを作成する
     const createdRoom = await this.chatService.createRoom(dto);
     if (!createdRoom) {
-      return undefined;
+      return { createdRoom: undefined };
     }
 
     // 作成者をチャットルームに入室させる
@@ -93,10 +93,10 @@ export class ChatGateway {
     };
     const res = await this.joinRoom(client, joinChatroomDto);
     if (!res) {
-      return undefined;
+      return { createdRoom: undefined };
     }
 
-    return createdRoom;
+    return { createdRoom: createdRoom };
   }
 
   /**
@@ -123,7 +123,7 @@ export class ChatGateway {
   async onMessage(
     @ConnectedSocket() client: Socket,
     @MessageBody() createMessageDto: CreateMessageDto,
-  ): Promise<string | undefined> {
+  ): Promise<{ error: string | undefined }> {
     this.logger.log(
       `chat:sendMessage received -> ${createMessageDto.chatroomId}`,
     );
@@ -137,10 +137,10 @@ export class ChatGateway {
     });
     if (userInfo.status !== ChatroomMembersStatus.NORMAL) {
       if (userInfo.status === ChatroomMembersStatus.BAN) {
-        return 'You were banned.';
+        return { error: 'You were banned.' };
       }
       if (userInfo.status === ChatroomMembersStatus.MUTE) {
-        return 'You were muted.';
+        return { error: 'You were muted.' };
       }
     }
 
@@ -166,16 +166,16 @@ export class ChatGateway {
       });
       if (blockRelations.length > 0) {
         if (blockRelations[0].blockedByUserId === createMessageDto.userId) {
-          return 'You blocked this user.';
+          return { error: 'You blocked this user.' };
         } else {
-          return 'This user blocked you.';
+          return { error: 'This user blocked you.' };
         }
       }
     }
 
     const message = await this.chatService.addMessage(createMessageDto);
     if (message === undefined) {
-      return 'Failed to send message.';
+      return { error: 'Failed to send message.' };
     }
     const chatMessage: ChatMessage = {
       roomId: message.chatroomId,
@@ -188,7 +188,7 @@ export class ChatGateway {
       .to(this.generateSocketChatRoomName(message.chatroomId))
       .emit('chat:receiveMessage', chatMessage);
 
-    return undefined;
+    return { error: undefined };
   }
 
   /**
@@ -264,11 +264,11 @@ export class ChatGateway {
   async joinRoom(
     @ConnectedSocket() client: Socket | undefined,
     @MessageBody() dto: JoinChatroomDto,
-  ): Promise<Chatroom | undefined> {
+  ): Promise<{ joinedRoom: Chatroom | undefined }> {
     this.logger.log(`chat:joinRoom received -> ${dto.userId}`);
     const joinedRoom = await this.chatService.joinRoom(dto);
     if (!joinedRoom) {
-      return undefined;
+      return { joinedRoom: undefined };
     }
     if (client) {
       const socketRoomName = this.generateSocketChatRoomName(joinedRoom.id);
@@ -276,7 +276,7 @@ export class ChatGateway {
       await client.join(socketRoomName);
     }
 
-    return joinedRoom;
+    return { joinedRoom: joinedRoom };
   }
 
   /**
