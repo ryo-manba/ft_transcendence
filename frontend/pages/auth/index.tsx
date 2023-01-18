@@ -19,7 +19,7 @@ const Authenticate = () => {
     if (didLoginRef.current === false) {
       didLoginRef.current = true; //ログイン実施中は他のログインを受け付けない
       if (process.env.NEXT_PUBLIC_API_URL) {
-        if (session && session.user !== undefined && session.user !== null) {
+        if (session) {
           let loginName = '';
           let imageUrl = '';
           debug(session);
@@ -39,7 +39,6 @@ const Authenticate = () => {
               login: string;
               image: Image;
             };
-            debug(session);
             const urlGetdata =
               'https://api.intra.42.fr/v2/users/' + String(session.user.id);
             const response = await axios.get<UserInfo>(urlGetdata, {
