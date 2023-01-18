@@ -2,7 +2,8 @@ import axios from 'axios';
 import { useRouter } from 'next/router';
 import { useState, useCallback, useRef } from 'react';
 import { useSession, signOut } from 'next-auth/react';
-import { LoginResult, LoginResultStatus } from '../../types';
+import { LoginResult, LoginResultStatus } from 'types';
+import { UserInfo } from 'types/auth';
 import { ValidationDialog } from 'components/auth/ValidationDialog';
 import { Loading } from 'components/common/Loading';
 import Debug from 'debug';
@@ -32,13 +33,6 @@ const Authenticate = () => {
             if (session.user.image) imageUrl = session.user.image;
           } else if (session.user.email) {
             // 42の場合、user情報を取得
-            type Image = {
-              link: string;
-            };
-            type UserInfo = {
-              login: string;
-              image: Image;
-            };
             const urlGetdata =
               'https://api.intra.42.fr/v2/users/' + String(session.user.id);
             const response = await axios.get<UserInfo>(urlGetdata, {
