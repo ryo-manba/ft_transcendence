@@ -22,7 +22,6 @@ export default NextAuth({
     },
 
     jwt({ token, account }) {
-      console.log('JWT');
       if (account && account !== undefined) {
         token.accessToken = account.access_token;
       }
@@ -31,7 +30,6 @@ export default NextAuth({
     },
 
     session({ session, token }) {
-      console.log('Session');
       if (token.sub != undefined) {
         session.user.id = token.sub;
         session.user.accessToken = token.accessToken;
