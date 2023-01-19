@@ -16,8 +16,6 @@ const Authenticate = () => {
   const [validationUserId, setValidationUserId] = useState(0);
 
   useEffect(() => {
-    let ignore = false;
-
     const oauthLogin = async () => {
       if (session === null || process.env.NEXT_PUBLIC_API_URL === undefined) {
         return;
@@ -85,16 +83,12 @@ const Authenticate = () => {
     };
 
     debug(status);
-    if (status === 'authenticated' && !ignore) {
+    if (status === 'authenticated') {
       // 認証後、1回だけ呼び出される
       void oauthLogin();
     } else if (status === 'unauthenticated') {
       void router.push('/');
     }
-
-    return () => {
-      ignore = true;
-    };
   }, [status]);
 
   // ValidateのDialogに失敗したらよばれる
