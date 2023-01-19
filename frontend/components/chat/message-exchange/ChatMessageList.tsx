@@ -38,10 +38,42 @@ export const ChatMessageList = memo(function ChatMessageList({
   // そこから古い順に向かって読み込んでいく
   const [firstItemIndex, setFirstItemIndex] = useState(0);
 
+  useEffect(() => {
+    let ignore = false;
+    // メッセージの合計数が逆順スクロールに必要になる
+    socket.emit(
+      'chat:getMessagesCount',
+      {
+        chatroomId: currentRoomId,
+      },
+      (count: number) => {
+        setFirstItemIndex(count);
+      },
+    );
+
+    const setupMessages = async () => {
+      const chatMessages = await fetchMessages({
+        roomId: currentRoomId,
+        skip: 0,
+        pageSize: INITIAL_ITEM_COUNT,
+      });
+      if (!ignore) {
+        setMessages(chatMessages);
+      }
+    };
+    void setupMessages();
+
+    setSkipPage(1);
+
+    return () => {
+      ignore = true;
+    };
+  }, [currentRoomId]);
+
   const loadingMessages = async (
     roomId: number,
     pageSize: number,
-    skip = 0,
+    skip: number,
   ) => {
     const chatMessages = await fetchMessages({
       roomId: roomId,
@@ -49,30 +81,16 @@ export const ChatMessageList = memo(function ChatMessageList({
       pageSize: pageSize,
     });
 
+    if (chatMessages.length === 0) {
+      return;
+    }
     setMessages((prev) => [...chatMessages, ...prev]);
     setSkipPage((prev) => prev + 1);
   };
 
-  useEffect(() => {
-    const getMessagesCountInfo = {
-      chatroomId: currentRoomId,
-    };
-    // メッセージの合計数が逆順スクロールに必要になる
-    socket.emit(
-      'chat:getMessagesCount',
-      getMessagesCountInfo,
-      (count: number) => {
-        setFirstItemIndex(count);
-      },
-    );
-
-    setMessages([]);
-    setSkipPage(0);
-    void loadingMessages(currentRoomId, INITIAL_ITEM_COUNT);
-  }, [currentRoomId]);
-
   const prependMessages = useCallback(() => {
-    const messagesToPrepend = 10;
+    // fetchする数を統一しないと、skipするデータ数が異なってしまう
+    const messagesToPrepend = INITIAL_ITEM_COUNT;
     const nextFirstItemIndex = Math.max(0, firstItemIndex - messagesToPrepend);
 
     setTimeout(() => {

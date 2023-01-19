@@ -9,6 +9,7 @@ import {
   InputLabel,
   FormControl,
 } from '@mui/material';
+import { blue } from '@mui/material/colors';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -340,8 +341,8 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
   return (
     <>
       <Dialog open={open} onClose={handleClose}>
-        <DialogTitle>Room Settings</DialogTitle>
-        <DialogContent>
+        <DialogTitle sx={{ bgcolor: blue[100] }}>Room Settings</DialogTitle>
+        <DialogContent className="mt-2">
           <FormControl sx={{ mx: 3, my: 1, minWidth: 200 }}>
             <InputLabel id="room-setting-select-label">Setting</InputLabel>
             <ChatroomSettingItems
