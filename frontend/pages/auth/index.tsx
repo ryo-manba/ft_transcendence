@@ -16,7 +16,7 @@ const Authenticate = () => {
   const [validationUserId, setValidationUserId] = useState(0);
 
   useEffect(() => {
-    const oauthLogin = async () => {
+    const loginAfterOAuth = async () => {
       if (session === null || process.env.NEXT_PUBLIC_API_URL === undefined) {
         return;
       }
@@ -56,26 +56,23 @@ const Authenticate = () => {
           imagePath: imageUrl,
         });
         debug(data);
-        if (data) {
-          if (data.res === LoginResultStatus.SUCCESS) {
-            debug('login success');
-            await router.push('/dashboard');
-          } else if (
-            data.res === LoginResultStatus.NEED2FA &&
-            data.userId !== undefined
-          ) {
-            // 2FAコード入力ダイアログを表示
-            setValidationUserId(data.userId);
-            setOpenValidationDialog(true);
-          } else {
-            // ログイン失敗、signOutしてログインに戻る
-            debug('login failure');
-            void signOut({ callbackUrl: '/' });
-          }
+        if (!data) {
+          void signOut({ callbackUrl: '/' });
+        } else if (data.res === LoginResultStatus.SUCCESS) {
+          await router.push('/dashboard');
+        } else if (
+          data.res === LoginResultStatus.NEED2FA &&
+          data.userId !== undefined
+        ) {
+          // 2FAコード入力ダイアログを表示
+          setValidationUserId(data.userId);
+          setOpenValidationDialog(true);
+        } else {
+          // ログイン失敗、signOutしてログインに戻る
+          void signOut({ callbackUrl: '/' });
         }
       } catch {
         // backendへの登録で例外の場合、セッションを切断してログインページに戻る
-        debug('login exception');
         void signOut({ callbackUrl: '/' });
 
         return;
@@ -85,7 +82,7 @@ const Authenticate = () => {
     debug(status);
     if (status === 'authenticated') {
       // 認証後、1回だけ呼び出される
-      void oauthLogin();
+      void loginAfterOAuth();
     } else if (status === 'unauthenticated') {
       void router.push('/');
     }
