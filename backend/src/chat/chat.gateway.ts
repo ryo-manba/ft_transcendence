@@ -210,8 +210,12 @@ export class ChatGateway {
       },
     };
     const userInfo = await this.chatService.findJoinedUserInfo(data);
+    if (!userInfo) {
+      return false;
+    }
+    const isBanned = userInfo.status === ChatroomMembersStatus.BAN;
 
-    return userInfo.status === ChatroomMembersStatus.BAN;
+    return isBanned;
   }
 
   /**
@@ -347,15 +351,19 @@ export class ChatGateway {
         },
       },
     });
-    if (!member) {
-      const deleteChatroomDto: DeleteChatroomDto = {
-        id: dto.chatroomId,
-        userId: dto.userId,
-      };
-      const deletedRoom = await this.deleteRoom(deleteChatroomDto);
-      if (!deletedRoom) {
-        this.logger.log('chat:leaveRoom failed to delete room');
-      }
+
+    const memberExists = !!member;
+    if (memberExists) {
+      return true;
+    }
+
+    const deleteChatroomDto: DeleteChatroomDto = {
+      id: dto.chatroomId,
+      userId: dto.userId,
+    };
+    const deletedRoom = await this.deleteRoom(deleteChatroomDto);
+    if (!deletedRoom) {
+      this.logger.log('chat:leaveRoom failed to delete room');
 
       return false;
     }
