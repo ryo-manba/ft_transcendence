@@ -32,6 +32,9 @@ import { GetAdminsIdsDto } from './dto/get-admins-ids.dto';
 import { GetMessagesCountDto } from './dto/get-messages-count.dto';
 import type { ChatMessage } from './types/chat';
 
+type ExcludeProperties = 'hashedPassword' | 'createdAt' | 'updatedAt';
+type ClientChatroom = Omit<Chatroom, ExcludeProperties>;
+
 @WebSocketGateway({
   cors: {
     origin: '*',
@@ -56,6 +59,17 @@ export class ChatGateway {
     this.logger.log(`Disconnect: ${socket.id}`);
   }
 
+  convertToClientChatroom(chatroom: Chatroom): ClientChatroom {
+    const clientChatroom: ClientChatroom = (({
+      hashedPassword, // eslint-disable-line @typescript-eslint/no-unused-vars
+      createdAt, // eslint-disable-line @typescript-eslint/no-unused-vars
+      updatedAt, // eslint-disable-line @typescript-eslint/no-unused-vars
+      ...rest
+    }) => rest)(chatroom);
+
+    return clientChatroom;
+  }
+
   /**
    * チャットルームを作成する
    * 作成者はそのまま入室する
@@ -65,11 +79,14 @@ export class ChatGateway {
   async CreateRoom(
     @ConnectedSocket() client: Socket,
     @MessageBody() dto: CreateChatroomDto,
-  ): Promise<Chatroom> {
+  ): Promise<ClientChatroom> {
     this.logger.log(`chat:createRoom: ${dto.name}`);
 
     // 作成と入室を行う
-    return await this.chatService.createAndJoinRoom(dto);
+    const room = await this.chatService.createAndJoinRoom(dto);
+    const clientChatroom = this.convertToClientChatroom(room);
+
+    return clientChatroom;
   }
 
   /**
@@ -84,8 +101,12 @@ export class ChatGateway {
     this.logger.log(`chat:getJoinedRooms: ${dto.userId}`);
     // ユーザーが入室しているチャットルームを取得する
     const rooms = await this.chatService.findJoinedRooms(dto.userId);
+
+    const clientChatrooms = rooms.map((room) =>
+      this.convertToClientChatroom(room),
+    );
     // フロントエンドへ送り返す
-    client.emit('chat:getJoinedRooms', rooms);
+    client.emit('chat:getJoinedRooms', clientChatrooms);
   }
 
   /**
@@ -220,9 +241,10 @@ export class ChatGateway {
     this.logger.log(`chat:joinRoom received -> ${dto.userId}`);
 
     const joinedRoom = await this.chatService.joinRoom(dto);
+    const clientJoinedRoom = this.convertToClientChatroom(joinedRoom);
 
     // 入室したルーム or undefinedをクライアントに送信する
-    client.emit('chat:joinRoom', joinedRoom);
+    client.emit('chat:joinRoom', clientJoinedRoom);
   }
 
   /**
@@ -299,8 +321,12 @@ export class ChatGateway {
     if (!deletedRoom) {
       return false;
     }
+
+    const deletedClientRoom = this.convertToClientChatroom(deletedRoom);
     // 現時点でチャットルームを表示しているユーザーに通知を送る
-    this.server.to(String(deletedRoom.id)).emit('chat:deleteRoom', deletedRoom);
+    this.server
+      .to(String(deletedRoom.id))
+      .emit('chat:deleteRoom', deletedClientRoom);
 
     // 全ユーザーのチャットルームを更新させる
     // NOTE: 本来削除されたルームに所属しているユーザーだけに送りたいが,
@@ -361,8 +387,12 @@ export class ChatGateway {
       return roomsDiff.includes(item.id);
     });
 
+    const clientJoinableRoom = viewableAndNotJoinedRooms.map((room) => {
+      this.convertToClientChatroom(room);
+    });
+
     // フロントエンドへ送信し返す
-    client.emit('chat:getJoinableRooms', viewableAndNotJoinedRooms);
+    client.emit('chat:getJoinableRooms', clientJoinableRoom);
   }
 
   /**
