@@ -387,9 +387,9 @@ export class ChatGateway {
       return roomsDiff.includes(item.id);
     });
 
-    const clientJoinableRoom = viewableAndNotJoinedRooms.map((room) => {
-      this.convertToClientChatroom(room);
-    });
+    const clientJoinableRoom = viewableAndNotJoinedRooms.map((room) =>
+      this.convertToClientChatroom(room),
+    );
 
     // フロントエンドへ送信し返す
     client.emit('chat:getJoinableRooms', clientJoinableRoom);
