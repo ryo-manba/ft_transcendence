@@ -1,4 +1,5 @@
 import { memo, useState, useEffect, Dispatch, SetStateAction } from 'react';
+import Debug from 'debug';
 import { Socket } from 'socket.io-client';
 import { Box, Collapse, Paper } from '@mui/material';
 import { Message, CurrentRoom } from 'types/chat';
@@ -22,6 +23,7 @@ export const ChatMessageExchange = memo(function ChatMessageExchange({
   messages,
   setMessages,
 }: Props) {
+  const debug = Debug('chat');
   const [error, setError] = useState('');
   const { data: user } = useQueryUser();
 
@@ -29,14 +31,19 @@ export const ChatMessageExchange = memo(function ChatMessageExchange({
     if (!user) return;
 
     // 他ユーザーからのメッセージを受け取る
-    socket.on('chat:receiveMessage', (data: Message) => {
-      setMessages((prev) => [...prev, data]);
+    socket.on('chat:receiveMessage', (message: Message) => {
+      debug('chat:receiveMessage ', message, currentRoom);
+
+      // 現在画面に表示しているルームのメッセージだった場合にのみ追加する
+      if (message.roomId === currentRoom?.id) {
+        setMessages((prev) => [...prev, message]);
+      }
     });
 
     return () => {
       socket.off('chat:receiveMessage');
     };
-  }, [user]);
+  }, [user, currentRoom]);
 
   if (user === undefined) {
     return <Loading fullHeight />;
