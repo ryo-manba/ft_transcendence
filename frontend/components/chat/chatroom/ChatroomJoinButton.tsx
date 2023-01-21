@@ -1,28 +1,41 @@
-import { memo, useState, useCallback, useEffect } from 'react';
+import { memo, useState, useCallback } from 'react';
 import { Socket } from 'socket.io-client';
 import { Button } from '@mui/material';
 import AddCircleOutlineRounded from '@mui/icons-material/AddCircleOutlineRounded';
-import { ChatroomJoinDialog } from 'components/chat/chatroom/ChatroomJoinDialog';
-import { User } from '@prisma/client';
 import type { Chatroom } from 'types/chat';
+import { ChatroomJoinDialog } from 'components/chat/chatroom/ChatroomJoinDialog';
+import { Loading } from 'components/common/Loading';
+import { useQueryUser } from 'hooks/useQueryUser';
 import Debug from 'debug';
 
 type Props = {
   socket: Socket;
-  user: Omit<User, 'hashedPassword'>;
+  addRooms: (room: Chatroom) => void;
 };
 
 export const ChatroomJoinButton = memo(function ChatroomJoinButton({
-  user,
   socket,
+  addRooms,
 }: Props) {
   const debug = Debug('chat');
   const [open, setOpen] = useState(false);
-  const [rooms, setRooms] = useState<Chatroom[]>([]);
+  const [joinableRooms, setJoinableRooms] = useState<Chatroom[]>([]);
+  const { data: user } = useQueryUser();
+
+  if (user === undefined) {
+    return <Loading />;
+  }
 
   const getJoinableRooms = useCallback(() => {
-    socket.emit('chat:getJoinableRooms', { userId: user.id });
-  }, [socket]);
+    socket.emit(
+      'chat:getJoinableRooms',
+      { userId: user.id },
+      (rooms: Chatroom[]) => {
+        debug('chat:getJoinableRooms -> receive %o', rooms);
+        setJoinableRooms(rooms);
+      },
+    );
+  }, []);
 
   const handleOpen = useCallback(() => {
     // チャットルームを探すボタンを押下したら公開されているチャットルーム一覧を取得する
@@ -33,17 +46,6 @@ export const ChatroomJoinButton = memo(function ChatroomJoinButton({
   const handleClose = useCallback(() => {
     setOpen(false);
   }, [open]);
-
-  useEffect(() => {
-    socket.on('chat:getJoinableRooms', (joinableRooms: Chatroom[]) => {
-      debug('chat:getJoinableRooms -> receive %o', joinableRooms);
-      setRooms(joinableRooms);
-    });
-
-    return () => {
-      socket.off('chat:getJoinableRooms');
-    };
-  }, [socket]);
 
   return (
     <>
@@ -60,10 +62,11 @@ export const ChatroomJoinButton = memo(function ChatroomJoinButton({
         Search Room
       </Button>
       <ChatroomJoinDialog
-        rooms={rooms}
         open={open}
-        onClose={handleClose}
+        rooms={joinableRooms}
         socket={socket}
+        addRooms={addRooms}
+        onClose={handleClose}
       />
     </>
   );

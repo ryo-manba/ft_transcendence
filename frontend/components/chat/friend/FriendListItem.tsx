@@ -96,7 +96,6 @@ export const FriendListItem = memo(function FriendListItem({
   };
 
   const directMessage = (friend: Friend) => {
-    // TODO: すでにDMを行っている場合はDMの画面に遷移させる
     const DMInfo = {
       userId1: user.id,
       userId2: friend.id,

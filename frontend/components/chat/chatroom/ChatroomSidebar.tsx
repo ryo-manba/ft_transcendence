@@ -32,6 +32,7 @@ export const ChatroomSidebar = memo(function ChatroomSidebar({
       debug('chat:getJoinedRooms %o', data);
       setRooms(data);
     });
+
     // サイドバーのチャットルームを更新する
     socket.on('chat:updateSideBarRooms', () => {
       socket.emit('chat:getJoinedRooms', { userId: user.id });
@@ -41,12 +42,30 @@ export const ChatroomSidebar = memo(function ChatroomSidebar({
     socket.on('chat:deleteRoom', (deletedRoom: Chatroom) => {
       debug('chat:deleteRoom %o', deletedRoom);
       // socketの退出処理をする
-      socket.emit('chat:leaveSocket', { roomId: deletedRoom.id });
-      // 所属しているチャットルーム一覧を取得する
-      socket.emit('chat:getJoinedRooms', { userId: user.id });
+      socket.emit('chat:leaveSocket', {
+        roomId: deletedRoom.id,
+      });
+      setRooms((prev) => prev.filter((room) => room.id !== deletedRoom.id));
       // 表示中のメッセージを削除する
       setMessages([]);
       setCurrentRoom(undefined);
+    });
+
+    // 他のユーザーによってチャットルームに入室させられたときの処理
+    socket.on('chat:joinRoomFromOtherUser', (joinedRoom: Chatroom) => {
+      debug('joinRoomFromOtherUser:', joinedRoom);
+
+      // 通知を受け取れるようソケットをjoinさせる
+      socket.emit(
+        'chat:socketJoinRoom',
+        { roomId: joinedRoom.id },
+        (res: boolean) => {
+          if (res) {
+            // サイドバーにチャットルームを追加する
+            setRooms((prev) => [...prev, joinedRoom]);
+          }
+        },
+      );
     });
 
     // setupが終わったら
@@ -56,8 +75,13 @@ export const ChatroomSidebar = memo(function ChatroomSidebar({
     return () => {
       socket.off('chat:getJoinedRooms');
       socket.off('chat:updateSideBarRooms');
+      socket.off('chat:joinRoomFromOtherUser');
     };
   }, []);
+
+  const addRooms = (room: Chatroom) => {
+    setRooms((prev) => [...prev, room]);
+  };
 
   if (user === undefined) {
     return <Loading />;
@@ -73,7 +97,7 @@ export const ChatroomSidebar = memo(function ChatroomSidebar({
         }}
       >
         <ChatroomCreateButton socket={socket} setRooms={setRooms} />
-        <ChatroomJoinButton socket={socket} user={user} />
+        <ChatroomJoinButton socket={socket} addRooms={addRooms} />
         <List dense={false}>
           {rooms &&
             rooms.map((room, i) => (
