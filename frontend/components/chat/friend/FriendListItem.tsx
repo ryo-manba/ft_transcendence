@@ -1,27 +1,22 @@
 import { useState, memo, useEffect, Dispatch, SetStateAction } from 'react';
-import {
-  ListItem,
-  ListItemText,
-  ListItemAvatar,
-  Box,
-  Collapse,
-} from '@mui/material';
+import { useRouter } from 'next/router';
+import Debug from 'debug';
 import { Socket } from 'socket.io-client';
+import { ListItem, ListItemText, ListItemAvatar } from '@mui/material';
+import { UserStatus } from '@prisma/client';
 import { Friend } from 'types/friend';
+import { Invitation } from 'types/game';
+import { CurrentRoom } from 'types/chat';
+import { useSocketStore } from 'store/game/ClientSocket';
+import { useInvitedFriendStateStore } from 'store/game/InvitedFriendState';
+import { getAvatarImageUrl } from 'api/user/getAvatarImageUrl';
+import { getUserStatusById } from 'api/user/getUserStatusById';
 import { useQueryUser } from 'hooks/useQueryUser';
 import { FriendInfoDialog } from 'components/chat/friend/FriendInfoDialog';
 import { Loading } from 'components/common/Loading';
-import { getAvatarImageUrl } from 'api/user/getAvatarImageUrl';
-import { getUserStatusById } from 'api/user/getUserStatusById';
-import { UserStatus } from '@prisma/client';
-import { useSocketStore } from 'store/game/ClientSocket';
-import { useInvitedFriendStateStore } from 'store/game/InvitedFriendState';
-import { useRouter } from 'next/router';
-import { Invitation } from 'types/game';
 import { BadgedAvatar } from 'components/common/BadgedAvatar';
-import { ChatErrorAlert } from 'components/chat/utils/ChatErrorAlert';
-import Debug from 'debug';
-import { CurrentRoom } from 'types/chat';
+import { ChatErrorAlert } from 'components/chat/alert/ChatErrorAlert';
+import { ChatAlertCollapse } from 'components/chat/alert/ChatAlertCollapse';
 
 type Props = {
   friend: Friend;
@@ -127,11 +122,9 @@ export const FriendListItem = memo(function FriendListItem({
 
   return (
     <>
-      <Box sx={{ width: '100%' }}>
-        <Collapse in={error !== ''}>
-          <ChatErrorAlert error={error} setError={setError} />
-        </Collapse>
-      </Box>
+      <ChatAlertCollapse show={error !== ''}>
+        <ChatErrorAlert error={error} setError={setError} />
+      </ChatAlertCollapse>
       <ListItem divider button onClick={handleClickOpen}>
         <ListItemAvatar>
           <BadgedAvatar

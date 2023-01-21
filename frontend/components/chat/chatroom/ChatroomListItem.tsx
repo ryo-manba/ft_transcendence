@@ -1,25 +1,23 @@
 import { memo, useState, useEffect, Dispatch, SetStateAction } from 'react';
+import { Socket } from 'socket.io-client';
+import Debug from 'debug';
 import {
   ListItem,
   IconButton,
   ListItemText,
   ListItemAvatar,
   Avatar,
-  Alert,
-  Box,
-  Collapse,
 } from '@mui/material';
 import SettingsIcon from '@mui/icons-material/Settings';
 import ChatIcon from '@mui/icons-material/Chat';
-import CloseIcon from '@mui/icons-material/Close';
 import { ChatroomMembersStatus, ChatroomType } from '@prisma/client';
-import { Socket } from 'socket.io-client';
 import { Chatroom, Message, JoinChatroomInfo, CurrentRoom } from 'types/chat';
 import { useQueryUser } from 'hooks/useQueryUser';
 import { Loading } from 'components/common/Loading';
 import { ChatroomSettingDialog } from 'components/chat/chatroom/ChatroomSettingDialog';
-import { ChatErrorAlert } from 'components/chat/utils/ChatErrorAlert';
-import Debug from 'debug';
+import { ChatErrorAlert } from 'components/chat/alert/ChatErrorAlert';
+import { ChatSuccessAlert } from 'components/chat/alert/ChatSuccessAlert';
+import { ChatAlertCollapse } from 'components/chat/alert/ChatAlertCollapse';
 
 type Props = {
   room: Chatroom;
@@ -278,36 +276,15 @@ export const ChatroomListItem = memo(function ChatroomListItem({
 
   return (
     <>
-      <Box sx={{ width: '100%' }}>
-        <Collapse in={error !== ''}>
-          <ChatErrorAlert
-            error={`${room.name}: ${error}`}
-            setError={setError}
-          />
-        </Collapse>
-      </Box>
-      <Box sx={{ width: '100%' }}>
-        <Collapse in={success !== ''}>
-          <Alert
-            severity="success"
-            action={
-              <IconButton
-                aria-label="close"
-                color="inherit"
-                size="small"
-                onClick={() => {
-                  setSuccess('');
-                }}
-              >
-                <CloseIcon fontSize="inherit" />
-              </IconButton>
-            }
-            sx={{ mb: 2 }}
-          >
-            {`${room.name}: ${success}`}
-          </Alert>
-        </Collapse>
-      </Box>
+      <ChatAlertCollapse show={error !== ''}>
+        <ChatErrorAlert error={`${room.name}: ${error}`} setError={setError} />
+      </ChatAlertCollapse>
+      <ChatAlertCollapse show={success !== ''}>
+        <ChatSuccessAlert
+          success={`${room.name}: ${success}`}
+          setSuccess={setSuccess}
+        />
+      </ChatAlertCollapse>
       <ListItem
         secondaryAction={
           <IconButton

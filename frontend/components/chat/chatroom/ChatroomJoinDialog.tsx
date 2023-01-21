@@ -1,5 +1,6 @@
 import { memo, useState } from 'react';
 import { useForm, SubmitHandler, Controller } from 'react-hook-form';
+import { Socket } from 'socket.io-client';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import {
@@ -16,7 +17,6 @@ import {
   DialogContent,
   InputAdornment,
   IconButton,
-  Collapse,
   TextField,
 } from '@mui/material';
 import { blue } from '@mui/material/colors';
@@ -24,11 +24,11 @@ import ChatIcon from '@mui/icons-material/Chat';
 import LockIcon from '@mui/icons-material/Lock';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
-import { Socket } from 'socket.io-client';
 import { Chatroom, ChatroomType, JoinChatroomInfo } from 'types/chat';
 import { useQueryUser } from 'hooks/useQueryUser';
 import { Loading } from 'components/common/Loading';
-import { ChatErrorAlert } from 'components/chat/utils/ChatErrorAlert';
+import { ChatErrorAlert } from 'components/chat/alert/ChatErrorAlert';
+import { ChatAlertCollapse } from 'components/chat/alert/ChatAlertCollapse';
 
 type Props = {
   open: boolean;
@@ -157,11 +157,9 @@ export const ChatroomJoinDialog = memo(function ChatroomJoinDialog({
           )}
           {isProtected(selectedRoom) && (
             <>
-              <Box sx={{ width: '100%' }}>
-                <Collapse in={error !== ''}>
-                  <ChatErrorAlert error={error} setError={setError} />
-                </Collapse>
-              </Box>
+              <ChatAlertCollapse show={error !== ''}>
+                <ChatErrorAlert error={error} setError={setError} />
+              </ChatAlertCollapse>
               <Controller
                 name="password"
                 control={control}
