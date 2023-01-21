@@ -3,7 +3,7 @@ import { useRouter } from 'next/router';
 import { useState, useCallback, useEffect } from 'react';
 import { useSession, signOut } from 'next-auth/react';
 import { LoginResult, LoginResultStatus } from 'types';
-import { UserInfo } from 'types/auth';
+import { UserInfo, LoginInput } from 'types/auth';
 import { ValidationDialog } from 'components/auth/ValidationDialog';
 import { Loading } from 'components/common/Loading';
 import Debug from 'debug';
@@ -16,22 +16,21 @@ const Authenticate = () => {
   const [validationUserId, setValidationUserId] = useState(0);
 
   useEffect(() => {
-    const loginAfterOAuth = async () => {
+    // セッション情報から、ログインに必要な情報を取得する（42,Googleに対応)
+    const getLoginInput = async () => {
       if (session === null || process.env.NEXT_PUBLIC_API_URL === undefined) {
-        return;
+        return null;
       }
-      let loginName = '';
-      let imageUrl = '';
-      debug(session);
+      const loginInput: LoginInput = { oAuthId: '', imagePath: '' };
       if (
         session.user.email &&
         session.user.email.indexOf('gmail.com') !== -1
       ) {
-        // gmailでのログインの場合
-        loginName = session.user.email;
-        if (session.user.image) imageUrl = session.user.image;
+        // gmailの場合、sessionからの情報をそのまま渡す
+        loginInput.oAuthId = session.user.email;
+        if (session.user.image) loginInput.imagePath = session.user.image;
       } else if (session.user.email) {
-        // 42の場合、user情報を取得
+        // 42の場合、user情報を追加で取得する
         const urlGetdata =
           'https://api.intra.42.fr/v2/users/' + String(session.user.id);
         try {
@@ -41,20 +40,26 @@ const Authenticate = () => {
             },
           });
           debug(response);
-          loginName = response.data.login;
-          imageUrl = response.data.image.link;
+          loginInput.oAuthId = response.data.login;
+          loginInput.imagePath = response.data.image.link;
         } catch {
           // User情報取得に失敗した場合は、signOutしてログインに戻る
           debug('42 user info failure');
           void signOut({ callbackUrl: '/' });
         }
       }
+
+      return loginInput;
+    };
+
+    const loginAfterOAuth = async () => {
+      if (session === null || process.env.NEXT_PUBLIC_API_URL === undefined) {
+        return;
+      }
+      const loginInput = await getLoginInput();
       const urlOauth = `${process.env.NEXT_PUBLIC_API_URL}/auth/oauth-login`;
       try {
-        const { data } = await axios.post<LoginResult>(urlOauth, {
-          oAuthId: loginName,
-          imagePath: imageUrl,
-        });
+        const { data } = await axios.post<LoginResult>(urlOauth, loginInput);
         debug(data);
         if (!data) {
           void signOut({ callbackUrl: '/' });
