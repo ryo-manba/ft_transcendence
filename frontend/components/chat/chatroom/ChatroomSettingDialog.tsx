@@ -191,7 +191,7 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
   // 設定項目を選択した時に対応するユーザ一覧を取得する
   useEffect(() => {
     let ignore = false;
-    if (user === undefined) return;
+    if (user === undefined || open === false) return;
     switch (selectedRoomSetting) {
       case ChatroomSetting.ADD_FRIEND:
         void fetchFriends(user.id, ignore);
@@ -222,7 +222,7 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
     return () => {
       ignore = true;
     };
-  }, [selectedRoomSetting]);
+  }, [selectedRoomSetting, open]);
 
   if (user === undefined) {
     return <Loading />;

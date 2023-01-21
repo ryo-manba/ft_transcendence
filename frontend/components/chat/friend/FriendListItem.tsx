@@ -1,4 +1,4 @@
-import { useState, memo, useEffect } from 'react';
+import { useState, memo, useEffect, Dispatch, SetStateAction } from 'react';
 import {
   ListItem,
   ListItemText,
@@ -21,15 +21,18 @@ import { Invitation } from 'types/game';
 import { BadgedAvatar } from 'components/common/BadgedAvatar';
 import { ChatErrorAlert } from 'components/chat/utils/ChatErrorAlert';
 import Debug from 'debug';
+import { CurrentRoom } from 'types/chat';
 
 type Props = {
   friend: Friend;
   socket: Socket;
+  setCurrentRoom: Dispatch<SetStateAction<CurrentRoom | undefined>>;
 };
 
 export const FriendListItem = memo(function FriendListItem({
   friend,
   socket,
+  setCurrentRoom,
 }: Props) {
   const debug = Debug('friend');
   const [open, setOpen] = useState(false);
@@ -93,20 +96,25 @@ export const FriendListItem = memo(function FriendListItem({
   };
 
   const directMessage = (friend: Friend) => {
-    // TODO: すでにDMを行っている場合はDMの画面に遷移させる
     const DMInfo = {
       userId1: user.id,
       userId2: friend.id,
       name1: user.name,
       name2: friend.name,
     };
-    socket.emit('chat:directMessage', DMInfo, (res: boolean) => {
-      if (!res) {
-        setError('Failed to start direct messages.');
-
-        return;
-      }
-    });
+    socket.emit(
+      'chat:directMessage',
+      DMInfo,
+      (res: { currentRoom: CurrentRoom | undefined }) => {
+        debug('chat:directMessage %o', res);
+        if (res.currentRoom) {
+          socket.emit('chat:changeCurrentRoom', { roomId: res.currentRoom.id });
+          setCurrentRoom(res.currentRoom);
+        } else {
+          setError('Failed to start direct messages.');
+        }
+      },
+    );
   };
 
   const handleClickOpen = () => {

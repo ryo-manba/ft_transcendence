@@ -1,4 +1,4 @@
-import { memo, useState, useEffect } from 'react';
+import { memo, useState } from 'react';
 import { useForm, SubmitHandler, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -35,6 +35,7 @@ type Props = {
   rooms: Chatroom[];
   socket: Socket;
   onClose: () => void;
+  addRooms: (room: Chatroom) => void;
 };
 
 export type ChatroomJoinForm = {
@@ -42,10 +43,11 @@ export type ChatroomJoinForm = {
 };
 
 export const ChatroomJoinDialog = memo(function ChatroomJoinDialog({
-  onClose,
-  socket,
-  rooms,
   open,
+  rooms,
+  socket,
+  onClose,
+  addRooms,
 }: Props) {
   const [showPassword, setShowPassword] = useState(false);
   const [selectedRoom, setSelectedRoom] = useState<Chatroom | null>(null);
@@ -98,23 +100,19 @@ export const ChatroomJoinDialog = memo(function ChatroomJoinDialog({
     setSelectedRoom(room);
   };
 
-  useEffect(() => {
-    socket.on('chat:joinRoom', (joinedRoom: Chatroom) => {
+  const joinRoom = (joinRoomInfo: JoinChatroomInfo) => {
+    socket.emit('chat:joinRoom', joinRoomInfo, (joinedRoom: Chatroom) => {
       // 入室に成功したらダイアログを閉じる
       if (joinedRoom) {
         handleClose();
-        // サイドバーを更新する
-        socket.emit('chat:getJoinedRooms', { userId: user.id });
+        // 入室済みのルーム一覧に追加する
+        addRooms(joinedRoom);
       } else {
-        setError('Incorrect password.');
+        setError('Failed to join room.');
         reset();
       }
     });
-
-    return () => {
-      socket.off('chat:joinRoom');
-    };
-  }, []);
+  };
 
   const onSubmit: SubmitHandler<ChatroomJoinForm> = ({
     password,
@@ -128,7 +126,7 @@ export const ChatroomJoinDialog = memo(function ChatroomJoinDialog({
       password: isProtected(selectedRoom) ? password : undefined,
     };
 
-    socket.emit('chat:joinRoom', joinRoomInfo);
+    joinRoom(joinRoomInfo);
   };
 
   return (

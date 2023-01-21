@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
-import { PrismaService } from '../prisma.service';
+import { PrismaService } from '../prisma/prisma.service';
 import {
   Chatroom,
   ChatroomAdmin,
@@ -19,12 +19,12 @@ import type { ChatUser, ChatMessage } from './types/chat';
 import { updatePasswordDto } from './dto/update-password.dto';
 import { updateMemberStatusDto } from './dto/update-member-status.dto';
 import { GetMessagesDto } from './dto/get-messages.dto';
-import { createDirectMessageDto } from './dto/create-direct-message.dto';
 import { DeleteChatroomDto } from './dto/delete-chatroom.dto';
 import { DeleteChatroomMemberDto } from './dto/delete-chatroom-member.dto';
 import { CreateBlockRelationDto } from './dto/create-block-relation.dto';
 import { DeleteBlockRelationDto } from './dto/delete-block-relation.dto';
 import { GetUnblockedUsersDto } from './dto/get-unblocked-users.dto';
+import { CreateDirectMessageDto } from './dto/create-direct-message.dto';
 
 // 2の12乗回の演算が必要という意味
 const saltRounds = 12;
@@ -61,7 +61,7 @@ export class ChatService {
     });
   }
 
-  async create(dto: CreateChatroomDto): Promise<Chatroom> {
+  async createRoom(dto: CreateChatroomDto): Promise<Chatroom> {
     // Protectedの場合はパスワードをハッシュ化する
     const hashed =
       dto.type === ChatroomType.PROTECTED
@@ -81,7 +81,7 @@ export class ChatService {
       // 成功したチャットルームの情報を返す
       return chatroom;
     } catch (error) {
-      this.logger.log('create', error);
+      this.logger.log('createRoom', error);
 
       return undefined;
     }
@@ -205,6 +205,7 @@ export class ChatService {
 
     const chatMessages = messages.map((message) => {
       return {
+        roomId: message.chatroomId,
         text: message.message,
         userName: message.user.name,
         createdAt: message.createdAt,
@@ -288,8 +289,7 @@ export class ChatService {
    * @param id
    * @return 入室したチャットルームを返す
    */
-  async joinRoom(dto: JoinChatroomDto): Promise<Chatroom> {
-    console.log('joinRoom: ', dto);
+  async joinRoom(dto: JoinChatroomDto): Promise<Chatroom | undefined> {
     // 入室するチャットルームを取得する
     const chatroom = await this.prisma.chatroom.findUnique({
       where: {
@@ -311,7 +311,7 @@ export class ChatService {
       }
     }
 
-    // 入室処理を行う
+    // ユーザーをチャットルームに追加する
     try {
       await this.prisma.chatroomMembers.create({
         data: {
@@ -327,26 +327,6 @@ export class ChatService {
 
     // 入室したチャットルームを返す
     return chatroom;
-  }
-
-  async createAndJoinRoom(dto: CreateChatroomDto): Promise<Chatroom> {
-    // Chatroomを作成する
-    const createdRoom = await this.create(dto);
-    if (createdRoom === undefined) {
-      return undefined;
-    }
-
-    // 作成できた場合、チャットルームに入室する
-    const joinDto: JoinChatroomDto = {
-      userId: dto.ownerId,
-      type: dto.type,
-      chatroomId: createdRoom.id,
-      password: dto.password,
-    };
-    const isSuccess = await this.joinRoom(joinDto);
-
-    // 入室できたら作成したチャットルームの情報を返す
-    return isSuccess ? createdRoom : undefined;
   }
 
   /**
@@ -670,10 +650,14 @@ export class ChatService {
 
   /**
    * user1 と user2 が含まれているDMルームがすでに存在するかを確認する
-   * @return 既にある -> true
-   * @return ない -> false
+   * 存在する場合、そのDMルームを返す
+   * @return 既にある -> DMルーム
+   * @return ない -> undefined
    */
-  async isCreatedDMRoom(userId1: number, userId2: number): Promise<boolean> {
+  async findExistingDMRoom(
+    userId1: number,
+    userId2: number,
+  ): Promise<Chatroom> {
     const DMRooms = await this.prisma.chatroom.findMany({
       where: {
         type: 'DM',
@@ -711,24 +695,34 @@ export class ChatService {
     const arr = this.getDuplicateIds(roomIds1, roomIds2);
     if (arr.length > 0) {
       this.logger.log('isCreatedDMRoom: already created');
+      const existingDMRoom = await this.prisma.chatroom.findUnique({
+        where: {
+          id: arr[0],
+        },
+      });
 
-      return true;
+      return existingDMRoom;
     }
 
-    return false;
+    return undefined;
   }
 
   /**
-   * チャットルームに所属するユーザーのステータスを更新する
+   * DM用のChatroomを作成し、作られたChatroomを返す
    * @param createDirectMessageDto
+   * @return 新規作成成功 or 既にある -> DMルーム
+   * @return 作成失敗 -> undefined
    */
-  async startDirectMessage(dto: createDirectMessageDto): Promise<boolean> {
+  async startDirectMessage(dto: CreateDirectMessageDto): Promise<Chatroom> {
     this.logger.log('startDirectMessage: ', dto);
 
-    const isCreated = await this.isCreatedDMRoom(dto.userId1, dto.userId2);
-    this.logger.log('isCreated', isCreated);
-    if (isCreated) {
-      return false;
+    const existingDMRoom = await this.findExistingDMRoom(
+      dto.userId1,
+      dto.userId2,
+    );
+    this.logger.log('existingDMRoom: ', existingDMRoom);
+    if (existingDMRoom) {
+      return existingDMRoom;
     }
 
     // 共通するRoom一覧を取得する
@@ -740,7 +734,7 @@ export class ChatService {
     };
     try {
       // チャットルームを作成する
-      const createdRoom = await this.create(createChatroomDto);
+      const createdRoom = await this.createRoom(createChatroomDto);
 
       const joinChatroomDto1 = {
         userId: dto.userId1,
@@ -772,11 +766,11 @@ export class ChatService {
         data: [createAdminDto1, createAdminDto2],
       });
 
-      return true;
+      return createdRoom;
     } catch (error) {
       this.logger.log('startDirectMessage', error);
 
-      return false;
+      return undefined;
     }
   }
 

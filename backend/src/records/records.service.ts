@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { GameRecord, Prisma } from '@prisma/client';
-import { PrismaService } from '../prisma.service';
+import { PrismaService } from '../prisma/prisma.service';
 import { CreateGameRecordDto } from './dto/create-gamerecord.dto';
 import { GameRecordWithUserName } from './interfaces/records.interface';
 
