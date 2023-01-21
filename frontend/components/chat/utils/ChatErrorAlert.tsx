@@ -1,4 +1,4 @@
-import { memo } from 'react';
+import { memo, useEffect } from 'react';
 import { IconButton, Alert } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 
@@ -11,6 +11,18 @@ export const ChatErrorAlert = memo(function ChatErrorAlert({
   error,
   setError,
 }: Props) {
+  useEffect(() => {
+    // 一定時間経過したらアラートを非表示にする
+    const displayingAlertTime = 3000;
+    const timeId = setTimeout(() => {
+      setError('');
+    }, displayingAlertTime);
+
+    return () => {
+      clearTimeout(timeId);
+    };
+  }, [error, setError]);
+
   return (
     <Alert
       severity="error"
