@@ -86,16 +86,24 @@ export class ChatService {
     }
   }
 
-  async update(params: {
+  async updateRoom(params: {
     where: Prisma.ChatroomWhereUniqueInput;
     data: Prisma.ChatroomUpdateInput;
   }): Promise<Chatroom> {
     const { where, data } = params;
 
-    return this.prisma.chatroom.update({
-      data,
-      where,
-    });
+    try {
+      const updatedRoom = this.prisma.chatroom.update({
+        data,
+        where,
+      });
+
+      return updatedRoom;
+    } catch (error) {
+      this.logger.log('updateRoom', error);
+
+      return undefined;
+    }
   }
 
   async remove(where: Prisma.ChatroomWhereUniqueInput): Promise<Chatroom> {
@@ -572,22 +580,22 @@ export class ChatService {
 
     const hashed = await bcrypt.hash(dto.newPassword, saltRounds);
 
-    try {
-      await this.update({
-        data: {
-          hashedPassword: hashed,
-        },
-        where: {
-          id: dto.chatroomId,
-        },
-      });
+    const updatedRoom = await this.updateRoom({
+      data: {
+        hashedPassword: hashed,
+      },
+      where: {
+        id: dto.chatroomId,
+      },
+    });
 
-      return true;
-    } catch (error) {
-      this.logger.log('updatePassword', error);
+    if (!updatedRoom) {
+      this.logger.log('updatePassword failed');
 
       return false;
     }
+
+    return true;
   }
 
   /**
