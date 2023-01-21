@@ -90,7 +90,7 @@ export const FriendListItem = memo(function FriendListItem({
         updateInvitedFriendState({ friendId: friend.id });
         void router.push('game/home');
       } else {
-        setError('You have already sent invitation now!');
+        setError('You already started to play/prepare game');
       }
     });
   };

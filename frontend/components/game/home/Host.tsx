@@ -128,11 +128,11 @@ export const Host = () => {
               align="center"
               gutterBottom
             >
-              {invitationDenied && 'Invitation was denied...'}
-              {playState !== PlayState.stateNothing && 'Wait a Minute...'}
+              {invitationDenied && 'Invitation was denie'}
+              {playState !== PlayState.stateNothing && 'Wait a Minute'}
               {playState === PlayState.stateNothing &&
                 !invitationDenied &&
-                'Waiting for Opponent...'}
+                'Waiting for Opponent'}
             </Typography>
           </Grid>
         </>
