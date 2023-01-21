@@ -1,38 +1,44 @@
 import { memo, useEffect } from 'react';
-import { IconButton, Alert } from '@mui/material';
+import { IconButton, Alert, AlertColor } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 
 type Props = {
-  error: string;
-  setError: (error: string) => void;
+  displayingTime?: number;
+  severity: AlertColor;
+  message: string;
+  setMessage: (message: string) => void;
 };
 
-export const ChatErrorAlert = memo(function ChatErrorAlert({
-  error,
-  setError,
+// 指定がない場合は以下の秒数(ミリ秒)でアラートを非表示にする
+const DEFAULT_DISPLAYING_TIME = 3000;
+
+export const ChatAlert = memo(function ChatAlert({
+  displayingTime = DEFAULT_DISPLAYING_TIME,
+  severity,
+  message,
+  setMessage,
 }: Props) {
   useEffect(() => {
     // 一定時間経過したらアラートを非表示にする
-    const displayingAlertTime = 3000;
     const timeId = setTimeout(() => {
-      setError('');
-    }, displayingAlertTime);
+      setMessage('');
+    }, displayingTime);
 
     return () => {
       clearTimeout(timeId);
     };
-  }, [error, setError]);
+  }, [message, setMessage]);
 
   return (
     <Alert
-      severity="error"
+      severity={severity}
       action={
         <IconButton
           aria-label="close"
           color="inherit"
           size="small"
           onClick={() => {
-            setError('');
+            setMessage('');
           }}
         >
           <CloseIcon fontSize="inherit" />
@@ -40,7 +46,7 @@ export const ChatErrorAlert = memo(function ChatErrorAlert({
       }
       sx={{ mb: 2 }}
     >
-      {error}
+      {message}
     </Alert>
   );
 });
