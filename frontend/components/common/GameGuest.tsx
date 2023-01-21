@@ -75,7 +75,7 @@ export const GameGuest = ({ hosts, setHosts }: Props) => {
         socket.emit('denyInvitation', match);
       }
     },
-    [user],
+    [user, hosts],
   );
 
   useEffect(() => {
