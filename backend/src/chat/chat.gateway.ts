@@ -508,9 +508,15 @@ export class ChatGateway {
     @MessageBody() dto: updateMemberStatusDto,
   ): Promise<boolean> {
     this.logger.log(`chat:banUser received -> roomId: ${dto.chatroomId}`);
-    const res = await this.chatService.updateMemberStatus(dto);
+    const updatedMemberStatus = await this.chatService.updateMemberStatus(dto);
 
-    return res ? true : false;
+    if (updatedMemberStatus) {
+      this.server
+        .to(this.generateSocketUserRoomName(dto.userId))
+        .emit('chat:banned');
+    }
+
+    return updatedMemberStatus ? true : false;
   }
 
   /**
