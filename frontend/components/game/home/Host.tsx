@@ -128,7 +128,7 @@ export const Host = () => {
               align="center"
               gutterBottom
             >
-              {invitationDenied && 'Invitation was denie'}
+              {invitationDenied && 'Invitation was denied'}
               {playState !== PlayState.stateNothing && 'Wait a Minute'}
               {playState === PlayState.stateNothing &&
                 !invitationDenied &&

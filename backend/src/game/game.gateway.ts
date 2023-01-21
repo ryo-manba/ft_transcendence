@@ -185,7 +185,8 @@ export class GameGateway {
       this.waitingQueue.find((player) => player.id === id) !== undefined;
     if (isWaitingGame) return true;
 
-    // 招待されているときに例えばゲームを開始しようとするのは問題ない。
+    // 招待されているときに例えばランダムゲームのマッチングを開始するのは問題ない。
+    // つまり、招待されていることを確認する必要はない。
     const isInvitingGame = this.invitationList.find(id) !== undefined;
     if (isInvitingGame) return true;
 
