@@ -705,7 +705,6 @@ export class ChatService {
         },
       },
     });
-    [0];
 
     const roomIds1 = rooms1.map((room) => {
       return room.chatroomId;
