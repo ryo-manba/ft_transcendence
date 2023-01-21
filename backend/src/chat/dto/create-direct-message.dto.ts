@@ -1,6 +1,6 @@
 import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
 
-export class createDirectMessageDto {
+export class CreateDirectMessageDto {
   @IsNumber()
   @IsNotEmpty()
   userId1: number;

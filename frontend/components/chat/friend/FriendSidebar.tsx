@@ -1,4 +1,4 @@
-import { memo, useState, useEffect } from 'react';
+import { memo, useState, useEffect, Dispatch, SetStateAction } from 'react';
 import { List } from '@mui/material';
 import { Socket } from 'socket.io-client';
 import Debug from 'debug';
@@ -10,12 +10,17 @@ import { FriendAddButton } from 'components/chat/friend/FriendAddButton';
 import { FriendListItem } from 'components/chat/friend/FriendListItem';
 import { ChatBlockButton } from 'components/chat/block/ChatBlockButton';
 import { ChatHeightStyle } from 'components/chat/utils/ChatHeightStyle';
+import { CurrentRoom } from 'types/chat';
 
 type Props = {
   socket: Socket;
+  setCurrentRoom: Dispatch<SetStateAction<CurrentRoom | undefined>>;
 };
 
-export const FriendSidebar = memo(function FriendSidebar({ socket }: Props) {
+export const FriendSidebar = memo(function FriendSidebar({
+  socket,
+  setCurrentRoom,
+}: Props) {
   const debug = Debug('friend');
   const [friends, setFriends] = useState<Friend[]>([]);
   const { data: user } = useQueryUser();
@@ -69,7 +74,12 @@ export const FriendSidebar = memo(function FriendSidebar({ socket }: Props) {
         <List dense={false}>
           {friends &&
             friends.map((friend) => (
-              <FriendListItem key={friend.id} friend={friend} socket={socket} />
+              <FriendListItem
+                key={friend.id}
+                friend={friend}
+                socket={socket}
+                setCurrentRoom={setCurrentRoom}
+              />
             ))}
         </List>
       </div>
