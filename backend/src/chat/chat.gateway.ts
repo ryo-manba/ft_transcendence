@@ -355,9 +355,9 @@ export class ChatGateway {
       const deletedRoom = await this.deleteRoom(deleteChatroomDto);
       if (!deletedRoom) {
         this.logger.log('chat:leaveRoom failed to delete room');
-      }
 
-      return false;
+        return false;
+      }
     }
 
     return true;
