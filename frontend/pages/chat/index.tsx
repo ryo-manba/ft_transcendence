@@ -97,7 +97,7 @@ const Chat: NextPage = () => {
             borderBottom: '1px solid',
           }}
         >
-          <FriendSidebar socket={socket} />
+          <FriendSidebar socket={socket} setCurrentRoom={setCurrentRoom} />
         </Grid>
       </Grid>
     </Layout>

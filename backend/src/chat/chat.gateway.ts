@@ -17,7 +17,7 @@ import { CreateMessageDto } from './dto/create-message.dto';
 import { CreateAdminDto } from './dto/create-admin.dto';
 import { updatePasswordDto } from './dto/update-password.dto';
 import { updateMemberStatusDto } from './dto/update-member-status.dto';
-import { createDirectMessageDto } from './dto/create-direct-message.dto';
+import { CreateDirectMessageDto } from './dto/create-direct-message.dto';
 import { CheckBanDto } from './dto/check-ban.dto';
 import { DeleteChatroomMemberDto } from './dto/delete-chatroom-member.dto';
 import { UpdateChatroomOwnerDto } from './dto/update-chatroom-owner.dto';
@@ -30,8 +30,7 @@ import { OnRoomJoinableDto } from './dto/on-room-joinable.dto';
 import { GetAdminsIdsDto } from './dto/get-admins-ids.dto';
 import { GetMessagesCountDto } from './dto/get-messages-count.dto';
 import { SocketJoinRoomDto } from './dto/socket-join-room.dto';
-
-import type { ChatMessage } from './types/chat';
+import type { ChatMessage, CurrentRoom } from './types/chat';
 
 @WebSocketGateway({
   cors: {
@@ -538,67 +537,24 @@ export class ChatGateway {
   @SubscribeMessage('chat:directMessage')
   async startDirectMessage(
     @ConnectedSocket() client: Socket,
-    @MessageBody() dto: createDirectMessageDto,
-  ): Promise<boolean> {
+    @MessageBody() dto: CreateDirectMessageDto,
+  ): Promise<{ currentRoom: CurrentRoom | undefined }> {
     this.logger.log('chat:directMessage received');
+    const directMessage = await this.chatService.startDirectMessage(dto);
 
-    const isCreated = await this.chatService.isCreatedDMRoom(
-      dto.userId1,
-      dto.userId2,
-    );
-    // すでに作成されている場合（自分と相手がすでにチャットルームに入室している）
-    if (isCreated) {
-      return false;
+    if (directMessage) {
+      const rooms = await this.chatService.findJoinedRooms(dto.userId1);
+      // フロントエンドへ送り返す
+      client.emit('chat:getJoinedRooms', rooms);
+      const currentRoom: CurrentRoom = {
+        id: directMessage.id,
+        name: directMessage.name,
+      };
+
+      return { currentRoom };
+    } else {
+      return { currentRoom: undefined };
     }
-    const roomName = dto.name1 + '_' + dto.name2;
-    const createChatroomDto: CreateChatroomDto = {
-      name: roomName,
-      type: ChatroomType.DM,
-      ownerId: dto.userId1,
-    };
-    const createdRoom = await this.chatService.createRoom(createChatroomDto);
-    if (!createdRoom) {
-      this.logger.log('chat:directMessage failed to createRoom');
-
-      return false;
-    }
-
-    // DM実行者を入室させる
-    const joinChatroomDto1: JoinChatroomDto = {
-      userId: dto.userId1,
-      chatroomId: createdRoom.id,
-      type: createdRoom.type,
-    };
-
-    const joined = await this.joinRoom(client, joinChatroomDto1);
-    if (!joined) {
-      this.logger.log('chat:directMessage failed to joinRoom');
-
-      return false;
-    }
-
-    // DM相手を入室させる
-    const joinChatroomDto2: JoinChatroomDto = {
-      userId: dto.userId2,
-      chatroomId: createdRoom.id,
-      type: createdRoom.type,
-    };
-    // 入室させたユーザーに通知を送る（オンラインだった場合は、socket.joinを実行させる）
-    const joinedOtherUser = await this.joinRoomFromOtherUser(
-      undefined,
-      joinChatroomDto2,
-    );
-    if (!joinedOtherUser) {
-      this.logger.log('chat:directMessage failed to joinRoom');
-
-      return false;
-    }
-
-    // DMを始めたユーザーのサイドバーを更新させる
-    // 直接Roomを返してサイドバーを更新させないのは、DMを実行するボタンがフレンド側に存在するため
-    client.emit('chat:updateSideBarRooms');
-
-    return true;
   }
 
   /**
