@@ -1,8 +1,8 @@
 import { NextPage } from 'next';
 import { useState, useEffect } from 'react';
 import { io, Socket } from 'socket.io-client';
-import Debug from 'debug';
 import Grid from '@mui/material/Unstable_Grid2';
+import { Box, Collapse } from '@mui/material';
 import { Message, CurrentRoom } from 'types/chat';
 import { Header } from 'components/common/Header';
 import { ChatroomSidebar } from 'components/chat/chatroom/ChatroomSidebar';
@@ -12,14 +12,15 @@ import { ChatMessageExchange } from 'components/chat/message-exchange/ChatMessag
 import { Loading } from 'components/common/Loading';
 import { useQueryUser } from 'hooks/useQueryUser';
 import { ChatHeightStyle } from 'components/chat/utils/ChatHeightStyle';
+import { ChatErrorAlert } from 'components/chat/utils/ChatErrorAlert';
 
 const Chat: NextPage = () => {
-  const debug = Debug('chat');
   const [socket, setSocket] = useState<Socket>();
   const [messages, setMessages] = useState<Message[]>([]);
   const [currentRoom, setCurrentRoom] = useState<CurrentRoom | undefined>(
     undefined,
   );
+  const [error, setError] = useState('');
   const { data: user } = useQueryUser();
 
   useEffect(() => {
@@ -36,13 +37,18 @@ const Chat: NextPage = () => {
     if (!user || !socket) return;
 
     socket.on('chat:handleConnection', () => {
-      debug('handleConnection');
-      // 通知用に自分のルームに入る
+      // 通知を受けるためにソケットの初期設定を行う(入室しているルームにjoinする)
       socket.emit('chat:initSocket', user.id);
+    });
+
+    socket.on('chat:banned', () => {
+      setError('You are banned.');
+      setCurrentRoom(undefined);
     });
 
     return () => {
       socket.off('chat:handleConnection');
+      socket.off('chat:banned');
     };
   }, [user, socket]);
 
@@ -55,6 +61,11 @@ const Chat: NextPage = () => {
   return (
     <Layout title="Chat">
       <Header title="Chatroom" />
+      <Box sx={{ width: '100%' }}>
+        <Collapse in={error !== ''}>
+          <ChatErrorAlert error={error} setError={setError} />
+        </Collapse>
+      </Box>
       <Grid
         container
         direction="row"
