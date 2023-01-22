@@ -27,7 +27,8 @@ export const ChatAlert = memo(function ChatAlert({
     return () => {
       clearTimeout(timeId);
     };
-  }, [displayingTime, setMessage]);
+    // NOTE: 依存配列にmessageを追加しないとアラートが呼ばれるたびにtimeoutが実行されない
+  }, [message, displayingTime, setMessage]);
 
   return (
     <Alert
