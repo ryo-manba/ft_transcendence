@@ -97,10 +97,10 @@ export const FriendListItem = memo(function FriendListItem({
 
   const directMessage = (friend: Friend) => {
     const DMInfo = {
-      userId1: user.id,
-      userId2: friend.id,
-      name1: user.name,
-      name2: friend.name,
+      senderId: user.id,
+      recipientId: friend.id,
+      senderName: user.name,
+      recipientName: friend.name,
     };
     socket.emit(
       'chat:directMessage',
