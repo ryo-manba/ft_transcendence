@@ -4,18 +4,26 @@ import { usePlayStateStore, PlayState } from 'store/game/PlayState';
 import { useSocketStore } from 'store/game/ClientSocket';
 import { useQueryUser } from 'hooks/useQueryUser';
 import { Loading } from 'components/common/Loading';
+import { Dispatch, SetStateAction, useCallback } from 'react';
 
-export const Start = () => {
+type Props = {
+  setOpenMatchError: Dispatch<SetStateAction<boolean>>;
+};
+
+export const Start = ({ setOpenMatchError }: Props) => {
   const { socket } = useSocketStore();
   const updatePlayState = usePlayStateStore((store) => store.updatePlayState);
   const { data: user } = useQueryUser();
 
   if (user === undefined) return <Loading />;
 
-  const start = () => {
-    socket.emit('playStart', { userId: user.id });
+  const start = useCallback(() => {
+    setOpenMatchError(false);
     updatePlayState(PlayState.stateWaiting);
-  };
+    socket.emit('playStart', { userId: user.id }, (res: boolean) => {
+      if (!res) setOpenMatchError(true);
+    });
+  }, []);
 
   return (
     <>
