@@ -576,24 +576,28 @@ export class ChatGateway {
   ): Promise<boolean> {
     this.logger.log('chat:changeRoomOwner received');
 
-    try {
-      await this.chatService.update({
-        data: {
-          owner: {
-            connect: {
-              id: dto.ownerId,
-            },
+    const changedRoom = await this.chatService.updateRoom({
+      data: {
+        owner: {
+          connect: {
+            id: dto.ownerId,
           },
         },
-        where: {
-          id: dto.chatroomId,
-        },
-      });
-    } catch (error) {
-      this.logger.log('chat:changeRoomOwner', error);
+      },
+      where: {
+        id: dto.chatroomId,
+      },
+    });
+    if (!changedRoom) {
+      this.logger.log('chat:changeRoomOwner failed');
 
       return false;
     }
+
+    // NOTE: オーナーになったユーザー以外にも伝えることで不整合を避ける
+    this.server
+      .to(this.generateSocketChatRoomName(changedRoom.id))
+      .emit('chat:changeRoomOwner', changedRoom);
 
     return true;
   }
