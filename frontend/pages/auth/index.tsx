@@ -24,65 +24,73 @@ const Authenticate = () => {
 
     // OAuthで取得した情報より、どこからの認証か判断する。
     const isGoogleOAuth = (email: string | null | undefined) => {
-      return email && email !== undefined && email.indexOf('gmail.com') !== -1;
+      return email && email.indexOf('gmail.com') !== -1;
+    };
+    const isFortyTwoOAuth = (email: string | null | undefined) => {
+      return email && email.indexOf('student.42tokyo.jp') !== -1;
+    };
+
+    // ログイン後の処理
+    const processAfterLogin = async (loginResult: LoginResult) => {
+      if (!loginResult) {
+        void signOut({ callbackUrl: '/' });
+      } else if (loginResult.res === LoginResultStatus.SUCCESS) {
+        await router.push('/dashboard');
+      } else if (
+        loginResult.res === LoginResultStatus.NEED2FA &&
+        loginResult.userId !== undefined
+      ) {
+        // 2FAコード入力ダイアログを表示
+        setValidationUserId(loginResult.userId);
+        setOpenValidationDialog(true);
+      } else {
+        // ログイン失敗、signOutしてログインに戻る
+        void signOut({ callbackUrl: '/' });
+      }
     };
 
     // Googleの場合、初回認証時に取得したメールアドレスをusernameとしてログインする
     const googleLogin = async () => {
-      if (!session.user.email || session.user.email === undefined)
-        throw new Error('session info exception');
-      const login_response = await axios.post<LoginResult>(urlOauth, {
+      if (!session.user.email) throw new Error('session info exception');
+      const loginResponse = await axios.post<LoginResult>(urlOauth, {
         oAuthId: session.user.email,
         imagePath: session.user.image,
       });
 
-      return login_response.data;
+      await processAfterLogin(loginResponse.data);
     };
 
     // 42の場合、アクセストークンを使ってuser情報を取得し、ログイン名・画像でログインする
     const fortyTwoLogin = async () => {
-      const urlGetdata =
+      const fortyTwoLoginUrl =
         'https://api.intra.42.fr/v2/users/' + String(session.user.id);
-      const users_response = await axios.get<UserInfo>(urlGetdata, {
+      const usersResponse = await axios.get<UserInfo>(fortyTwoLoginUrl, {
         headers: {
           Authorization: 'Bearer ' + String(session.user.accessToken),
         },
       });
-      debug(users_response);
-      const login_response = await axios.post<LoginResult>(urlOauth, {
-        oAuthId: users_response.data.login,
-        imagePath: users_response.data.image.link,
+      debug(usersResponse);
+      const loginResponse = await axios.post<LoginResult>(urlOauth, {
+        oAuthId: usersResponse.data.login,
+        imagePath: usersResponse.data.image.link,
       });
 
-      return login_response.data;
+      await processAfterLogin(loginResponse.data);
     };
 
     const loginAfterOAuth = async () => {
       try {
-        const loginResult = isGoogleOAuth(session.user.email)
-          ? await googleLogin()
-          : await fortyTwoLogin();
-        debug(loginResult);
-        if (!loginResult) {
-          void signOut({ callbackUrl: '/' });
-        } else if (loginResult.res === LoginResultStatus.SUCCESS) {
-          await router.push('/dashboard');
-        } else if (
-          loginResult.res === LoginResultStatus.NEED2FA &&
-          loginResult.userId !== undefined
-        ) {
-          // 2FAコード入力ダイアログを表示
-          setValidationUserId(loginResult.userId);
-          setOpenValidationDialog(true);
+        if (isGoogleOAuth(session.user.email)) {
+          await googleLogin();
+        } else if (isFortyTwoOAuth(session.user.email)) {
+          await fortyTwoLogin();
         } else {
-          // ログイン失敗、signOutしてログインに戻る
+          // どちらでもないOAuth認証は未対応
           void signOut({ callbackUrl: '/' });
         }
       } catch {
-        // ログイン時のAxios例外などは、signOutしてログインに戻る
+        // ログイン時のAxios例外の場合
         void signOut({ callbackUrl: '/' });
-
-        return;
       }
     };
 
