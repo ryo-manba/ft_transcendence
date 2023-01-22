@@ -27,7 +27,7 @@ export const ChatAlert = memo(function ChatAlert({
     return () => {
       clearTimeout(timeId);
     };
-  }, [message, setMessage]);
+  }, [displayingTime, setMessage]);
 
   return (
     <Alert
