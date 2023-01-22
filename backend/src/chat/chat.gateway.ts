@@ -607,24 +607,25 @@ export class ChatGateway {
         type: createdRoom.type,
       };
 
-      const joined = await this.joinRoom(client, {
+      const joinedSender = await this.joinRoom(client, {
         userId: dto.senderId,
         ...joinChatroomBase,
       });
-      if (!joined) {
+      if (!joinedSender) {
         throw new Error('chat:directMessage failed to joinRoom');
       }
 
       // 入室させたユーザーに通知を送る（オンラインだった場合は、socket.joinを実行させる）
-      const isSuccess = await this.joinRoomFromOtherUser({
+      const joinedRecipient = await this.joinRoomFromOtherUser({
         userId: dto.recipientId,
         ...joinChatroomBase,
       });
-      if (!isSuccess) {
+      if (!joinedRecipient) {
         throw new Error('chat:directMessage failed to joinRoomFromOtherUser');
       }
     } catch (error) {
       this.logger.log(error);
+
       // どちらかの入室処理に失敗した場合は、チャットルームを削除する
       await this.chatService.deleteRoom({
         id: createdRoom.id,
