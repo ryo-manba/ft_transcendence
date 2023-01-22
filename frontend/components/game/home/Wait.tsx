@@ -13,8 +13,13 @@ import { useRouter } from 'next/router';
 import DoneOutlineIcon from '@mui/icons-material/DoneOutline';
 import { useMutationStatus } from 'hooks/useMutationStatus';
 import { useQueryUser } from 'hooks/useQueryUser';
+import ErrorIcon from '@mui/icons-material/Error';
 
-export const Wait = () => {
+type Props = {
+  openMatchError: boolean;
+};
+
+export const Wait = ({ openMatchError }: Props) => {
   const updatePlayState = usePlayStateStore((store) => store.updatePlayState);
   const { playState } = usePlayStateStore();
   const [open, setOpen] = useState(true);
@@ -94,11 +99,13 @@ export const Wait = () => {
           }}
         >
           <Grid item>
-            {playState === PlayState.stateWaiting ? (
+            {playState === PlayState.stateWaiting && !openMatchError && (
               <CircularProgress />
-            ) : (
-              <DoneOutlineIcon />
             )}
+            {playState === PlayState.stateWaiting && openMatchError && (
+              <ErrorIcon fontSize="large" />
+            )}
+            {playState !== PlayState.stateWaiting && <DoneOutlineIcon />}
           </Grid>
           <Grid item sx={{ mt: 2 }}>
             <Typography
@@ -107,9 +114,13 @@ export const Wait = () => {
               align="center"
               gutterBottom
             >
-              {playState === PlayState.stateWaiting
-                ? 'Waiting for Opponent...'
-                : 'Wait a Minute...'}
+              {playState === PlayState.stateWaiting &&
+                !openMatchError &&
+                'Waiting for Opponent'}
+              {playState === PlayState.stateWaiting &&
+                openMatchError &&
+                'You already started to play/prepare game'}
+              {playState !== PlayState.stateWaiting && 'Wait a Minute'}
             </Typography>
           </Grid>
           {playState === PlayState.stateWaiting && (

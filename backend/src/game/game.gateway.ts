@@ -174,6 +174,25 @@ export class GameGateway {
     }
   }
 
+  isStartingGame(id: number): boolean {
+    const isPlayingGame =
+      this.gameRooms.find(
+        (room) => room.player1.id === id || room.player2.id === id,
+      ) !== undefined;
+    if (isPlayingGame) return true;
+
+    const isWaitingGame =
+      this.waitingQueue.find((player) => player.id === id) !== undefined;
+    if (isWaitingGame) return true;
+
+    // 招待されているときに例えばランダムゲームのマッチングを開始するのは問題ない。
+    // つまり、招待されていることを確認する必要はない。
+    const isInvitingGame = this.invitationList.find(id) !== undefined;
+    if (isInvitingGame) return true;
+
+    return false;
+  }
+
   /**
    * 接続と招待者の通知
    * @param socket
@@ -219,6 +238,8 @@ export class GameGateway {
     @ConnectedSocket() socket: Socket,
     @MessageBody() dto: InviteFriendDto,
   ): Promise<boolean> {
+    if (this.isStartingGame(dto.hostId)) return false;
+
     const newInvitation: Invitation = {
       guestId: dto.guestId,
       hostId: dto.hostId,
@@ -280,7 +301,9 @@ export class GameGateway {
   async beginFriendMatch(
     @ConnectedSocket() socket: Socket,
     @MessageBody() dto: AcceptInvitationDto,
-  ) {
+  ): Promise<boolean> {
+    if (this.isStartingGame(dto.guestId)) return false;
+
     const invitation = this.invitationList.find(dto.hostId);
     if (invitation === undefined) return;
 
@@ -318,15 +341,18 @@ export class GameGateway {
       height: GameGateway.initialHeight,
       score: 0,
     };
-
     void this.startGame(player1, player2, 'friend');
+
+    return true;
   }
 
   @SubscribeMessage('playStart')
   async joinRoom(
     @ConnectedSocket() socket: Socket,
     @MessageBody() dto: JoinRoomDto,
-  ) {
+  ): Promise<boolean> {
+    if (this.isStartingGame(dto.userId)) return false;
+
     const waitingUserIdx = this.waitingQueue.findIndex(
       (item) => item.id !== dto.userId,
     );
@@ -356,6 +382,8 @@ export class GameGateway {
       };
       void this.startGame(player1, player2, 'random');
     }
+
+    return true;
   }
 
   async startGame(player1: Player, player2: Player, gameType: string) {
