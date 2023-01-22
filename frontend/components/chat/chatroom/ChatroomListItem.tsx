@@ -49,23 +49,26 @@ export const ChatroomListItem = memo(function ChatroomListItem({
     let ignore = false;
     if (user === undefined) return;
 
+    socket.on('chat:addAdmin', () => {
+      setIsAdmin(true);
+    });
+
     // adminかどうかを判定する
     socket.emit(
       'chat:isAdmin',
       { chatroomId: room.id, userId: user.id },
       (res: boolean) => {
-        if (res) {
-          if (!ignore) {
-            setIsAdmin(true);
-          }
+        if (!ignore) {
+          setIsAdmin(res);
         }
       },
     );
 
     return () => {
+      socket.off('chat:addAdmin');
       ignore = true;
     };
-  }, [user]);
+  }, [user, socket]);
 
   // ルームをクリックしたときの処理
   const changeCurrentRoom = (roomId: number, roomName: string) => {
@@ -139,18 +142,19 @@ export const ChatroomListItem = memo(function ChatroomListItem({
     // Adminを設定できるのはチャットルームオーナーだけ
     if (user.id !== room.ownerId) {
       setError('Only the owner can set admin.');
-    } else {
-      const setAdminInfo = {
-        userId: userId,
-        chatroomId: room.id,
-      };
 
-      socket.emit('chat:addAdmin', setAdminInfo, (res: boolean) => {
-        if (!res) {
-          setError('Failed to add admin.');
-        }
-      });
+      return;
     }
+    const addAdminInfo = {
+      userId: userId,
+      chatroomId: room.id,
+    };
+
+    socket.emit('chat:addAdmin', addAdminInfo, (res: boolean) => {
+      if (!res) {
+        setError('Failed to add admin.');
+      }
+    });
   };
 
   const changePassword = (

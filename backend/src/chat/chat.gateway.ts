@@ -464,9 +464,16 @@ export class ChatGateway {
   ): Promise<boolean> {
     this.logger.log(`chat:addAdmin received -> roomId: ${dto.chatroomId}`);
 
-    const res = await this.chatService.createAdmin(dto);
+    const createdAdmin = await this.chatService.createAdmin(dto);
+    if (!createdAdmin) {
+      return undefined;
+    }
 
-    return res !== undefined;
+    this.server
+      .to(this.generateSocketUserRoomName(createdAdmin.userId))
+      .emit('chat:addAdmin');
+
+    return true;
   }
 
   /**
