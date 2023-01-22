@@ -1,6 +1,6 @@
 import axios, { AxiosError } from 'axios';
 import { useQueryClient, useMutation } from '@tanstack/react-query';
-import { User } from '@prisma/client';
+import { LoginUser } from 'types/user';
 import Debug from 'debug';
 
 type Props = {
@@ -16,24 +16,18 @@ export const useMutationName = () => {
   const debug = Debug('user');
   const queryClient = useQueryClient();
 
-  const updateNameMutation = useMutation<
-    Omit<User, 'hashedPassword'>,
-    AxiosError,
-    Props
-  >(
+  const updateNameMutation = useMutation<LoginUser, AxiosError, Props>(
     async ({ userId, updatedName }: Props) => {
-      const { data } = await axios.patch<Omit<User, 'hashedPassword'>>(
-        endpoint,
-        { userId, name: updatedName },
-      );
+      const { data } = await axios.patch<LoginUser>(endpoint, {
+        userId,
+        name: updatedName,
+      });
 
       return data;
     },
     {
       onSuccess: (res) => {
-        const oldUserData = queryClient.getQueryData<
-          Omit<User, 'hashedPassword'>
-        >(['user']);
+        const oldUserData = queryClient.getQueryData<LoginUser>(['user']);
         if (oldUserData) {
           queryClient.setQueryData(['user'], res);
         }

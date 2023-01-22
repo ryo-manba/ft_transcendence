@@ -3,7 +3,7 @@ import { signOut } from 'next-auth/react';
 import { QueryClient } from '@tanstack/react-query';
 import { Session } from 'next-auth';
 import { NextRouter } from 'next/router';
-import { User } from '@prisma/client';
+import { LoginUser } from 'types/user';
 
 const endpoint = `${process.env.NEXT_PUBLIC_API_URL as string}/auth/logout`;
 
@@ -13,9 +13,7 @@ export const logout = (
   session: Session | null,
 ) => {
   const logout = async () => {
-    const cachedUser = queryClient.getQueryData<Omit<User, 'hashedPassword'>>([
-      'user',
-    ]);
+    const cachedUser = queryClient.getQueryData<LoginUser>(['user']);
     if (cachedUser) {
       await axios.post(endpoint, {
         id: cachedUser.id,

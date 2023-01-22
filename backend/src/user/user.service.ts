@@ -14,13 +14,16 @@ import { createReadStream, unlink } from 'node:fs';
 import * as path from 'path';
 import { DeleteAvatarDto } from './dto/delete-avatar.dto';
 
+type ExcludeProperties = 'hashedPassword' | 'secret2FA';
+type LoginUser = Omit<User, ExcludeProperties>;
+
 @Injectable()
 export class UserService {
   constructor(private prisma: PrismaService) {}
 
   private logger: Logger = new Logger('UserService');
 
-  async findOne(userId: number): Promise<Omit<User, 'hashedPassword'> | null> {
+  async findOne(userId: number): Promise<LoginUser | null> {
     const user = await this.prisma.user.findUnique({
       where: {
         id: userId,
@@ -28,7 +31,10 @@ export class UserService {
     });
 
     // userがnullのときにhashedPasswordにアクセスしようとするとエラーになる
-    if (user !== null) delete user.hashedPassword;
+    if (user !== null) {
+      delete user.hashedPassword;
+      delete user.secret2FA;
+    }
 
     return user;
   }
@@ -55,7 +61,7 @@ export class UserService {
     });
   }
 
-  async updateName(dto: UpdateNameDto): Promise<Omit<User, 'hashedPassword'>> {
+  async updateName(dto: UpdateNameDto): Promise<LoginUser> {
     try {
       const user = await this.prisma.user.update({
         where: {
@@ -66,6 +72,7 @@ export class UserService {
         },
       });
       delete user.hashedPassword;
+      delete user.secret2FA;
 
       return user;
     } catch (error) {
@@ -78,9 +85,7 @@ export class UserService {
     }
   }
 
-  async updatePoint(
-    dto: UpdatePointDto,
-  ): Promise<Omit<User, 'hashedPassword'>> {
+  async updatePoint(dto: UpdatePointDto): Promise<LoginUser> {
     try {
       const user = await this.prisma.user.update({
         where: {
@@ -91,6 +96,7 @@ export class UserService {
         },
       });
       delete user.hashedPassword;
+      delete user.secret2FA;
 
       return user;
     } catch (error) {
@@ -113,9 +119,7 @@ export class UserService {
     return new StreamableFile(file);
   }
 
-  async deleteAvatar(
-    dto: DeleteAvatarDto,
-  ): Promise<Omit<User, 'hashedPassword'>> {
+  async deleteAvatar(dto: DeleteAvatarDto): Promise<LoginUser> {
     const filePath = path.join(
       process.cwd(),
       process.env.AVATAR_IMAGE_DIR,
@@ -134,9 +138,7 @@ export class UserService {
     return this.updateAvatar(updateDto);
   }
 
-  async updateAvatar(
-    dto: UpdateAvatarDto,
-  ): Promise<Omit<User, 'hashedPassword'>> {
+  async updateAvatar(dto: UpdateAvatarDto): Promise<LoginUser> {
     try {
       const user = await this.prisma.user.update({
         where: {
@@ -147,6 +149,7 @@ export class UserService {
         },
       });
       delete user.hashedPassword;
+      delete user.secret2FA;
 
       return user;
     } catch (error) {
@@ -162,9 +165,7 @@ export class UserService {
     return user.status;
   }
 
-  async updateStatus(
-    dto: UpdateStatusDto,
-  ): Promise<Omit<User, 'hashedPassword'>> {
+  async updateStatus(dto: UpdateStatusDto): Promise<LoginUser> {
     try {
       const user = await this.prisma.user.update({
         where: {
@@ -175,6 +176,7 @@ export class UserService {
         },
       });
       delete user.hashedPassword;
+      delete user.secret2FA;
 
       return user;
     } catch (error) {

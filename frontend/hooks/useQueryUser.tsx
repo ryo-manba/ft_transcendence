@@ -1,20 +1,20 @@
 import { useRouter } from 'next/router';
 import axios, { AxiosError } from 'axios';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { User } from '@prisma/client';
+import { LoginUser } from 'types/user';
 
 export const useQueryUser = () => {
   const queryClient = useQueryClient();
   const router = useRouter();
   const getUser = async () => {
-    const { data } = await axios.get<Omit<User, 'hashedPassword'>>(
+    const { data } = await axios.get<LoginUser>(
       `${process.env.NEXT_PUBLIC_API_URL as string}/user`,
     );
 
     return data;
   };
 
-  return useQuery<Omit<User, 'hashedPassword'>, AxiosError>({
+  return useQuery<LoginUser, AxiosError>({
     queryKey: ['user'],
     queryFn: getUser,
     onError: (err: AxiosError) => {
@@ -22,7 +22,7 @@ export const useQueryUser = () => {
         err.response &&
         (err.response.status === 401 || err.response.status === 403)
       ) {
-        const user: User | undefined = queryClient.getQueryData(['user']);
+        const user: LoginUser | undefined = queryClient.getQueryData(['user']);
         if (user !== undefined) {
           void axios.post(
             `${process.env.NEXT_PUBLIC_API_URL as string}/auth/logout`,

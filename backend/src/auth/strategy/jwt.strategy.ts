@@ -40,6 +40,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
       },
     });
     delete user.hashedPassword;
+    delete user.secret2FA;
 
     return user;
   }

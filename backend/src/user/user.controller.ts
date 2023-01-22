@@ -27,6 +27,10 @@ import { v4 as uuidv4 } from 'uuid';
 import * as path from 'path';
 import { UpdateAvatarDto } from './dto/update-avatar.dto';
 
+// front側へ返す必要のない情報を取り除く
+type ExcludeProperties = 'hashedPassword' | 'secret2FA';
+type LoginUser = Omit<User, ExcludeProperties>;
+
 // FileInterceptorにわたすオプションを設定。
 // destination: ファイルの保存先。フォルダが無い場合には、バックエンドを起動したタイミングでフォルダが生成される
 // filename: 保存されるファイルのファイル名を修正するためのロジックを設定できる。何も設定しないと、拡張子もつかないランダムなファイル名が勝手につけられる
@@ -49,7 +53,7 @@ export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @Get()
-  getLoginUser(@Req() req: Request): Omit<User, 'hashedPassword'> {
+  getLoginUser(@Req() req: Request): LoginUser {
     // custom.d.ts で型変換してる
     return req.user;
   }
@@ -71,30 +75,24 @@ export class UserController {
   }
 
   @Patch('update-status')
-  updateStatus(
-    @Body() dto: UpdateStatusDto,
-  ): Promise<Omit<User, 'hashedPassword'>> {
+  updateStatus(@Body() dto: UpdateStatusDto): Promise<LoginUser> {
     return this.userService.updateStatus(dto);
   }
 
   @Get(':id')
   getUserById(
     @Param('id', ParseIntPipe) id: number,
-  ): Promise<Omit<User, 'hashedPassword'> | null> {
+  ): Promise<LoginUser | null> {
     return this.userService.findOne(id);
   }
 
   @Patch('update-point')
-  updatePoint(
-    @Body() dto: UpdatePointDto,
-  ): Promise<Omit<User, 'hashedPassword'>> {
+  updatePoint(@Body() dto: UpdatePointDto): Promise<LoginUser> {
     return this.userService.updatePoint(dto);
   }
 
   @Patch('update-name')
-  updateName(
-    @Body() dto: UpdateNameDto,
-  ): Promise<Omit<User, 'hashedPassword'>> {
+  updateName(@Body() dto: UpdateNameDto): Promise<LoginUser> {
     return this.userService.updateName(dto);
   }
 
@@ -108,7 +106,7 @@ export class UserController {
   uploadAvatar(
     @UploadedFile() file: Express.Multer.File,
     @Param('id', ParseIntPipe) id: number,
-  ): Promise<Omit<User, 'hashedPassword'>> {
+  ): Promise<LoginUser> {
     const dto: UpdateAvatarDto = {
       userId: id,
       avatarPath: file.filename,
@@ -127,9 +125,7 @@ export class UserController {
   }
 
   @Patch('delete-avatar')
-  deleteAvatar(
-    @Body() dto: DeleteAvatarDto,
-  ): Promise<Omit<User, 'hashedPassword'>> {
+  deleteAvatar(@Body() dto: DeleteAvatarDto): Promise<LoginUser> {
     return this.userService.deleteAvatar(dto);
   }
 }
