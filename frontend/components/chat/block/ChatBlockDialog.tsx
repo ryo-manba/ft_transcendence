@@ -1,13 +1,11 @@
 import { memo, useState, useEffect } from 'react';
 import { Socket } from 'socket.io-client';
 import {
-  Box,
   Button,
   Dialog,
   DialogActions,
   DialogTitle,
   DialogContent,
-  Collapse,
   Select,
   SelectChangeEvent,
   MenuItem,
@@ -16,12 +14,13 @@ import {
 } from '@mui/material';
 import { blue } from '@mui/material/colors';
 import { ChatUser, ChatBlockSetting } from 'types/chat';
-import { useQueryUser } from 'hooks/useQueryUser';
-import { Loading } from 'components/common/Loading';
-import { ChatErrorAlert } from 'components/chat/utils/ChatErrorAlert';
-import { ChatBlockSettingDetailDialog } from 'components/chat/block/ChatBlockSettingDetailDialog';
 import { fetchBlockedUsers } from 'api/chat/fetchBlockedUsers';
 import { fetchUnblockedUsers } from 'api/chat/fetchUnblockedUsers';
+import { useQueryUser } from 'hooks/useQueryUser';
+import { Loading } from 'components/common/Loading';
+import { ChatBlockSettingDetailDialog } from 'components/chat/block/ChatBlockSettingDetailDialog';
+import { ChatErrorAlert } from 'components/chat/alert/ChatErrorAlert';
+import { ChatAlertCollapse } from 'components/chat/alert/ChatAlertCollapse';
 
 type Props = {
   socket: Socket;
@@ -203,11 +202,9 @@ export const ChatBlockDialog = memo(function ChatBlockDialog({
           onChange={handleChangeUserId}
         />
       )}
-      <Box sx={{ width: '100%' }}>
-        <Collapse in={error !== ''}>
-          <ChatErrorAlert error={error} setError={setError} />
-        </Collapse>
-      </Box>
+      <ChatAlertCollapse show={error !== ''}>
+        <ChatErrorAlert error={error} setError={setError} />
+      </ChatAlertCollapse>
       <DialogActions>
         <Button onClick={handleClose} variant="outlined">
           Cancel

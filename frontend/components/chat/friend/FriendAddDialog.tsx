@@ -3,7 +3,6 @@ import {
   Avatar,
   Box,
   Button,
-  Collapse,
   List,
   ListItem,
   ListItemAvatar,
@@ -14,12 +13,13 @@ import {
   DialogContent,
 } from '@mui/material';
 import { blue } from '@mui/material/colors';
-import { useQueryUser } from 'hooks/useQueryUser';
-import { Loading } from 'components/common/Loading';
-import { followUser } from 'api/friend/followUser';
 import type { Friend } from 'types/friend';
+import { followUser } from 'api/friend/followUser';
+import { useQueryUser } from 'hooks/useQueryUser';
 import { getAvatarImageUrl } from 'api/user/getAvatarImageUrl';
-import { ChatErrorAlert } from 'components/chat/utils/ChatErrorAlert';
+import { Loading } from 'components/common/Loading';
+import { ChatErrorAlert } from 'components/chat/alert/ChatErrorAlert';
+import { ChatAlertCollapse } from 'components/chat/alert/ChatAlertCollapse';
 
 type Props = {
   open: boolean;
@@ -118,11 +118,9 @@ export const FriendAddDialog = memo(function FriendAddDialog({
       {selectedUser && (
         <p className="text-center">Selected: {selectedUser.name}</p>
       )}
-      <Box sx={{ width: '100%' }}>
-        <Collapse in={error !== ''}>
-          <ChatErrorAlert error={error} setError={setError} />
-        </Collapse>
-      </Box>
+      <ChatAlertCollapse show={error !== ''}>
+        <ChatErrorAlert error={error} setError={setError} />
+      </ChatAlertCollapse>
       <DialogActions>
         <Button onClick={handleClose}>Cancel</Button>
         <Button

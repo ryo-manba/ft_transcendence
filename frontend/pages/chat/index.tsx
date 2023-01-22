@@ -2,7 +2,6 @@ import { NextPage } from 'next';
 import { useState, useEffect } from 'react';
 import { io, Socket } from 'socket.io-client';
 import Grid from '@mui/material/Unstable_Grid2';
-import { Box, Collapse } from '@mui/material';
 import { Message, CurrentRoom } from 'types/chat';
 import { Header } from 'components/common/Header';
 import { ChatroomSidebar } from 'components/chat/chatroom/ChatroomSidebar';
@@ -12,7 +11,8 @@ import { ChatMessageExchange } from 'components/chat/message-exchange/ChatMessag
 import { Loading } from 'components/common/Loading';
 import { useQueryUser } from 'hooks/useQueryUser';
 import { ChatHeightStyle } from 'components/chat/utils/ChatHeightStyle';
-import { ChatErrorAlert } from 'components/chat/utils/ChatErrorAlert';
+import { ChatErrorAlert } from 'components/chat/alert/ChatErrorAlert';
+import { ChatAlertCollapse } from 'components/chat/alert/ChatAlertCollapse';
 
 const Chat: NextPage = () => {
   const [socket, setSocket] = useState<Socket>();
@@ -61,11 +61,9 @@ const Chat: NextPage = () => {
   return (
     <Layout title="Chat">
       <Header title="Chatroom" />
-      <Box sx={{ width: '100%' }}>
-        <Collapse in={error !== ''}>
-          <ChatErrorAlert error={error} setError={setError} />
-        </Collapse>
-      </Box>
+      <ChatAlertCollapse show={error !== ''}>
+        <ChatErrorAlert error={error} setError={setError} />
+      </ChatAlertCollapse>
       <Grid
         container
         direction="row"

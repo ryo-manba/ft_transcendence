@@ -3,10 +3,9 @@ import { Socket } from 'socket.io-client';
 import { useForm, SubmitHandler, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
+import Debug from 'debug';
 import {
   Button,
-  Box,
-  Collapse,
   TextField,
   Dialog,
   DialogActions,
@@ -22,9 +21,9 @@ import AddCircleOutlineRounded from '@mui/icons-material/AddCircleOutlineRounded
 import { CreateChatroomInfo, ChatroomType, Chatroom } from 'types/chat';
 import { useQueryUser } from 'hooks/useQueryUser';
 import { Loading } from 'components/common/Loading';
-import { ChatErrorAlert } from 'components/chat/utils/ChatErrorAlert';
+import { ChatErrorAlert } from 'components/chat/alert/ChatErrorAlert';
+import { ChatAlertCollapse } from 'components/chat/alert/ChatAlertCollapse';
 import { ChatPasswordForm } from 'components/chat/utils/ChatPasswordForm';
-import Debug from 'debug';
 
 type Props = {
   socket: Socket;
@@ -124,11 +123,9 @@ export const ChatroomCreateButton = memo(function ChatroomCreateButton({
 
   return (
     <>
-      <Box sx={{ width: '100%' }}>
-        <Collapse in={error !== ''}>
-          <ChatErrorAlert error={error} setError={setError} />
-        </Collapse>
-      </Box>
+      <ChatAlertCollapse show={error !== ''}>
+        <ChatErrorAlert error={error} setError={setError} />
+      </ChatAlertCollapse>
       <Button
         color="primary"
         variant="outlined"
