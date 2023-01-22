@@ -51,11 +51,10 @@ export const ChatroomListItem = memo(function ChatroomListItem({
 
     // adminかどうかを判定する
     socket.emit(
-      'chat:getAdminIds',
-      { roomId: room.id },
-      (adminIds: number[]) => {
-        debug('adminIds %o', adminIds);
-        if (adminIds.includes(user.id)) {
+      'chat:isAdmin',
+      { chatroomId: room.id, userId: user.id },
+      (res: boolean) => {
+        if (res) {
           if (!ignore) {
             setIsAdmin(true);
           }
@@ -146,7 +145,6 @@ export const ChatroomListItem = memo(function ChatroomListItem({
         chatroomId: room.id,
       };
 
-      // callbackを受け取ることで判断する
       socket.emit('chat:addAdmin', setAdminInfo, (res: boolean) => {
         if (!res) {
           setError('Failed to add admin.');
