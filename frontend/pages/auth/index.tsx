@@ -3,7 +3,7 @@ import { useRouter } from 'next/router';
 import { useState, useCallback, useEffect } from 'react';
 import { useSession, signOut } from 'next-auth/react';
 import { LoginResult, LoginResultStatus } from 'types';
-import { UserInfo, LoginInput } from 'types/auth';
+import { UserInfo } from 'types/auth';
 import { ValidationDialog } from 'components/auth/ValidationDialog';
 import { Loading } from 'components/common/Loading';
 import Debug from 'debug';
@@ -16,68 +16,70 @@ const Authenticate = () => {
   const [validationUserId, setValidationUserId] = useState(0);
 
   useEffect(() => {
-    // セッション情報から、ログインに必要な情報を取得する（42,Googleに対応)
-    const getLoginInput = async () => {
-      if (session === null || process.env.NEXT_PUBLIC_API_URL === undefined) {
-        return null;
-      }
-      const loginInput: LoginInput = { oAuthId: '', imagePath: '' };
-      if (
-        session.user.email &&
-        session.user.email.indexOf('gmail.com') !== -1
-      ) {
-        // gmailの場合、sessionからの情報をそのまま渡す
-        loginInput.oAuthId = session.user.email;
-        if (session.user.image) loginInput.imagePath = session.user.image;
-      } else if (session.user.email) {
-        // 42の場合、user情報を追加で取得する
-        const urlGetdata =
-          'https://api.intra.42.fr/v2/users/' + String(session.user.id);
-        try {
-          const response = await axios.get<UserInfo>(urlGetdata, {
-            headers: {
-              Authorization: 'Bearer ' + String(session.user.accessToken),
-            },
-          });
-          debug(response);
-          loginInput.oAuthId = response.data.login;
-          loginInput.imagePath = response.data.image.link;
-        } catch {
-          // User情報取得に失敗した場合は、signOutしてログインに戻る
-          debug('42 user info failure');
-          void signOut({ callbackUrl: '/' });
-        }
-      }
+    if (session === null || process.env.NEXT_PUBLIC_API_URL === undefined) {
+      return;
+    }
 
-      return loginInput;
+    const urlOauth = `${process.env.NEXT_PUBLIC_API_URL}/auth/oauth-login`;
+
+    // OAuthで取得した情報より、どこからの認証か判断する。
+    const isGoogleOAuth = (email: string | null | undefined) => {
+      return email && email !== undefined && email.indexOf('gmail.com') !== -1;
+    };
+
+    // Googleの場合、初回認証時に取得したメールアドレスをusernameとしてログインする
+    const googleLogin = async () => {
+      if (!session.user.email || session.user.email === undefined)
+        throw new Error('session info exception');
+      const login_response = await axios.post<LoginResult>(urlOauth, {
+        oAuthId: session.user.email,
+        imagePath: session.user.image,
+      });
+
+      return login_response.data;
+    };
+
+    // 42の場合、アクセストークンを使ってuser情報を取得し、ログイン名・画像でログインする
+    const fortyTwoLogin = async () => {
+      const urlGetdata =
+        'https://api.intra.42.fr/v2/users/' + String(session.user.id);
+      const users_response = await axios.get<UserInfo>(urlGetdata, {
+        headers: {
+          Authorization: 'Bearer ' + String(session.user.accessToken),
+        },
+      });
+      debug(users_response);
+      const login_response = await axios.post<LoginResult>(urlOauth, {
+        oAuthId: users_response.data.login,
+        imagePath: users_response.data.image.link,
+      });
+
+      return login_response.data;
     };
 
     const loginAfterOAuth = async () => {
-      if (session === null || process.env.NEXT_PUBLIC_API_URL === undefined) {
-        return;
-      }
-      const loginInput = await getLoginInput();
-      const urlOauth = `${process.env.NEXT_PUBLIC_API_URL}/auth/oauth-login`;
       try {
-        const { data } = await axios.post<LoginResult>(urlOauth, loginInput);
-        debug(data);
-        if (!data) {
+        const loginResult = isGoogleOAuth(session.user.email)
+          ? await googleLogin()
+          : await fortyTwoLogin();
+        debug(loginResult);
+        if (!loginResult) {
           void signOut({ callbackUrl: '/' });
-        } else if (data.res === LoginResultStatus.SUCCESS) {
+        } else if (loginResult.res === LoginResultStatus.SUCCESS) {
           await router.push('/dashboard');
         } else if (
-          data.res === LoginResultStatus.NEED2FA &&
-          data.userId !== undefined
+          loginResult.res === LoginResultStatus.NEED2FA &&
+          loginResult.userId !== undefined
         ) {
           // 2FAコード入力ダイアログを表示
-          setValidationUserId(data.userId);
+          setValidationUserId(loginResult.userId);
           setOpenValidationDialog(true);
         } else {
           // ログイン失敗、signOutしてログインに戻る
           void signOut({ callbackUrl: '/' });
         }
       } catch {
-        // backendへの登録で例外の場合、セッションを切断してログインページに戻る
+        // ログイン時のAxios例外などは、signOutしてログインに戻る
         void signOut({ callbackUrl: '/' });
 
         return;
