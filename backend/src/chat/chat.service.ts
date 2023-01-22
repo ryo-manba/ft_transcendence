@@ -87,16 +87,24 @@ export class ChatService {
     }
   }
 
-  async update(params: {
+  async updateRoom(params: {
     where: Prisma.ChatroomWhereUniqueInput;
     data: Prisma.ChatroomUpdateInput;
   }): Promise<Chatroom> {
     const { where, data } = params;
 
-    return this.prisma.chatroom.update({
-      data,
-      where,
-    });
+    try {
+      const updatedRoom = this.prisma.chatroom.update({
+        data,
+        where,
+      });
+
+      return updatedRoom;
+    } catch (error) {
+      this.logger.log('updateRoom', error);
+
+      return undefined;
+    }
   }
 
   async remove(where: Prisma.ChatroomWhereUniqueInput): Promise<Chatroom> {
@@ -273,11 +281,8 @@ export class ChatService {
           chatroomId: userInfo.chatroomId,
           status: ChatroomMembersStatus.NORMAL,
         };
-        try {
-          return await this.updateMemberStatus(dto);
-        } catch (err) {
-          return undefined;
-        }
+
+        return await this.updateMemberStatus(dto);
       }
     }
 
@@ -573,22 +578,22 @@ export class ChatService {
 
     const hashed = await bcrypt.hash(dto.newPassword, saltRounds);
 
-    try {
-      await this.update({
-        data: {
-          hashedPassword: hashed,
-        },
-        where: {
-          id: dto.chatroomId,
-        },
-      });
+    const updatedRoom = await this.updateRoom({
+      data: {
+        hashedPassword: hashed,
+      },
+      where: {
+        id: dto.chatroomId,
+      },
+    });
 
-      return true;
-    } catch (error) {
-      this.logger.log('updatePassword', error);
+    if (!updatedRoom) {
+      this.logger.log('updatePassword failed');
 
       return false;
     }
+
+    return true;
   }
 
   /**
@@ -598,21 +603,25 @@ export class ChatService {
   async updateMemberStatus(
     dto: updateMemberStatusDto,
   ): Promise<ChatroomMembers> {
-    const isNormal = dto.status === ChatroomMembersStatus.NORMAL;
+    // NOTE: とりあえずどちらも期間を1週間に設定している
+    const BAN_TIME_IN_DAYS = 7;
+    const MUTE_TIME_IN_DAYS = 7;
 
+    const isNormal = dto.status === ChatroomMembersStatus.NORMAL;
     const startAt = isNormal ? null : new Date();
-    let endAt = new Date();
+    let endAt = undefined;
     if (!isNormal) {
-      // NOTE: とりあえず期間を1週間に設定している
-      endAt.setDate(startAt.getDate() + 7);
-    } else {
-      endAt = null;
+      endAt = new Date();
+      const durationOfTheDay =
+        dto.status === ChatroomMembersStatus.MUTE
+          ? MUTE_TIME_IN_DAYS
+          : BAN_TIME_IN_DAYS;
+
+      endAt.setDate(startAt.getDate() + durationOfTheDay);
     }
 
-    this.logger.log(`startAt: ${startAt?.getDate()}`);
-    this.logger.log(`endAt: ${endAt?.getDate()}`);
     try {
-      const res = await this.prisma.chatroomMembers.update({
+      const member = await this.prisma.chatroomMembers.update({
         data: {
           status: dto.status,
           startAt: startAt,
@@ -626,7 +635,7 @@ export class ChatService {
         },
       });
 
-      return res;
+      return member;
     } catch (error) {
       this.logger.log('updateMemberStatus', error);
 
