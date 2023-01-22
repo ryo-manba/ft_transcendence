@@ -1,4 +1,5 @@
 import { useState, memo, useEffect, Dispatch, SetStateAction } from 'react';
+import { useRouter } from 'next/router';
 import {
   ListItem,
   ListItemText,
@@ -7,21 +8,20 @@ import {
   Collapse,
 } from '@mui/material';
 import { Socket } from 'socket.io-client';
-import { Friend } from 'types/friend';
-import { useQueryUser } from 'hooks/useQueryUser';
-import { FriendInfoDialog } from 'components/chat/friend/FriendInfoDialog';
-import { Loading } from 'components/common/Loading';
-import { getAvatarImageUrl } from 'api/user/getAvatarImageUrl';
-import { getUserStatusById } from 'api/user/getUserStatusById';
+import Debug from 'debug';
 import { UserStatus } from '@prisma/client';
+import { Invitation } from 'types/game';
+import { Friend } from 'types/friend';
+import { Chatroom, CurrentRoom } from 'types/chat';
+import { useQueryUser } from 'hooks/useQueryUser';
 import { useSocketStore } from 'store/game/ClientSocket';
 import { useInvitedFriendStateStore } from 'store/game/InvitedFriendState';
-import { useRouter } from 'next/router';
-import { Invitation } from 'types/game';
+import { getAvatarImageUrl } from 'api/user/getAvatarImageUrl';
+import { getUserStatusById } from 'api/user/getUserStatusById';
+import { FriendInfoDialog } from 'components/chat/friend/FriendInfoDialog';
+import { Loading } from 'components/common/Loading';
 import { BadgedAvatar } from 'components/common/BadgedAvatar';
 import { ChatErrorAlert } from 'components/chat/utils/ChatErrorAlert';
-import Debug from 'debug';
-import { CurrentRoom } from 'types/chat';
 
 type Props = {
   friend: Friend;
@@ -105,14 +105,19 @@ export const FriendListItem = memo(function FriendListItem({
     socket.emit(
       'chat:directMessage',
       DMInfo,
-      (res: { currentRoom: CurrentRoom | undefined }) => {
+      (res: { chatroom: Chatroom | undefined }) => {
         debug('chat:directMessage %o', res);
-        if (res.currentRoom) {
-          socket.emit('chat:changeCurrentRoom', { roomId: res.currentRoom.id });
-          setCurrentRoom(res.currentRoom);
-        } else {
+        if (!res.chatroom) {
           setError('Failed to start direct messages.');
+
+          return;
         }
+
+        const newCurrentRoom: CurrentRoom = {
+          id: res.chatroom.id,
+          name: res.chatroom.name,
+        };
+        setCurrentRoom(newCurrentRoom);
       },
     );
   };

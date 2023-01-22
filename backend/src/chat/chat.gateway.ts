@@ -30,7 +30,7 @@ import { OnRoomJoinableDto } from './dto/on-room-joinable.dto';
 import { GetAdminsIdsDto } from './dto/get-admins-ids.dto';
 import { GetMessagesCountDto } from './dto/get-messages-count.dto';
 import { SocketJoinRoomDto } from './dto/socket-join-room.dto';
-import type { ChatMessage, CurrentRoom } from './types/chat';
+import type { ChatMessage } from './types/chat';
 
 type ExcludeProperties = 'hashedPassword' | 'createdAt' | 'updatedAt';
 type ClientChatroom = Omit<Chatroom, ExcludeProperties>;
@@ -575,7 +575,7 @@ export class ChatGateway {
   async startDirectMessage(
     @ConnectedSocket() client: Socket,
     @MessageBody() dto: CreateDirectMessageDto,
-  ): Promise<{ currentRoom: CurrentRoom | undefined }> {
+  ): Promise<{ chatroom: ClientChatroom | undefined }> {
     this.logger.log('chat:directMessage received');
 
     const existingDMRoom = await this.chatService.findExistingDMRoom(
@@ -585,7 +585,9 @@ export class ChatGateway {
 
     // すでに作成されている場合（自分と相手がすでにチャットルームに入室している）
     if (existingDMRoom) {
-      return { currentRoom: existingDMRoom };
+      const clientChatroom = this.convertToClientChatroom(existingDMRoom);
+
+      return { chatroom: clientChatroom };
     }
 
     const roomName = dto.senderName + '_' + dto.recipientName;
@@ -598,7 +600,7 @@ export class ChatGateway {
     if (!createdRoom) {
       this.logger.log('chat:directMessage failed to createRoom');
 
-      return { currentRoom: undefined };
+      return { chatroom: undefined };
     }
 
     try {
@@ -633,14 +635,15 @@ export class ChatGateway {
       });
       await client.leave(this.generateSocketChatRoomName(createdRoom.id));
 
-      return { currentRoom: undefined };
+      return { chatroom: undefined };
     }
 
     // DMを始めたユーザーのサイドバーを更新させる
     // 直接Roomを返してサイドバーを更新させないのは、DMを実行するボタンがフレンド側に存在するため
     client.emit('chat:updateSideBarRooms');
+    const clientChatroom = this.convertToClientChatroom(createdRoom);
 
-    return { currentRoom: createdRoom };
+    return { chatroom: clientChatroom };
   }
 
   /**
