@@ -92,20 +92,23 @@ export const ChatroomCreateButton = memo(function ChatroomCreateButton({
     clearErrors();
   }, [open]);
 
-  const getJoinedRooms = useCallback(() => {
-    socket.emit('chat:getJoinedRooms', { userId: user.id });
-  }, [socket]);
+  const createChatroom = (roomInfo: CreateChatroomInfo) => {
+    socket.emit(
+      'chat:createAndJoinRoom',
+      roomInfo,
+      (res: { createdRoom: Chatroom | undefined }) => {
+        debug('chat:createAndJoinRoom: createdRoom', res.createdRoom);
 
-  const createChatroom = useCallback(
-    (room: CreateChatroomInfo) => {
-      socket.emit('chat:createRoom', room, (res: Chatroom) => {
-        res === undefined
-          ? setError('Failed to create room.')
-          : setRooms((prev) => [...prev, res]);
-      });
-    },
-    [socket],
-  );
+        if (res.createdRoom) {
+          // 直接res.createdRoomをsetするとlintエラーが出る
+          const room: Chatroom = res.createdRoom;
+          setRooms((prev) => [...prev, room]);
+        } else {
+          setError('Failed to create room.');
+        }
+      },
+    );
+  };
 
   const onSubmit: SubmitHandler<ChatroomForm> = (data: ChatroomForm) => {
     const room: CreateChatroomInfo = {
@@ -116,7 +119,6 @@ export const ChatroomCreateButton = memo(function ChatroomCreateButton({
     };
     debug('create chatroom: %o', room);
     createChatroom(room);
-    getJoinedRooms();
     handleClose();
   };
 

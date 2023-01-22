@@ -69,7 +69,7 @@ export const ChatroomListItem = memo(function ChatroomListItem({
   }, [user]);
 
   // ルームをクリックしたときの処理
-  const changeCurrentRoom = (roomId: number) => {
+  const changeCurrentRoom = (roomId: number, roomName: string) => {
     debug('changeCurrentRoom: %d', roomId);
 
     const checkBanInfo = {
@@ -84,9 +84,13 @@ export const ChatroomListItem = memo(function ChatroomListItem({
         setCurrentRoom(undefined);
         setMessages([]);
       } else {
-        // 入室に成功したら、既存のメッセージを受け取る
-        socket.emit('chat:changeCurrentRoom', { roomId });
-        setCurrentRoom({ id: room.id, name: room.name });
+        // currentRoomの変更をトリガーにmessageが自動取得される
+        const newCurrentRoom = {
+          id: roomId,
+          name: roomName,
+        };
+        debug('chat:changeCurrentRoom ', newCurrentRoom);
+        setCurrentRoom(newCurrentRoom);
       }
     });
   };
@@ -125,8 +129,11 @@ export const ChatroomListItem = memo(function ChatroomListItem({
       type: room.type,
     };
 
-    // TODO:フレンドを入室させたあとのgatewayからのレスポンス対応は今後行う
-    socket.emit('chat:joinRoom', joinRoomInfo);
+    socket.emit('chat:joinRoomFromOtherUser', joinRoomInfo, (res: boolean) => {
+      if (!res) {
+        setError('Failed to add friend.');
+      }
+    });
   };
 
   const addAdmin = (userId: number) => {
@@ -188,6 +195,22 @@ export const ChatroomListItem = memo(function ChatroomListItem({
     });
   };
 
+  const unbanUser = (userId: number) => {
+    const unbanUserInfo = {
+      chatroomId: room.id,
+      userId: userId,
+      status: ChatroomMembersStatus.NORMAL,
+    };
+
+    socket.emit('chat:unbanUser', unbanUserInfo, (res: boolean) => {
+      if (res) {
+        setSuccess('User has been unbanned successfully.');
+      } else {
+        setError('Failed to unban user.');
+      }
+    });
+  };
+
   const muteUser = (userId: number) => {
     const muteUserInfo = {
       chatroomId: room.id,
@@ -200,6 +223,22 @@ export const ChatroomListItem = memo(function ChatroomListItem({
         setSuccess('User has been muted successfully.');
       } else {
         setError('Failed to mute user.');
+      }
+    });
+  };
+
+  const unmuteUser = (userId: number) => {
+    const unmuteUserInfo = {
+      chatroomId: room.id,
+      userId: userId,
+      status: ChatroomMembersStatus.NORMAL,
+    };
+
+    socket.emit('chat:unmuteUser', unmuteUserInfo, (res: boolean) => {
+      if (res) {
+        setSuccess('User has been unmuted successfully.');
+      } else {
+        setError('Failed to unmute user.');
       }
     });
   };
@@ -282,7 +321,7 @@ export const ChatroomListItem = memo(function ChatroomListItem({
         divider
         button
         onClick={() => {
-          changeCurrentRoom(room.id);
+          changeCurrentRoom(room.id, room.name);
         }}
       >
         <ListItemAvatar>
@@ -305,7 +344,9 @@ export const ChatroomListItem = memo(function ChatroomListItem({
           addAdmin={addAdmin}
           changePassword={changePassword}
           banUser={banUser}
+          unbanUser={unbanUser}
           muteUser={muteUser}
+          unmuteUser={unmuteUser}
         />
         <ListItemText
           primary={room.name}

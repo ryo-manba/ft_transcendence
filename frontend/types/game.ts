@@ -1,14 +1,11 @@
-const difficultyLevelArray: readonly string[] = [
-  'Easy',
-  'Normal',
-  'Hard',
-] as const;
+export const DifficultyLevel = {
+  EASY: 'Easy',
+  NORMAL: 'Normal',
+  HARD: 'Hard',
+} as const;
 
-export type DifficultyLevel = typeof difficultyLevelArray[number];
-
-export const isDifficultyLevel = (value: unknown): value is DifficultyLevel => {
-  return typeof value === 'string' && difficultyLevelArray.includes(value);
-};
+export type DifficultyLevel =
+  typeof DifficultyLevel[keyof typeof DifficultyLevel];
 
 export type GameSetting = {
   difficulty: DifficultyLevel;
@@ -36,4 +33,36 @@ export type FinishedGameInfo = {
 export type Invitation = {
   hostId: number;
   guestId: number;
+};
+
+export type Ball = {
+  x: number;
+  y: number;
+  radius: number;
+};
+
+export type GameInfo = {
+  height1: number;
+  height2: number;
+  ball: Ball;
+};
+
+export type GameParameters = {
+  topLeftX: number;
+  canvasWidth: number;
+  canvasHeight: number;
+  barWidth: number;
+  barLength: number;
+  player1X: number;
+  player2X: number;
+  highestPos: number;
+  lowestPos: number;
+  sideBarLeft: number;
+  sideBarRight: number;
+  lineDashStyle: [number, number];
+  initialHeight: number;
+  ballInitialX: number;
+  ballInitialY: number;
+  ballRadius: number;
+  widthRatio: number;
 };

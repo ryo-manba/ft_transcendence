@@ -20,6 +20,8 @@ import {
   FinishedGameInfo,
   Friend,
   Invitation,
+  DifficultyLevel,
+  GameState,
 } from './types/game';
 import { GetInvitedListDto } from './dto/get-invited-list.dto';
 import { InviteFriendDto } from './dto/invite-friend.dto';
@@ -30,6 +32,10 @@ import { JoinRoomDto } from './dto/join-room.dto';
 import { WatchGameDto } from './dto/watch-game.dto';
 import { PlayGameDto } from './dto/play-game.dto';
 import { UpdatePlayerPosDto } from './dto/update-player-pos.dto';
+
+const DENOMINATOR_FOR_EASY = 6; // barLength will be 100
+const DENOMINATOR_FOR_NORMAL = 12; // barLength will be 50
+const DENOMINATOR_FOR_HARD = 30; // barLength will be 20
 
 // host側は同時に複数招待を送ることはできない
 class InvitationList {
@@ -91,21 +97,22 @@ export class GameGateway {
   static ballInitialY = 300;
   static ballRadius = 10;
   static ballInitialXVec = -1;
-  static ballSpeed = 3;
+  static ballSpeed = 7;
   static highestPos = 10; // top left corner of the canvas is (0, 0)
   static lowestPos = 490;
   static leftEnd = 40;
   static rightEnd = 960;
-  static barLength = 100;
   static defaultSetting: GameSetting = {
-    difficulty: 'Easy',
+    difficulty: DifficultyLevel.EASY,
     matchPoint: 3,
     player1Score: 0,
     player2Score: 0,
   };
 
   static boardWidth = 1000;
-  static barSpeed = 10;
+  static boardHeight = 600;
+  static barSpeed = 30;
+  static barLength = GameGateway.boardHeight / DENOMINATOR_FOR_EASY;
 
   @WebSocketServer()
   server: Server;
@@ -152,17 +159,38 @@ export class GameGateway {
     return Math.random() * (Math.random() < 0.5 ? 1 : -1);
   }
 
-  updatePlayerStatus(player1: Player, player2: Player) {
+  updatePlayerStatus(player1: Player, player2: Player, gameType: string) {
     const playerNames: [string, string] = [player1.name, player2.name];
+    const select = gameType + ':select';
+    const standBy = gameType + ':standBy';
 
     // if both players' points are equal, first player joining the que will select the rule
     if (player1.point <= player2.point) {
-      player1.socket.emit('select', playerNames);
-      player2.socket.emit('standBy', playerNames);
+      player1.socket.emit(select, playerNames);
+      player2.socket.emit(standBy, playerNames);
     } else {
-      player1.socket.emit('standBy', playerNames);
-      player2.socket.emit('select', playerNames);
+      player1.socket.emit(standBy, playerNames);
+      player2.socket.emit(select, playerNames);
     }
+  }
+
+  isStartingGame(id: number): boolean {
+    const isPlayingGame =
+      this.gameRooms.find(
+        (room) => room.player1.id === id || room.player2.id === id,
+      ) !== undefined;
+    if (isPlayingGame) return true;
+
+    const isWaitingGame =
+      this.waitingQueue.find((player) => player.id === id) !== undefined;
+    if (isWaitingGame) return true;
+
+    // 招待されているときに例えばランダムゲームのマッチングを開始するのは問題ない。
+    // つまり、招待されていることを確認する必要はない。
+    const isInvitingGame = this.invitationList.find(id) !== undefined;
+    if (isInvitingGame) return true;
+
+    return false;
   }
 
   /**
@@ -210,6 +238,8 @@ export class GameGateway {
     @ConnectedSocket() socket: Socket,
     @MessageBody() dto: InviteFriendDto,
   ): Promise<boolean> {
+    if (this.isStartingGame(dto.hostId)) return false;
+
     const newInvitation: Invitation = {
       guestId: dto.guestId,
       hostId: dto.hostId,
@@ -271,7 +301,9 @@ export class GameGateway {
   async beginFriendMatch(
     @ConnectedSocket() socket: Socket,
     @MessageBody() dto: AcceptInvitationDto,
-  ) {
+  ): Promise<boolean> {
+    if (this.isStartingGame(dto.guestId)) return false;
+
     const invitation = this.invitationList.find(dto.hostId);
     if (invitation === undefined) return;
 
@@ -309,15 +341,18 @@ export class GameGateway {
       height: GameGateway.initialHeight,
       score: 0,
     };
+    void this.startGame(player1, player2, 'friend');
 
-    void this.startGame(player1, player2);
+    return true;
   }
 
   @SubscribeMessage('playStart')
   async joinRoom(
     @ConnectedSocket() socket: Socket,
     @MessageBody() dto: JoinRoomDto,
-  ) {
+  ): Promise<boolean> {
+    if (this.isStartingGame(dto.userId)) return false;
+
     const waitingUserIdx = this.waitingQueue.findIndex(
       (item) => item.id !== dto.userId,
     );
@@ -345,11 +380,13 @@ export class GameGateway {
         height: GameGateway.initialHeight,
         score: 0,
       };
-      void this.startGame(player1, player2);
+      void this.startGame(player1, player2, 'random');
     }
+
+    return true;
   }
 
-  async startGame(player1: Player, player2: Player) {
+  async startGame(player1: Player, player2: Player, gameType: string) {
     const roomName = uuidv4();
 
     this.logger.log(`${player1.socket.id} joined to room ${roomName}`);
@@ -379,14 +416,17 @@ export class GameGateway {
       ballVec: ballVec,
       isPlayer1Turn: true,
       gameSetting: GameGateway.defaultSetting,
+      barLength: GameGateway.barLength,
       barSpeed: GameGateway.barSpeed,
+      initialHeight: GameGateway.initialHeight,
+      lowestPos: GameGateway.lowestPos,
       rewards: 0,
-      gameState: 'Setting',
+      gameState: GameState.SETTING,
     };
 
     this.gameRooms.push(newRoom);
 
-    this.updatePlayerStatus(player1, player2);
+    this.updatePlayerStatus(player1, player2, gameType);
   }
 
   @SubscribeMessage('watchGame')
@@ -403,7 +443,8 @@ export class GameGateway {
     room.supporters.push(socket);
     this.logger.log(`${socket.id} joined to room ${dto.roomName}`);
     await socket.join(dto.roomName);
-    const gameSetting = room.gameState === 'Setting' ? null : room.gameSetting;
+    const gameSetting =
+      room.gameState === GameState.SETTING ? null : room.gameSetting;
     socket.emit('joinGameRoom', room.gameState, gameSetting);
   }
 
@@ -438,20 +479,23 @@ export class GameGateway {
       room.gameSetting = dto as GameSetting;
       room.rewards = 10 * dto.matchPoint;
       switch (dto.difficulty) {
-        case 'Normal':
-          room.barSpeed = 20;
-          room.ballVec.speed = 5;
+        case DifficultyLevel.NORMAL:
+          room.barLength = GameGateway.boardHeight / DENOMINATOR_FOR_NORMAL;
           break;
-        case 'Hard':
-          room.barSpeed = 30;
-          room.ballVec.speed = 7;
+        case DifficultyLevel.HARD:
+          room.barLength = GameGateway.boardHeight / DENOMINATOR_FOR_HARD;
           room.rewards *= 2;
           break;
         default:
           room.rewards *= 0.5;
           break;
       }
-      room.gameState = 'Playing';
+      room.initialHeight = GameGateway.boardHeight / 2 - room.barLength / 2;
+      room.lowestPos =
+        GameGateway.boardHeight - GameGateway.highestPos - room.barLength;
+      room.player1.height = room.initialHeight;
+      room.player2.height = room.initialHeight;
+      room.gameState = GameState.PLAYING;
       this.server.to(room.roomName).emit('playStarted', dto as GameSetting);
     }
   }
@@ -533,8 +577,8 @@ export class GameGateway {
     const updatedHeight = player.height + dto.move * room.barSpeed;
     if (updatedHeight < GameGateway.highestPos) {
       player.height = GameGateway.highestPos;
-    } else if (GameGateway.lowestPos < updatedHeight) {
-      player.height = GameGateway.lowestPos;
+    } else if (room.lowestPos < updatedHeight) {
+      player.height = room.lowestPos;
     } else {
       player.height = updatedHeight;
     }
@@ -542,8 +586,7 @@ export class GameGateway {
     // Update yVec of ball when bouncing on side bars
     if (
       (ballVec.yVec < 0 && ball.y < GameGateway.highestPos) ||
-      (0 < ballVec.yVec &&
-        GameGateway.lowestPos + GameGateway.barLength < ball.y)
+      (0 < ballVec.yVec && room.lowestPos + room.barLength < ball.y)
     ) {
       ballVec.yVec *= -1;
     }
@@ -553,12 +596,12 @@ export class GameGateway {
       if (
         ballVec.xVec < 0 &&
         room.player1.height <= ball.y &&
-        ball.y <= room.player1.height + GameGateway.barLength
+        ball.y <= room.player1.height + room.barLength
       ) {
         ballVec.xVec = 1;
         ballVec.yVec =
-          ((ball.y - (room.player1.height + GameGateway.barLength / 2)) * 2) /
-          GameGateway.barLength;
+          ((ball.y - (room.player1.height + room.barLength / 2)) * 2) /
+          room.barLength;
       } else {
         isGameOver = true;
         room.player2.score++;
@@ -567,12 +610,12 @@ export class GameGateway {
       if (
         0 < ballVec.xVec &&
         room.player2.height <= ball.y &&
-        ball.y <= room.player2.height + GameGateway.barLength
+        ball.y <= room.player2.height + room.barLength
       ) {
         ballVec.xVec = -1;
         ballVec.yVec =
-          ((ball.y - (room.player2.height + GameGateway.barLength / 2)) * 2) /
-          GameGateway.barLength;
+          ((ball.y - (room.player2.height + room.barLength / 2)) * 2) /
+          room.barLength;
       } else {
         isGameOver = true;
         room.player1.score++;

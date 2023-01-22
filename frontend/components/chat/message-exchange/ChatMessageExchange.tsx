@@ -1,4 +1,5 @@
 import { memo, useState, useEffect, Dispatch, SetStateAction } from 'react';
+import Debug from 'debug';
 import { Socket } from 'socket.io-client';
 import { Box, Collapse, Paper } from '@mui/material';
 import { Message, CurrentRoom } from 'types/chat';
@@ -7,6 +8,7 @@ import { Loading } from 'components/common/Loading';
 import { ChatErrorAlert } from 'components/chat/utils/ChatErrorAlert';
 import { ChatTextInput } from 'components/chat/message-exchange/ChatTextInput';
 import { ChatMessageList } from 'components/chat/message-exchange/ChatMessageList';
+import { ChatHeightStyle } from 'components/chat/utils/ChatHeightStyle';
 
 type Props = {
   socket: Socket;
@@ -21,6 +23,7 @@ export const ChatMessageExchange = memo(function ChatMessageExchange({
   messages,
   setMessages,
 }: Props) {
+  const debug = Debug('chat');
   const [error, setError] = useState('');
   const { data: user } = useQueryUser();
 
@@ -28,14 +31,19 @@ export const ChatMessageExchange = memo(function ChatMessageExchange({
     if (!user) return;
 
     // 他ユーザーからのメッセージを受け取る
-    socket.on('chat:receiveMessage', (data: Message) => {
-      setMessages((prev) => [...prev, data]);
+    socket.on('chat:receiveMessage', (message: Message) => {
+      debug('chat:receiveMessage ', message, currentRoom);
+
+      // 現在画面に表示しているルームのメッセージだった場合にのみ追加する
+      if (message.roomId === currentRoom?.id) {
+        setMessages((prev) => [...prev, message]);
+      }
     });
 
     return () => {
       socket.off('chat:receiveMessage');
     };
-  }, [user]);
+  }, [user, currentRoom]);
 
   if (user === undefined) {
     return <Loading fullHeight />;
@@ -49,22 +57,26 @@ export const ChatMessageExchange = memo(function ChatMessageExchange({
       message: text,
     };
 
-    socket.emit('chat:sendMessage', message, (res: boolean) => {
-      if (!res) {
-        setError('You can not send a message.');
-      }
-    });
+    socket.emit(
+      'chat:sendMessage',
+      message,
+      (res: { error: string | undefined }) => {
+        if (res.error) {
+          setError(res.error);
+        }
+      },
+    );
   };
 
-  const appBarHeight = '64px';
+  const heightStyle = ChatHeightStyle();
 
   return (
     <>
       <Paper
         style={{
+          ...heightStyle,
           display: 'flex',
           flexDirection: 'column',
-          height: `calc(100vh - ${appBarHeight})`,
         }}
       >
         <div

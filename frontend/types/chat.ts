@@ -25,6 +25,7 @@ export type JoinChatroomInfo = {
 };
 
 export type Message = {
+  roomId: number;
   text: string;
   userName: string;
   createdAt: Date;
@@ -46,7 +47,9 @@ export const ChatroomSetting = {
   CHANGE_PASSWORD: 'Change Password', // protected room
   SET_ADMIN: 'Set Admin',
   MUTE_USER: 'Mute User',
+  UNMUTE_USER: 'Unmute User',
   BAN_USER: 'Ban User',
+  UNBAN_USER: 'Unban User',
 } as const;
 
 export type ChatroomSetting =
@@ -56,3 +59,11 @@ export type ChatUser = {
   id: number;
   name: string;
 };
+
+export const ChatBlockSetting = {
+  BLOCK_USER: 'Block User',
+  UNBLOCK_USER: 'Unblock User',
+} as const;
+
+export type ChatBlockSetting =
+  typeof ChatBlockSetting[keyof typeof ChatBlockSetting];

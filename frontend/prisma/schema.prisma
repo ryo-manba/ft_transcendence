@@ -108,7 +108,7 @@ model User {
 
 model BlockRelation {
   createdAt       DateTime @default(now())
-  updatedAt       DateTime @default(now()) @updatedAt
+  updatedAt       DateTime @default(now())
   blockingUserId  Int
   blockedByUserId Int
   blockedBy       User     @relation("blockedBy", fields: [blockedByUserId], references: [id], onDelete: Cascade)

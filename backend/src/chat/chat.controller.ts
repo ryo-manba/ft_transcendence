@@ -1,14 +1,10 @@
 import { Query, Controller, Get, ParseIntPipe } from '@nestjs/common';
 import { ChatService } from './chat.service';
-import { UserService } from '../user/user.service';
 import type { ChatUser, ChatMessage } from './types/chat';
 
 @Controller('chat')
 export class ChatController {
-  constructor(
-    private readonly chatService: ChatService,
-    private readonly userService: UserService,
-  ) {}
+  constructor(private readonly chatService: ChatService) {}
 
   /**
    * @param roomId
@@ -34,6 +30,32 @@ export class ChatController {
     @Query('roomId', ParseIntPipe) roomId: number,
   ): Promise<ChatUser[]> {
     return await this.chatService.findNotBannedUsers(roomId);
+  }
+
+  /**
+   * @param roomId
+   * @return 以下の情報をオブジェクトの配列で返す
+   * - MUTEされているユーザーのID
+   * - MUTEされているユーザーの名前
+   */
+  @Get('muted-users')
+  async findMutedUsers(
+    @Query('roomId', ParseIntPipe) roomId: number,
+  ): Promise<ChatUser[]> {
+    return await this.chatService.findMutedUsers(roomId);
+  }
+
+  /**
+   * @param roomId
+   * @return 以下を満たすユーザーのIDと名前の配列を返す
+   * - BANされているユーザーのID
+   * - BANされているユーザーの名前
+   */
+  @Get('banned-users')
+  async findChatroomBannedUsers(
+    @Query('roomId', ParseIntPipe) roomId: number,
+  ): Promise<ChatUser[]> {
+    return await this.chatService.findChatroomBannedUsers(roomId);
   }
 
   /**
@@ -85,27 +107,6 @@ export class ChatController {
   }
 
   /**
-   * @return すべてのユーザーを取得する
-   */
-  @Get('all-users')
-  async findAllChatUsers(): Promise<ChatUser[]> {
-    const users = await this.userService.findAll({
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
-
-    const chatUsers = users.map((user) => {
-      return {
-        id: user.id,
-        name: user.name,
-      };
-    });
-
-    return chatUsers;
-  }
-
-  /**
    * @return ブロックされていないユーザ一覧を返す
    * @param userId
    */
@@ -113,19 +114,25 @@ export class ChatController {
   async findUnblockedChatUsers(
     @Query('userId', ParseIntPipe) userId: number,
   ): Promise<ChatUser[]> {
-    const chatUsers = await this.findAllChatUsers();
+    const unblockedUsers = this.chatService.findUnblockedUsers({
+      blockedByUserId: userId,
+    });
 
+    return unblockedUsers;
+  }
+
+  /**
+   * @return ブロックされているユーザ一覧を返す
+   * @param userId
+   */
+  @Get('blocked-users')
+  async findBlockedChatUsers(
+    @Query('userId', ParseIntPipe) userId: number,
+  ): Promise<ChatUser[]> {
     const blockedUsers = await this.chatService.findBlockedUsers({
       blockedByUserId: userId,
     });
-    console.log(blockedUsers);
-    const blockingUserIds = blockedUsers.map((user) => user.blockingUserId);
 
-    // すべてのユーザーからブロックされているユーザーを除去する
-    const unblockedUsers = chatUsers.filter(
-      (user) => !blockingUserIds.includes(user.id),
-    );
-
-    return unblockedUsers;
+    return blockedUsers;
   }
 }

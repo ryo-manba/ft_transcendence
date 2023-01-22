@@ -7,6 +7,7 @@ import { ChatroomJoinButton } from 'components/chat/chatroom/ChatroomJoinButton'
 import { Chatroom, CurrentRoom, Message } from 'types/chat';
 import { useQueryUser } from 'hooks/useQueryUser';
 import { Loading } from 'components/common/Loading';
+import { ChatHeightStyle } from 'components/chat/utils/ChatHeightStyle';
 import Debug from 'debug';
 
 type Props = {
@@ -31,6 +32,7 @@ export const ChatroomSidebar = memo(function ChatroomSidebar({
       debug('chat:getJoinedRooms %o', data);
       setRooms(data);
     });
+
     // サイドバーのチャットルームを更新する
     socket.on('chat:updateSideBarRooms', () => {
       socket.emit('chat:getJoinedRooms', { userId: user.id });
@@ -40,44 +42,86 @@ export const ChatroomSidebar = memo(function ChatroomSidebar({
     socket.on('chat:deleteRoom', (deletedRoom: Chatroom) => {
       debug('chat:deleteRoom %o', deletedRoom);
       // socketの退出処理をする
-      socket.emit('chat:leaveSocket', { roomId: deletedRoom.id });
-      // 所属しているチャットルーム一覧を取得する
-      socket.emit('chat:getJoinedRooms', { userId: user.id });
+      socket.emit('chat:leaveSocket', {
+        roomId: deletedRoom.id,
+      });
+      setRooms((prev) => prev.filter((room) => room.id !== deletedRoom.id));
       // 表示中のメッセージを削除する
       setMessages([]);
       setCurrentRoom(undefined);
     });
 
-    // setupが終わったら
-    // 入室中のチャットルーム一覧を取得する
+    // 他のユーザーによってチャットルームに入室させられたときの処理
+    socket.on('chat:joinRoomFromOtherUser', (joinedRoom: Chatroom) => {
+      debug('joinRoomFromOtherUser:', joinedRoom);
+
+      // 通知を受け取れるようソケットをjoinさせる
+      socket.emit(
+        'chat:socketJoinRoom',
+        { roomId: joinedRoom.id },
+        (res: boolean) => {
+          if (res) {
+            // サイドバーにチャットルームを追加する
+            setRooms((prev) => [...prev, joinedRoom]);
+          }
+        },
+      );
+    });
+
+    // チャットルームのオーナーが変わった場合にルームを差し替える
+    socket.on('chat:changeRoomOwner', (changeRoom: Chatroom) => {
+      debug('changeRoomOwner', changeRoom);
+
+      setRooms((prevRooms) =>
+        prevRooms.map((room) => {
+          return room.id === changeRoom.id ? changeRoom : room;
+        }),
+      );
+    });
+
+    // setupが終わったら入室中のチャットルーム一覧を取得する
     socket.emit('chat:getJoinedRooms', { userId: user.id });
 
     return () => {
       socket.off('chat:getJoinedRooms');
       socket.off('chat:updateSideBarRooms');
+      socket.off('chat:joinRoomFromOtherUser');
+      socket.off('chat:changeRoomOwner');
     };
   }, []);
+
+  const addRooms = (room: Chatroom) => {
+    setRooms((prev) => [...prev, room]);
+  };
 
   if (user === undefined) {
     return <Loading />;
   }
+  const heightStyle = ChatHeightStyle();
 
   return (
     <>
-      <ChatroomCreateButton socket={socket} setRooms={setRooms} />
-      <ChatroomJoinButton socket={socket} user={user} />
-      <List dense={false}>
-        {rooms &&
-          rooms.map((room, i) => (
-            <ChatroomListItem
-              key={i}
-              room={room}
-              socket={socket}
-              setCurrentRoom={setCurrentRoom}
-              setMessages={setMessages}
-            />
-          ))}
-      </List>
+      <div
+        style={{
+          ...heightStyle,
+          overflow: 'scroll',
+        }}
+      >
+        <ChatroomCreateButton socket={socket} setRooms={setRooms} />
+        <ChatroomJoinButton socket={socket} addRooms={addRooms} />
+        <List dense={false}>
+          {rooms &&
+            rooms.map((room, i) => (
+              <ChatroomListItem
+                key={i}
+                room={room}
+                socket={socket}
+                setCurrentRoom={setCurrentRoom}
+                setMessages={setMessages}
+              />
+            ))}
+        </List>
+      </div>
     </>
   );
 });

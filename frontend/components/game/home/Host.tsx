@@ -43,7 +43,7 @@ export const Host = () => {
         return;
       }
     };
-    socket.on('select', (playerNames: [string, string]) => {
+    socket.on('friend:select', (playerNames: [string, string]) => {
       updatePlayerNames(playerNames);
       updatePlayState(PlayState.stateSelecting);
       updateInvitedFriendState({
@@ -53,7 +53,7 @@ export const Host = () => {
       updateUserStatusPlaying();
       void router.push('/game/battle');
     });
-    socket.on('standBy', (playerNames: [string, string]) => {
+    socket.on('friend:standBy', (playerNames: [string, string]) => {
       updatePlayerNames(playerNames);
       updatePlayState(PlayState.stateStandingBy);
       updateInvitedFriendState({
@@ -69,8 +69,8 @@ export const Host = () => {
     });
 
     return () => {
-      socket.off('select');
-      socket.off('standBy');
+      socket.off('friend:select');
+      socket.off('friend:standBy');
       socket.off('denyInvitation');
     };
   });
@@ -128,11 +128,11 @@ export const Host = () => {
               align="center"
               gutterBottom
             >
-              {invitationDenied && 'Invitation was denied...'}
-              {playState !== PlayState.stateNothing && 'Wait a Minute...'}
+              {invitationDenied && 'Invitation was denied'}
+              {playState !== PlayState.stateNothing && 'Wait a Minute'}
               {playState === PlayState.stateNothing &&
                 !invitationDenied &&
-                'Waiting for Opponent...'}
+                'Waiting for Opponent'}
             </Typography>
           </Grid>
         </>

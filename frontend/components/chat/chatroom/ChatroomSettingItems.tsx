@@ -37,7 +37,7 @@ const DMSettingItems = memo(function DMSettingItems({
 
 /**
  * ユーザーのタイプ：Owner, Admin, Normal
- * - チャットルームを削除する： Owner, DMの場合はAdminも可能
+ * - チャットルームを削除する： Owner, DMの場合はNormalも可能
  * - チャットルームを退出する： 全てのユーザーが実行可能
  * - adminを設定する：Owner
  * - friendを入室させる：PrivateかつOwnerのみ
@@ -77,8 +77,18 @@ export const ChatroomSettingItems = memo(function ChatroomSettingItems({
         </MenuItem>
       )}
       {(isAdmin || isOwner) && (
+        <MenuItem value={ChatroomSetting.UNMUTE_USER}>
+          {ChatroomSetting.UNMUTE_USER}
+        </MenuItem>
+      )}
+      {(isAdmin || isOwner) && (
         <MenuItem value={ChatroomSetting.BAN_USER}>
           {ChatroomSetting.BAN_USER}
+        </MenuItem>
+      )}
+      {(isAdmin || isOwner) && (
+        <MenuItem value={ChatroomSetting.UNBAN_USER}>
+          {ChatroomSetting.UNBAN_USER}
         </MenuItem>
       )}
       {isOwner && (

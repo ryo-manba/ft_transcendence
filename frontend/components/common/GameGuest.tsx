@@ -1,6 +1,8 @@
 import {
+  Alert,
   Button,
   ButtonGroup,
+  Collapse,
   Dialog,
   DialogActions,
   DialogTitle,
@@ -26,6 +28,7 @@ import { useQueryUser } from 'hooks/useQueryUser';
 import { Invitation } from 'types/game';
 import { CloseButton } from '@mantine/core';
 import { useMutationStatus } from 'hooks/useMutationStatus';
+import CloseIcon from '@mui/icons-material/Close';
 
 type Props = {
   hosts: Friend[];
@@ -35,6 +38,7 @@ type Props = {
 export const GameGuest = ({ hosts, setHosts }: Props) => {
   const [openDialog, setOpenDialog] = useState(false);
   const [openSnackbar, setOpenSnackbar] = useState(true);
+  const [openDialogError, setOpenDialogError] = useState(false);
   const { socket } = useSocketStore();
   const updatePlayState = usePlayStateStore((store) => store.updatePlayState);
   const updatePlayerNames = usePlayerNamesStore(
@@ -59,7 +63,9 @@ export const GameGuest = ({ hosts, setHosts }: Props) => {
           guestId: user.id,
           hostId: friend.id,
         };
-        socket.emit('acceptInvitation', match);
+        socket.emit('acceptInvitation', match, (res: boolean) => {
+          if (!res) setOpenDialogError(true);
+        });
       }
     },
     [user],
@@ -76,7 +82,7 @@ export const GameGuest = ({ hosts, setHosts }: Props) => {
         socket.emit('denyInvitation', match);
       }
     },
-    [user],
+    [user, hosts],
   );
 
   useEffect(() => {
@@ -92,24 +98,28 @@ export const GameGuest = ({ hosts, setHosts }: Props) => {
       }
     };
 
-    socket.on('select', (playerNames: [string, string]) => {
+    socket.on('friend:select', (playerNames: [string, string]) => {
       updatePlayerNames(playerNames);
       updatePlayState(PlayState.stateSelecting);
 
       updateUserStatusPlaying();
+      // cancel random match
+      socket.emit('playCancel');
       void router.push('/game/battle');
     });
-    socket.on('standBy', (playerNames: [string, string]) => {
+    socket.on('friend:standBy', (playerNames: [string, string]) => {
       updatePlayerNames(playerNames);
       updatePlayState(PlayState.stateStandingBy);
 
       updateUserStatusPlaying();
+      // cancel random match
+      socket.emit('playCancel');
       void router.push('/game/battle');
     });
 
     return () => {
-      socket.off('select');
-      socket.off('standBy');
+      socket.off('friend:select');
+      socket.off('friend:standBy');
     };
   });
 
@@ -123,20 +133,36 @@ export const GameGuest = ({ hosts, setHosts }: Props) => {
         action={
           <>
             <Button onClick={handleClick}>OPEN</Button>
-            <IconButton
-              aria-label="close"
-              sx={{ p: 0.5 }}
+            <CloseButton
               onClick={() => {
                 setOpenSnackbar(false);
               }}
-            >
-              <CloseButton />
-            </IconButton>
+            />
           </>
         }
       />
       <Dialog open={openDialog}>
         <DialogTitle>Friend Match</DialogTitle>
+        <Collapse in={openDialogError}>
+          <Alert
+            severity="error"
+            action={
+              <IconButton
+                aria-label="close"
+                color="inherit"
+                size="small"
+                onClick={() => {
+                  setOpenDialogError(false);
+                }}
+              >
+                <CloseIcon fontSize="inherit" />
+              </IconButton>
+            }
+            sx={{ mb: 2 }}
+          >
+            You already started to play/prepare game
+          </Alert>
+        </Collapse>
         <List>
           {hosts.map((host) => (
             <ListItem key={host.id}>
