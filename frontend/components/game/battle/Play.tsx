@@ -320,6 +320,7 @@ export const Play = ({ updateFinishedGameInfo }: Props) => {
         updatePlayState(PlayState.stateFinished);
       },
     );
+
     socket.on('error', () => {
       try {
         if (user !== undefined) {
@@ -331,12 +332,34 @@ export const Play = ({ updateFinishedGameInfo }: Props) => {
       } catch (error) {
         debug(error);
       }
+
+      updatePlayState(PlayState.stateNothing);
+    });
+
+    socket.on('exception', () => {
+      try {
+        if (user !== undefined) {
+          updateStatusMutation.mutate({
+            userId: user?.id,
+            status: 'ONLINE',
+          });
+        }
+      } catch (error) {
+        debug(error);
+      }
+
+      // これを送らないとエラーが起きたときにバックエンドでゲームが終了しない
+      socket.emit('cancelOngoingBattle');
+
+      // ゲームプレー中にサーバー側のvalidation errorが起きた場合には
+      // PlayStateを更新してゲームのホーム画面に戻す
       updatePlayState(PlayState.stateNothing);
     });
 
     return () => {
       socket.off('finishGame');
       socket.off('error');
+      socket.off('exception');
     };
   }, [socket]);
 

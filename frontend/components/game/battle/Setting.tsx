@@ -57,10 +57,18 @@ export const Setting = () => {
       updatePlayState(PlayState.stateCanceled);
     });
 
+    socket.on('exception', () => {
+      // これを送らないとエラーが起きたときにバックエンドでゲームが終了しない
+      socket.emit('cancelOngoingBattle');
+
+      updatePlayState(PlayState.stateNothing);
+    });
+
     return () => {
       socket.off('playStarted');
       socket.off('error');
       socket.off('cancelOngoingBattle');
+      socket.off('exception');
     };
   }, [socket]);
 
