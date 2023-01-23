@@ -6,16 +6,14 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { UpdateNameDto } from './dto/update-name.dto';
-import { Prisma, User, UserStatus } from '@prisma/client';
+import { Prisma, UserStatus } from '@prisma/client';
 import { UpdateStatusDto } from './dto/update-status.dto';
 import { UpdatePointDto } from './dto/update-point.dto';
 import { UpdateAvatarDto } from './dto/update-avatar.dto';
 import { createReadStream, unlink } from 'node:fs';
 import * as path from 'path';
 import { DeleteAvatarDto } from './dto/delete-avatar.dto';
-
-type ExcludeProperties = 'hashedPassword' | 'secret2FA';
-type LoginUser = Omit<User, ExcludeProperties>;
+import { LoginUser } from './types/user';
 
 @Injectable()
 export class UserService {
@@ -49,16 +47,24 @@ export class UserService {
     cursor?: Prisma.UserWhereUniqueInput;
     where?: Prisma.UserWhereInput;
     orderBy?: Prisma.UserOrderByWithRelationInput;
-  }): Promise<User[]> {
+  }): Promise<LoginUser[]> {
     const { skip, take, cursor, where, orderBy } = params;
 
-    return this.prisma.user.findMany({
+    const users = await this.prisma.user.findMany({
       skip,
       take,
       cursor,
       where,
       orderBy,
     });
+    if (users != null) {
+      users.forEach(function (user) {
+        delete user.hashedPassword;
+        delete user.secret2FA;
+      });
+    }
+
+    return users;
   }
 
   async updateName(dto: UpdateNameDto): Promise<LoginUser> {

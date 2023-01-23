@@ -18,7 +18,7 @@ import { Request } from 'express';
 import { UserService } from './user.service';
 import { DeleteAvatarDto } from './dto/delete-avatar.dto';
 import { UpdateNameDto } from './dto/update-name.dto';
-import { User, UserStatus } from '@prisma/client';
+import { UserStatus } from '@prisma/client';
 import { UpdateStatusDto } from './dto/update-status.dto';
 import { UpdatePointDto } from './dto/update-point.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -26,10 +26,7 @@ import { diskStorage } from 'multer';
 import { v4 as uuidv4 } from 'uuid';
 import * as path from 'path';
 import { UpdateAvatarDto } from './dto/update-avatar.dto';
-
-// front側へ返す必要のない情報を取り除く
-type ExcludeProperties = 'hashedPassword' | 'secret2FA';
-type LoginUser = Omit<User, ExcludeProperties>;
+import { LoginUser } from './types/user';
 
 // FileInterceptorにわたすオプションを設定。
 // destination: ファイルの保存先。フォルダが無い場合には、バックエンドを起動したタイミングでフォルダが生成される
