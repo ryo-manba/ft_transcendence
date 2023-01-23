@@ -481,7 +481,7 @@ export class ChatGateway {
    * @param isAdminDto
    */
   @SubscribeMessage('chat:isAdmin')
-  async getAdminsIds(
+  async isAdmin(
     @ConnectedSocket() client: Socket,
     @MessageBody() dto: IsAdminDto,
   ): Promise<boolean> {
