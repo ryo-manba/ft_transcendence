@@ -30,7 +30,7 @@ import { OnRoomJoinableDto } from './dto/on-room-joinable.dto';
 import { GetAdminsIdsDto } from './dto/get-admins-ids.dto';
 import { GetMessagesCountDto } from './dto/get-messages-count.dto';
 import { SocketJoinRoomDto } from './dto/socket-join-room.dto';
-import type { ChatMessage, CurrentRoom } from './types/chat';
+import type { ChatMessage } from './types/chat';
 
 type ExcludeProperties = 'hashedPassword' | 'createdAt' | 'updatedAt';
 type ClientChatroom = Omit<Chatroom, ExcludeProperties>;
@@ -245,13 +245,13 @@ export class ChatGateway {
    */
   @SubscribeMessage('chat:joinRoomFromOtherUser')
   async joinRoomFromOtherUser(
-    @ConnectedSocket() client: Socket,
     @MessageBody() dto: JoinChatroomDto,
   ): Promise<boolean> {
     this.logger.log(`chat:joinRoomFromOtherUser received -> ${dto.userId}`);
 
-    const joinedRoom = await this.joinRoom(undefined, dto);
-    if (joinedRoom === undefined) {
+    const res = await this.joinRoom(undefined, dto);
+    const joinedRoom = res.joinedRoom;
+    if (!joinedRoom) {
       return false;
     }
 
@@ -291,6 +291,7 @@ export class ChatGateway {
     @MessageBody() dto: JoinChatroomDto,
   ): Promise<{ joinedRoom: ClientChatroom | undefined }> {
     this.logger.log(`chat:joinRoom received -> ${dto.userId}`);
+
     const joinedRoom = await this.chatService.joinRoom(dto);
     if (!joinedRoom) {
       return { joinedRoom: undefined };
@@ -581,23 +582,75 @@ export class ChatGateway {
   async startDirectMessage(
     @ConnectedSocket() client: Socket,
     @MessageBody() dto: CreateDirectMessageDto,
-  ): Promise<{ currentRoom: CurrentRoom | undefined }> {
+  ): Promise<{ chatroom: ClientChatroom | undefined }> {
     this.logger.log('chat:directMessage received');
-    const directMessage = await this.chatService.startDirectMessage(dto);
 
-    if (directMessage) {
-      const rooms = await this.chatService.findJoinedRooms(dto.userId1);
-      // フロントエンドへ送り返す
-      client.emit('chat:getJoinedRooms', rooms);
-      const currentRoom: CurrentRoom = {
-        id: directMessage.id,
-        name: directMessage.name,
+    const existingDMRoom = await this.chatService.findExistingDMRoom(
+      dto.senderId,
+      dto.recipientId,
+    );
+
+    // すでに作成されている場合（自分と相手がすでにチャットルームに入室している）
+    if (existingDMRoom) {
+      const clientChatroom = this.convertToClientChatroom(existingDMRoom);
+
+      return { chatroom: clientChatroom };
+    }
+
+    const roomName = dto.senderName + '_' + dto.recipientName;
+    const createChatroomDto: CreateChatroomDto = {
+      name: roomName,
+      type: ChatroomType.DM,
+      ownerId: dto.senderId,
+    };
+    const createdRoom = await this.chatService.createRoom(createChatroomDto);
+    if (!createdRoom) {
+      this.logger.log('chat:directMessage failed to createRoom');
+
+      return { chatroom: undefined };
+    }
+
+    try {
+      const joinChatroomBase = {
+        chatroomId: createdRoom.id,
+        type: createdRoom.type,
       };
 
-      return { currentRoom };
-    } else {
-      return { currentRoom: undefined };
+      const joinedSender = await this.joinRoom(client, {
+        userId: dto.senderId,
+        ...joinChatroomBase,
+      });
+      if (!joinedSender) {
+        throw new Error('chat:directMessage failed to joinRoom');
+      }
+
+      // 入室させたユーザーに通知を送る（オンラインだった場合は、socket.joinを実行させる）
+      const joinedRecipient = await this.joinRoomFromOtherUser({
+        userId: dto.recipientId,
+        ...joinChatroomBase,
+      });
+      if (!joinedRecipient) {
+        throw new Error('chat:directMessage failed to joinRoomFromOtherUser');
+      }
+    } catch (error) {
+      this.logger.log(error);
+
+      // どちらかの入室処理に失敗した場合は、チャットルームを削除する
+      await this.chatService.deleteRoom({
+        id: createdRoom.id,
+        userId: dto.senderId,
+      });
+      await client.leave(this.generateSocketChatRoomName(createdRoom.id));
+
+      return { chatroom: undefined };
     }
+
+    // DMを始めたユーザーのサイドバーを更新させる
+    // 直接Roomを返してサイドバーを更新させないのは、DMを実行するボタンがフレンド側に存在するため
+    client.emit('chat:updateSideBarRooms');
+    const clientChatroom = this.convertToClientChatroom(createdRoom);
+
+    return { chatroom: clientChatroom };
   }
 
   /**

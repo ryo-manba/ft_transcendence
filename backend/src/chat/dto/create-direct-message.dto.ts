@@ -3,17 +3,17 @@ import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
 export class CreateDirectMessageDto {
   @IsNumber()
   @IsNotEmpty()
-  userId1: number;
+  senderId: number;
 
   @IsNumber()
   @IsNotEmpty()
-  userId2: number;
+  recipientId: number;
 
   @IsString()
   @IsNotEmpty()
-  name1: string;
+  senderName: string;
 
   @IsString()
   @IsNotEmpty()
-  name2: string;
+  recipientName: string;
 }
