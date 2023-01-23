@@ -15,7 +15,7 @@ const Home: NextPage = () => {
   const [isSSValidationError, setIsSSValidationError] = useState(false);
 
   useEffect(() => {
-    // バックエンドのvalidation errorは一律でServer-side validation errorで表示
+    // バックエンドのvalidation errorをキャッチ
     socket.on('exception', (data: { status: string; message: string }) => {
       debug('receive exception: %o', data);
       setIsSSValidationError(true);
@@ -23,8 +23,6 @@ const Home: NextPage = () => {
     });
 
     return () => {
-      socket.off('inviteFriend');
-      socket.off('cancelInvitation');
       socket.off('exception');
     };
   });
