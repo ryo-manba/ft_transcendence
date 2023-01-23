@@ -27,7 +27,7 @@ import { IsBlockedByUserIdDto } from './dto/is-blocked-by-user-id.dto';
 import { OnGetRoomsDto } from './dto/on-get-rooms.dto';
 import { LeaveSocketDto } from './dto/leave-socket.dto';
 import { OnRoomJoinableDto } from './dto/on-room-joinable.dto';
-import { GetAdminsIdsDto } from './dto/get-admins-ids.dto';
+import { IsAdminDto } from './dto/is-admin.dto';
 import { GetMessagesCountDto } from './dto/get-messages-count.dto';
 import { SocketJoinRoomDto } from './dto/socket-join-room.dto';
 import type { ChatMessage } from './types/chat';
@@ -466,28 +466,38 @@ export class ChatGateway {
   ): Promise<boolean> {
     this.logger.log(`chat:addAdmin received -> roomId: ${dto.chatroomId}`);
 
-    const res = await this.chatService.createAdmin(dto);
+    const createdAdmin = await this.chatService.createAdmin(dto);
+    if (!createdAdmin) {
+      return false;
+    }
 
-    return res !== undefined;
+    this.server
+      .to(this.generateSocketUserRoomName(createdAdmin.userId))
+      .emit('chat:addAdmin');
+
+    return true;
   }
 
   /**
-   * チャットルームのadminId一覧を返す
-   * @param GetAdminsIdsDto
+   * ユーザーがadminかどうかを判定する
+   * @param isAdminDto
    */
-  @SubscribeMessage('chat:getAdminIds')
-  async getAdminsIds(
+  @SubscribeMessage('chat:isAdmin')
+  async isAdmin(
     @ConnectedSocket() client: Socket,
-    @MessageBody() dto: GetAdminsIdsDto,
-  ): Promise<number[]> {
-    this.logger.log(`chat:getAdmins received -> roomId: ${dto.roomId}`);
+    @MessageBody() dto: IsAdminDto,
+  ): Promise<boolean> {
+    this.logger.log(`chat:getAdmins received -> roomId: ${dto.chatroomId}`);
 
-    const admins = await this.chatService.findAdmins(dto.roomId);
-    const res = admins.map((admin) => {
-      return admin.userId;
+    const res = await this.prisma.chatroomAdmin.findUnique({
+      where: {
+        chatroomId_userId: {
+          ...dto,
+        },
+      },
     });
 
-    return res;
+    return !!res;
   }
 
   /**
