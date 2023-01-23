@@ -57,7 +57,7 @@ export class UserService {
       where,
       orderBy,
     });
-    if (users != null) {
+    if (users) {
       users.forEach(function (user) {
         delete user.hashedPassword;
         delete user.secret2FA;
