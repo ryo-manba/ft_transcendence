@@ -466,7 +466,7 @@ export class ChatGateway {
 
     const createdAdmin = await this.chatService.createAdmin(dto);
     if (!createdAdmin) {
-      return undefined;
+      return false;
     }
 
     this.server
