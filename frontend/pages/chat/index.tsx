@@ -51,7 +51,7 @@ const Chat: NextPage = () => {
     // バックエンドのvalidation errorは一律でServer-side validation errorで表示
     socket.on('exception', (data: { status: string; message: string }) => {
       debug('receive exception: %o', data);
-      setError('Server-side validation error.');
+      setError('Something went wrong...');
     });
 
     return () => {

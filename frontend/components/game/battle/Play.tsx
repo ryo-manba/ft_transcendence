@@ -325,7 +325,7 @@ export const Play = ({ updateFinishedGameInfo }: Props) => {
       try {
         if (user !== undefined) {
           updateStatusMutation.mutate({
-            userId: user?.id,
+            userId: user.id,
             status: 'ONLINE',
           });
         }
@@ -340,7 +340,7 @@ export const Play = ({ updateFinishedGameInfo }: Props) => {
       try {
         if (user !== undefined) {
           updateStatusMutation.mutate({
-            userId: user?.id,
+            userId: user.id,
             status: 'ONLINE',
           });
         }

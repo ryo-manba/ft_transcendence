@@ -44,7 +44,7 @@ const Home: NextPage = () => {
         anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
       >
         <Alert onClose={handleSnackClose} severity="error">
-          <Typography variant="body2">Server-side validation error.</Typography>
+          <Typography variant="body2">Something went wrong...</Typography>
         </Alert>
       </Snackbar>
     </Layout>
