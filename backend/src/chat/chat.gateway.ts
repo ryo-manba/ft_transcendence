@@ -7,7 +7,7 @@ import {
 } from '@nestjs/websockets';
 import { Chatroom, ChatroomType, ChatroomMembersStatus } from '@prisma/client';
 import { Server, Socket } from 'socket.io';
-import { Logger } from '@nestjs/common';
+import { Logger, UsePipes, ValidationPipe } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { ChatService } from './chat.service';
 import { CreateChatroomDto } from './dto/create-chatroom.dto';
@@ -41,6 +41,7 @@ type ClientChatroom = Omit<Chatroom, ExcludeProperties>;
   },
   namespace: '/chat',
 })
+@UsePipes(new ValidationPipe())
 export class ChatGateway {
   constructor(
     private prisma: PrismaService,
