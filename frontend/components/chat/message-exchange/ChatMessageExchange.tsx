@@ -1,14 +1,15 @@
 import { memo, useState, useEffect, Dispatch, SetStateAction } from 'react';
 import Debug from 'debug';
 import { Socket } from 'socket.io-client';
-import { Box, Collapse, Paper } from '@mui/material';
+import { Paper } from '@mui/material';
 import { Message, CurrentRoom } from 'types/chat';
 import { useQueryUser } from 'hooks/useQueryUser';
 import { Loading } from 'components/common/Loading';
-import { ChatErrorAlert } from 'components/chat/utils/ChatErrorAlert';
 import { ChatTextInput } from 'components/chat/message-exchange/ChatTextInput';
 import { ChatMessageList } from 'components/chat/message-exchange/ChatMessageList';
 import { ChatHeightStyle } from 'components/chat/utils/ChatHeightStyle';
+import { ChatErrorAlert } from 'components/chat/alert/ChatErrorAlert';
+import { ChatAlertCollapse } from 'components/chat/alert/ChatAlertCollapse';
 
 type Props = {
   socket: Socket;
@@ -96,11 +97,9 @@ export const ChatMessageExchange = memo(function ChatMessageExchange({
             socket={socket}
           />
         </div>
-        <Box sx={{ width: '100%' }}>
-          <Collapse in={error !== ''}>
-            <ChatErrorAlert error={error} setError={setError} />
-          </Collapse>
-        </Box>
+        <ChatAlertCollapse show={error !== ''}>
+          <ChatErrorAlert error={error} setError={setError} />
+        </ChatAlertCollapse>
         <form style={{ display: 'flex', alignItems: 'center', padding: '2px' }}>
           <ChatTextInput
             roomName={currentRoom.name}

@@ -5,3 +5,5 @@ public/
 **/*.min.js
 *.config.js
 *.*lint.js
+*.d.ts
+
