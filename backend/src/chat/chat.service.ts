@@ -14,6 +14,7 @@ import {
 import { CreateChatroomDto } from './dto/create-chatroom.dto';
 import { CreateMessageDto } from './dto/create-message.dto';
 import { CreateAdminDto } from './dto/create-admin.dto';
+import { DeleteAdminDto } from './dto/delete-admin.dto';
 import { JoinChatroomDto } from './dto/join-chatroom.dto';
 import type { ChatUser, ChatMessage } from './types/chat';
 import { updatePasswordDto } from './dto/update-password.dto';
@@ -550,6 +551,28 @@ export class ChatService {
       return admin;
     } catch (error) {
       this.logger.log('createAdmin', error);
+
+      return undefined;
+    }
+  }
+
+  /**
+   * チャットルームのadminを削除する
+   * @param CreateAdminDto
+   */
+  async deleteAdmin(dto: DeleteAdminDto): Promise<ChatroomAdmin> {
+    try {
+      const deletedAdmin = await this.prisma.chatroomAdmin.delete({
+        where: {
+          chatroomId_userId: {
+            ...dto,
+          },
+        },
+      });
+
+      return deletedAdmin;
+    } catch (error) {
+      this.logger.log('deleteAdmin', error);
 
       return undefined;
     }

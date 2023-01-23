@@ -15,6 +15,7 @@ import { DeleteChatroomDto } from './dto/delete-chatroom.dto';
 import { JoinChatroomDto } from './dto/join-chatroom.dto';
 import { CreateMessageDto } from './dto/create-message.dto';
 import { CreateAdminDto } from './dto/create-admin.dto';
+import { DeleteAdminDto } from './dto/delete-admin.dto';
 import { updatePasswordDto } from './dto/update-password.dto';
 import { updateMemberStatusDto } from './dto/update-member-status.dto';
 import { CreateDirectMessageDto } from './dto/create-direct-message.dto';
@@ -363,6 +364,14 @@ export class ChatGateway {
     await this.leaveSocket(client, {
       roomId: dto.chatroomId,
     });
+
+    // TODO: adminの判定をする
+    // adminの設定を削除する
+    const deleteAdminDto: DeleteAdminDto = {
+      userId: dto.userId,
+      chatroomId: dto.chatroomId,
+    };
+    await this.chatService.deleteAdmin(deleteAdminDto);
 
     // チャットルームを抜けたことで入室者がいなくなる場合は削除する
     // BAN or MUTEのユーザーは無視する
