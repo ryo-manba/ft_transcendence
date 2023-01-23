@@ -257,7 +257,7 @@ export class AuthService {
         },
         data: {
           has2FA: false,
-          secret2FA: null,
+          secret2FA: undefined,
         },
       });
     } catch {
