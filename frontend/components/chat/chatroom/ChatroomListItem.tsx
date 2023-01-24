@@ -179,17 +179,16 @@ export const ChatroomListItem = memo(function ChatroomListItem({
 
   const banUser = (userId: number) => {
     const banUserInfo = {
-      chatroomId: room.id,
       userId: userId,
-      status: ChatroomMembersStatus.BAN,
+      chatroomId: room.id,
     };
-
-    socket.emit('chat:banUser', banUserInfo, (res: boolean) => {
-      if (res) {
-        setSuccess('User has been banned successfully.');
-      } else {
+    socket.emit('chat:banUser', banUserInfo, (isSuccess: boolean) => {
+      if (!isSuccess) {
         setError('Failed to ban user.');
+
+        return;
       }
+      setSuccess('User has been banned successfully.');
     });
   };
 

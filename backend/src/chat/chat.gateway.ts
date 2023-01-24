@@ -30,7 +30,8 @@ import { OnRoomJoinableDto } from './dto/on-room-joinable.dto';
 import { GetAdminsIdsDto } from './dto/get-admins-ids.dto';
 import { GetMessagesCountDto } from './dto/get-messages-count.dto';
 import { SocketJoinRoomDto } from './dto/socket-join-room.dto';
-import { CreateMuteRelationDto } from './dto/create-mute-relation.dto';
+import { MuteUserDto } from './dto/mute-user.dto';
+import { BanUserDto } from './dto/ban-user.dto';
 import type { ChatMessage, CurrentRoom } from './types/chat';
 
 type ExcludeProperties = 'hashedPassword' | 'createdAt' | 'updatedAt';
@@ -515,18 +516,18 @@ export class ChatGateway {
   @SubscribeMessage('chat:banUser')
   async banUser(
     @ConnectedSocket() client: Socket,
-    @MessageBody() dto: updateMemberStatusDto,
+    @MessageBody() dto: BanUserDto,
   ): Promise<boolean> {
     this.logger.log(`chat:banUser received -> roomId: ${dto.chatroomId}`);
-    const updatedMemberStatus = await this.chatService.updateMemberStatus(dto);
+    const isBanned = await this.chatService.banUser(dto);
 
-    if (updatedMemberStatus) {
+    if (isBanned) {
       this.server
         .to(this.generateSocketUserRoomName(dto.userId))
         .emit('chat:banned');
     }
 
-    return updatedMemberStatus ? true : false;
+    return isBanned;
   }
 
   /**
@@ -551,7 +552,7 @@ export class ChatGateway {
   @SubscribeMessage('chat:muteUser')
   async muteUser(
     @ConnectedSocket() client: Socket,
-    @MessageBody() dto: CreateMuteRelationDto,
+    @MessageBody() dto: MuteUserDto,
   ): Promise<boolean> {
     this.logger.log(`chat:muteUser received -> roomId: ${dto.chatroomId}`);
 
