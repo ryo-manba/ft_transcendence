@@ -10,6 +10,7 @@ import {
   Prisma,
   ChatroomMembersStatus,
   BlockRelation,
+  MuteRelation,
 } from '@prisma/client';
 import { CreateChatroomDto } from './dto/create-chatroom.dto';
 import { CreateMessageDto } from './dto/create-message.dto';
@@ -25,6 +26,8 @@ import { CreateBlockRelationDto } from './dto/create-block-relation.dto';
 import { DeleteBlockRelationDto } from './dto/delete-block-relation.dto';
 import { GetUnblockedUsersDto } from './dto/get-unblocked-users.dto';
 import { CreateDirectMessageDto } from './dto/create-direct-message.dto';
+import { CreateMuteRelationDto } from './dto/create-mute-relation.dto';
+import { MuteUserDto } from './dto/mute-user.dto';
 
 // 2の12乗回の演算が必要という意味
 const saltRounds = 12;
@@ -268,6 +271,7 @@ export class ChatService {
       where: chatroomMembersWhereUniqueInput,
     });
 
+    // TODO: 置き換える
     // NORMAL以外の場合は期間が過ぎていないかを確認する
     if (userInfo.status !== ChatroomMembersStatus.NORMAL) {
       const startAt = userInfo.startAt?.getTime();
@@ -346,6 +350,7 @@ export class ChatService {
       return admin.userId;
     });
 
+    // TODO: 置き換える
     // adminではない かつ statusがNORMAL
     const canSetAdminUsersInfo = await this.prisma.chatroomMembers.findMany({
       where: {
@@ -379,6 +384,7 @@ export class ChatService {
    * @param roomId
    */
   async findChatroomBannedUsers(roomId: number): Promise<ChatUser[]> {
+    // TODO: 置き換える
     // ルームに所属している かつ statusがBAN以外のユーザーを取得する
     const bannedUsersInfo = await this.prisma.chatroomMembers.findMany({
       where: {
@@ -408,6 +414,7 @@ export class ChatService {
    * @param roomId
    */
   async findNotBannedUsers(roomId: number): Promise<ChatUser[]> {
+    // TODO: 置き換える
     // ルームに所属している かつ statusがBAN以外のユーザーを取得する
     const notBannedUsersInfo = await this.prisma.chatroomMembers.findMany({
       where: {
@@ -455,6 +462,7 @@ export class ChatService {
 
     const adminAndOwnerIds = [...adminUserIds, ownerId];
 
+    // TODO: 置き換える
     const normalUsersInfo = await this.prisma.chatroomMembers.findMany({
       where: {
         AND: {
@@ -486,6 +494,7 @@ export class ChatService {
    * @param roomId
    */
   async findChatroomActiveUsers(roomId: number): Promise<ChatUser[]> {
+    // TODO: 置き換える
     const activeUsersInfo = await this.prisma.chatroomMembers.findMany({
       where: {
         AND: {
@@ -513,6 +522,7 @@ export class ChatService {
    * @param roomId
    */
   async findMutedUsers(roomId: number): Promise<ChatUser[]> {
+    // TODO: 置き換える
     const mutedUsersInfo = await this.prisma.chatroomMembers.findMany({
       where: {
         AND: {
@@ -603,6 +613,7 @@ export class ChatService {
   async updateMemberStatus(
     dto: updateMemberStatusDto,
   ): Promise<ChatroomMembers> {
+    // TODO: 置き換える
     // NOTE: とりあえずどちらも期間を1週間に設定している
     const BAN_TIME_IN_DAYS = 7;
     const MUTE_TIME_IN_DAYS = 7;
@@ -919,5 +930,50 @@ export class ChatService {
     });
 
     return chatUnblockedUsers;
+  }
+
+  /**
+   * Muteリレーションを作成する
+   * @param CreateMuteRelationDto
+   */
+  async createMuteRelation(dto: CreateMuteRelationDto): Promise<MuteRelation> {
+    this.logger.log('createMuteRelation: ', dto);
+    try {
+      const muteRelation = await this.prisma.muteRelation.create({
+        data: {
+          ...dto,
+        },
+      });
+
+      return muteRelation;
+    } catch (error) {
+      this.logger.log('createMuteRelation: ', error);
+
+      return undefined;
+    }
+  }
+
+  /**
+   * ユーザーをミュートする
+   * @param MuteUserDto
+   */
+  async muteUser(dto: MuteUserDto): Promise<boolean> {
+    this.logger.log('muteUser: ', dto);
+
+    const MUTE_TIME_IN_DAYS = 7;
+    const startAt = new Date();
+    const endAt = new Date();
+    endAt.setDate(startAt.getDate() + MUTE_TIME_IN_DAYS);
+
+    const createMuteRelationDto: CreateMuteRelationDto = {
+      userId: dto.userId,
+      chatroomId: dto.chatroomId,
+      startAt: startAt,
+      endAt: endAt,
+    };
+
+    const muteRelation = await this.createMuteRelation(createMuteRelationDto);
+
+    return !!muteRelation;
   }
 }

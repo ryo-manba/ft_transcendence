@@ -211,17 +211,18 @@ export const ChatroomListItem = memo(function ChatroomListItem({
 
   const muteUser = (userId: number) => {
     const muteUserInfo = {
-      chatroomId: room.id,
       userId: userId,
-      status: ChatroomMembersStatus.MUTE,
+      chatroomId: room.id,
     };
 
-    socket.emit('chat:muteUser', muteUserInfo, (res: boolean) => {
-      if (res) {
-        setSuccess('User has been muted successfully.');
-      } else {
+    socket.emit('chat:muteUser', muteUserInfo, (isSuccess: boolean) => {
+      if (!isSuccess) {
         setError('Failed to mute user.');
+
+        return;
       }
+
+      setSuccess('User has been muted successfully.');
     });
   };
 

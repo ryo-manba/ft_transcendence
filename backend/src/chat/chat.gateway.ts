@@ -30,6 +30,7 @@ import { OnRoomJoinableDto } from './dto/on-room-joinable.dto';
 import { GetAdminsIdsDto } from './dto/get-admins-ids.dto';
 import { GetMessagesCountDto } from './dto/get-messages-count.dto';
 import { SocketJoinRoomDto } from './dto/socket-join-room.dto';
+import { CreateMuteRelationDto } from './dto/create-mute-relation.dto';
 import type { ChatMessage, CurrentRoom } from './types/chat';
 
 type ExcludeProperties = 'hashedPassword' | 'createdAt' | 'updatedAt';
@@ -148,6 +149,7 @@ export class ChatGateway {
       `chat:sendMessage received -> ${createMessageDto.chatroomId}`,
     );
 
+    // TODO: リレーションに置き換える
     // BAN or MUTEされていないことを確認する
     const userInfo = await this.chatService.findJoinedUserInfo({
       chatroomId_userId: {
@@ -232,6 +234,7 @@ export class ChatGateway {
     if (!userInfo) {
       return false;
     }
+    // TODO:置き換え
     const isBanned = userInfo.status === ChatroomMembersStatus.BAN;
 
     return isBanned;
@@ -366,6 +369,7 @@ export class ChatGateway {
 
     // チャットルームを抜けたことで入室者がいなくなる場合は削除する
     // BAN or MUTEのユーザーは無視する
+    // TODO: 置き換える
     const member = await this.prisma.chatroomMembers.findFirst({
       where: {
         AND: {
@@ -547,12 +551,11 @@ export class ChatGateway {
   @SubscribeMessage('chat:muteUser')
   async muteUser(
     @ConnectedSocket() client: Socket,
-    @MessageBody() dto: updateMemberStatusDto,
+    @MessageBody() dto: CreateMuteRelationDto,
   ): Promise<boolean> {
     this.logger.log(`chat:muteUser received -> roomId: ${dto.chatroomId}`);
-    const res = await this.chatService.updateMemberStatus(dto);
 
-    return res ? true : false;
+    return await this.chatService.muteUser(dto);
   }
 
   /**
