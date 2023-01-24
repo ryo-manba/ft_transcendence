@@ -16,9 +16,11 @@ model Chatroom {
   ownerId         Int
   hashedPassword  String?
   User            User              @relation(fields: [ownerId], references: [id])
+  BanRelation     BanRelation[]
   ChatroomAdmin   ChatroomAdmin[]
   ChatroomMembers ChatroomMembers[]
   Message         Message[]
+  MuteRelation    MuteRelation[]
 }
 
 model ChatroomAdmin {
@@ -94,6 +96,7 @@ model User {
   has2FA          Boolean           @default(false)
   oAuthId         String?           @unique
   secret2FA       String            @default("")
+  BanRelation     BanRelation[]
   blockedByUsers  BlockRelation[]   @relation("blockedBy")
   blockingUsers   BlockRelation[]   @relation("blocking")
   Chatroom        Chatroom[]
@@ -104,6 +107,7 @@ model User {
   loseGameRecord  GameRecord[]      @relation("Loser")
   winGameRecord   GameRecord[]      @relation("Winner")
   Message         Message[]
+  MuteRelation    MuteRelation[]
 }
 
 model BlockRelation {
@@ -116,6 +120,32 @@ model BlockRelation {
 
   @@id([blockingUserId, blockedByUserId])
   @@unique([blockingUserId, blockedByUserId])
+}
+
+model BanRelation {
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @default(now())
+  userId     Int
+  chatroomId Int
+  startAt    DateTime
+  endAt      DateTime
+  Chatroom   Chatroom @relation(fields: [chatroomId], references: [id], onDelete: Cascade)
+  User       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([chatroomId, userId])
+}
+
+model MuteRelation {
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @default(now())
+  userId     Int
+  chatroomId Int
+  startAt    DateTime
+  endAt      DateTime
+  Chatroom   Chatroom @relation(fields: [chatroomId], references: [id], onDelete: Cascade)
+  User       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([chatroomId, userId])
 }
 
 enum ChatroomType {

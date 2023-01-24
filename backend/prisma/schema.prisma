@@ -27,9 +27,11 @@ model User {
   blockingUsers   BlockRelation[]   @relation("blocking")
   blockedByUsers  BlockRelation[]   @relation("blockedBy")
 
-  oAuthId   String? @unique
-  has2FA    Boolean @default(false)
-  secret2FA String  @default("")
+  oAuthId      String?        @unique
+  has2FA       Boolean        @default(false)
+  secret2FA    String         @default("")
+  MuteRelation MuteRelation[]
+  BanRelation  BanRelation[]
 }
 
 enum UserStatus {
@@ -64,6 +66,32 @@ model BlockRelation {
   @@unique([blockingUserId, blockedByUserId])
 }
 
+model MuteRelation {
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @default(now()) @updatedAt
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId     Int
+  chatroom   Chatroom  @relation(fields: [chatroomId], references: [id], onDelete: Cascade)
+  chatroomId Int
+  startAt    DateTime
+  endAt      DateTime
+
+  @@id([chatroomId, userId])
+}
+
+model BanRelation {
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @default(now()) @updatedAt
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId     Int
+  chatroom   Chatroom  @relation(fields: [chatroomId], references: [id], onDelete: Cascade)
+  chatroomId Int
+  startAt    DateTime
+  endAt      DateTime
+
+  @@id([chatroomId, userId])
+}
+
 // オーナー -> チャットルーム作成者(管理者権限も持つ)
 // 管理者   -> あとから追加できる(複数人)
 model Chatroom {
@@ -78,6 +106,8 @@ model Chatroom {
   messages       Message[]
   admins         ChatroomAdmin[]
   members        ChatroomMembers[]
+  MuteRelation   MuteRelation[]
+  BanRelation    BanRelation[]
 }
 
 enum ChatroomType {
