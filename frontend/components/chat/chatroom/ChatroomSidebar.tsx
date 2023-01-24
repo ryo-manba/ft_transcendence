@@ -68,14 +68,25 @@ export const ChatroomSidebar = memo(function ChatroomSidebar({
       );
     });
 
-    // setupが終わったら
-    // 入室中のチャットルーム一覧を取得する
+    // チャットルームのオーナーが変わった場合にルームを差し替える
+    socket.on('chat:changeRoomOwner', (changeRoom: Chatroom) => {
+      debug('changeRoomOwner', changeRoom);
+
+      setRooms((prevRooms) =>
+        prevRooms.map((room) => {
+          return room.id === changeRoom.id ? changeRoom : room;
+        }),
+      );
+    });
+
+    // setupが終わったら入室中のチャットルーム一覧を取得する
     socket.emit('chat:getJoinedRooms', { userId: user.id });
 
     return () => {
       socket.off('chat:getJoinedRooms');
       socket.off('chat:updateSideBarRooms');
       socket.off('chat:joinRoomFromOtherUser');
+      socket.off('chat:changeRoomOwner');
     };
   }, []);
 

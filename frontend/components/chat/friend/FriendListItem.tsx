@@ -1,27 +1,22 @@
 import { useState, memo, useEffect, Dispatch, SetStateAction } from 'react';
-import {
-  ListItem,
-  ListItemText,
-  ListItemAvatar,
-  Box,
-  Collapse,
-} from '@mui/material';
+import { useRouter } from 'next/router';
+import Debug from 'debug';
 import { Socket } from 'socket.io-client';
+import { ListItem, ListItemText, ListItemAvatar } from '@mui/material';
+import { UserStatus } from '@prisma/client';
 import { Friend } from 'types/friend';
+import { Invitation } from 'types/game';
+import { CurrentRoom, Chatroom } from 'types/chat';
+import { useSocketStore } from 'store/game/ClientSocket';
+import { useInvitedFriendStateStore } from 'store/game/InvitedFriendState';
+import { getAvatarImageUrl } from 'api/user/getAvatarImageUrl';
+import { getUserStatusById } from 'api/user/getUserStatusById';
 import { useQueryUser } from 'hooks/useQueryUser';
 import { FriendInfoDialog } from 'components/chat/friend/FriendInfoDialog';
 import { Loading } from 'components/common/Loading';
-import { getAvatarImageUrl } from 'api/user/getAvatarImageUrl';
-import { getUserStatusById } from 'api/user/getUserStatusById';
-import { UserStatus } from '@prisma/client';
-import { useSocketStore } from 'store/game/ClientSocket';
-import { useInvitedFriendStateStore } from 'store/game/InvitedFriendState';
-import { useRouter } from 'next/router';
-import { Invitation } from 'types/game';
 import { BadgedAvatar } from 'components/common/BadgedAvatar';
-import { ChatErrorAlert } from 'components/chat/utils/ChatErrorAlert';
-import Debug from 'debug';
-import { CurrentRoom } from 'types/chat';
+import { ChatErrorAlert } from 'components/chat/alert/ChatErrorAlert';
+import { ChatAlertCollapse } from 'components/chat/alert/ChatAlertCollapse';
 
 type Props = {
   friend: Friend;
@@ -90,29 +85,34 @@ export const FriendListItem = memo(function FriendListItem({
         updateInvitedFriendState({ friendId: friend.id });
         void router.push('game/home');
       } else {
-        setError('You have already sent invitation now!');
+        setError('You already started to play/prepare game');
       }
     });
   };
 
   const directMessage = (friend: Friend) => {
     const DMInfo = {
-      userId1: user.id,
-      userId2: friend.id,
-      name1: user.name,
-      name2: friend.name,
+      senderId: user.id,
+      recipientId: friend.id,
+      senderName: user.name,
+      recipientName: friend.name,
     };
     socket.emit(
       'chat:directMessage',
       DMInfo,
-      (res: { currentRoom: CurrentRoom | undefined }) => {
+      (res: { chatroom: Chatroom | undefined }) => {
         debug('chat:directMessage %o', res);
-        if (res.currentRoom) {
-          socket.emit('chat:changeCurrentRoom', { roomId: res.currentRoom.id });
-          setCurrentRoom(res.currentRoom);
-        } else {
+        if (!res.chatroom) {
           setError('Failed to start direct messages.');
+
+          return;
         }
+
+        const newCurrentRoom: CurrentRoom = {
+          id: res.chatroom.id,
+          name: res.chatroom.name,
+        };
+        setCurrentRoom(newCurrentRoom);
       },
     );
   };
@@ -127,11 +127,9 @@ export const FriendListItem = memo(function FriendListItem({
 
   return (
     <>
-      <Box sx={{ width: '100%' }}>
-        <Collapse in={error !== ''}>
-          <ChatErrorAlert error={error} setError={setError} />
-        </Collapse>
-      </Box>
+      <ChatAlertCollapse show={error !== ''}>
+        <ChatErrorAlert error={error} setError={setError} />
+      </ChatAlertCollapse>
       <ListItem divider button onClick={handleClickOpen}>
         <ListItemAvatar>
           <BadgedAvatar

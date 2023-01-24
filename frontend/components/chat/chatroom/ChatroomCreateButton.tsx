@@ -3,10 +3,9 @@ import { Socket } from 'socket.io-client';
 import { useForm, SubmitHandler, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
+import Debug from 'debug';
 import {
   Button,
-  Box,
-  Collapse,
   TextField,
   Dialog,
   DialogActions,
@@ -22,9 +21,9 @@ import AddCircleOutlineRounded from '@mui/icons-material/AddCircleOutlineRounded
 import { CreateChatroomInfo, ChatroomType, Chatroom } from 'types/chat';
 import { useQueryUser } from 'hooks/useQueryUser';
 import { Loading } from 'components/common/Loading';
-import { ChatErrorAlert } from 'components/chat/utils/ChatErrorAlert';
+import { ChatErrorAlert } from 'components/chat/alert/ChatErrorAlert';
+import { ChatAlertCollapse } from 'components/chat/alert/ChatAlertCollapse';
 import { ChatPasswordForm } from 'components/chat/utils/ChatPasswordForm';
-import Debug from 'debug';
 
 type Props = {
   socket: Socket;
@@ -36,6 +35,11 @@ export type ChatroomForm = {
   password: string;
 };
 
+const ROOM_NAME_MIN_LEN = 1;
+const ROOM_NAME_MAX_LEN = 150;
+const PASSWORD_MIN_LEN = 5;
+const PASSWORD_MAX_LEN = 50;
+
 export const ChatroomCreateButton = memo(function ChatroomCreateButton({
   socket,
   setRooms,
@@ -44,19 +48,26 @@ export const ChatroomCreateButton = memo(function ChatroomCreateButton({
   const [open, setOpen] = useState(false);
   const [roomType, setRoomType] = useState<ChatroomType>(ChatroomType.PUBLIC);
   const [error, setError] = useState('');
-
   const { data: user } = useQueryUser();
+
   if (user === undefined) {
     return <Loading />;
   }
 
   const schema = z.object({
-    roomName: z.string().min(1, { message: 'Room Name field is required' }),
+    roomName: z.string().refine(
+      (value: string) =>
+        ROOM_NAME_MIN_LEN <= value.length && value.length <= ROOM_NAME_MAX_LEN,
+      () => ({
+        message: `Room Name must be at least ${ROOM_NAME_MIN_LEN} and at most ${ROOM_NAME_MAX_LEN} characters`,
+      }),
+    ),
     password: z.string().refine(
       (value: string) =>
-        roomType !== ChatroomType.PROTECTED || value.length >= 5,
+        roomType !== ChatroomType.PROTECTED ||
+        (value.length >= PASSWORD_MIN_LEN && value.length <= PASSWORD_MAX_LEN),
       () => ({
-        message: 'Passwords must be at least 5 characters',
+        message: `Passwords must be at least ${PASSWORD_MIN_LEN} and at most ${PASSWORD_MAX_LEN} characters`,
       }),
     ),
   });
@@ -93,16 +104,21 @@ export const ChatroomCreateButton = memo(function ChatroomCreateButton({
   }, [open]);
 
   const createChatroom = (roomInfo: CreateChatroomInfo) => {
-    socket.emit('chat:createAndJoinRoom', roomInfo, (createdRoom: Chatroom) => {
-      debug('chat:createAndJoinRoom: createdRoom', createdRoom);
+    socket.emit(
+      'chat:createAndJoinRoom',
+      roomInfo,
+      (res: { createdRoom: Chatroom | undefined }) => {
+        debug('chat:createAndJoinRoom: createdRoom', res.createdRoom);
 
-      if (createdRoom === undefined) {
-        setError('Failed to create room.');
-
-        return;
-      }
-      setRooms((prev) => [...prev, createdRoom]);
-    });
+        if (res.createdRoom) {
+          // 直接res.createdRoomをsetするとlintエラーが出る
+          const room: Chatroom = res.createdRoom;
+          setRooms((prev) => [...prev, room]);
+        } else {
+          setError('Failed to create room.');
+        }
+      },
+    );
   };
 
   const onSubmit: SubmitHandler<ChatroomForm> = (data: ChatroomForm) => {
@@ -119,11 +135,9 @@ export const ChatroomCreateButton = memo(function ChatroomCreateButton({
 
   return (
     <>
-      <Box sx={{ width: '100%' }}>
-        <Collapse in={error !== ''}>
-          <ChatErrorAlert error={error} setError={setError} />
-        </Collapse>
-      </Box>
+      <ChatAlertCollapse show={error !== ''}>
+        <ChatErrorAlert error={error} setError={setError} />
+      </ChatAlertCollapse>
       <Button
         color="primary"
         variant="outlined"

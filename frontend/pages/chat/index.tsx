@@ -1,7 +1,6 @@
 import { NextPage } from 'next';
 import { useState, useEffect } from 'react';
 import { io, Socket } from 'socket.io-client';
-import Debug from 'debug';
 import Grid from '@mui/material/Unstable_Grid2';
 import { Message, CurrentRoom } from 'types/chat';
 import { Header } from 'components/common/Header';
@@ -12,6 +11,9 @@ import { ChatMessageExchange } from 'components/chat/message-exchange/ChatMessag
 import { Loading } from 'components/common/Loading';
 import { useQueryUser } from 'hooks/useQueryUser';
 import { ChatHeightStyle } from 'components/chat/utils/ChatHeightStyle';
+import { ChatErrorAlert } from 'components/chat/alert/ChatErrorAlert';
+import { ChatAlertCollapse } from 'components/chat/alert/ChatAlertCollapse';
+import Debug from 'debug';
 
 const Chat: NextPage = () => {
   const debug = Debug('chat');
@@ -20,6 +22,7 @@ const Chat: NextPage = () => {
   const [currentRoom, setCurrentRoom] = useState<CurrentRoom | undefined>(
     undefined,
   );
+  const [error, setError] = useState('');
   const { data: user } = useQueryUser();
 
   useEffect(() => {
@@ -36,13 +39,25 @@ const Chat: NextPage = () => {
     if (!user || !socket) return;
 
     socket.on('chat:handleConnection', () => {
-      debug('handleConnection');
-      // 通知用に自分のルームに入る
+      // 通知を受けるためにソケットの初期設定を行う(入室しているルームにjoinする)
       socket.emit('chat:initSocket', user.id);
+    });
+
+    socket.on('chat:banned', () => {
+      setError('You are banned.');
+      setCurrentRoom(undefined);
+    });
+
+    // バックエンドのvalidation errorをチャッチ
+    socket.on('exception', (data: { status: string; message: string }) => {
+      debug('receive exception: %o', data);
+      setError('Something went wrong...');
     });
 
     return () => {
       socket.off('chat:handleConnection');
+      socket.off('chat:banned');
+      socket.off('exception');
     };
   }, [user, socket]);
 
@@ -55,6 +70,9 @@ const Chat: NextPage = () => {
   return (
     <Layout title="Chat">
       <Header title="Chatroom" />
+      <ChatAlertCollapse show={error !== ''}>
+        <ChatErrorAlert error={error} setError={setError} />
+      </ChatAlertCollapse>
       <Grid
         container
         direction="row"

@@ -7,7 +7,7 @@ import {
 } from '@nestjs/websockets';
 import { Chatroom, ChatroomType, ChatroomMembersStatus } from '@prisma/client';
 import { Server, Socket } from 'socket.io';
-import { Logger } from '@nestjs/common';
+import { Logger, UsePipes, ValidationPipe } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { ChatService } from './chat.service';
 import { CreateChatroomDto } from './dto/create-chatroom.dto';
@@ -15,6 +15,7 @@ import { DeleteChatroomDto } from './dto/delete-chatroom.dto';
 import { JoinChatroomDto } from './dto/join-chatroom.dto';
 import { CreateMessageDto } from './dto/create-message.dto';
 import { CreateAdminDto } from './dto/create-admin.dto';
+import { DeleteAdminDto } from './dto/delete-admin.dto';
 import { updatePasswordDto } from './dto/update-password.dto';
 import { updateMemberStatusDto } from './dto/update-member-status.dto';
 import { CreateDirectMessageDto } from './dto/create-direct-message.dto';
@@ -27,10 +28,13 @@ import { IsBlockedByUserIdDto } from './dto/is-blocked-by-user-id.dto';
 import { OnGetRoomsDto } from './dto/on-get-rooms.dto';
 import { LeaveSocketDto } from './dto/leave-socket.dto';
 import { OnRoomJoinableDto } from './dto/on-room-joinable.dto';
-import { GetAdminsIdsDto } from './dto/get-admins-ids.dto';
+import { IsAdminDto } from './dto/is-admin.dto';
 import { GetMessagesCountDto } from './dto/get-messages-count.dto';
 import { SocketJoinRoomDto } from './dto/socket-join-room.dto';
-import type { ChatMessage, CurrentRoom } from './types/chat';
+import type { ChatMessage } from './types/chat';
+
+type ExcludeProperties = 'hashedPassword' | 'createdAt' | 'updatedAt';
+type ClientChatroom = Omit<Chatroom, ExcludeProperties>;
 
 @WebSocketGateway({
   cors: {
@@ -38,6 +42,7 @@ import type { ChatMessage, CurrentRoom } from './types/chat';
   },
   namespace: '/chat',
 })
+@UsePipes(new ValidationPipe())
 export class ChatGateway {
   constructor(
     private prisma: PrismaService,
@@ -58,6 +63,17 @@ export class ChatGateway {
     this.logger.log(`Disconnect: ${socket.id}`);
   }
 
+  convertToClientChatroom(chatroom: Chatroom): ClientChatroom {
+    const clientChatroom: ClientChatroom = (({
+      hashedPassword, // eslint-disable-line @typescript-eslint/no-unused-vars
+      createdAt, // eslint-disable-line @typescript-eslint/no-unused-vars
+      updatedAt, // eslint-disable-line @typescript-eslint/no-unused-vars
+      ...rest
+    }) => rest)(chatroom);
+
+    return clientChatroom;
+  }
+
   generateSocketUserRoomName = (userId: number) => {
     return 'user' + String(userId);
   };
@@ -75,13 +91,13 @@ export class ChatGateway {
   async CreateAndJoinRoom(
     @ConnectedSocket() client: Socket,
     @MessageBody() dto: CreateChatroomDto,
-  ): Promise<Chatroom> {
-    this.logger.log(`chat:createAndRoom: ${dto.name}`);
+  ): Promise<{ createdRoom: ClientChatroom | undefined }> {
+    this.logger.log(`chat:createAndJoinRoom: ${dto.name}`);
 
     // チャットルームを作成する
     const createdRoom = await this.chatService.createRoom(dto);
     if (!createdRoom) {
-      return undefined;
+      return { createdRoom: undefined };
     }
 
     // 作成者をチャットルームに入室させる
@@ -93,10 +109,12 @@ export class ChatGateway {
     };
     const res = await this.joinRoom(client, joinChatroomDto);
     if (!res) {
-      return undefined;
+      return { createdRoom: undefined };
     }
 
-    return createdRoom;
+    const clientChatroom = this.convertToClientChatroom(createdRoom);
+
+    return { createdRoom: clientChatroom };
   }
 
   /**
@@ -111,8 +129,12 @@ export class ChatGateway {
     this.logger.log(`chat:getJoinedRooms: ${dto.userId}`);
     // ユーザーが入室しているチャットルームを取得する
     const rooms = await this.chatService.findJoinedRooms(dto.userId);
+
+    const clientChatrooms = rooms.map((room) =>
+      this.convertToClientChatroom(room),
+    );
     // フロントエンドへ送り返す
-    client.emit('chat:getJoinedRooms', rooms);
+    client.emit('chat:getJoinedRooms', clientChatrooms);
   }
 
   /**
@@ -123,7 +145,7 @@ export class ChatGateway {
   async onMessage(
     @ConnectedSocket() client: Socket,
     @MessageBody() createMessageDto: CreateMessageDto,
-  ): Promise<string | undefined> {
+  ): Promise<{ error: string | undefined }> {
     this.logger.log(
       `chat:sendMessage received -> ${createMessageDto.chatroomId}`,
     );
@@ -137,10 +159,10 @@ export class ChatGateway {
     });
     if (userInfo.status !== ChatroomMembersStatus.NORMAL) {
       if (userInfo.status === ChatroomMembersStatus.BAN) {
-        return 'You were banned.';
+        return { error: 'You were banned.' };
       }
       if (userInfo.status === ChatroomMembersStatus.MUTE) {
-        return 'You were muted.';
+        return { error: 'You were muted.' };
       }
     }
 
@@ -166,16 +188,16 @@ export class ChatGateway {
       });
       if (blockRelations.length > 0) {
         if (blockRelations[0].blockedByUserId === createMessageDto.userId) {
-          return 'You blocked this user.';
+          return { error: 'You blocked this user.' };
         } else {
-          return 'This user blocked you.';
+          return { error: 'This user blocked you.' };
         }
       }
     }
 
     const message = await this.chatService.addMessage(createMessageDto);
     if (message === undefined) {
-      return 'Failed to send message.';
+      return { error: 'Failed to send message.' };
     }
     const chatMessage: ChatMessage = {
       roomId: message.chatroomId,
@@ -188,7 +210,7 @@ export class ChatGateway {
       .to(this.generateSocketChatRoomName(message.chatroomId))
       .emit('chat:receiveMessage', chatMessage);
 
-    return undefined;
+    return { error: undefined };
   }
 
   /**
@@ -209,8 +231,12 @@ export class ChatGateway {
       },
     };
     const userInfo = await this.chatService.findJoinedUserInfo(data);
+    if (!userInfo) {
+      return false;
+    }
+    const isBanned = userInfo.status === ChatroomMembersStatus.BAN;
 
-    return userInfo.status === ChatroomMembersStatus.BAN;
+    return isBanned;
   }
 
   /**
@@ -220,13 +246,13 @@ export class ChatGateway {
    */
   @SubscribeMessage('chat:joinRoomFromOtherUser')
   async joinRoomFromOtherUser(
-    @ConnectedSocket() client: Socket,
     @MessageBody() dto: JoinChatroomDto,
   ): Promise<boolean> {
     this.logger.log(`chat:joinRoomFromOtherUser received -> ${dto.userId}`);
 
-    const joinedRoom = await this.joinRoom(undefined, dto);
-    if (joinedRoom === undefined) {
+    const res = await this.joinRoom(undefined, dto);
+    const joinedRoom = res.joinedRoom;
+    if (!joinedRoom) {
       return false;
     }
 
@@ -264,11 +290,12 @@ export class ChatGateway {
   async joinRoom(
     @ConnectedSocket() client: Socket | undefined,
     @MessageBody() dto: JoinChatroomDto,
-  ): Promise<Chatroom | undefined> {
+  ): Promise<{ joinedRoom: ClientChatroom | undefined }> {
     this.logger.log(`chat:joinRoom received -> ${dto.userId}`);
+
     const joinedRoom = await this.chatService.joinRoom(dto);
     if (!joinedRoom) {
-      return undefined;
+      return { joinedRoom: undefined };
     }
     if (client) {
       const socketRoomName = this.generateSocketChatRoomName(joinedRoom.id);
@@ -276,7 +303,9 @@ export class ChatGateway {
       await client.join(socketRoomName);
     }
 
-    return joinedRoom;
+    const clientJoinedRoom = this.convertToClientChatroom(joinedRoom);
+
+    return { joinedRoom: clientJoinedRoom };
   }
 
   /**
@@ -308,7 +337,9 @@ export class ChatGateway {
     }
 
     const socketRoomName = this.generateSocketChatRoomName(deletedRoom.id);
-    this.server.to(socketRoomName).emit('chat:deleteRoom', deletedRoom);
+
+    const deletedClientRoom = this.convertToClientChatroom(deletedRoom);
+    this.server.to(socketRoomName).emit('chat:deleteRoom', deletedClientRoom);
 
     // 入室者をルームから退出させる
     this.server.socketsLeave(socketRoomName);
@@ -336,6 +367,14 @@ export class ChatGateway {
       roomId: dto.chatroomId,
     });
 
+    // TODO: adminの判定をする
+    // adminの設定を削除する
+    const deleteAdminDto: DeleteAdminDto = {
+      userId: dto.userId,
+      chatroomId: dto.chatroomId,
+    };
+    await this.chatService.deleteAdmin(deleteAdminDto);
+
     // チャットルームを抜けたことで入室者がいなくなる場合は削除する
     // BAN or MUTEのユーザーは無視する
     const member = await this.prisma.chatroomMembers.findFirst({
@@ -346,15 +385,19 @@ export class ChatGateway {
         },
       },
     });
-    if (!member) {
-      const deleteChatroomDto: DeleteChatroomDto = {
-        id: dto.chatroomId,
-        userId: dto.userId,
-      };
-      const deletedRoom = await this.deleteRoom(deleteChatroomDto);
-      if (!deletedRoom) {
-        this.logger.log('chat:leaveRoom failed to delete room');
-      }
+
+    const memberExists = !!member;
+    if (memberExists) {
+      return true;
+    }
+    const deleteChatroomDto: DeleteChatroomDto = {
+      id: dto.chatroomId,
+      userId: dto.userId,
+    };
+
+    const deletedRoom = await this.deleteRoom(deleteChatroomDto);
+    if (!deletedRoom) {
+      this.logger.log('chat:leaveRoom failed to delete room');
 
       return false;
     }
@@ -390,7 +433,7 @@ export class ChatGateway {
   async onRoomJoinable(
     @ConnectedSocket() client: Socket,
     @MessageBody() dto: OnRoomJoinableDto,
-  ): Promise<Chatroom[]> {
+  ): Promise<ClientChatroom[]> {
     this.logger.log(`chat:getJoinableRooms received -> roomId: ${dto.userId}`);
 
     // Private以外のチャットルームに絞る
@@ -413,7 +456,11 @@ export class ChatGateway {
       return roomsDiff.includes(item.id);
     });
 
-    return viewableAndNotJoinedRooms;
+    const clientJoinableRoom = viewableAndNotJoinedRooms.map((room) =>
+      this.convertToClientChatroom(room),
+    );
+
+    return clientJoinableRoom;
   }
 
   /**
@@ -428,28 +475,38 @@ export class ChatGateway {
   ): Promise<boolean> {
     this.logger.log(`chat:addAdmin received -> roomId: ${dto.chatroomId}`);
 
-    const res = await this.chatService.createAdmin(dto);
+    const createdAdmin = await this.chatService.createAdmin(dto);
+    if (!createdAdmin) {
+      return false;
+    }
 
-    return res !== undefined;
+    this.server
+      .to(this.generateSocketUserRoomName(createdAdmin.userId))
+      .emit('chat:addAdmin');
+
+    return true;
   }
 
   /**
-   * チャットルームのadminId一覧を返す
-   * @param GetAdminsIdsDto
+   * ユーザーがadminかどうかを判定する
+   * @param isAdminDto
    */
-  @SubscribeMessage('chat:getAdminIds')
-  async getAdminsIds(
+  @SubscribeMessage('chat:isAdmin')
+  async isAdmin(
     @ConnectedSocket() client: Socket,
-    @MessageBody() dto: GetAdminsIdsDto,
-  ): Promise<number[]> {
-    this.logger.log(`chat:getAdmins received -> roomId: ${dto.roomId}`);
+    @MessageBody() dto: IsAdminDto,
+  ): Promise<boolean> {
+    this.logger.log(`chat:getAdmins received -> roomId: ${dto.chatroomId}`);
 
-    const admins = await this.chatService.findAdmins(dto.roomId);
-    const res = admins.map((admin) => {
-      return admin.userId;
+    const res = await this.prisma.chatroomAdmin.findUnique({
+      where: {
+        chatroomId_userId: {
+          ...dto,
+        },
+      },
     });
 
-    return res;
+    return !!res;
   }
 
   /**
@@ -478,9 +535,15 @@ export class ChatGateway {
     @MessageBody() dto: updateMemberStatusDto,
   ): Promise<boolean> {
     this.logger.log(`chat:banUser received -> roomId: ${dto.chatroomId}`);
-    const res = await this.chatService.updateMemberStatus(dto);
+    const updatedMemberStatus = await this.chatService.updateMemberStatus(dto);
 
-    return res ? true : false;
+    if (updatedMemberStatus) {
+      this.server
+        .to(this.generateSocketUserRoomName(dto.userId))
+        .emit('chat:banned');
+    }
+
+    return updatedMemberStatus ? true : false;
   }
 
   /**
@@ -538,23 +601,75 @@ export class ChatGateway {
   async startDirectMessage(
     @ConnectedSocket() client: Socket,
     @MessageBody() dto: CreateDirectMessageDto,
-  ): Promise<{ currentRoom: CurrentRoom | undefined }> {
+  ): Promise<{ chatroom: ClientChatroom | undefined }> {
     this.logger.log('chat:directMessage received');
-    const directMessage = await this.chatService.startDirectMessage(dto);
 
-    if (directMessage) {
-      const rooms = await this.chatService.findJoinedRooms(dto.userId1);
-      // フロントエンドへ送り返す
-      client.emit('chat:getJoinedRooms', rooms);
-      const currentRoom: CurrentRoom = {
-        id: directMessage.id,
-        name: directMessage.name,
+    const existingDMRoom = await this.chatService.findExistingDMRoom(
+      dto.senderId,
+      dto.recipientId,
+    );
+
+    // すでに作成されている場合（自分と相手がすでにチャットルームに入室している）
+    if (existingDMRoom) {
+      const clientChatroom = this.convertToClientChatroom(existingDMRoom);
+
+      return { chatroom: clientChatroom };
+    }
+
+    const roomName = dto.senderName + '_' + dto.recipientName;
+    const createChatroomDto: CreateChatroomDto = {
+      name: roomName,
+      type: ChatroomType.DM,
+      ownerId: dto.senderId,
+    };
+    const createdRoom = await this.chatService.createRoom(createChatroomDto);
+    if (!createdRoom) {
+      this.logger.log('chat:directMessage failed to createRoom');
+
+      return { chatroom: undefined };
+    }
+
+    try {
+      const joinChatroomBase = {
+        chatroomId: createdRoom.id,
+        type: createdRoom.type,
       };
 
-      return { currentRoom };
-    } else {
-      return { currentRoom: undefined };
+      const joinedSender = await this.joinRoom(client, {
+        userId: dto.senderId,
+        ...joinChatroomBase,
+      });
+      if (!joinedSender) {
+        throw new Error('chat:directMessage failed to joinRoom');
+      }
+
+      // 入室させたユーザーに通知を送る（オンラインだった場合は、socket.joinを実行させる）
+      const joinedRecipient = await this.joinRoomFromOtherUser({
+        userId: dto.recipientId,
+        ...joinChatroomBase,
+      });
+      if (!joinedRecipient) {
+        throw new Error('chat:directMessage failed to joinRoomFromOtherUser');
+      }
+    } catch (error) {
+      this.logger.log(error);
+
+      // どちらかの入室処理に失敗した場合は、チャットルームを削除する
+      await this.chatService.deleteRoom({
+        id: createdRoom.id,
+        userId: dto.senderId,
+      });
+      await client.leave(this.generateSocketChatRoomName(createdRoom.id));
+
+      return { chatroom: undefined };
     }
+
+    // DMを始めたユーザーのサイドバーを更新させる
+    // 直接Roomを返してサイドバーを更新させないのは、DMを実行するボタンがフレンド側に存在するため
+    client.emit('chat:updateSideBarRooms');
+    const clientChatroom = this.convertToClientChatroom(createdRoom);
+
+    return { chatroom: clientChatroom };
   }
 
   /**
@@ -568,24 +683,28 @@ export class ChatGateway {
   ): Promise<boolean> {
     this.logger.log('chat:changeRoomOwner received');
 
-    try {
-      await this.chatService.update({
-        data: {
-          owner: {
-            connect: {
-              id: dto.ownerId,
-            },
+    const changedRoom = await this.chatService.updateRoom({
+      data: {
+        owner: {
+          connect: {
+            id: dto.ownerId,
           },
         },
-        where: {
-          id: dto.chatroomId,
-        },
-      });
-    } catch (error) {
-      this.logger.log('chat:changeRoomOwner', error);
+      },
+      where: {
+        id: dto.chatroomId,
+      },
+    });
+    if (!changedRoom) {
+      this.logger.log('chat:changeRoomOwner failed');
 
       return false;
     }
+
+    // NOTE: オーナーになったユーザー以外にも伝えることで不整合を避ける
+    this.server
+      .to(this.generateSocketChatRoomName(changedRoom.id))
+      .emit('chat:changeRoomOwner', changedRoom);
 
     return true;
   }

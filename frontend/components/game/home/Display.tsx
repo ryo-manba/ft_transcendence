@@ -1,5 +1,5 @@
 import { Grid, Paper } from '@mui/material';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { usePlayStateStore, PlayState } from 'store/game/PlayState';
 import { Start } from './Start';
 import { Wait } from './Wait';
@@ -18,6 +18,7 @@ export const Display = () => {
   const updatePlayState = usePlayStateStore((store) => store.updatePlayState);
   const { invitedFriendState } = useInvitedFriendStateStore();
   const { updateStatusMutation } = useMutationStatus();
+  const [openMatchError, setOpenMatchError] = useState(false);
 
   useEffect(() => {
     if (user === undefined) {
@@ -64,9 +65,13 @@ export const Display = () => {
         </Grid>
         <Grid item xs={5} sx={{ minWidth: '430px' }}>
           <Paper elevation={2} sx={{ height: '100%' }}>
-            {playState === PlayState.stateNothing && <Start />}
+            {playState === PlayState.stateNothing && (
+              <Start setOpenMatchError={setOpenMatchError} />
+            )}
             {(playState === PlayState.stateWaiting ||
-              playState === PlayState.statePlaying) && <Wait />}
+              playState === PlayState.statePlaying) && (
+              <Wait openMatchError={openMatchError} />
+            )}
           </Paper>
         </Grid>
         <Grid item xs={5} sx={{ height: '60%', minWidth: '430px' }}>
