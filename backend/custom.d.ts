@@ -1,7 +1,7 @@
-import { User } from '@prisma/client';
+import { LoginUser } from 'src/user/types/user';
 
 declare module 'express-serve-static-core' {
   interface Request {
-    user?: Omit<User, 'hashedPassword' | 'secret2FA'>;
+    user?: LoginUser;
   }
 }
