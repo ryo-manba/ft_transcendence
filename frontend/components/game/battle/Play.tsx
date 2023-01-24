@@ -273,7 +273,16 @@ export const Play = ({ updateFinishedGameInfo }: Props) => {
       document.removeEventListener('keydown', onKeyDown);
       document.removeEventListener('keyup', onKeyUp);
     };
-  }, [drawField, countDown, gameInfo, gameParameters, socket]);
+  }, [
+    drawField,
+    countDown,
+    gameInfo,
+    gameParameters,
+    socket,
+    isArrowDownPressed,
+    isArrowUpPressed,
+    user,
+  ]);
 
   useEffect(() => {
     socket.on('updateScores', (newScores: [number, number]) => {
@@ -338,7 +347,7 @@ export const Play = ({ updateFinishedGameInfo }: Props) => {
       socket.off('finishGame');
       socket.off('error');
     };
-  }, [socket]);
+  }, [socket, user]);
 
   useEffect(() => {
     const handleWindowResize = () => {
@@ -352,7 +361,7 @@ export const Play = ({ updateFinishedGameInfo }: Props) => {
     return () => {
       window.removeEventListener('resize', handleWindowResize);
     };
-  }, []);
+  }, [gameSetting.difficulty]);
 
   useEffect(() => {
     const cancelOngoingBattle = () => {
@@ -366,7 +375,7 @@ export const Play = ({ updateFinishedGameInfo }: Props) => {
     return () => {
       router.events.off('routeChangeStart', cancelOngoingBattle);
     };
-  });
+  }, [socket, playState]);
 
   useEffect(() => {
     socket.on('cancelOngoingBattle', () => {

@@ -94,7 +94,7 @@ export const Setting = () => {
     return () => {
       router.events.off('routeChangeStart', cancelOngoingBattle);
     };
-  });
+  }, [socket]);
 
   useEffect(() => {
     socket.on('cancelOngoingBattle', () => {

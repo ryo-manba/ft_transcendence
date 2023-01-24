@@ -24,15 +24,14 @@ export const FriendSidebar = memo(function FriendSidebar({
   const debug = Debug('friend');
   const [friends, setFriends] = useState<Friend[]>([]);
   const { data: user } = useQueryUser();
-  if (user === undefined) {
-    return <Loading fullHeight />;
-  }
 
   const handleRemoveFriendById = (removeId: number) => {
     setFriends((friends) => friends.filter((friend) => friend.id !== removeId));
   };
 
   useEffect(() => {
+    if (user === undefined) return;
+
     let ignore = false;
 
     const setupFriends = async (ignore: boolean) => {
@@ -54,7 +53,11 @@ export const FriendSidebar = memo(function FriendSidebar({
       socket.off('chat:blocked');
       ignore = true;
     };
-  }, []);
+  }, [user]);
+
+  if (user === undefined) {
+    return <Loading fullHeight />;
+  }
 
   const heightStyle = ChatHeightStyle();
 

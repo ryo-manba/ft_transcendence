@@ -35,7 +35,7 @@ export const FriendAddButton = memo(function FriendAddButton({
 
   const handleClose = useCallback(() => {
     setDialogOpen(false);
-  }, [dialogOpen]);
+  }, []);
 
   const addFriends = (friend: Friend) => {
     setFriends((prev) => [...prev, friend]);

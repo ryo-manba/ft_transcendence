@@ -23,7 +23,6 @@ export const Display = () => {
     if (user === undefined) {
       return;
     }
-    updatePlayState(PlayState.stateNothing);
     if (user.status !== 'ONLINE') {
       try {
         updateStatusMutation.mutate({
@@ -34,6 +33,10 @@ export const Display = () => {
         return;
       }
     }
+  }, [user]);
+
+  useEffect(() => {
+    updatePlayState(PlayState.stateNothing);
   }, []);
 
   if (user === undefined) return <Loading />;

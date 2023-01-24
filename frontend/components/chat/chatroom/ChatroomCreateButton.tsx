@@ -83,7 +83,7 @@ export const ChatroomCreateButton = memo(function ChatroomCreateButton({
 
   const handleOpen = useCallback(() => {
     setOpen(true);
-  }, [open]);
+  }, []);
 
   const handleClose = useCallback(() => {
     setOpen(false);

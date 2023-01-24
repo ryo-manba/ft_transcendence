@@ -87,7 +87,7 @@ export const ChatBlockDialog = memo(function ChatBlockDialog({
     return () => {
       ignore = true;
     };
-  }, [selectedBlockSetting, open]);
+  }, [selectedBlockSetting, open, user]);
 
   if (user === undefined) {
     return <Loading />;

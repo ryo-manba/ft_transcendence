@@ -222,7 +222,7 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
     return () => {
       ignore = true;
     };
-  }, [selectedRoomSetting, open]);
+  }, [selectedRoomSetting, open, user]);
 
   if (user === undefined) {
     return <Loading />;

@@ -61,11 +61,12 @@ export const GameGuest = ({ hosts, setHosts }: Props) => {
         socket.emit('acceptInvitation', match);
       }
     },
-    [user],
+    [user, socket],
   );
 
   const handleDenyClick = useCallback(
     (friend: Friend) => {
+      console.log('DENY');
       setHosts(hosts.filter((elem) => elem.id !== friend.id));
       if (user !== undefined) {
         const match: Invitation = {
@@ -75,7 +76,7 @@ export const GameGuest = ({ hosts, setHosts }: Props) => {
         socket.emit('denyInvitation', match);
       }
     },
-    [user],
+    [user, hosts],
   );
 
   useEffect(() => {
@@ -114,7 +115,7 @@ export const GameGuest = ({ hosts, setHosts }: Props) => {
       socket.off('friend:select');
       socket.off('friend:standBy');
     };
-  });
+  }, [user]);
 
   return (
     <>
@@ -137,8 +138,8 @@ export const GameGuest = ({ hosts, setHosts }: Props) => {
       <Dialog open={openDialog}>
         <DialogTitle>Friend Match</DialogTitle>
         <List>
-          {hosts.map((host) => (
-            <ListItem key={host.id}>
+          {hosts.map((host, index) => (
+            <ListItem key={index}>
               <ListItemText
                 primary={host.name}
                 sx={{

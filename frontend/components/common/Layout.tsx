@@ -30,11 +30,11 @@ export const Layout: FC<Props> = ({ children, title = 'Next.js' }) => {
     }
     if (showGuestPaths.includes(router.pathname)) {
       gameSocket.emit(
-        'getInvitedLlist',
+        'getInvitedList',
         { userId: user.id },
         (newHosts: Friend[]) => {
           if (!ignore) {
-            setHosts([...hosts, ...newHosts]);
+            setHosts(newHosts);
           }
         },
       );
@@ -43,15 +43,17 @@ export const Layout: FC<Props> = ({ children, title = 'Next.js' }) => {
     return () => {
       ignore = true;
     };
-  }, [user]);
+  }, [user, hosts]);
 
   useEffect(() => {
     if (!showGuestPaths.includes(router.pathname)) return;
 
     gameSocket.on('inviteFriend', (data: Friend) => {
+      console.log('inviteFriend');
       setHosts([...hosts.filter((elem) => elem.id !== data.id), data]);
     });
     gameSocket.on('cancelInvitation', (data: number) => {
+      console.log('cancelInvitation');
       setHosts(hosts.filter((elem) => elem.id !== data));
     });
 
@@ -59,7 +61,7 @@ export const Layout: FC<Props> = ({ children, title = 'Next.js' }) => {
       gameSocket.off('inviteFriend');
       gameSocket.off('cancelInvitation');
     };
-  });
+  }, [hosts]);
 
   if (router.pathname !== '/' && !isSuccess) {
     return <Loading fullHeight />;

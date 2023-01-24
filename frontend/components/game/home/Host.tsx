@@ -73,7 +73,7 @@ export const Host = () => {
       socket.off('friend:standBy');
       socket.off('denyInvitation');
     };
-  });
+  }, [user, socket]);
 
   const cancelInvitation = useCallback(() => {
     if (invitedFriendState.friendId !== null && user !== undefined) {
@@ -85,7 +85,7 @@ export const Host = () => {
       socket.emit('cancelInvitation', invitation);
       updateInvitedFriendState({ friendId: null });
     }
-  }, [user]);
+  }, [user, invitedFriendState.friendId, socket]);
 
   useEffect(() => {
     router.events.on('routeChangeStart', cancelInvitation);
@@ -93,7 +93,7 @@ export const Host = () => {
     return () => {
       router.events.off('routeChangeStart', cancelInvitation);
     };
-  });
+  }, []);
 
   return (
     <Modal open={true} aria-labelledby="modal-modal-title">

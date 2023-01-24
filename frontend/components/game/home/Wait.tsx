@@ -27,7 +27,8 @@ export const Wait = () => {
     setOpen(false);
     updatePlayState(PlayState.stateNothing);
     socket.emit('playCancel');
-  }, []);
+  }, [playState, socket]);
+
   const updatePlayerNames = usePlayerNamesStore(
     (store) => store.updatePlayerNames,
   );
@@ -72,7 +73,7 @@ export const Wait = () => {
     return () => {
       router.events.off('routeChangeStart', cancelPlay);
     };
-  });
+  }, [cancelPlay]);
 
   return (
     <Grid item>

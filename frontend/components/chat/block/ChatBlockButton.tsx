@@ -23,11 +23,11 @@ export const ChatBlockButton = memo(function ChatBlockButton({
 
   const handleOpen = useCallback(() => {
     setDialogOpen(true);
-  }, [dialogOpen]);
+  }, []);
 
   const handleClose = useCallback(() => {
     setDialogOpen(false);
-  }, [dialogOpen]);
+  }, []);
 
   return (
     <>
