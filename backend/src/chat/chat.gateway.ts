@@ -436,17 +436,16 @@ export class ChatGateway {
   ): Promise<ClientChatroom[]> {
     this.logger.log(`chat:getJoinableRooms received -> roomId: ${dto.userId}`);
 
-    // Private以外のチャットルームに絞る
-    const notPrivate = {
-      where: {
-        type: {
-          notIn: <ChatroomType>'PRIVATE',
-        },
-      },
-    };
+    const notDisplayRoomType = [ChatroomType.PRIVATE, ChatroomType.DM];
 
     // public, protectedのチャットルーム一覧を取得する
-    const viewableRooms = await this.chatService.findAll(notPrivate);
+    const viewableRooms = await this.chatService.findAll({
+      where: {
+        NOT: {
+          type: { in: notDisplayRoomType },
+        },
+      },
+    });
 
     // userが所属しているチャットルームの一覧を取得する
     const joinedRooms = await this.chatService.findJoinedRooms(dto.userId);
