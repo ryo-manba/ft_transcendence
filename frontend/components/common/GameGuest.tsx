@@ -73,7 +73,6 @@ export const GameGuest = ({ hosts, setHosts }: Props) => {
 
   const handleDenyClick = useCallback(
     (friend: Friend) => {
-      console.log('DENY');
       setHosts(hosts.filter((elem) => elem.id !== friend.id));
       if (user !== undefined) {
         const match: Invitation = {

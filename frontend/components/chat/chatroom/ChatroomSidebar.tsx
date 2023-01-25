@@ -88,7 +88,7 @@ export const ChatroomSidebar = memo(function ChatroomSidebar({
       socket.off('chat:joinRoomFromOtherUser');
       socket.off('chat:changeRoomOwner');
     };
-  }, []);
+  }, [user]);
 
   const addRooms = (room: Chatroom) => {
     setRooms((prev) => [...prev, room]);

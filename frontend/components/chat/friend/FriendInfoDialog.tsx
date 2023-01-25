@@ -45,7 +45,7 @@ export const FriendInfoDialog = memo(function FriendInfoDialog({
 
   const initDialog = useCallback(() => {
     setActionType('Profile');
-  }, []);
+  }, [actionType]);
 
   const handleChangeType = (event: SelectChangeEvent) => {
     setActionType(event.target.value as FriendActions);

@@ -49,11 +49,9 @@ export const Layout: FC<Props> = ({ children, title = 'Next.js' }) => {
     if (!showGuestPaths.includes(router.pathname)) return;
 
     gameSocket.on('inviteFriend', (data: Friend) => {
-      console.log('inviteFriend');
       setHosts([...hosts.filter((elem) => elem.id !== data.id), data]);
     });
     gameSocket.on('cancelInvitation', (data: number) => {
-      console.log('cancelInvitation');
       setHosts(hosts.filter((elem) => elem.id !== data));
     });
 

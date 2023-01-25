@@ -45,7 +45,7 @@ export const ChatroomJoinButton = memo(function ChatroomJoinButton({
 
   const handleClose = useCallback(() => {
     setOpen(false);
-  }, []);
+  }, [open]);
 
   return (
     <>

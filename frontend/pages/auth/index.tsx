@@ -101,7 +101,7 @@ const Authenticate = () => {
     } else if (status === 'unauthenticated') {
       void router.push('/');
     }
-  }, [status]);
+  }, [status, session]);
 
   // ValidateのDialogに失敗したらよばれる
   const handleClose = useCallback(() => {

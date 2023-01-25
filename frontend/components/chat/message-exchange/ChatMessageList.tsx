@@ -99,7 +99,7 @@ export const ChatMessageList = memo(function ChatMessageList({
     }, 500);
 
     return false;
-  }, [firstItemIndex, messages, setMessages]);
+  }, [firstItemIndex, messages]);
 
   const itemContent = (index: number, item: Message) => (
     <MessageLeft
