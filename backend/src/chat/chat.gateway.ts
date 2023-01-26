@@ -10,6 +10,7 @@ import { Server, Socket } from 'socket.io';
 import { Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { ChatService } from './chat.service';
+import { BanService } from './ban.service';
 import { CreateChatroomDto } from './dto/create-chatroom.dto';
 import { DeleteChatroomDto } from './dto/delete-chatroom.dto';
 import { JoinChatroomDto } from './dto/join-chatroom.dto';
@@ -32,6 +33,7 @@ import { GetMessagesCountDto } from './dto/get-messages-count.dto';
 import { SocketJoinRoomDto } from './dto/socket-join-room.dto';
 import { MuteUserDto } from './dto/mute-user.dto';
 import { BanUserDto } from './dto/ban-user.dto';
+import { UnbanUserDto } from './dto/unban-user.dto';
 import type { ChatMessage, CurrentRoom } from './types/chat';
 
 type ExcludeProperties = 'hashedPassword' | 'createdAt' | 'updatedAt';
@@ -45,8 +47,9 @@ type ClientChatroom = Omit<Chatroom, ExcludeProperties>;
 })
 export class ChatGateway {
   constructor(
-    private prisma: PrismaService,
+    private readonly prisma: PrismaService,
     private readonly chatService: ChatService,
+    private readonly banService: BanService,
   ) {}
 
   @WebSocketServer() server: Server;
@@ -519,7 +522,7 @@ export class ChatGateway {
     @MessageBody() dto: BanUserDto,
   ): Promise<boolean> {
     this.logger.log(`chat:banUser received -> roomId: ${dto.chatroomId}`);
-    const isBanned = await this.chatService.banUser(dto);
+    const isBanned = await this.banService.banUser(dto);
 
     if (isBanned) {
       this.server
@@ -537,12 +540,11 @@ export class ChatGateway {
   @SubscribeMessage('chat:unbanUser')
   async unbanUser(
     @ConnectedSocket() client: Socket,
-    @MessageBody() dto: updateMemberStatusDto,
+    @MessageBody() dto: UnbanUserDto,
   ): Promise<boolean> {
     this.logger.log(`chat:unbanUser received -> roomId: ${dto.chatroomId}`);
-    const res = await this.chatService.updateMemberStatus(dto);
 
-    return res ? true : false;
+    return await this.banService.unbanUser(dto);
   }
 
   /**

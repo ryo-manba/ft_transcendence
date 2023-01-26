@@ -196,15 +196,16 @@ export const ChatroomListItem = memo(function ChatroomListItem({
     const unbanUserInfo = {
       chatroomId: room.id,
       userId: userId,
-      status: ChatroomMembersStatus.NORMAL,
     };
 
     socket.emit('chat:unbanUser', unbanUserInfo, (res: boolean) => {
-      if (res) {
-        setSuccess('User has been unbanned successfully.');
-      } else {
+      if (!res) {
         setError('Failed to unban user.');
+
+        return;
       }
+
+      setSuccess('User has been unbanned successfully.');
     });
   };
 

@@ -11,7 +11,6 @@ import {
   ChatroomMembersStatus,
   BlockRelation,
   MuteRelation,
-  BanRelation,
 } from '@prisma/client';
 import { CreateChatroomDto } from './dto/create-chatroom.dto';
 import { CreateMessageDto } from './dto/create-message.dto';
@@ -29,8 +28,6 @@ import { GetUnblockedUsersDto } from './dto/get-unblocked-users.dto';
 import { CreateDirectMessageDto } from './dto/create-direct-message.dto';
 import { CreateMuteRelationDto } from './dto/create-mute-relation.dto';
 import { MuteUserDto } from './dto/mute-user.dto';
-import { CreateBanRelationDto } from './dto/create-ban-relation.dto';
-import { BanUserDto } from './dto/ban-user.dto';
 
 // 2の12乗回の演算が必要という意味
 const saltRounds = 12;
@@ -389,20 +386,42 @@ export class ChatService {
   async findChatroomBannedUsers(roomId: number): Promise<ChatUser[]> {
     // TODO: 置き換える
     // ルームに所属している かつ statusがBAN以外のユーザーを取得する
-    const bannedUsersInfo = await this.prisma.chatroomMembers.findMany({
+
+    const now = new Date();
+    const bannedUsersRelation = await this.prisma.banRelation.findMany({
       where: {
-        AND: {
-          chatroomId: roomId,
-          status: ChatroomMembersStatus.BAN,
+        chatroomId: roomId,
+        startAt: {
+          lte: now,
+        },
+        endAt: {
+          gt: now,
         },
       },
       include: {
-        user: true,
+        user: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
       },
     });
 
+    // const bannedUsersInfo = await this.prisma.chatroomMembers.findMany({
+    //   where: {
+    //     AND: {
+    //       chatroomId: roomId,
+    //       status: ChatroomMembersStatus.BAN,
+    //     },
+    //   },
+    //   include: {
+    //     user: true,
+    //   },
+    // });
+
     // idと名前の配列にする
-    const bannedUsers: ChatUser[] = bannedUsersInfo.map((info) => {
+    const bannedUsers: ChatUser[] = bannedUsersRelation.map((info) => {
       return {
         id: info.user.id,
         name: info.user.name,
@@ -978,50 +997,5 @@ export class ChatService {
     const muteRelation = await this.createMuteRelation(createMuteRelationDto);
 
     return !!muteRelation;
-  }
-
-  /**
-   * Banリレーションを作成する
-   * @param CreateBanRelationDto
-   */
-  async createBanRelation(dto: CreateBanRelationDto): Promise<BanRelation> {
-    this.logger.log('createBanRelation: ', dto);
-    try {
-      const banRelation = await this.prisma.banRelation.create({
-        data: {
-          ...dto,
-        },
-      });
-
-      return banRelation;
-    } catch (error) {
-      this.logger.log('createBanRelation: ', error);
-
-      return undefined;
-    }
-  }
-
-  /**
-   * ユーザーをBanする
-   * @param BanUserDto
-   */
-  async banUser(dto: BanUserDto): Promise<boolean> {
-    this.logger.log('banUser: ', dto);
-
-    const BAN_TIME_IN_DAYS = 7;
-    const startAt = new Date();
-    const endAt = new Date();
-    endAt.setDate(startAt.getDate() + BAN_TIME_IN_DAYS);
-
-    const createBanRelationDto: CreateBanRelationDto = {
-      userId: dto.userId,
-      chatroomId: dto.chatroomId,
-      startAt: startAt,
-      endAt: endAt,
-    };
-
-    const banRelation = await this.createBanRelation(createBanRelationDto);
-
-    return !!banRelation;
   }
 }
