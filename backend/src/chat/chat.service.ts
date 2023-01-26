@@ -18,7 +18,6 @@ import { CreateAdminDto } from './dto/create-admin.dto';
 import { JoinChatroomDto } from './dto/join-chatroom.dto';
 import type { ChatUser, ChatMessage } from './types/chat';
 import { updatePasswordDto } from './dto/update-password.dto';
-import { updateMemberStatusDto } from './dto/update-member-status.dto';
 import { GetMessagesDto } from './dto/get-messages.dto';
 import { DeleteChatroomDto } from './dto/delete-chatroom.dto';
 import { DeleteChatroomMemberDto } from './dto/delete-chatroom-member.dto';
@@ -255,42 +254,6 @@ export class ChatService {
     const joinedRoom = joinedRoomInfo.map((room) => room.chatroom);
 
     return joinedRoom;
-  }
-
-  /**
-   * 入室しているユーザーの情報を返す
-   * - ユーザーがMUTE or BANされている場合は期間を確認する
-   * - 期間を越えている場合は、ステータスをNORMALに戻す
-   * @param ChatroomMembersWhereUniqueInput
-   */
-  async findJoinedUserInfo(
-    chatroomMembersWhereUniqueInput: Prisma.ChatroomMembersWhereUniqueInput,
-  ): Promise<ChatroomMembers | null> {
-    // チャットルームメンバーからuserIdが含まれているものを取得する
-    const userInfo = await this.prisma.chatroomMembers.findUnique({
-      where: chatroomMembersWhereUniqueInput,
-    });
-
-    // TODO: 置き換える
-    // NORMAL以外の場合は期間が過ぎていないかを確認する
-    if (userInfo.status !== ChatroomMembersStatus.NORMAL) {
-      const startAt = userInfo.startAt?.getTime();
-      const endAt = userInfo.endAt?.getTime();
-      const now = Date.now();
-
-      // 期間内ではなかった場合NORMALに更新する
-      if (!(startAt <= now && now <= endAt)) {
-        const dto: updateMemberStatusDto = {
-          userId: userInfo.userId,
-          chatroomId: userInfo.chatroomId,
-          status: ChatroomMembersStatus.NORMAL,
-        };
-
-        return await this.updateMemberStatus(dto);
-      }
-    }
-
-    return userInfo;
   }
 
   /**
@@ -626,54 +589,6 @@ export class ChatService {
     }
 
     return true;
-  }
-
-  /**
-   * チャットルームに所属するユーザーのステータスを更新する
-   * @param updateMemberStatusDto
-   */
-  async updateMemberStatus(
-    dto: updateMemberStatusDto,
-  ): Promise<ChatroomMembers> {
-    // TODO: 置き換える
-    // NOTE: とりあえずどちらも期間を1週間に設定している
-    const BAN_TIME_IN_DAYS = 7;
-    const MUTE_TIME_IN_DAYS = 7;
-
-    const isNormal = dto.status === ChatroomMembersStatus.NORMAL;
-    const startAt = isNormal ? null : new Date();
-    let endAt = undefined;
-    if (!isNormal) {
-      endAt = new Date();
-      const durationOfTheDay =
-        dto.status === ChatroomMembersStatus.MUTE
-          ? MUTE_TIME_IN_DAYS
-          : BAN_TIME_IN_DAYS;
-
-      endAt.setDate(startAt.getDate() + durationOfTheDay);
-    }
-
-    try {
-      const member = await this.prisma.chatroomMembers.update({
-        data: {
-          status: dto.status,
-          startAt: startAt,
-          endAt: endAt,
-        },
-        where: {
-          chatroomId_userId: {
-            chatroomId: dto.chatroomId,
-            userId: dto.userId,
-          },
-        },
-      });
-
-      return member;
-    } catch (error) {
-      this.logger.log('updateMemberStatus', error);
-
-      return undefined;
-    }
   }
 
   /**

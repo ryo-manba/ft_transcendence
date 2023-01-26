@@ -3,6 +3,7 @@ import { Prisma, MuteRelation } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { MuteUserDto } from './dto/mute-user.dto';
 import { UnmuteUserDto } from './dto/unmute-user.dto';
+import { IsMutedDto } from './dto/is-muted.dto';
 import type { ChatUser } from './types/chat';
 
 @Injectable()
@@ -219,5 +220,29 @@ export class MuteService {
     });
 
     return mutedUsers;
+  }
+
+  /**
+   * Muteされているか判定する
+   * @param IsMutedDto
+   */
+  async isMuted(dto: IsMutedDto): Promise<boolean> {
+    const now = new Date();
+    const mutedUsers = await this.findAll({
+      where: {
+        chatroomId: dto.chatroomId,
+        userId: dto.userId,
+        startAt: {
+          lte: now,
+        },
+        endAt: {
+          gt: now,
+        },
+      },
+    });
+
+    const isMuted = mutedUsers.length > 0;
+
+    return isMuted;
   }
 }

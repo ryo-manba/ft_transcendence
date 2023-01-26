@@ -19,7 +19,7 @@ import { CreateMessageDto } from './dto/create-message.dto';
 import { CreateAdminDto } from './dto/create-admin.dto';
 import { updatePasswordDto } from './dto/update-password.dto';
 import { CreateDirectMessageDto } from './dto/create-direct-message.dto';
-import { CheckBanDto } from './dto/check-ban.dto';
+import { IsBannedDto } from './dto/is-banned.dto';
 import { DeleteChatroomMemberDto } from './dto/delete-chatroom-member.dto';
 import { UpdateChatroomOwnerDto } from './dto/update-chatroom-owner.dto';
 import { CreateBlockRelationDto } from './dto/create-block-relation.dto';
@@ -155,21 +155,18 @@ export class ChatGateway {
       `chat:sendMessage received -> ${createMessageDto.chatroomId}`,
     );
 
-    // TODO: リレーションに置き換える
-    // BAN or MUTEされていないことを確認する
-    const userInfo = await this.chatService.findJoinedUserInfo({
-      chatroomId_userId: {
-        chatroomId: createMessageDto.chatroomId,
-        userId: createMessageDto.userId,
-      },
-    });
-    if (userInfo.status !== ChatroomMembersStatus.NORMAL) {
-      if (userInfo.status === ChatroomMembersStatus.BAN) {
-        return { error: 'You were banned.' };
-      }
-      if (userInfo.status === ChatroomMembersStatus.MUTE) {
-        return { error: 'You were muted.' };
-      }
+    const isCheckingDto = {
+      userId: createMessageDto.userId,
+      chatroomId: createMessageDto.chatroomId,
+    };
+    const isBanned = await this.banService.isBanned(isCheckingDto);
+    if (isBanned) {
+      return { error: 'You were banned.' };
+    }
+
+    const isMuted = await this.muteService.isMuted(isCheckingDto);
+    if (isMuted) {
+      return { error: 'You were muted.' };
     }
 
     const chatroom = await this.prisma.chatroom.findUnique({
@@ -220,30 +217,17 @@ export class ChatGateway {
   }
 
   /**
-   * ユーザーがチャットルームからBANされているかをチェックする
-   * @param CheckBanDto
-   * @return BANされていたらtrueを返す
+   * ユーザーがBanされているか判定する
+   * @param IsBannedDto
    */
   @SubscribeMessage('chat:isBannedUser')
   async isBannedUser(
     @ConnectedSocket() client: Socket,
-    @MessageBody() dto: CheckBanDto,
+    @MessageBody() dto: IsBannedDto,
   ): Promise<boolean> {
     this.logger.log(`chat:isBannedUser received -> ${dto.userId}`);
 
-    const data = {
-      chatroomId_userId: {
-        ...dto,
-      },
-    };
-    const userInfo = await this.chatService.findJoinedUserInfo(data);
-    if (!userInfo) {
-      return false;
-    }
-    // TODO:置き換え
-    const isBanned = userInfo.status === ChatroomMembersStatus.BAN;
-
-    return isBanned;
+    return await this.banService.isBanned(dto);
   }
 
   /**
@@ -516,7 +500,7 @@ export class ChatGateway {
 
   /**
    * ユーザーをBANする
-   * @param updateMemberStatusDto
+   * @param BanUserDto
    */
   @SubscribeMessage('chat:banUser')
   async banUser(
@@ -537,7 +521,7 @@ export class ChatGateway {
 
   /**
    * ユーザーをUNBANする
-   * @param updateMemberStatusDto
+   * @param UnbanUserDto
    */
   @SubscribeMessage('chat:unbanUser')
   async unbanUser(

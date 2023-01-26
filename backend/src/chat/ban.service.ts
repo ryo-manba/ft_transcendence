@@ -3,6 +3,7 @@ import { Prisma, BanRelation } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { BanUserDto } from './dto/ban-user.dto';
 import { UnbanUserDto } from './dto/unban-user.dto';
+import { IsBannedDto } from './dto/is-banned.dto';
 import type { ChatUser } from './types/chat';
 
 @Injectable()
@@ -216,5 +217,29 @@ export class BanService {
     });
 
     return bannedUsers;
+  }
+
+  /**
+   * Banされているか判定する
+   * @param IsBannedDto
+   */
+  async isBanned(dto: IsBannedDto): Promise<boolean> {
+    const now = new Date();
+    const bannedUsers = await this.findAll({
+      where: {
+        chatroomId: dto.chatroomId,
+        userId: dto.userId,
+        startAt: {
+          lte: now,
+        },
+        endAt: {
+          gt: now,
+        },
+      },
+    });
+
+    const isBanned = bannedUsers.length > 0;
+
+    return isBanned;
   }
 }
