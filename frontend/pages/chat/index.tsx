@@ -13,8 +13,10 @@ import { useQueryUser } from 'hooks/useQueryUser';
 import { ChatHeightStyle } from 'components/chat/utils/ChatHeightStyle';
 import { ChatErrorAlert } from 'components/chat/alert/ChatErrorAlert';
 import { ChatAlertCollapse } from 'components/chat/alert/ChatAlertCollapse';
+import Debug from 'debug';
 
 const Chat: NextPage = () => {
+  const debug = Debug('chat');
   const [socket, setSocket] = useState<Socket>();
   const [messages, setMessages] = useState<Message[]>([]);
   const [currentRoom, setCurrentRoom] = useState<CurrentRoom | undefined>(
@@ -46,9 +48,16 @@ const Chat: NextPage = () => {
       setCurrentRoom(undefined);
     });
 
+    // バックエンドのvalidation errorをチャッチ
+    socket.on('exception', (data: { status: string; message: string }) => {
+      debug('receive exception: %o', data);
+      setError('Something went wrong...');
+    });
+
     return () => {
       socket.off('chat:handleConnection');
       socket.off('chat:banned');
+      socket.off('exception');
     };
   }, [user, socket]);
 

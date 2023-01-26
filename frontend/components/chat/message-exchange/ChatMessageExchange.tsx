@@ -18,6 +18,8 @@ type Props = {
   setMessages: Dispatch<SetStateAction<Message[]>>;
 };
 
+const MAX_MESSAGE_LENGTH = 2000;
+
 export const ChatMessageExchange = memo(function ChatMessageExchange({
   socket,
   currentRoom,
@@ -51,6 +53,14 @@ export const ChatMessageExchange = memo(function ChatMessageExchange({
   }
 
   const sendMessage = (text: string) => {
+    if (MAX_MESSAGE_LENGTH < text.length) {
+      setError(
+        `The maximum length of a message is ${MAX_MESSAGE_LENGTH} characters.`,
+      );
+
+      return;
+    }
+
     const message = {
       userId: user.id,
       userName: user.name,
