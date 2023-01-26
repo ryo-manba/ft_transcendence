@@ -3,6 +3,7 @@ import { Prisma, MuteRelation } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { MuteUserDto } from './dto/mute-user.dto';
 import { UnmuteUserDto } from './dto/unmute-user.dto';
+import type { ChatUser } from './types/chat';
 
 @Injectable()
 export class MuteService {
@@ -182,5 +183,41 @@ export class MuteService {
     }
 
     return true;
+  }
+
+  /**
+   * Muteされているユーザ一覧を返す
+   * @param chatroomId
+   */
+  async findMutedUsers(chatroomId: number): Promise<ChatUser[]> {
+    this.logger.log('findMutedUser: chatroomId ->', chatroomId);
+    const now = new Date();
+    const mutedUsersRelation = await this.prisma.muteRelation.findMany({
+      where: {
+        chatroomId: chatroomId,
+        startAt: {
+          lte: now,
+        },
+        endAt: {
+          gt: now,
+        },
+      },
+      include: {
+        user: true,
+      },
+    });
+
+    if (mutedUsersRelation.length === 0) {
+      return [];
+    }
+
+    const mutedUsers: ChatUser[] = mutedUsersRelation.map((relation) => {
+      return {
+        id: relation.user.id,
+        name: relation.user.name,
+      };
+    });
+
+    return mutedUsers;
   }
 }

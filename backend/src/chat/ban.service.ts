@@ -184,7 +184,7 @@ export class BanService {
 
   /**
    * Banされているユーザ一覧を返す
-   * @param UnbanUserDto
+   * @param chatroomId
    */
   async findBannedUsers(chatroomId: number): Promise<ChatUser[]> {
     this.logger.log('findBannedUser: chatroomId ->', chatroomId);
@@ -203,8 +203,6 @@ export class BanService {
         user: true,
       },
     });
-
-    this.logger.log('bannedUsersRelation:', bannedUsersRelation);
 
     if (bannedUsersRelation.length === 0) {
       return [];

@@ -24,7 +24,8 @@ import { Loading } from 'components/common/Loading';
 import { ChatroomSettingDetailDialog } from 'components/chat/chatroom/ChatroomSettingDetailDialog';
 import { ChatroomSettingItems } from 'components/chat/chatroom/ChatroomSettingItems';
 import { ChatPasswordForm } from 'components/chat/utils/ChatPasswordForm';
-import { fetchChatroomMutedUsers } from 'api/chat/fetchChatroomMutedUsers';
+import { fetchMutedUsers } from 'api/chat/fetchMutedUsers';
+import { fetchNotMutedUsers } from 'api/chat/fetchNotMutedUsers';
 import { fetchBannedUsers } from 'api/chat/fetchBannedUsers';
 
 type Props = {
@@ -166,16 +167,23 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
   };
 
   const fetchCanMuteUsers = async (ignore: boolean) => {
-    const notMutedUsers = await fetchChatroomNormalUsers({
+    if (!user) return;
+
+    const notMutedUsers = await fetchNotMutedUsers({
       roomId: room.id,
     });
+
+    const canMuteUsers = notMutedUsers.filter(
+      (notMutedUser) => notMutedUser.id !== user.id,
+    );
+
     if (!ignore) {
-      setNotMutedUsers(notMutedUsers);
+      setNotMutedUsers(canMuteUsers);
     }
   };
 
   const fetchCanUnmuteUsers = async (ignore: boolean) => {
-    const mutedUsers = await fetchChatroomMutedUsers({
+    const mutedUsers = await fetchMutedUsers({
       roomId: room.id,
     });
     if (!ignore) {

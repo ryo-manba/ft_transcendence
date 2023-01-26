@@ -10,7 +10,7 @@ const endpoint = `${
   process.env.NEXT_PUBLIC_API_URL as string
 }/chat/muted-users`;
 
-export const fetchChatroomMutedUsers = async ({ roomId }: Props) => {
+export const fetchMutedUsers = async ({ roomId }: Props) => {
   const debug = Debug('chat');
   try {
     const response = await axios.get<ChatUser[]>(endpoint, {

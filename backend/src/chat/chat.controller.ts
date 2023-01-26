@@ -1,6 +1,7 @@
 import { Query, Controller, Get, ParseIntPipe } from '@nestjs/common';
 import { ChatService } from './chat.service';
 import { BanService } from './ban.service';
+import { MuteService } from './mute.service';
 import type { ChatUser, ChatMessage } from './types/chat';
 
 @Controller('chat')
@@ -8,6 +9,7 @@ export class ChatController {
   constructor(
     private readonly chatService: ChatService,
     private readonly banService: BanService,
+    private readonly muteService: MuteService,
   ) {}
 
   /**
@@ -33,7 +35,31 @@ export class ChatController {
   async findMutedUsers(
     @Query('roomId', ParseIntPipe) roomId: number,
   ): Promise<ChatUser[]> {
-    return await this.chatService.findMutedUsers(roomId);
+    return await this.muteService.findMutedUsers(roomId);
+  }
+
+  /**
+   * Muteされていないユーザ一覧を返す
+   * @param roomId
+   */
+  @Get('non-muted')
+  async findNotMutedUsers(
+    @Query('roomId', ParseIntPipe) roomId: number,
+  ): Promise<ChatUser[]> {
+    const chatroomUsers = await this.chatService.findChatroomActiveUsers(
+      roomId,
+    );
+    const mutedUsers = await this.muteService.findMutedUsers(roomId);
+    if (mutedUsers.length === 0) {
+      return chatroomUsers;
+    }
+
+    const mutedIds = mutedUsers.map((user) => user.id);
+    const notBannedUsers = chatroomUsers.filter(
+      (user) => !mutedIds.includes(user.id),
+    );
+
+    return notBannedUsers;
   }
 
   /**
