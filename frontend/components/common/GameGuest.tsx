@@ -171,8 +171,8 @@ export const GameGuest = ({ hosts, setHosts }: Props) => {
           </Alert>
         </Collapse>
         <List>
-          {hosts.map((host, index) => (
-            <ListItem key={index}>
+          {hosts.map((host) => (
+            <ListItem key={host.id}>
               <ListItemText
                 primary={host.name}
                 sx={{
