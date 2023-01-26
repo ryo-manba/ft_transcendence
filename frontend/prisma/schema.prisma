@@ -129,10 +129,9 @@ model BanRelation {
   chatroomId Int
   startAt    DateTime
   endAt      DateTime
+  id         Int      @id @default(autoincrement())
   Chatroom   Chatroom @relation(fields: [chatroomId], references: [id], onDelete: Cascade)
   User       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@id([chatroomId, userId])
 }
 
 model MuteRelation {
@@ -142,10 +141,9 @@ model MuteRelation {
   chatroomId Int
   startAt    DateTime
   endAt      DateTime
+  id         Int      @id @default(autoincrement())
   Chatroom   Chatroom @relation(fields: [chatroomId], references: [id], onDelete: Cascade)
   User       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@id([chatroomId, userId])
 }
 
 enum ChatroomType {

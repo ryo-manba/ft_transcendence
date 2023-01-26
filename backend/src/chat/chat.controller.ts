@@ -1,10 +1,14 @@
 import { Query, Controller, Get, ParseIntPipe } from '@nestjs/common';
 import { ChatService } from './chat.service';
+import { BanService } from './ban.service';
 import type { ChatUser, ChatMessage } from './types/chat';
 
 @Controller('chat')
 export class ChatController {
-  constructor(private readonly chatService: ChatService) {}
+  constructor(
+    private readonly chatService: ChatService,
+    private readonly banService: BanService,
+  ) {}
 
   /**
    * @param roomId
@@ -22,19 +26,6 @@ export class ChatController {
   /**
    * @param roomId
    * @return 以下の情報をオブジェクトの配列で返す
-   * - BANされていないユーザーのID
-   * - BANされていないユーザーの名前
-   */
-  @Get('non-banned')
-  async findNotBannedUsers(
-    @Query('roomId', ParseIntPipe) roomId: number,
-  ): Promise<ChatUser[]> {
-    return await this.chatService.findNotBannedUsers(roomId);
-  }
-
-  /**
-   * @param roomId
-   * @return 以下の情報をオブジェクトの配列で返す
    * - MUTEされているユーザーのID
    * - MUTEされているユーザーの名前
    */
@@ -46,16 +37,38 @@ export class ChatController {
   }
 
   /**
+   * Banされているユーザ一覧を返す
    * @param roomId
-   * @return 以下を満たすユーザーのIDと名前の配列を返す
-   * - BANされているユーザーのID
-   * - BANされているユーザーの名前
    */
   @Get('banned-users')
   async findChatroomBannedUsers(
     @Query('roomId', ParseIntPipe) roomId: number,
   ): Promise<ChatUser[]> {
-    return await this.chatService.findChatroomBannedUsers(roomId);
+    return await this.banService.findBannedUsers(roomId);
+  }
+
+  /**
+   * Banされていないユーザ一覧を返す
+   * @param roomId
+   */
+  @Get('non-banned')
+  async findNotBannedUsers(
+    @Query('roomId', ParseIntPipe) roomId: number,
+  ): Promise<ChatUser[]> {
+    const chatroomUsers = await this.chatService.findChatroomActiveUsers(
+      roomId,
+    );
+    const bannedUsers = await this.banService.findBannedUsers(roomId);
+    if (bannedUsers.length === 0) {
+      return chatroomUsers;
+    }
+
+    const bannedIds = bannedUsers.map((user) => user.id);
+    const notBannedUsers = chatroomUsers.filter(
+      (user) => !bannedIds.includes(user.id),
+    );
+
+    return notBannedUsers;
   }
 
   /**

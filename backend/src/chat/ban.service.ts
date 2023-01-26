@@ -3,6 +3,7 @@ import { Prisma, BanRelation } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { BanUserDto } from './dto/ban-user.dto';
 import { UnbanUserDto } from './dto/unban-user.dto';
+import type { ChatUser } from './types/chat';
 
 @Injectable()
 export class BanService {
@@ -179,5 +180,43 @@ export class BanService {
     }
 
     return true;
+  }
+
+  /**
+   * Banされているユーザ一覧を返す
+   * @param UnbanUserDto
+   */
+  async findBannedUsers(chatroomId: number): Promise<ChatUser[]> {
+    this.logger.log('findBannedUser: chatroomId ->', chatroomId);
+    const now = new Date();
+    const bannedUsersRelation = await this.prisma.banRelation.findMany({
+      where: {
+        chatroomId: chatroomId,
+        startAt: {
+          lte: now,
+        },
+        endAt: {
+          gt: now,
+        },
+      },
+      include: {
+        user: true,
+      },
+    });
+
+    this.logger.log('bannedUsersRelation:', bannedUsersRelation);
+
+    if (bannedUsersRelation.length === 0) {
+      return [];
+    }
+
+    const bannedUsers: ChatUser[] = bannedUsersRelation.map((relation) => {
+      return {
+        id: relation.user.id,
+        name: relation.user.name,
+      };
+    });
+
+    return bannedUsers;
   }
 }

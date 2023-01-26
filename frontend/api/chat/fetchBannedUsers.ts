@@ -10,7 +10,7 @@ const endpoint = `${
   process.env.NEXT_PUBLIC_API_URL as string
 }/chat/banned-users`;
 
-export const fetchChatroomBannedUsers = async ({ roomId }: Props) => {
+export const fetchBannedUsers = async ({ roomId }: Props) => {
   const debug = Debug('chat');
   try {
     const response = await axios.get<ChatUser[]>(endpoint, {
