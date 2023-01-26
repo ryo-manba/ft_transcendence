@@ -5,7 +5,7 @@ import {
   WebSocketServer,
   ConnectedSocket,
 } from '@nestjs/websockets';
-import { Chatroom, ChatroomType, ChatroomMembersStatus } from '@prisma/client';
+import { Chatroom, ChatroomType } from '@prisma/client';
 import { Server, Socket } from 'socket.io';
 import { Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
@@ -357,20 +357,25 @@ export class ChatGateway {
       roomId: dto.chatroomId,
     });
 
-    // チャットルームを抜けたことで入室者がいなくなる場合は削除する
+    // 退出することにより入室者がいなくなる場合はチャットルームを削除する
     // BAN or MUTEのユーザーは無視する
-    // TODO: 置き換える
-    const member = await this.prisma.chatroomMembers.findFirst({
-      where: {
-        AND: {
+    const bannedUsers = await this.banService.findBannedUsers(dto.chatroomId);
+    const mutedUsers = await this.muteService.findMutedUsers(dto.chatroomId);
+    const bannedIds = bannedUsers.map((user) => user.id);
+    const mutedIds = mutedUsers.map((user) => user.id);
+    const excludeIdSets = new Set([...bannedIds, ...mutedIds]);
+    const excludeIds = [...excludeIdSets];
+    const chatroomMembers =
+      await this.chatService.findChatroomMembersToChatUsers({
+        where: {
           chatroomId: dto.chatroomId,
-          status: ChatroomMembersStatus.NORMAL,
+          userId: {
+            notIn: excludeIds,
+          },
         },
-      },
-    });
+      });
 
-    const memberExists = !!member;
-    if (memberExists) {
+    if (chatroomMembers.length > 0) {
       return true;
     }
     const deleteChatroomDto: DeleteChatroomDto = {
@@ -535,7 +540,7 @@ export class ChatGateway {
 
   /**
    * ユーザーをMUTEする
-   * @param updateChatMemberStatusDto
+   * @param MuteUserDto
    */
   @SubscribeMessage('chat:muteUser')
   async muteUser(
@@ -549,7 +554,7 @@ export class ChatGateway {
 
   /**
    * ユーザーをUNMUTEする
-   * @param updateChatMemberStatusDto
+   * @param UnmuteUserDto
    */
   @SubscribeMessage('chat:unmuteUser')
   async unmuteUser(
@@ -577,7 +582,7 @@ export class ChatGateway {
 
     if (directMessage) {
       const rooms = await this.chatService.findJoinedRooms(dto.userId1);
-      // フロントエンドへ送り返す
+
       client.emit('chat:getJoinedRooms', rooms);
       const currentRoom: CurrentRoom = {
         id: directMessage.id,
