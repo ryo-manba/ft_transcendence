@@ -36,15 +36,12 @@ model ChatroomAdmin {
 }
 
 model ChatroomMembers {
-  createdAt  DateTime              @default(now())
-  updatedAt  DateTime              @default(now())
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @default(now())
   chatroomId Int
   userId     Int
-  status     ChatroomMembersStatus @default(NORMAL)
-  endAt      DateTime?
-  startAt    DateTime?
-  Chatroom   Chatroom              @relation(fields: [chatroomId], references: [id], onDelete: Cascade)
-  User       User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  Chatroom   Chatroom @relation(fields: [chatroomId], references: [id], onDelete: Cascade)
+  User       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@id([chatroomId, userId])
   @@unique([chatroomId, userId])
@@ -157,10 +154,4 @@ enum UserStatus {
   ONLINE
   PLAYING
   OFFLINE
-}
-
-enum ChatroomMembersStatus {
-  NORMAL
-  BAN
-  MUTE
 }
