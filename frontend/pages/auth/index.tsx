@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { useRouter } from 'next/router';
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import { useSession, signOut } from 'next-auth/react';
 import { LoginResult, LoginResultStatus } from 'types';
 import { UserInfo } from 'types/auth';
@@ -9,7 +9,7 @@ import { Loading } from 'components/common/Loading';
 import Debug from 'debug';
 
 const Authenticate = () => {
-  const debug = Debug('authenticate');
+  const debug = useMemo(() => Debug('authenticate'), []);
   const router = useRouter();
   const { data: session, status } = useSession();
   const [openValidationDialog, setOpenValidationDialog] = useState(false);

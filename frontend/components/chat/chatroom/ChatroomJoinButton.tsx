@@ -1,4 +1,4 @@
-import { memo, useState, useCallback } from 'react';
+import { memo, useState, useCallback, useMemo } from 'react';
 import { Socket } from 'socket.io-client';
 import { Button } from '@mui/material';
 import AddCircleOutlineRounded from '@mui/icons-material/AddCircleOutlineRounded';
@@ -17,7 +17,7 @@ export const ChatroomJoinButton = memo(function ChatroomJoinButton({
   socket,
   addRooms,
 }: Props) {
-  const debug = Debug('chat');
+  const debug = useMemo(() => Debug('chat'), []);
   const [open, setOpen] = useState(false);
   const [joinableRooms, setJoinableRooms] = useState<Chatroom[]>([]);
   const { data: user } = useQueryUser();

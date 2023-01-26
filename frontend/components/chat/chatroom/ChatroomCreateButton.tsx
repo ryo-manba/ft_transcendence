@@ -1,4 +1,11 @@
-import { useState, memo, useCallback, Dispatch, SetStateAction } from 'react';
+import {
+  useState,
+  memo,
+  useCallback,
+  Dispatch,
+  SetStateAction,
+  useMemo,
+} from 'react';
 import { Socket } from 'socket.io-client';
 import { useForm, SubmitHandler, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -44,7 +51,7 @@ export const ChatroomCreateButton = memo(function ChatroomCreateButton({
   socket,
   setRooms,
 }: Props) {
-  const debug = Debug('chat');
+  const debug = useMemo(() => Debug('chat'), []);
   const [open, setOpen] = useState(false);
   const [roomType, setRoomType] = useState<ChatroomType>(ChatroomType.PUBLIC);
   const [error, setError] = useState('');

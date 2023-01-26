@@ -1,5 +1,5 @@
 import { Grid, Typography, Zoom } from '@mui/material';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSocketStore } from 'store/game/ClientSocket';
 import { usePlayerNamesStore } from 'store/game/PlayerNames';
 import { usePlayStateStore, PlayState } from 'store/game/PlayState';
@@ -89,7 +89,7 @@ const getGameParameters = (
 };
 
 export const Play = ({ updateFinishedGameInfo }: Props) => {
-  const debug = Debug('game');
+  const debug = useMemo(() => Debug('game'), []);
 
   const getCanvasWidth = () => {
     const { innerWidth, innerHeight } = window;

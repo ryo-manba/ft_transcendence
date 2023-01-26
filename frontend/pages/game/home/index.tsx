@@ -5,12 +5,12 @@ import { Header } from 'components/common/Header';
 import { useSocketStore } from 'store/game/ClientSocket';
 import Debug from 'debug';
 import { PlayState, usePlayStateStore } from 'store/game/PlayState';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Alert, Snackbar, Typography } from '@mui/material';
 
 const Home: NextPage = () => {
   const { socket } = useSocketStore();
-  const debug = Debug('game');
+  const debug = useMemo(() => Debug('game'), []);
   const updatePlayState = usePlayStateStore((store) => store.updatePlayState);
   const [isSSValidationError, setIsSSValidationError] = useState(false);
 
