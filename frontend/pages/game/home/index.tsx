@@ -25,7 +25,7 @@ const Home: NextPage = () => {
     return () => {
       socket.off('exception');
     };
-  }, []);
+  }, [debug, socket, updatePlayState]);
 
   const handleSnackClose = () => {
     setIsSSValidationError(false);

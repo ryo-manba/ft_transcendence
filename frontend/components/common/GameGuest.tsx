@@ -82,7 +82,7 @@ export const GameGuest = ({ hosts, setHosts }: Props) => {
         socket.emit('denyInvitation', match);
       }
     },
-    [user, hosts],
+    [user, hosts, socket, setHosts],
   );
 
   useEffect(() => {
@@ -121,7 +121,14 @@ export const GameGuest = ({ hosts, setHosts }: Props) => {
       socket.off('friend:select');
       socket.off('friend:standBy');
     };
-  }, [user]);
+  }, [
+    user,
+    socket,
+    router,
+    updatePlayState,
+    updatePlayerNames,
+    updateStatusMutation,
+  ]);
 
   return (
     <>

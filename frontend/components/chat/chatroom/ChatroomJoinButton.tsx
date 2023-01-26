@@ -35,17 +35,17 @@ export const ChatroomJoinButton = memo(function ChatroomJoinButton({
         setJoinableRooms(rooms);
       },
     );
-  }, []);
+  }, [debug, socket, user.id]);
 
   const handleOpen = useCallback(() => {
     // チャットルームを探すボタンを押下したら公開されているチャットルーム一覧を取得する
     getJoinableRooms();
     setOpen(true);
-  }, [open]);
+  }, [getJoinableRooms]);
 
   const handleClose = useCallback(() => {
     setOpen(false);
-  }, [open]);
+  }, []);
 
   return (
     <>

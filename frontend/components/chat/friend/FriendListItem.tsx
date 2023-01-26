@@ -61,7 +61,7 @@ export const FriendListItem = memo(function FriendListItem({
     return () => {
       ignore = true;
     };
-  }, []);
+  }, [debug, friend.id]);
 
   const inviteGame = async (friend: Friend) => {
     // 最新のユーザ状態を取り直す

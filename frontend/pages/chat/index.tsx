@@ -59,7 +59,7 @@ const Chat: NextPage = () => {
       socket.off('chat:banned');
       socket.off('exception');
     };
-  }, [user, socket]);
+  }, [user, socket, debug]);
 
   if (socket === undefined || user === undefined) {
     return <Loading fullHeight />;

@@ -86,7 +86,14 @@ export const Watch = () => {
       socket.off('watchListed');
       socket.off('joinGameRoom');
     };
-  }, [socket, user]);
+  }, [
+    socket,
+    user,
+    router,
+    updateGameSetting,
+    updatePlayState,
+    updateStatusMutation,
+  ]);
 
   const watchGame = (room: WatchInfo) => {
     const playerNames: [string, string] = [room.name1, room.name2];

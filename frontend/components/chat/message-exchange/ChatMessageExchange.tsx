@@ -46,7 +46,7 @@ export const ChatMessageExchange = memo(function ChatMessageExchange({
     return () => {
       socket.off('chat:receiveMessage');
     };
-  }, [user, currentRoom]);
+  }, [user, currentRoom, debug, setMessages, socket]);
 
   if (user === undefined) {
     return <Loading fullHeight />;

@@ -66,7 +66,7 @@ export const ChatroomListItem = memo(function ChatroomListItem({
       socket.off('chat:addAdmin');
       ignore = true;
     };
-  }, [user, socket]);
+  }, [room.id, socket, user]);
 
   // ルームをクリックしたときの処理
   const changeCurrentRoom = (roomId: number, roomName: string) => {

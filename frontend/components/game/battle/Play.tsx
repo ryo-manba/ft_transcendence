@@ -282,6 +282,8 @@ export const Play = ({ updateFinishedGameInfo }: Props) => {
     isArrowDownPressed,
     isArrowUpPressed,
     user,
+    playerNames,
+    waitMillSec,
   ]);
 
   useEffect(() => {
@@ -296,7 +298,7 @@ export const Play = ({ updateFinishedGameInfo }: Props) => {
     return () => {
       socket.off('updateScores');
     };
-  }, [socket]);
+  }, [socket, gameSetting, updateGameSetting]);
 
   useEffect(() => {
     socket.on(
@@ -370,7 +372,15 @@ export const Play = ({ updateFinishedGameInfo }: Props) => {
       socket.off('error');
       socket.off('exception');
     };
-  }, [socket, user]);
+  }, [
+    socket,
+    user,
+    debug,
+    updateFinishedGameInfo,
+    updatePlayState,
+    updatePointMutation,
+    updateStatusMutation,
+  ]);
 
   useEffect(() => {
     const handleWindowResize = () => {
@@ -398,7 +408,7 @@ export const Play = ({ updateFinishedGameInfo }: Props) => {
     return () => {
       router.events.off('routeChangeStart', cancelOngoingBattle);
     };
-  }, [socket, playState]);
+  }, [socket, playState, router.events]);
 
   useEffect(() => {
     socket.on('cancelOngoingBattle', () => {
@@ -408,7 +418,7 @@ export const Play = ({ updateFinishedGameInfo }: Props) => {
     return () => {
       socket.off('cancelOngoingBattle');
     };
-  }, [socket]);
+  }, [socket, updatePlayState]);
 
   useEffect(() => {
     if (countDown > 0) {
@@ -420,7 +430,7 @@ export const Play = ({ updateFinishedGameInfo }: Props) => {
         updateChangeCount(true);
       }, 1000);
     }
-  }, [countDown]);
+  }, [countDown, updatePlayState]);
 
   if (user === undefined) return <Loading fullHeight={true} />;
 

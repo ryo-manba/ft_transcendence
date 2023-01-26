@@ -34,11 +34,11 @@ export const Display = () => {
         return;
       }
     }
-  }, [user]);
+  }, [user, updateStatusMutation]);
 
   useEffect(() => {
     updatePlayState(PlayState.stateNothing);
-  }, []);
+  }, [updatePlayState]);
 
   if (user === undefined) return <Loading />;
 
