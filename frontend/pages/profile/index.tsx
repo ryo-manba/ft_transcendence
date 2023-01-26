@@ -10,13 +10,13 @@ import { BadgedAvatar } from 'components/common/BadgedAvatar';
 import { useEffect, useState } from 'react';
 import { GameRecordWithUserName } from 'types/game';
 import { getRecordsById } from 'api/records/getRecordsById';
-import { LoginUser } from 'types/user';
+import { ClientUser } from 'types/user';
 import { getUserById } from 'api/user/getUserById';
 import { getUserRanking } from 'api/user/getUserRanking';
 
 const Profile: NextPage = () => {
   const router = useRouter();
-  const [user, setUser] = useState<LoginUser | undefined>(undefined);
+  const [user, setUser] = useState<ClientUser | undefined>(undefined);
   const [userError, setUserError] = useState<Error | undefined>(undefined);
   const [records, setRecords] = useState<GameRecordWithUserName[] | undefined>(
     undefined,

@@ -1,6 +1,6 @@
 import axios, { AxiosError } from 'axios';
 import { useQueryClient, useMutation } from '@tanstack/react-query';
-import { LoginUser } from 'types/user';
+import { ClientUser } from 'types/user';
 import Debug from 'debug';
 
 type PropsForUpdate = {
@@ -22,12 +22,12 @@ export const useMutationAvatar = () => {
   const queryClient = useQueryClient();
 
   const updateAvatarMutation = useMutation<
-    LoginUser,
+    ClientUser,
     AxiosError,
     PropsForUpdate
   >(
     async ({ userId, updatedAvatarFile }: PropsForUpdate) => {
-      const { data } = await axios.post<LoginUser>(
+      const { data } = await axios.post<ClientUser>(
         `${process.env.NEXT_PUBLIC_API_URL as string}/user/avatar/${userId}`,
         updatedAvatarFile,
       );
@@ -36,7 +36,7 @@ export const useMutationAvatar = () => {
     },
     {
       onSuccess: (res) => {
-        const oldUserData = queryClient.getQueryData<LoginUser>(['user']);
+        const oldUserData = queryClient.getQueryData<ClientUser>(['user']);
         if (oldUserData) {
           queryClient.setQueryData(['user'], res);
         }
@@ -49,13 +49,13 @@ export const useMutationAvatar = () => {
   );
 
   const deleteAvatarMutation = useMutation<
-    LoginUser,
+    ClientUser,
     AxiosError,
     PropsForDeletion
   >(
     // Backend側でuserIdからいちいちavatarPathを取得してくる手間を省くためにavatarPathも送信
     async ({ userId, avatarPath }: PropsForDeletion) => {
-      const { data } = await axios.patch<LoginUser>(endpointForDeletion, {
+      const { data } = await axios.patch<ClientUser>(endpointForDeletion, {
         userId,
         avatarPath,
       });
@@ -64,7 +64,7 @@ export const useMutationAvatar = () => {
     },
     {
       onSuccess: (res) => {
-        const oldUserData = queryClient.getQueryData<LoginUser>(['user']);
+        const oldUserData = queryClient.getQueryData<ClientUser>(['user']);
         if (oldUserData) {
           queryClient.setQueryData(['user'], res);
         }

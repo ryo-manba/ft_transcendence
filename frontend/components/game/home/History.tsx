@@ -9,7 +9,7 @@ import {
   AlertTitle,
   Pagination,
 } from '@mui/material';
-import { LoginUser } from 'types/user';
+import { ClientUser } from 'types/user';
 import { getRecordsById } from 'api/records/getRecordsById';
 import { getUserById } from 'api/user/getUserById';
 import { Loading } from 'components/common/Loading';
@@ -21,7 +21,7 @@ type Props = {
 };
 
 export const History = ({ userId }: Props) => {
-  const [user, setUser] = useState<LoginUser | undefined>();
+  const [user, setUser] = useState<ClientUser | undefined>();
   const [userError, setUserError] = useState<Error | undefined>(undefined);
   const [records, setRecords] = useState<GameRecordWithUserName[] | undefined>(
     undefined,

@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { useQueryClient, useMutation } from '@tanstack/react-query';
-import { LoginUser } from 'types/user';
+import { ClientUser } from 'types/user';
 import Debug from 'debug';
 
 type Props = {
@@ -16,9 +16,9 @@ export const useMutationPoint = () => {
   const debug = Debug('user');
   const queryClient = useQueryClient();
 
-  const updatePointMutation = useMutation<LoginUser, Error, Props>(
+  const updatePointMutation = useMutation<ClientUser, Error, Props>(
     async ({ userId, updatedPoint }: Props) => {
-      const { data } = await axios.patch<LoginUser>(endpoint, {
+      const { data } = await axios.patch<ClientUser>(endpoint, {
         userId,
         point: updatedPoint,
       });
@@ -27,7 +27,7 @@ export const useMutationPoint = () => {
     },
     {
       onSuccess: (res) => {
-        const oldUserData = queryClient.getQueryData<LoginUser>(['user']);
+        const oldUserData = queryClient.getQueryData<ClientUser>(['user']);
         if (oldUserData) {
           queryClient.setQueryData(['user'], res);
         }
