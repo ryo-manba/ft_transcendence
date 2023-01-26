@@ -188,7 +188,6 @@ export class BanService {
    * @param chatroomId
    */
   async findBannedUsers(chatroomId: number): Promise<ChatUser[]> {
-    this.logger.log('findBannedUser: chatroomId ->', chatroomId);
     const now = new Date();
     const bannedUsersRelation = await this.prisma.banRelation.findMany({
       where: {

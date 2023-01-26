@@ -117,7 +117,7 @@ export class MuteService {
    * @param MuteUserDto
    */
   async muteUser(dto: MuteUserDto): Promise<boolean> {
-    this.logger.log('banUser', dto.userId);
+    this.logger.log('muteUser', dto.userId);
 
     const MUTE_TIME_IN_DAYS = 7;
     const startAt = new Date();
@@ -191,7 +191,6 @@ export class MuteService {
    * @param chatroomId
    */
   async findMutedUsers(chatroomId: number): Promise<ChatUser[]> {
-    this.logger.log('findMutedUser: chatroomId ->', chatroomId);
     const now = new Date();
     const mutedUsersRelation = await this.prisma.muteRelation.findMany({
       where: {
