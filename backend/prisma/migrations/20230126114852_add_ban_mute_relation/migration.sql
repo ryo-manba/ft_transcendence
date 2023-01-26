@@ -1,5 +1,22 @@
+/*
+  Warnings:
+
+  - You are about to drop the column `endAt` on the `ChatroomMembers` table. All the data in the column will be lost.
+  - You are about to drop the column `startAt` on the `ChatroomMembers` table. All the data in the column will be lost.
+  - You are about to drop the column `status` on the `ChatroomMembers` table. All the data in the column will be lost.
+
+*/
+-- AlterTable
+ALTER TABLE "ChatroomMembers" DROP COLUMN "endAt",
+DROP COLUMN "startAt",
+DROP COLUMN "status";
+
+-- DropEnum
+DROP TYPE "ChatroomMembersStatus";
+
 -- CreateTable
 CREATE TABLE "MuteRelation" (
+    "id" SERIAL NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "userId" INTEGER NOT NULL,
@@ -7,11 +24,12 @@ CREATE TABLE "MuteRelation" (
     "startAt" TIMESTAMP(3) NOT NULL,
     "endAt" TIMESTAMP(3) NOT NULL,
 
-    CONSTRAINT "MuteRelation_pkey" PRIMARY KEY ("chatroomId","userId")
+    CONSTRAINT "MuteRelation_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "BanRelation" (
+    "id" SERIAL NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "userId" INTEGER NOT NULL,
@@ -19,7 +37,7 @@ CREATE TABLE "BanRelation" (
     "startAt" TIMESTAMP(3) NOT NULL,
     "endAt" TIMESTAMP(3) NOT NULL,
 
-    CONSTRAINT "BanRelation_pkey" PRIMARY KEY ("chatroomId","userId")
+    CONSTRAINT "BanRelation_pkey" PRIMARY KEY ("id")
 );
 
 -- AddForeignKey

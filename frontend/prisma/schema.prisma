@@ -120,25 +120,25 @@ model BlockRelation {
 }
 
 model BanRelation {
+  id         Int      @id @default(autoincrement())
   createdAt  DateTime @default(now())
   updatedAt  DateTime @default(now())
   userId     Int
   chatroomId Int
   startAt    DateTime
   endAt      DateTime
-  id         Int      @id @default(autoincrement())
   Chatroom   Chatroom @relation(fields: [chatroomId], references: [id], onDelete: Cascade)
   User       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model MuteRelation {
+  id         Int      @id @default(autoincrement())
   createdAt  DateTime @default(now())
   updatedAt  DateTime @default(now())
   userId     Int
   chatroomId Int
   startAt    DateTime
   endAt      DateTime
-  id         Int      @id @default(autoincrement())
   Chatroom   Chatroom @relation(fields: [chatroomId], references: [id], onDelete: Cascade)
   User       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
