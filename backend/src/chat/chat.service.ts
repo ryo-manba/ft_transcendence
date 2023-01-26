@@ -8,7 +8,6 @@ import {
   ChatroomMembers,
   Message,
   Prisma,
-  ChatroomMembersStatus,
   BlockRelation,
   MuteRelation,
 } from '@prisma/client';
@@ -329,34 +328,6 @@ export class ChatService {
 
     // 入室したチャットルームを返す
     return chatroom;
-  }
-
-  /**
-   * statusがNORMALなユーザ一覧を返す
-   * @param roomId
-   */
-  async findChatroomActiveUsers(roomId: number): Promise<ChatUser[]> {
-    // TODO: 置き換える
-    const activeUsersInfo = await this.prisma.chatroomMembers.findMany({
-      where: {
-        AND: {
-          chatroomId: roomId,
-          status: ChatroomMembersStatus.NORMAL,
-        },
-      },
-      include: {
-        user: true,
-      },
-    });
-
-    const activeUsers: ChatUser[] = activeUsersInfo.map((info) => {
-      return {
-        id: info.user.id,
-        name: info.user.name,
-      };
-    });
-
-    return activeUsers;
   }
 
   /**

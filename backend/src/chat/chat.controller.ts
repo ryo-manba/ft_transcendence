@@ -57,6 +57,42 @@ export class ChatController {
   }
 
   /**
+   * chatroomに入室していて、以下の条件を満たすユーザ一覧を返す
+   * - Banされていない
+   * - Muteされていない
+   * - Ownerではない
+   * @param roomId
+   */
+  @Get('can-set-owner')
+  async findCanSetOwnerUsers(
+    @Query('roomId', ParseIntPipe) roomId: number,
+  ): Promise<ChatUser[]> {
+    const bannedUsers = await this.banService.findBannedUsers(roomId);
+    const mutedUsers = await this.muteService.findMutedUsers(roomId);
+    const chatroomOwner = await this.chatService.findChatroomOwner(roomId);
+
+    const bannedIds = bannedUsers.map((user) => user.id);
+    const mutedIds = mutedUsers.map((user) => user.id);
+    const ownerId = chatroomOwner.id;
+
+    const excludeIdSets = new Set([...bannedIds, ...mutedIds, ownerId]);
+    const excludeIds = [...excludeIdSets];
+
+    // すべてを満たさないUser一覧を取得する
+    const canSetOwnerUsers =
+      await this.chatService.findChatroomMembersToChatUsers({
+        where: {
+          chatroomId: roomId,
+          userId: {
+            notIn: excludeIds,
+          },
+        },
+      });
+
+    return canSetOwnerUsers;
+  }
+
+  /**
    * Muteされているユーザ一覧を返す
    * @param roomId
    */
@@ -75,8 +111,12 @@ export class ChatController {
   async findNotMutedUsers(
     @Query('roomId', ParseIntPipe) roomId: number,
   ): Promise<ChatUser[]> {
-    const chatroomUsers = await this.chatService.findChatroomActiveUsers(
-      roomId,
+    const chatroomUsers = await this.chatService.findChatroomMembersToChatUsers(
+      {
+        where: {
+          chatroomId: roomId,
+        },
+      },
     );
     const mutedUsers = await this.muteService.findMutedUsers(roomId);
     if (mutedUsers.length === 0) {
@@ -110,9 +150,14 @@ export class ChatController {
   async findNotBannedUsers(
     @Query('roomId', ParseIntPipe) roomId: number,
   ): Promise<ChatUser[]> {
-    const chatroomUsers = await this.chatService.findChatroomActiveUsers(
-      roomId,
+    const chatroomUsers = await this.chatService.findChatroomMembersToChatUsers(
+      {
+        where: {
+          chatroomId: roomId,
+        },
+      },
     );
+
     const bannedUsers = await this.banService.findBannedUsers(roomId);
     if (bannedUsers.length === 0) {
       return chatroomUsers;
@@ -147,17 +192,6 @@ export class ChatController {
      * 新 -> 古 を 古 -> 新 にする
      */
     return chatMessages.reverse();
-  }
-
-  /**
-   * chatroomに入室しているStatusがNormalなユーザーのIDと名前の配列を返す
-   * @param roomId
-   */
-  @Get('active-users')
-  async findActiveUsers(
-    @Query('roomId', ParseIntPipe) roomId: number,
-  ): Promise<ChatUser[]> {
-    return await this.chatService.findChatroomActiveUsers(roomId);
   }
 
   /**

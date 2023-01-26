@@ -18,7 +18,7 @@ import { Friend } from 'types/friend';
 import { fetchJoinableFriends } from 'api/friend/fetchJoinableFriends';
 import { fetchCanSetAdminUsers } from 'api/chat/fetchCanSetAdminUsers';
 import { fetchNotBannedUsers } from 'api/chat/fetchNotBannedUsers';
-import { fetchActiveUsers } from 'api/chat/fetchActiveUsers';
+import { fetchCanSetOwnerUsers } from 'api/chat/fetchCanSetOwnerUsers';
 import { useQueryUser } from 'hooks/useQueryUser';
 import { Loading } from 'components/common/Loading';
 import { ChatroomSettingDetailDialog } from 'components/chat/chatroom/ChatroomSettingDetailDialog';
@@ -199,7 +199,7 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
   };
 
   const reloadCanSetOwnerUsers = async (ignore: boolean) => {
-    const activeUsers = await fetchActiveUsers({
+    const activeUsers = await fetchCanSetOwnerUsers({
       roomId: room.id,
     });
     const activeNotOwnerUsers = activeUsers.filter(
