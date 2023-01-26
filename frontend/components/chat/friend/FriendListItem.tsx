@@ -6,7 +6,7 @@ import { ListItem, ListItemText, ListItemAvatar } from '@mui/material';
 import { UserStatus } from '@prisma/client';
 import { Friend } from 'types/friend';
 import { Invitation } from 'types/game';
-import { CurrentRoom } from 'types/chat';
+import { CurrentRoom, Chatroom } from 'types/chat';
 import { useSocketStore } from 'store/game/ClientSocket';
 import { useInvitedFriendStateStore } from 'store/game/InvitedFriendState';
 import { getAvatarImageUrl } from 'api/user/getAvatarImageUrl';
@@ -92,22 +92,27 @@ export const FriendListItem = memo(function FriendListItem({
 
   const directMessage = (friend: Friend) => {
     const DMInfo = {
-      userId1: user.id,
-      userId2: friend.id,
-      name1: user.name,
-      name2: friend.name,
+      senderId: user.id,
+      recipientId: friend.id,
+      senderName: user.name,
+      recipientName: friend.name,
     };
     socket.emit(
       'chat:directMessage',
       DMInfo,
-      (res: { currentRoom: CurrentRoom | undefined }) => {
+      (res: { chatroom: Chatroom | undefined }) => {
         debug('chat:directMessage %o', res);
-        if (res.currentRoom) {
-          socket.emit('chat:changeCurrentRoom', { roomId: res.currentRoom.id });
-          setCurrentRoom(res.currentRoom);
-        } else {
+        if (!res.chatroom) {
           setError('Failed to start direct messages.');
+
+          return;
         }
+
+        const newCurrentRoom: CurrentRoom = {
+          id: res.chatroom.id,
+          name: res.chatroom.name,
+        };
+        setCurrentRoom(newCurrentRoom);
       },
     );
   };

@@ -1,4 +1,4 @@
-import { Logger } from '@nestjs/common';
+import { Logger, UsePipes, ValidationPipe } from '@nestjs/common';
 import {
   SubscribeMessage,
   WebSocketGateway,
@@ -80,6 +80,7 @@ class InvitationList {
   },
   namespace: '/game',
 })
+@UsePipes(new ValidationPipe())
 export class GameGateway {
   constructor(
     private readonly records: RecordsService,

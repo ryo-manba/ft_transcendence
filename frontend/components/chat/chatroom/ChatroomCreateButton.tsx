@@ -35,6 +35,11 @@ export type ChatroomForm = {
   password: string;
 };
 
+const ROOM_NAME_MIN_LEN = 1;
+const ROOM_NAME_MAX_LEN = 150;
+const PASSWORD_MIN_LEN = 5;
+const PASSWORD_MAX_LEN = 50;
+
 export const ChatroomCreateButton = memo(function ChatroomCreateButton({
   socket,
   setRooms,
@@ -43,19 +48,26 @@ export const ChatroomCreateButton = memo(function ChatroomCreateButton({
   const [open, setOpen] = useState(false);
   const [roomType, setRoomType] = useState<ChatroomType>(ChatroomType.PUBLIC);
   const [error, setError] = useState('');
-
   const { data: user } = useQueryUser();
+
   if (user === undefined) {
     return <Loading />;
   }
 
   const schema = z.object({
-    roomName: z.string().min(1, { message: 'Room Name field is required' }),
+    roomName: z.string().refine(
+      (value: string) =>
+        ROOM_NAME_MIN_LEN <= value.length && value.length <= ROOM_NAME_MAX_LEN,
+      () => ({
+        message: `Room Name must be at least ${ROOM_NAME_MIN_LEN} and at most ${ROOM_NAME_MAX_LEN} characters`,
+      }),
+    ),
     password: z.string().refine(
       (value: string) =>
-        roomType !== ChatroomType.PROTECTED || value.length >= 5,
+        roomType !== ChatroomType.PROTECTED ||
+        (value.length >= PASSWORD_MIN_LEN && value.length <= PASSWORD_MAX_LEN),
       () => ({
-        message: 'Passwords must be at least 5 characters',
+        message: `Passwords must be at least ${PASSWORD_MIN_LEN} and at most ${PASSWORD_MAX_LEN} characters`,
       }),
     ),
   });

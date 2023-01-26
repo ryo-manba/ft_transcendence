@@ -65,7 +65,7 @@ const getGameParameters = (
     sideBarRight: convert2Int(canvasWidth * 0.95 + topLeftX),
     lineDashStyle: [20, 5],
     initialHeight: 0,
-    ballInitialX: convert2Int(canvasWidth / 2 + topLeftX),
+    ballInitialX: convert2Int(canvasWidth / 2),
     ballInitialY: 0,
     ballRadius: convert2Int(canvasWidth * 0.01),
     widthRatio: 0,
@@ -320,23 +320,46 @@ export const Play = ({ updateFinishedGameInfo }: Props) => {
         updatePlayState(PlayState.stateFinished);
       },
     );
+
     socket.on('error', () => {
       try {
         if (user !== undefined) {
           updateStatusMutation.mutate({
-            userId: user?.id,
+            userId: user.id,
             status: 'ONLINE',
           });
         }
       } catch (error) {
         debug(error);
       }
+
+      updatePlayState(PlayState.stateNothing);
+    });
+
+    socket.on('exception', () => {
+      try {
+        if (user !== undefined) {
+          updateStatusMutation.mutate({
+            userId: user.id,
+            status: 'ONLINE',
+          });
+        }
+      } catch (error) {
+        debug(error);
+      }
+
+      // これを送らないとエラーが起きたときにバックエンドでゲームが終了しない
+      socket.emit('cancelOngoingBattle');
+
+      // ゲームプレー中にサーバー側のvalidation errorが起きた場合には
+      // PlayStateを更新してゲームのホーム画面に戻す
       updatePlayState(PlayState.stateNothing);
     });
 
     return () => {
       socket.off('finishGame');
       socket.off('error');
+      socket.off('exception');
     };
   }, [socket]);
 
