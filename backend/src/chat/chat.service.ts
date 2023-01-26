@@ -9,7 +9,6 @@ import {
   Message,
   Prisma,
   BlockRelation,
-  MuteRelation,
 } from '@prisma/client';
 import { CreateChatroomDto } from './dto/create-chatroom.dto';
 import { CreateMessageDto } from './dto/create-message.dto';
@@ -24,8 +23,6 @@ import { DeleteChatroomMemberDto } from './dto/delete-chatroom-member.dto';
 import { CreateBlockRelationDto } from './dto/create-block-relation.dto';
 import { DeleteBlockRelationDto } from './dto/delete-block-relation.dto';
 import { GetUnblockedUsersDto } from './dto/get-unblocked-users.dto';
-import { CreateMuteRelationDto } from './dto/create-mute-relation.dto';
-import { MuteUserDto } from './dto/mute-user.dto';
 
 // 2の12乗回の演算が必要という意味
 const saltRounds = 12;
@@ -646,50 +643,5 @@ export class ChatService {
     });
 
     return chatUnblockedUsers;
-  }
-
-  /**
-   * Muteリレーションを作成する
-   * @param CreateMuteRelationDto
-   */
-  async createMuteRelation(dto: CreateMuteRelationDto): Promise<MuteRelation> {
-    this.logger.log('createMuteRelation: ', dto);
-    try {
-      const muteRelation = await this.prisma.muteRelation.create({
-        data: {
-          ...dto,
-        },
-      });
-
-      return muteRelation;
-    } catch (error) {
-      this.logger.log('createMuteRelation: ', error);
-
-      return undefined;
-    }
-  }
-
-  /**
-   * ユーザーをミュートする
-   * @param MuteUserDto
-   */
-  async muteUser(dto: MuteUserDto): Promise<boolean> {
-    this.logger.log('muteUser: ', dto);
-
-    const MUTE_TIME_IN_DAYS = 7;
-    const startAt = new Date();
-    const endAt = new Date();
-    endAt.setDate(startAt.getDate() + MUTE_TIME_IN_DAYS);
-
-    const createMuteRelationDto: CreateMuteRelationDto = {
-      userId: dto.userId,
-      chatroomId: dto.chatroomId,
-      startAt: startAt,
-      endAt: endAt,
-    };
-
-    const muteRelation = await this.createMuteRelation(createMuteRelationDto);
-
-    return !!muteRelation;
   }
 }
