@@ -10,7 +10,7 @@ import {
 } from '@mui/material';
 import SettingsIcon from '@mui/icons-material/Settings';
 import ChatIcon from '@mui/icons-material/Chat';
-import { ChatroomMembersStatus, ChatroomType } from '@prisma/client';
+import { ChatroomType } from '@prisma/client';
 import { Chatroom, Message, JoinChatroomInfo, CurrentRoom } from 'types/chat';
 import { useQueryUser } from 'hooks/useQueryUser';
 import { Loading } from 'components/common/Loading';
@@ -230,15 +230,16 @@ export const ChatroomListItem = memo(function ChatroomListItem({
     const unmuteUserInfo = {
       chatroomId: room.id,
       userId: userId,
-      status: ChatroomMembersStatus.NORMAL,
     };
 
-    socket.emit('chat:unmuteUser', unmuteUserInfo, (res: boolean) => {
-      if (res) {
-        setSuccess('User has been unmuted successfully.');
-      } else {
+    socket.emit('chat:unmuteUser', unmuteUserInfo, (isSuccess: boolean) => {
+      if (!isSuccess) {
         setError('Failed to unmute user.');
+
+        return;
       }
+
+      setSuccess('User has been unmuted successfully.');
     });
   };
 

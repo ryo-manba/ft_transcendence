@@ -11,13 +11,13 @@ import { Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { ChatService } from './chat.service';
 import { BanService } from './ban.service';
+import { MuteService } from './mute.service';
 import { CreateChatroomDto } from './dto/create-chatroom.dto';
 import { DeleteChatroomDto } from './dto/delete-chatroom.dto';
 import { JoinChatroomDto } from './dto/join-chatroom.dto';
 import { CreateMessageDto } from './dto/create-message.dto';
 import { CreateAdminDto } from './dto/create-admin.dto';
 import { updatePasswordDto } from './dto/update-password.dto';
-import { updateMemberStatusDto } from './dto/update-member-status.dto';
 import { CreateDirectMessageDto } from './dto/create-direct-message.dto';
 import { CheckBanDto } from './dto/check-ban.dto';
 import { DeleteChatroomMemberDto } from './dto/delete-chatroom-member.dto';
@@ -32,6 +32,7 @@ import { GetAdminsIdsDto } from './dto/get-admins-ids.dto';
 import { GetMessagesCountDto } from './dto/get-messages-count.dto';
 import { SocketJoinRoomDto } from './dto/socket-join-room.dto';
 import { MuteUserDto } from './dto/mute-user.dto';
+import { UnmuteUserDto } from './dto/unmute-user.dto';
 import { BanUserDto } from './dto/ban-user.dto';
 import { UnbanUserDto } from './dto/unban-user.dto';
 import type { ChatMessage, CurrentRoom } from './types/chat';
@@ -50,6 +51,7 @@ export class ChatGateway {
     private readonly prisma: PrismaService,
     private readonly chatService: ChatService,
     private readonly banService: BanService,
+    private readonly muteService: MuteService,
   ) {}
 
   @WebSocketServer() server: Server;
@@ -558,7 +560,7 @@ export class ChatGateway {
   ): Promise<boolean> {
     this.logger.log(`chat:muteUser received -> roomId: ${dto.chatroomId}`);
 
-    return await this.chatService.muteUser(dto);
+    return await this.muteService.muteUser(dto);
   }
 
   /**
@@ -568,12 +570,11 @@ export class ChatGateway {
   @SubscribeMessage('chat:unmuteUser')
   async unmuteUser(
     @ConnectedSocket() client: Socket,
-    @MessageBody() dto: updateMemberStatusDto,
+    @MessageBody() dto: UnmuteUserDto,
   ): Promise<boolean> {
     this.logger.log(`chat:unmuteUser received -> roomId: ${dto.chatroomId}`);
-    const res = await this.chatService.updateMemberStatus(dto);
 
-    return res ? true : false;
+    return await this.muteService.unmuteUser(dto);
   }
 
   /*

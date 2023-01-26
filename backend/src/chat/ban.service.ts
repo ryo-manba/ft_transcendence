@@ -13,7 +13,7 @@ export class BanService {
   async findOne(
     BanRelationWhereUniqueInput: Prisma.BanRelationWhereUniqueInput,
   ): Promise<BanRelation | null> {
-    return this.prisma.banRelation.findUnique({
+    return await this.prisma.banRelation.findUnique({
       where: BanRelationWhereUniqueInput,
     });
   }
@@ -27,7 +27,7 @@ export class BanService {
   }): Promise<BanRelation[]> {
     const { skip, take, cursor, where, orderBy } = params;
 
-    return this.prisma.banRelation.findMany({
+    return await this.prisma.banRelation.findMany({
       skip,
       take,
       cursor,
