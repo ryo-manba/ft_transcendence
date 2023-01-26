@@ -65,7 +65,7 @@ const getGameParameters = (
     sideBarRight: convert2Int(canvasWidth * 0.95 + topLeftX),
     lineDashStyle: [20, 5],
     initialHeight: 0,
-    ballInitialX: convert2Int(canvasWidth / 2 + topLeftX),
+    ballInitialX: convert2Int(canvasWidth / 2),
     ballInitialY: 0,
     ballRadius: convert2Int(canvasWidth * 0.01),
     widthRatio: 0,
