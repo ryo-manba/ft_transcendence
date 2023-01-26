@@ -16,7 +16,7 @@ import * as z from 'zod';
 import { Chatroom, ChatroomSetting, ChatUser, ChatroomType } from 'types/chat';
 import { Friend } from 'types/friend';
 import { fetchJoinableFriends } from 'api/friend/fetchJoinableFriends';
-import { fetchChatroomNormalUsers } from 'api/chat/fetchChatroomNormalUsers';
+import { fetchCanSetAdminUsers } from 'api/chat/fetchCanSetAdminUsers';
 import { fetchNotBannedUsers } from 'api/chat/fetchNotBannedUsers';
 import { fetchActiveUsers } from 'api/chat/fetchActiveUsers';
 import { useQueryUser } from 'hooks/useQueryUser';
@@ -123,7 +123,7 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
   //   }
   // });
 
-  const fetchFriends = async (userId: number, ignore: boolean) => {
+  const reloadFriends = async (userId: number, ignore: boolean) => {
     const res = await fetchJoinableFriends({
       userId: userId,
       roomId: room.id,
@@ -133,16 +133,23 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
     }
   };
 
-  const fetchCanSetAdminUsers = async (ignore: boolean) => {
-    const notAdminUsers = await fetchChatroomNormalUsers({
+  const reloadCanSetAdminUsers = async (ignore: boolean) => {
+    if (!user) return;
+
+    const notAdminUsers = await fetchCanSetAdminUsers({
       roomId: room.id,
     });
+
+    const canSetAdminUsers = notAdminUsers.filter(
+      (notAdminUser) => notAdminUser.id !== user.id,
+    );
+
     if (!ignore) {
-      setNotAdminUsers(notAdminUsers);
+      setNotAdminUsers(canSetAdminUsers);
     }
   };
 
-  const fetchCanBanUsers = async (ignore: boolean) => {
+  const reloadCanBanUsers = async (ignore: boolean) => {
     if (!user) return;
 
     const notBannedUsers = await fetchNotBannedUsers({
@@ -157,7 +164,7 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
     }
   };
 
-  const fetchCanUnbanUsers = async (ignore: boolean) => {
+  const reloadCanUnbanUsers = async (ignore: boolean) => {
     const bannedUsers = await fetchBannedUsers({
       roomId: room.id,
     });
@@ -166,7 +173,7 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
     }
   };
 
-  const fetchCanMuteUsers = async (ignore: boolean) => {
+  const reloadCanMuteUsers = async (ignore: boolean) => {
     if (!user) return;
 
     const notMutedUsers = await fetchNotMutedUsers({
@@ -182,7 +189,7 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
     }
   };
 
-  const fetchCanUnmuteUsers = async (ignore: boolean) => {
+  const reloadCanUnmuteUsers = async (ignore: boolean) => {
     const mutedUsers = await fetchMutedUsers({
       roomId: room.id,
     });
@@ -191,7 +198,7 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
     }
   };
 
-  const fetchCanSetOwnerUsers = async (ignore: boolean) => {
+  const reloadCanSetOwnerUsers = async (ignore: boolean) => {
     const activeUsers = await fetchActiveUsers({
       roomId: room.id,
     });
@@ -209,26 +216,26 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
     if (user === undefined || open === false) return;
     switch (selectedRoomSetting) {
       case ChatroomSetting.ADD_FRIEND:
-        void fetchFriends(user.id, ignore);
+        void reloadFriends(user.id, ignore);
         break;
       case ChatroomSetting.SET_ADMIN:
-        void fetchCanSetAdminUsers(ignore);
+        void reloadCanSetAdminUsers(ignore);
         break;
       case ChatroomSetting.BAN_USER:
-        void fetchCanBanUsers(ignore);
+        void reloadCanBanUsers(ignore);
         break;
       case ChatroomSetting.UNBAN_USER:
-        void fetchCanUnbanUsers(ignore);
+        void reloadCanUnbanUsers(ignore);
         break;
       case ChatroomSetting.MUTE_USER:
-        void fetchCanMuteUsers(ignore);
+        void reloadCanMuteUsers(ignore);
         break;
       case ChatroomSetting.UNMUTE_USER:
-        void fetchCanUnmuteUsers(ignore);
+        void reloadCanUnmuteUsers(ignore);
         break;
       case ChatroomSetting.LEAVE_ROOM:
         if (user.id === room.ownerId) {
-          void fetchCanSetOwnerUsers(ignore);
+          void reloadCanSetOwnerUsers(ignore);
         }
         break;
       default:

@@ -14,22 +14,51 @@ export class ChatController {
 
   /**
    * @param roomId
-   * @return 以下の情報をオブジェクトの配列で返す
-   * - adminではないユーザーのID
-   * - adminではないユーザーの名前
+   * 以下の条件を満たすユーザ一覧を返す
+   * - Adminではない
+   * - Ownerではない
+   * - Muteされていない
+   * - Banされていない
    */
-  @Get('non-admin')
-  async findNotAdminUsers(
+  @Get('can-set-admin')
+  async findCanSetAdminUsers(
     @Query('roomId', ParseIntPipe) roomId: number,
   ): Promise<ChatUser[]> {
-    return await this.chatService.findCanSetAdminUsers(roomId);
+    const adminUsers = await this.chatService.findAdmins(roomId);
+    const bannedUsers = await this.banService.findBannedUsers(roomId);
+    const mutedUsers = await this.muteService.findMutedUsers(roomId);
+    const chatroomOwner = await this.chatService.findChatroomOwner(roomId);
+
+    const adminIds = adminUsers.map((admin) => admin.userId);
+    const bannedIds = bannedUsers.map((user) => user.id);
+    const mutedIds = mutedUsers.map((user) => user.id);
+    const ownerId = chatroomOwner.id;
+
+    const excludeIdSets = new Set([
+      ...adminIds,
+      ...bannedIds,
+      ...mutedIds,
+      ownerId,
+    ]);
+    const excludeIds = [...excludeIdSets];
+
+    // すべてを満たさないUser一覧を取得する
+    const canSetAdminUsers =
+      await this.chatService.findChatroomMembersToChatUsers({
+        where: {
+          chatroomId: roomId,
+          userId: {
+            notIn: excludeIds,
+          },
+        },
+      });
+
+    return canSetAdminUsers;
   }
 
   /**
+   * Muteされているユーザ一覧を返す
    * @param roomId
-   * @return 以下の情報をオブジェクトの配列で返す
-   * - MUTEされているユーザーのID
-   * - MUTEされているユーザーの名前
    */
   @Get('muted-users')
   async findMutedUsers(
@@ -67,7 +96,7 @@ export class ChatController {
    * @param roomId
    */
   @Get('banned-users')
-  async findChatroomBannedUsers(
+  async findBannedUsers(
     @Query('roomId', ParseIntPipe) roomId: number,
   ): Promise<ChatUser[]> {
     return await this.banService.findBannedUsers(roomId);
@@ -98,22 +127,8 @@ export class ChatController {
   }
 
   /**
+   * チャットのメッセージを返す
    * @param roomId
-   * @return 以下を満たすユーザーのIDと名前の配列を返す
-   * - StatusがNormal
-   * - Adminではない
-   * - オーナーではない
-   */
-  @Get('normal-users')
-  async findChatroomNormalUsers(
-    @Query('roomId', ParseIntPipe) roomId: number,
-  ): Promise<ChatUser[]> {
-    return await this.chatService.findChatroomNormalUsers(roomId);
-  }
-
-  /**
-   * @param roomId
-   * @return Message[]
    */
   @Get('messages')
   async findChatMessages(
@@ -135,8 +150,8 @@ export class ChatController {
   }
 
   /**
+   * chatroomに入室しているStatusがNormalなユーザーのIDと名前の配列を返す
    * @param roomId
-   * @return chatroomに入室しているStatusがNormalなユーザーのIDと名前の配列を返す
    */
   @Get('active-users')
   async findActiveUsers(
