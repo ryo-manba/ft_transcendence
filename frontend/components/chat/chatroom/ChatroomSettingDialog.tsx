@@ -1,4 +1,4 @@
-import { useState, useEffect, memo } from 'react';
+import { useState, useEffect, memo, useCallback } from 'react';
 import {
   Button,
   Dialog,
@@ -121,72 +121,93 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
   //   }
   // });
 
-  const fetchFriends = async (userId: number, ignore: boolean) => {
-    const res = await fetchJoinableFriends({
-      userId: userId,
-      roomId: room.id,
-    });
-    if (!ignore) {
-      setFriends(res);
-    }
-  };
+  const fetchFriends = useCallback(
+    async (userId: number, ignore: boolean) => {
+      const res = await fetchJoinableFriends({
+        userId: userId,
+        roomId: room.id,
+      });
+      if (!ignore) {
+        setFriends(res);
+      }
+    },
+    [setFriends, room.id],
+  );
 
-  const fetchCanSetAdminUsers = async (ignore: boolean) => {
-    const notAdminUsers = await fetchChatroomNormalUsers({
-      roomId: room.id,
-    });
-    if (!ignore) {
-      setNotAdminUsers(notAdminUsers);
-    }
-  };
+  const fetchCanSetAdminUsers = useCallback(
+    async (ignore: boolean) => {
+      const notAdminUsers = await fetchChatroomNormalUsers({
+        roomId: room.id,
+      });
+      if (!ignore) {
+        setNotAdminUsers(notAdminUsers);
+      }
+    },
+    [setNotAdminUsers, room.id],
+  );
 
-  const fetchCanBanUsers = async (ignore: boolean) => {
-    const notBannedUsers = await fetchChatroomNormalUsers({
-      roomId: room.id,
-    });
-    if (!ignore) {
-      setNotBannedUsers(notBannedUsers);
-    }
-  };
+  const fetchCanBanUsers = useCallback(
+    async (ignore: boolean) => {
+      const notBannedUsers = await fetchChatroomNormalUsers({
+        roomId: room.id,
+      });
+      if (!ignore) {
+        setNotBannedUsers(notBannedUsers);
+      }
+    },
+    [room.id],
+  );
 
-  const fetchCanUnbanUsers = async (ignore: boolean) => {
-    const bannedUsers = await fetchChatroomBannedUsers({
-      roomId: room.id,
-    });
-    if (!ignore) {
-      setBannedUsers(bannedUsers);
-    }
-  };
+  const fetchCanUnbanUsers = useCallback(
+    async (ignore: boolean) => {
+      const bannedUsers = await fetchChatroomBannedUsers({
+        roomId: room.id,
+      });
+      if (!ignore) {
+        setBannedUsers(bannedUsers);
+      }
+    },
+    [room.id, setBannedUsers],
+  );
 
-  const fetchCanMuteUsers = async (ignore: boolean) => {
-    const notMutedUsers = await fetchChatroomNormalUsers({
-      roomId: room.id,
-    });
-    if (!ignore) {
-      setNotMutedUsers(notMutedUsers);
-    }
-  };
+  const fetchCanMuteUsers = useCallback(
+    async (ignore: boolean) => {
+      const notMutedUsers = await fetchChatroomNormalUsers({
+        roomId: room.id,
+      });
+      if (!ignore) {
+        setNotMutedUsers(notMutedUsers);
+      }
+    },
+    [setNotMutedUsers, room.id],
+  );
 
-  const fetchCanUnmuteUsers = async (ignore: boolean) => {
-    const mutedUsers = await fetchChatroomMutedUsers({
-      roomId: room.id,
-    });
-    if (!ignore) {
-      setMutedUsers(mutedUsers);
-    }
-  };
+  const fetchCanUnmuteUsers = useCallback(
+    async (ignore: boolean) => {
+      const mutedUsers = await fetchChatroomMutedUsers({
+        roomId: room.id,
+      });
+      if (!ignore) {
+        setMutedUsers(mutedUsers);
+      }
+    },
+    [room.id, setMutedUsers],
+  );
 
-  const fetchCanSetOwnerUsers = async (ignore: boolean) => {
-    const activeUsers = await fetchActiveUsers({
-      roomId: room.id,
-    });
-    const activeNotOwnerUsers = activeUsers.filter(
-      (user) => user.id !== room.ownerId,
-    );
-    if (!ignore) {
-      setActiveUsers(activeNotOwnerUsers);
-    }
-  };
+  const fetchCanSetOwnerUsers = useCallback(
+    async (ignore: boolean) => {
+      const activeUsers = await fetchActiveUsers({
+        roomId: room.id,
+      });
+      const activeNotOwnerUsers = activeUsers.filter(
+        (user) => user.id !== room.ownerId,
+      );
+      if (!ignore) {
+        setActiveUsers(activeNotOwnerUsers);
+      }
+    },
+    [setActiveUsers, room.id, room.ownerId],
+  );
 
   // 設定項目を選択した時に対応するユーザ一覧を取得する
   useEffect(() => {
@@ -222,7 +243,19 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
     return () => {
       ignore = true;
     };
-  }, [selectedRoomSetting, open]);
+  }, [
+    selectedRoomSetting,
+    open,
+    user,
+    fetchCanBanUsers,
+    fetchCanMuteUsers,
+    fetchCanSetAdminUsers,
+    fetchCanSetOwnerUsers,
+    fetchCanUnbanUsers,
+    fetchCanUnmuteUsers,
+    fetchFriends,
+    room.ownerId,
+  ]);
 
   if (user === undefined) {
     return <Loading />;

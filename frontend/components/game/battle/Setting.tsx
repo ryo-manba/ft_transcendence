@@ -70,7 +70,7 @@ export const Setting = () => {
       socket.off('cancelOngoingBattle');
       socket.off('exception');
     };
-  }, [socket]);
+  }, [socket, updateGameSetting, updatePlayState]);
 
   useEffect(() => {
     if (0 < countDown) {
@@ -81,7 +81,7 @@ export const Setting = () => {
       socket.emit('cancelOngoingBattle');
       updatePlayState(PlayState.stateCanceled);
     }
-  }, [countDown, socket]);
+  }, [countDown, socket, updatePlayState]);
 
   const handleSubmit = () => {
     socket.emit('completeSetting', {
@@ -102,7 +102,7 @@ export const Setting = () => {
     return () => {
       router.events.off('routeChangeStart', cancelOngoingBattle);
     };
-  });
+  }, [socket, router.events]);
 
   useEffect(() => {
     socket.on('cancelOngoingBattle', () => {
@@ -112,7 +112,7 @@ export const Setting = () => {
     return () => {
       socket.off('cancelOngoingBattle');
     };
-  }, [socket]);
+  }, [socket, updatePlayState]);
 
   return (
     <Grid item>

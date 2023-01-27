@@ -200,7 +200,7 @@ export class GameGateway {
    * @param data
    * @returns Friend[]
    */
-  @SubscribeMessage('getInvitedLlist')
+  @SubscribeMessage('getInvitedList')
   async getInvitedList(
     @ConnectedSocket() socket: Socket,
     @MessageBody() dto: GetInvitedListDto,

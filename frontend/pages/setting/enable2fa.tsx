@@ -49,7 +49,7 @@ const Enable2FA: NextPage = () => {
     return () => {
       ignore = true;
     };
-  }, []);
+  }, [user]);
 
   const handleClose = () => {
     setOpenSnack(OpenSnackState.NONE);
