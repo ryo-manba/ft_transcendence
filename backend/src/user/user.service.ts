@@ -21,7 +21,7 @@ export class UserService {
 
   private logger: Logger = new Logger('UserService');
 
-  convertToClientUserFrom(user: User): ClientUser {
+  convertToClientUser(user: User): ClientUser {
     // src/user/types/user.tsと型を合わせる
     const clientUser = (({
       hashedPassword, // eslint-disable-line @typescript-eslint/no-unused-vars
@@ -42,9 +42,9 @@ export class UserService {
     });
 
     // userがnullのときにhashedPasswordにアクセスしようとするとエラーになる
-    if (!user) return user;
+    if (!user) return null;
 
-    return this.convertToClientUserFrom(user);
+    return this.convertToClientUser(user);
   }
 
   /**
@@ -67,11 +67,9 @@ export class UserService {
       where,
       orderBy,
     });
-    const clientUsers = [];
-    if (users) {
-      for (let i = 0; i < users.length; i++)
-        clientUsers[i] = this.convertToClientUserFrom(users[i]);
-    }
+    if (users.length === 0) return [];
+
+    const clientUsers = users.map((user) => this.convertToClientUser(user));
 
     return clientUsers;
   }
@@ -87,7 +85,7 @@ export class UserService {
         },
       });
 
-      return this.convertToClientUserFrom(user);
+      return this.convertToClientUser(user);
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         if (error.code === 'P2002') {
@@ -109,7 +107,7 @@ export class UserService {
         },
       });
 
-      return this.convertToClientUserFrom(user);
+      return this.convertToClientUser(user);
     } catch (error) {
       console.error(error);
       throw error;
@@ -160,7 +158,7 @@ export class UserService {
         },
       });
 
-      return this.convertToClientUserFrom(user);
+      return this.convertToClientUser(user);
     } catch (error) {
       console.error(error);
       throw error;
@@ -185,7 +183,7 @@ export class UserService {
         },
       });
 
-      return this.convertToClientUserFrom(user);
+      return this.convertToClientUser(user);
     } catch (error) {
       console.error(error);
 

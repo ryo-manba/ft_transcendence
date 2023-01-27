@@ -43,6 +43,6 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
       },
     });
 
-    return this.user.convertToClientUserFrom(user);
+    return this.user.convertToClientUser(user);
   }
 }
