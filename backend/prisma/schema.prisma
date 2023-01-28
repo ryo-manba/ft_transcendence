@@ -26,10 +26,9 @@ model User {
   followings      FriendRelation[]  @relation("following")
   blockingUsers   BlockRelation[]   @relation("blocking")
   blockedByUsers  BlockRelation[]   @relation("blockedBy")
-
-  oAuthId   String? @unique
-  has2FA    Boolean @default(false)
-  secret2FA String  @default("")
+  oAuthId         String?           @unique
+  has2FA          Boolean           @default(false)
+  secret2FA       String?
 }
 
 enum UserStatus {

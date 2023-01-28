@@ -32,7 +32,8 @@ export const Wait = ({ openMatchError }: Props) => {
     setOpen(false);
     updatePlayState(PlayState.stateNothing);
     socket.emit('playCancel');
-  }, []);
+  }, [playState, socket, updatePlayState]);
+
   const updatePlayerNames = usePlayerNamesStore(
     (store) => store.updatePlayerNames,
   );
@@ -69,7 +70,14 @@ export const Wait = ({ openMatchError }: Props) => {
       socket.off('random:select');
       socket.off('random:standBy');
     };
-  }, [socket, user]);
+  }, [
+    socket,
+    user,
+    router,
+    updatePlayState,
+    updatePlayerNames,
+    updateStatusMutation,
+  ]);
 
   useEffect(() => {
     router.events.on('routeChangeStart', cancelPlay);
@@ -77,7 +85,7 @@ export const Wait = ({ openMatchError }: Props) => {
     return () => {
       router.events.off('routeChangeStart', cancelPlay);
     };
-  });
+  }, [cancelPlay, router.events]);
 
   return (
     <Grid item>
