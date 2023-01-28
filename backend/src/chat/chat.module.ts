@@ -6,10 +6,18 @@ import { UserModule } from '../user/user.module';
 import { PrismaService } from '../prisma/prisma.service';
 import { BanService } from './ban.service';
 import { MuteService } from './mute.service';
+import { AdminService } from './admin.service';
 
 @Module({
   imports: [UserModule],
   controllers: [ChatController],
-  providers: [ChatGateway, ChatService, PrismaService, BanService, MuteService],
+  providers: [
+    ChatGateway,
+    ChatService,
+    PrismaService,
+    BanService,
+    MuteService,
+    AdminService,
+  ],
 })
 export class ChatModule {}
