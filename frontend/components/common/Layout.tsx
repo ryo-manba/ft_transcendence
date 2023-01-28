@@ -24,6 +24,14 @@ export const Layout: FC<Props> = ({ children, title = 'Next.js' }) => {
     let ignore = false;
     if (user === undefined) return;
 
+    // disconnect when switching user
+    if (gameSocket.auth !== undefined) {
+      const id = (gameSocket.auth as { id: number }).id;
+      if (id !== user.id) {
+        gameSocket.auth = { id: user.id };
+        gameSocket.disconnect();
+      }
+    }
     if (gameSocket.disconnected) {
       gameSocket.auth = { id: user.id };
       gameSocket.connect();
