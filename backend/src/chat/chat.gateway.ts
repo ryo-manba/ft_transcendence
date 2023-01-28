@@ -9,34 +9,34 @@ import { Chatroom, ChatroomType } from '@prisma/client';
 import { Server, Socket } from 'socket.io';
 import { Logger, UsePipes, ValidationPipe } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import type { ChatMessage } from './types/chat';
 import { ChatService } from './chat.service';
 import { BanService } from './ban.service';
 import { MuteService } from './mute.service';
-import { CreateChatroomDto } from './dto/create-chatroom.dto';
-import { DeleteChatroomDto } from './dto/delete-chatroom.dto';
-import { JoinChatroomDto } from './dto/join-chatroom.dto';
-import { CreateMessageDto } from './dto/create-message.dto';
-import { CreateAdminDto } from './dto/create-admin.dto';
-import { DeleteAdminDto } from './dto/delete-admin.dto';
-import { updatePasswordDto } from './dto/update-password.dto';
-import { CreateDirectMessageDto } from './dto/create-direct-message.dto';
-import { IsBannedDto } from './dto/is-banned.dto';
-import { DeleteChatroomMemberDto } from './dto/delete-chatroom-member.dto';
-import { UpdateChatroomOwnerDto } from './dto/update-chatroom-owner.dto';
-import { CreateBlockRelationDto } from './dto/create-block-relation.dto';
-import { DeleteBlockRelationDto } from './dto/delete-block-relation.dto';
-import { IsBlockedByUserIdDto } from './dto/is-blocked-by-user-id.dto';
-import { OnGetRoomsDto } from './dto/on-get-rooms.dto';
-import { LeaveSocketDto } from './dto/leave-socket.dto';
-import { OnRoomJoinableDto } from './dto/on-room-joinable.dto';
-import { IsAdminDto } from './dto/is-admin.dto';
-import { GetMessagesCountDto } from './dto/get-messages-count.dto';
-import { SocketJoinRoomDto } from './dto/socket-join-room.dto';
-import { MuteUserDto } from './dto/mute-user.dto';
-import { UnmuteUserDto } from './dto/unmute-user.dto';
-import { BanUserDto } from './dto/ban-user.dto';
-import { UnbanUserDto } from './dto/unban-user.dto';
-import type { ChatMessage } from './types/chat';
+import { CreateAdminDto } from './dto/admin/create-admin.dto';
+import { DeleteAdminDto } from './dto/admin/delete-admin.dto';
+import { IsAdminDto } from './dto/admin/is-admin.dto';
+import { IsBannedDto } from './dto/ban/is-banned.dto';
+import { BanUserDto } from './dto/ban/ban-user.dto';
+import { UnbanUserDto } from './dto/ban/unban-user.dto';
+import { CreateBlockRelationDto } from './dto/block/create-block-relation.dto';
+import { DeleteBlockRelationDto } from './dto/block/delete-block-relation.dto';
+import { IsBlockedByUserIdDto } from './dto/block/is-blocked-by-user-id.dto';
+import { CreateChatroomDto } from './dto/chatroom/create-chatroom.dto';
+import { DeleteChatroomDto } from './dto/chatroom/delete-chatroom.dto';
+import { JoinChatroomDto } from './dto/chatroom/join-chatroom.dto';
+import { DeleteChatroomMemberDto } from './dto/chatroom/delete-chatroom-member.dto';
+import { UpdateChatroomOwnerDto } from './dto/chatroom/update-chatroom-owner.dto';
+import { GetJoinedChatroomsDto } from './dto/chatroom/get-joined-chatrooms.dto';
+import { GetJoinableChatRoomsDto } from './dto/chatroom/get-joinable-chatrooms.dto';
+import { UpdateChatroomPasswordDto } from './dto/chatroom/update-chatroom-password.dto';
+import { CreateMessageDto } from './dto/message/create-message.dto';
+import { CreateDirectMessageDto } from './dto/message/create-direct-message.dto';
+import { GetMessagesCountDto } from './dto/message/get-messages-count.dto';
+import { MuteUserDto } from './dto/mute/mute-user.dto';
+import { UnmuteUserDto } from './dto/mute/unmute-user.dto';
+import { LeaveSocketDto } from './dto/socket/leave-socket.dto';
+import { SocketJoinRoomDto } from './dto/socket/socket-join-room.dto';
 
 type ExcludeProperties = 'hashedPassword' | 'createdAt' | 'updatedAt';
 type ClientChatroom = Omit<Chatroom, ExcludeProperties>;
@@ -126,12 +126,12 @@ export class ChatGateway {
 
   /**
    * 入室しているチャットルーム一覧を返す
-   * @param OnGetRoomsDto
+   * @param GetJoinedChatroomsDto
    */
   @SubscribeMessage('chat:getJoinedRooms')
-  async onGetRooms(
+  async getJoinedRooms(
     @ConnectedSocket() client: Socket,
-    @MessageBody() dto: OnGetRoomsDto,
+    @MessageBody() dto: GetJoinedChatroomsDto,
   ) {
     this.logger.log(`chat:getJoinedRooms: ${dto.userId}`);
     // ユーザーが入室しているチャットルームを取得する
@@ -346,7 +346,7 @@ export class ChatGateway {
    * @param DeleteChatroomMemberDto
    */
   @SubscribeMessage('chat:leaveRoom')
-  async onRoomLeave(
+  async leaveRoom(
     @ConnectedSocket() client: Socket,
     @MessageBody() dto: DeleteChatroomMemberDto,
   ): Promise<boolean> {
@@ -426,12 +426,12 @@ export class ChatGateway {
 
   /**
    * 入室可能な部屋の一覧を返す
-   * @param OnRoomJoinableDto
+   * @param GetJoinableChatRoomsDto
    */
   @SubscribeMessage('chat:getJoinableRooms')
   async onRoomJoinable(
     @ConnectedSocket() client: Socket,
-    @MessageBody() dto: OnRoomJoinableDto,
+    @MessageBody() dto: GetJoinableChatRoomsDto,
   ): Promise<ClientChatroom[]> {
     this.logger.log(`chat:getJoinableRooms received -> roomId: ${dto.userId}`);
 
@@ -509,12 +509,12 @@ export class ChatGateway {
 
   /**
    * チャットルームのパスワードを更新する
-   * @param updatePasswordDto
+   * @param UpdateChatroomPasswordDto
    */
   @SubscribeMessage('chat:updatePassword')
   async updatePassword(
     @ConnectedSocket() client: Socket,
-    @MessageBody() dto: updatePasswordDto,
+    @MessageBody() dto: UpdateChatroomPasswordDto,
   ): Promise<boolean> {
     this.logger.log(
       `chat:updatePassword received -> roomId: ${dto.chatroomId}`,

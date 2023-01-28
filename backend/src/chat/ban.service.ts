@@ -1,9 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Prisma, BanRelation } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
-import { BanUserDto } from './dto/ban-user.dto';
-import { UnbanUserDto } from './dto/unban-user.dto';
-import { IsBannedDto } from './dto/is-banned.dto';
+import { BanUserDto } from './dto/ban/ban-user.dto';
+import { UnbanUserDto } from './dto/ban/unban-user.dto';
+import { IsBannedDto } from './dto/ban/is-banned.dto';
 import type { ChatUser } from './types/chat';
 
 @Injectable()

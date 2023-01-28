@@ -1,7 +1,7 @@
 import { IsNotEmpty, IsNumber } from 'class-validator';
 
-export class ChangeCurrentRoomDto {
+export class GetJoinedChatroomsDto {
   @IsNumber()
   @IsNotEmpty()
-  roomId: number;
+  userId: number;
 }
