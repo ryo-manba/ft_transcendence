@@ -131,7 +131,7 @@ export class GameGateway {
     const socketAuth = socket.handshake.auth as SocketAuth;
 
     // ゲーム招待をしていた場合キャンセル
-    const invitation = this.invitationList.find(socketAuth.id);
+    const invitation = this.invitationList.find(socketAuth.userId);
     if (invitation !== undefined) {
       const guestSocketIds = this.userSocketMap.get(invitation.guestId);
       if (guestSocketIds !== undefined) {
@@ -139,11 +139,11 @@ export class GameGateway {
           this.server.to(socketId).emit('cancelInvitation', invitation.hostId);
         });
       }
-      this.invitationList.delete(socketAuth.id);
+      this.invitationList.delete(socketAuth.userId);
     }
 
     // userIdとsocketIdをのつながりを消す
-    const socketIds = this.userSocketMap.get(socketAuth.id);
+    const socketIds = this.userSocketMap.get(socketAuth.userId);
     if (socketIds !== undefined) socketIds.delete(socket.id);
 
     this.gameRooms = this.gameRooms.filter(
@@ -212,6 +212,7 @@ export class GameGateway {
       this.userSocketMap.set(dto.userId, new Set([socket.id]));
     else socketIds.add(socket.id);
 
+    console.log(this.userSocketMap);
     // 招待を送ったhostの一覧を返す
     const hostIds = this.invitationList.findHosts(dto.userId);
     if (hostIds === undefined) return [];

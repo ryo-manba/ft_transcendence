@@ -28,10 +28,10 @@ export const Layout: FC<Props> = ({ children, title = 'Next.js' }) => {
     // reconnect when switching user
     if (gameSocket.auth !== undefined) {
       const socketAuth = gameSocket.auth as SocketAuth;
-      if (socketAuth.id !== user.id) gameSocket.disconnect();
+      if (socketAuth.userId !== user.id) gameSocket.disconnect();
     }
     if (gameSocket.disconnected) {
-      const socketAuth = { id: user.id } as SocketAuth;
+      const socketAuth = { userId: user.id } as SocketAuth;
       gameSocket.auth = socketAuth;
       gameSocket.connect();
     }
@@ -50,7 +50,7 @@ export const Layout: FC<Props> = ({ children, title = 'Next.js' }) => {
     return () => {
       ignore = true;
     };
-  }, [user, hosts, gameSocket, router.pathname, showGuestPaths]);
+  }, [user, gameSocket, router.pathname, showGuestPaths]);
 
   useEffect(() => {
     if (!showGuestPaths.includes(router.pathname)) return;

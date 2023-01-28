@@ -87,5 +87,5 @@ export type Invitation = {
 };
 
 export type SocketAuth = {
-  id: number;
+  userId: number;
 };

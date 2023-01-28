@@ -68,5 +68,5 @@ export type GameParameters = {
 };
 
 export type SocketAuth = {
-  id: number;
+  userId: number;
 };
