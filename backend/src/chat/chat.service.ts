@@ -8,14 +8,10 @@ import {
   ChatroomMembers,
   Message,
   Prisma,
-  BlockRelation,
 } from '@prisma/client';
 import type { ChatUser, ChatMessage } from './types/chat';
 import { CreateAdminDto } from './dto/admin/create-admin.dto';
 import { DeleteAdminDto } from './dto/admin/delete-admin.dto';
-import { CreateBlockRelationDto } from './dto/block/create-block-relation.dto';
-import { DeleteBlockRelationDto } from './dto/block/delete-block-relation.dto';
-import { GetUnblockedUsersDto } from './dto/block/get-unblocked-users.dto';
 import { CreateChatroomDto } from './dto/chatroom/create-chatroom.dto';
 import { JoinChatroomDto } from './dto/chatroom/join-chatroom.dto';
 import { DeleteChatroomDto } from './dto/chatroom/delete-chatroom.dto';
@@ -505,143 +501,5 @@ export class ChatService {
     }
 
     return undefined;
-  }
-
-  /**
-   * BlockRelationにデータを作成する
-   * @param CreateBlockRelationDto
-   */
-  async createBlockRelation(
-    dto: CreateBlockRelationDto,
-  ): Promise<BlockRelation> {
-    this.logger.log('createBlockRelation: ', dto);
-    try {
-      const blockRelation = await this.prisma.blockRelation.create({
-        data: {
-          ...dto,
-        },
-      });
-
-      return blockRelation;
-    } catch (error) {
-      this.logger.log('createBlockRelation: : ', error);
-
-      return undefined;
-    }
-  }
-
-  /**
-   * 次のブロック処理を行う
-   * - BlockUserRelationにデータを作成する
-   * - ブロックしたユーザとのフレンド関係を削除する
-   * @param CreateBlockUserDto
-   */
-  async blockUser(dto: CreateBlockRelationDto): Promise<BlockRelation> {
-    this.logger.log('blockUser: ', dto);
-
-    const blockRelation = await this.createBlockRelation(dto);
-    if (!blockRelation) {
-      return undefined;
-    }
-
-    // ブロックしたユーザとのフレンド関係を削除する
-    const wheres = [
-      { followerId: dto.blockedByUserId, followingId: dto.blockingUserId },
-      { followerId: dto.blockingUserId, followingId: dto.blockedByUserId },
-    ];
-    try {
-      await this.prisma.friendRelation.deleteMany({
-        where: {
-          OR: [...wheres],
-        },
-      });
-    } catch (error) {
-      this.logger.log('blockUser: ', error);
-    }
-
-    return blockRelation;
-  }
-
-  /**
-   * ブロックを解除する
-   * @param CreateBlockUserDto
-   */
-  async unblockUser(dto: DeleteBlockRelationDto): Promise<BlockRelation> {
-    this.logger.log('unblockUser: ', dto);
-
-    try {
-      const blockRelation = await this.prisma.blockRelation.delete({
-        where: {
-          blockingUserId_blockedByUserId: {
-            ...dto,
-          },
-        },
-      });
-
-      return blockRelation;
-    } catch (error) {
-      this.logger.log('unblockUser: ', error);
-
-      return undefined;
-    }
-  }
-
-  /**
-   * ブロックされているユーザ一覧を返す
-   * @param Prisma.BlockRelationWhereInput
-   */
-  async findBlockedUsers(
-    where: Prisma.BlockRelationWhereInput,
-  ): Promise<ChatUser[]> {
-    this.logger.log('findBlockedUsers: ', where);
-
-    const blockedUsers = await this.prisma.blockRelation.findMany({
-      where: where,
-      include: {
-        blocking: true,
-      },
-    });
-
-    const chatBlockedUsers: ChatUser[] = blockedUsers.map((user) => {
-      return {
-        id: user.blocking.id,
-        name: user.blocking.name,
-      };
-    });
-
-    return chatBlockedUsers;
-  }
-
-  /**
-   * ブロックされていないユーザ一覧を返す
-   * @param Prisma.BlockRelationWhereInput
-   */
-  async findUnblockedUsers(dto: GetUnblockedUsersDto): Promise<ChatUser[]> {
-    this.logger.log('findUnlockedUsers: ', dto.blockedByUserId);
-
-    const blockedUsers = await this.prisma.blockRelation.findMany({
-      where: {
-        blockedByUserId: dto.blockedByUserId,
-      },
-    });
-    const blockingUserIds = blockedUsers.map((user) => user.blockingUserId);
-
-    const unblockedUsers = await this.prisma.user.findMany({
-      where: {
-        AND: [
-          { id: { not: dto.blockedByUserId } },
-          { id: { notIn: blockingUserIds } },
-        ],
-      },
-    });
-
-    const chatUnblockedUsers: ChatUser[] = unblockedUsers.map((user) => {
-      return {
-        id: user.id,
-        name: user.name,
-      };
-    });
-
-    return chatUnblockedUsers;
   }
 }
