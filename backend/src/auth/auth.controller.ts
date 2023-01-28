@@ -10,6 +10,7 @@ import {
   Param,
   Patch,
   ParseIntPipe,
+  ForbiddenException,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { AuthService } from './auth.service';
@@ -64,11 +65,21 @@ export class AuthController {
         res: LoginResultStatus.SUCCESS,
         userId: undefined,
       };
-    } catch {
-      return {
-        res: LoginResultStatus.FAILURE,
-        userId: undefined,
-      };
+    } catch (error) {
+      if (error instanceof ForbiddenException) {
+        const errorMessage = error.message;
+
+        return {
+          res: LoginResultStatus.FAILURE,
+          userId: undefined,
+          errorMessage,
+        };
+      } else {
+        return {
+          res: LoginResultStatus.FAILURE,
+          userId: undefined,
+        };
+      }
     }
   }
 

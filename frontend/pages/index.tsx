@@ -102,16 +102,25 @@ const Home: NextPage = () => {
           setValidationUserId(data.userId);
           setOpenValidationDialog(true);
         } else {
-          const messages = ['Login Failure'];
-          setError(messages);
+          const messages = data.errorMessage
+            ? data.errorMessage
+            : 'Login Failure';
+          if (Array.isArray(messages)) {
+            setError(messages);
+          } else {
+            setError([messages]);
+          }
         }
       }
     } catch (e) {
       if (axios.isAxiosError(e) && e.response && e.response.data) {
         reset();
         const messages = (e.response.data as AxiosErrorResponse).message;
-        if (Array.isArray(messages)) setError(messages);
-        else setError([messages]);
+        if (Array.isArray(messages)) {
+          setError(messages);
+        } else {
+          setError([messages]);
+        }
       }
     }
   };

@@ -32,6 +32,8 @@ export class AuthService {
   private logger: Logger = new Logger('AuthService');
   preAuthSecrets = new Map<number, string>();
 
+  loginUserIds: number[] = [];
+
   async singUp(dto: AuthDto): Promise<Msg> {
     // 2の12乗回の演算が必要、という意味の12
     const hashed = await bcrypt.hash(dto.password, 12);
@@ -64,10 +66,21 @@ export class AuthService {
         name: dto.username,
       },
     });
-    if (!user) throw new ForbiddenException('username or password incorrect');
+    if (!user)
+      throw new ForbiddenException('Username or password is incorrect.');
     const isValid = await bcrypt.compare(dto.password, user.hashedPassword);
     if (!isValid)
-      throw new ForbiddenException('username or password incorrect');
+      throw new ForbiddenException('Username or password is incorrect.');
+
+    // check if user id exists in the loginUserIds array
+    // if not, add user id to the array
+    if (this.loginUserIds.find((id) => id === user.id)) {
+      throw new ForbiddenException(
+        "You can't log in with multiple windows/tabs.",
+      );
+    } else {
+      this.loginUserIds.push(user.id);
+    }
 
     // ここのupdateは上の処理で絶対に存在しているuser.idが入るはずなのでエラー処理不要
     await this.prisma.user.update({
@@ -86,6 +99,11 @@ export class AuthService {
 
   async logout(dto: LogoutDto) {
     try {
+      this.logger.log('Logout: ', dto);
+
+      // remove user id from the array
+      this.loginUserIds = this.loginUserIds.filter((id) => id !== dto.id);
+
       await this.prisma.user.update({
         where: {
           id: dto.id,
@@ -165,6 +183,16 @@ export class AuthService {
       user = await this.prisma.user.create({
         data,
       });
+    }
+
+    // check if user id exists in the loginUserIds array
+    // if not, add user id to the array
+    if (this.loginUserIds.find((id) => id === user.id)) {
+      throw new ForbiddenException(
+        "You can't log in with multiple windows/tabs.",
+      );
+    } else {
+      this.loginUserIds.push(user.id);
     }
 
     // ここのupdateは上の処理で絶対に存在しているuser.idが入るはずなのでエラー処理不要

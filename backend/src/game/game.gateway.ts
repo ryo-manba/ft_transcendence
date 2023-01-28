@@ -121,13 +121,15 @@ export class GameGateway {
   private logger: Logger = new Logger('GameGateway');
 
   handleConnection(socket: Socket) {
-    this.logger.log(`Connected: ${socket.id}`);
+    const id = (socket.handshake.auth as { id: number }).id;
+
+    this.logger.log(`Connected: id >> ${id}, socket id >> ${socket.id}`);
   }
 
   handleDisconnect(socket: Socket) {
-    this.logger.log(`Disconnected: ${socket.id}`);
-
     const id = (socket.handshake.auth as { id: number }).id;
+
+    this.logger.log(`Disconnected: id >> ${id}, socket id >> ${socket.id}`);
 
     // ゲーム招待をしていた場合キャンセル
     const invitation = this.invitationList.find(id);
