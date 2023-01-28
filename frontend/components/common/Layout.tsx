@@ -5,6 +5,7 @@ import { useRouter } from 'next/router';
 import { FC, ReactNode, useEffect, useMemo, useState } from 'react';
 import { useSocketStore } from 'store/game/ClientSocket';
 import { Friend } from 'types/friend';
+import { SocketAuth } from 'types/game';
 import { Loading } from './Loading';
 
 type Props = {
@@ -24,16 +25,14 @@ export const Layout: FC<Props> = ({ children, title = 'Next.js' }) => {
     let ignore = false;
     if (user === undefined) return;
 
-    // disconnect when switching user
+    // reconnect when switching user
     if (gameSocket.auth !== undefined) {
-      const id = (gameSocket.auth as { id: number }).id;
-      if (id !== user.id) {
-        gameSocket.auth = { id: user.id };
-        gameSocket.disconnect();
-      }
+      const socketAuth = gameSocket.auth as SocketAuth;
+      if (socketAuth.id !== user.id) gameSocket.disconnect();
     }
     if (gameSocket.disconnected) {
-      gameSocket.auth = { id: user.id };
+      const socketAuth = { id: user.id } as SocketAuth;
+      gameSocket.auth = socketAuth;
       gameSocket.connect();
     }
     if (showGuestPaths.includes(router.pathname)) {

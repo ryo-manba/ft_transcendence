@@ -85,3 +85,7 @@ export type Invitation = {
   hostId: number;
   hostSocketId: string;
 };
+
+export type SocketAuth = {
+  id: number;
+};

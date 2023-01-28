@@ -22,6 +22,7 @@ import {
   Invitation,
   DifficultyLevel,
   GameState,
+  SocketAuth,
 } from './types/game';
 import { GetInvitedListDto } from './dto/get-invited-list.dto';
 import { InviteFriendDto } from './dto/invite-friend.dto';
@@ -127,10 +128,10 @@ export class GameGateway {
   handleDisconnect(socket: Socket) {
     this.logger.log(`Disconnected: ${socket.id}`);
 
-    const id = (socket.handshake.auth as { id: number }).id;
+    const socketAuth = socket.handshake.auth as SocketAuth;
 
     // ゲーム招待をしていた場合キャンセル
-    const invitation = this.invitationList.find(id);
+    const invitation = this.invitationList.find(socketAuth.id);
     if (invitation !== undefined) {
       const guestSocketIds = this.userSocketMap.get(invitation.guestId);
       if (guestSocketIds !== undefined) {
@@ -138,11 +139,11 @@ export class GameGateway {
           this.server.to(socketId).emit('cancelInvitation', invitation.hostId);
         });
       }
-      this.invitationList.delete(id);
+      this.invitationList.delete(socketAuth.id);
     }
 
     // userIdとsocketIdをのつながりを消す
-    const socketIds = this.userSocketMap.get(id);
+    const socketIds = this.userSocketMap.get(socketAuth.id);
     if (socketIds !== undefined) socketIds.delete(socket.id);
 
     this.gameRooms = this.gameRooms.filter(
