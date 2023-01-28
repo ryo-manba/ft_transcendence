@@ -9,6 +9,7 @@ import {
 import { Socket, Server } from 'socket.io';
 import { RecordsService } from '../records/records.service';
 import { UserService } from '../user/user.service';
+import { AuthService } from '../auth/auth.service';
 import { v4 as uuidv4 } from 'uuid';
 import {
   Player,
@@ -22,6 +23,7 @@ import {
   Invitation,
   DifficultyLevel,
   GameState,
+  UserStatus,
 } from './types/game';
 import { GetInvitedListDto } from './dto/get-invited-list.dto';
 import { InviteFriendDto } from './dto/invite-friend.dto';
@@ -32,6 +34,7 @@ import { JoinRoomDto } from './dto/join-room.dto';
 import { WatchGameDto } from './dto/watch-game.dto';
 import { PlayGameDto } from './dto/play-game.dto';
 import { UpdatePlayerPosDto } from './dto/update-player-pos.dto';
+import { GetUserStatusByIdDto } from './dto/get-user-status-by-id.dto';
 
 const DENOMINATOR_FOR_EASY = 6; // barLength will be 100
 const DENOMINATOR_FOR_NORMAL = 12; // barLength will be 50
@@ -85,12 +88,64 @@ export class GameGateway {
   constructor(
     private readonly records: RecordsService,
     private readonly user: UserService,
+    private readonly auth: AuthService,
   ) {}
 
   gameRooms: RoomInfo[] = [];
   waitingQueue: Player[] = [];
   invitationList: InvitationList = new InvitationList();
   userSocketMap: Map<number, Set<string>> = new Map();
+
+  playingUserIds: number[] = [];
+
+  getIdFromSocket(socket: Socket): number {
+    return (socket.handshake.auth as { id: number }).id;
+  }
+
+  isPlayingUserId(id: number): boolean {
+    if (this.playingUserIds.find((playingUserId) => playingUserId === id)) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  addPlayingUserId(id: number) {
+    if (!this.isPlayingUserId(id)) {
+      this.logger.log(`addPlayingUserId: ${id}`);
+
+      this.playingUserIds.push(id);
+
+      this.server.emit('updateStatus', {
+        userId: id,
+        status: UserStatus.PLAYING,
+      });
+    }
+  }
+
+  removePlayingUserId(id: number) {
+    if (this.isPlayingUserId(id)) {
+      this.logger.log(`removePlayingUserId: ${id}`);
+
+      this.playingUserIds = this.playingUserIds.filter(
+        (playingUserId) => playingUserId !== id,
+      );
+
+      this.server.emit('updateStatus', {
+        userId: id,
+        status: UserStatus.ONLINE,
+      });
+    }
+  }
+
+  removePlayingUsersFromRoom(room: RoomInfo) {
+    room.supporters.map((supporter) => {
+      const supporterId = this.getIdFromSocket(supporter);
+      this.removePlayingUserId(supporterId);
+    });
+    this.removePlayingUserId(room.player1.id);
+    this.removePlayingUserId(room.player2.id);
+  }
 
   // Game parameters
   static initialHeight = 250;
@@ -121,15 +176,31 @@ export class GameGateway {
   private logger: Logger = new Logger('GameGateway');
 
   handleConnection(socket: Socket) {
-    const id = (socket.handshake.auth as { id: number }).id;
+    const id = this.getIdFromSocket(socket);
 
     this.logger.log(`Connected: id >> ${id}, socket id >> ${socket.id}`);
+
+    // add LoginUserId array managed in auth service
+    this.auth.addLoginUserId(id);
+
+    // update friend status
+    this.server.emit('updateStatus', { userId: id, status: UserStatus.ONLINE });
   }
 
   handleDisconnect(socket: Socket) {
-    const id = (socket.handshake.auth as { id: number }).id;
+    const id = this.getIdFromSocket(socket);
 
     this.logger.log(`Disconnected: id >> ${id}, socket id >> ${socket.id}`);
+
+    this.auth.removeLoginUserId(id);
+
+    this.removePlayingUserId(id);
+
+    // update friend status
+    this.server.emit('updateStatus', {
+      userId: id,
+      status: UserStatus.OFFLINE,
+    });
 
     // ゲーム招待をしていた場合キャンセル
     const invitation = this.invitationList.find(id);
@@ -395,6 +466,9 @@ export class GameGateway {
     this.logger.log(`${player1.socket.id} joined to room ${roomName}`);
     this.logger.log(`${player2.socket.id} joined to room ${roomName}`);
 
+    this.addPlayingUserId(player1.id);
+    this.addPlayingUserId(player2.id);
+
     await player1.socket.join(roomName);
     await player2.socket.join(roomName);
 
@@ -449,6 +523,9 @@ export class GameGateway {
     const gameSetting =
       room.gameState === GameState.SETTING ? null : room.gameSetting;
     socket.emit('joinGameRoom', room.gameState, gameSetting);
+
+    const id = this.getIdFromSocket(socket);
+    this.addPlayingUserId(id);
   }
 
   @SubscribeMessage('cancelOngoingBattle')
@@ -459,6 +536,8 @@ export class GameGateway {
     );
     if (!room) {
       socket.emit('error');
+      const id = this.getIdFromSocket(socket);
+      this.removePlayingUserId(id);
     } else {
       this.server.to(room.roomName).emit('cancelOngoingBattle');
       this.gameRooms = this.gameRooms.filter(
@@ -466,6 +545,7 @@ export class GameGateway {
           room.player1.socket.id !== socket.id &&
           room.player2.socket.id !== socket.id,
       );
+      this.removePlayingUsersFromRoom(room);
     }
   }
 
@@ -477,6 +557,8 @@ export class GameGateway {
     );
     if (!room) {
       socket.emit('error');
+      const id = this.getIdFromSocket(socket);
+      this.removePlayingUserId(id);
     } else {
       this.logger.log('completeSetting: ', dto);
       room.gameSetting = dto as GameSetting;
@@ -510,28 +592,32 @@ export class GameGateway {
       winnerScore: winner.score,
       loserScore: loser.score,
     };
+
     currentRoom.supporters.map((supporter) => {
       supporter.emit('finishGame', null, finishedGameInfo);
-      supporter.disconnect(true);
     });
+
     winner.socket.emit(
       'finishGame',
       winner.point + currentRoom.rewards,
       finishedGameInfo,
     );
+
     loser.socket.emit(
       'finishGame',
       Math.max(loser.point - currentRoom.rewards, 0),
       finishedGameInfo,
     );
-    winner.socket.disconnect(true);
-    loser.socket.disconnect(true);
+
     await this.records.createGameRecord({
       winnerId: winner.id,
       loserId: loser.id,
       winnerScore: winner.score,
       loserScore: loser.score,
     });
+
+    this.removePlayingUsersFromRoom(currentRoom);
+
     this.gameRooms = this.gameRooms.filter(
       (room) => room.roomName !== currentRoom.roomName,
     );
@@ -560,6 +646,8 @@ export class GameGateway {
     );
     if (!room) {
       socket.emit('error');
+      const id = this.getIdFromSocket(socket);
+      this.removePlayingUserId(id);
 
       return;
     }
@@ -677,5 +765,20 @@ export class GameGateway {
         },
     );
     socket.emit('watchListed', watchInfo);
+  }
+
+  @SubscribeMessage('getUserStatusById')
+  getUserStatusById(
+    @ConnectedSocket() socket: Socket,
+    @MessageBody() dto: GetUserStatusByIdDto,
+  ): UserStatus {
+    const userId = dto.userId;
+    if (this.isPlayingUserId(userId)) {
+      return UserStatus.PLAYING;
+    } else if (this.auth.isLoginUserId(userId)) {
+      return UserStatus.ONLINE;
+    } else {
+      return UserStatus.OFFLINE;
+    }
   }
 }

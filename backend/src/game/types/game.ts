@@ -17,6 +17,14 @@ export const DifficultyLevel = {
 export type DifficultyLevel =
   typeof DifficultyLevel[keyof typeof DifficultyLevel];
 
+export const UserStatus = {
+  ONLINE: 'ONLINE',
+  PLAYING: 'PLAYING',
+  OFFLINE: 'OFFLINE',
+} as const;
+
+export type UserStatus = typeof UserStatus[keyof typeof UserStatus];
+
 export type Player = {
   name: string;
   id: number;

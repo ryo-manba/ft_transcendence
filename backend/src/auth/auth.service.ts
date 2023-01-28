@@ -34,6 +34,32 @@ export class AuthService {
 
   loginUserIds: number[] = [];
 
+  isLoginUserId(id: number): boolean {
+    if (this.loginUserIds.find((loginUserId) => loginUserId === id)) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  addLoginUserId(id: number) {
+    if (!this.isLoginUserId(id)) {
+      this.logger.log(`addLoginUserId: ${id}`);
+
+      this.loginUserIds.push(id);
+    }
+  }
+
+  removeLoginUserId(id: number) {
+    if (this.isLoginUserId(id)) {
+      this.logger.log(`removeLoginUserId: ${id}`);
+
+      this.loginUserIds = this.loginUserIds.filter(
+        (loginUserId) => loginUserId !== id,
+      );
+    }
+  }
+
   async singUp(dto: AuthDto): Promise<Msg> {
     // 2の12乗回の演算が必要、という意味の12
     const hashed = await bcrypt.hash(dto.password, 12);
@@ -79,7 +105,7 @@ export class AuthService {
         "You can't log in with multiple windows/tabs.",
       );
     } else {
-      this.loginUserIds.push(user.id);
+      this.addLoginUserId(user.id);
     }
 
     // ここのupdateは上の処理で絶対に存在しているuser.idが入るはずなのでエラー処理不要
@@ -102,7 +128,7 @@ export class AuthService {
       this.logger.log('Logout: ', dto);
 
       // remove user id from the array
-      this.loginUserIds = this.loginUserIds.filter((id) => id !== dto.id);
+      this.removeLoginUserId(dto.id);
 
       await this.prisma.user.update({
         where: {

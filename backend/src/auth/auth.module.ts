@@ -9,5 +9,6 @@ import { JwtStrategy } from './strategy/jwt.strategy';
   imports: [PrismaModule, JwtModule.register({})],
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy],
+  exports: [AuthService],
 })
 export class AuthModule {}

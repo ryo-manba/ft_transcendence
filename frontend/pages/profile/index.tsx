@@ -10,12 +10,14 @@ import { BadgedAvatar } from 'components/common/BadgedAvatar';
 import { useEffect, useState } from 'react';
 import { GameRecordWithUserName } from 'types/game';
 import { getRecordsById } from 'api/records/getRecordsById';
-import { User } from '@prisma/client';
+import { User, UserStatus } from '@prisma/client';
 import { getUserById } from 'api/user/getUserById';
 import { getUserRanking } from 'api/user/getUserRanking';
+import { useSocketStore } from 'store/game/ClientSocket';
 
 const Profile: NextPage = () => {
   const router = useRouter();
+  const { socket } = useSocketStore();
   const [user, setUser] = useState<Omit<User, 'hashedPassword'> | undefined>(
     undefined,
   );
@@ -27,6 +29,7 @@ const Profile: NextPage = () => {
     undefined,
   );
   const [ranking, setRanking] = useState<number | undefined>(undefined);
+  const [userStatus, setUserStatus] = useState<UserStatus>(UserStatus.OFFLINE);
 
   useEffect(() => {
     let ignore = false;
@@ -78,6 +81,12 @@ const Profile: NextPage = () => {
               setUserError(err as Error);
             }
           });
+
+        socket.emit('getUserStatusById', { userId }, (res: UserStatus) => {
+          if (!ignore) {
+            setUserStatus(res);
+          }
+        });
       }
     };
 
@@ -86,7 +95,7 @@ const Profile: NextPage = () => {
     return () => {
       ignore = true;
     };
-  }, [router]);
+  }, [router, socket]);
 
   if (userError !== undefined || recordsError !== undefined) {
     if (!router.isReady) {
@@ -133,7 +142,7 @@ const Profile: NextPage = () => {
       >
         <Grid item>
           <BadgedAvatar
-            status={user.status}
+            status={userStatus}
             width={150}
             height={150}
             src={avatarImageUrl}
