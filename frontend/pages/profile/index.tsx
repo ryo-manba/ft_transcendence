@@ -10,7 +10,7 @@ import { BadgedAvatar } from 'components/common/BadgedAvatar';
 import { useEffect, useState } from 'react';
 import { GameRecordWithUserName, UserStatus } from 'types/game';
 import { getRecordsById } from 'api/records/getRecordsById';
-import { User } from '@prisma/client';
+import { ClientUser } from 'types/user';
 import { getUserById } from 'api/user/getUserById';
 import { getUserRanking } from 'api/user/getUserRanking';
 import { useSocketStore } from 'store/game/ClientSocket';
@@ -18,9 +18,7 @@ import { useSocketStore } from 'store/game/ClientSocket';
 const Profile: NextPage = () => {
   const router = useRouter();
   const { socket } = useSocketStore();
-  const [user, setUser] = useState<Omit<User, 'hashedPassword'> | undefined>(
-    undefined,
-  );
+  const [user, setUser] = useState<ClientUser | undefined>(undefined);
   const [userError, setUserError] = useState<Error | undefined>(undefined);
   const [records, setRecords] = useState<GameRecordWithUserName[] | undefined>(
     undefined,
