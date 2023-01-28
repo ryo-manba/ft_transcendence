@@ -16,7 +16,6 @@ import { CurrentRoom, Chatroom } from 'types/chat';
 import { useSocketStore } from 'store/game/ClientSocket';
 import { useInvitedFriendStateStore } from 'store/game/InvitedFriendState';
 import { getAvatarImageUrl } from 'api/user/getAvatarImageUrl';
-import { getUserStatusById } from 'api/user/getUserStatusById';
 import { useQueryUser } from 'hooks/useQueryUser';
 import { FriendInfoDialog } from 'components/chat/friend/FriendInfoDialog';
 import { Loading } from 'components/common/Loading';
@@ -80,14 +79,9 @@ export const FriendListItem = memo(function FriendListItem({
     };
   }, [debug, friend.id, gameSocket]);
 
-  const inviteGame = async (friend: Friend) => {
-    // 最新のユーザ状態を取り直す
-    const status = await getUserStatusById({ userId: friend.id });
-    if (status !== friendStatus) {
-      setFriendStatus(status);
-    }
-    if (status !== UserStatus.ONLINE) {
-      setError(`${friend.name} is now ${status}`);
+  const inviteGame = (friend: Friend) => {
+    if (friendStatus !== UserStatus.ONLINE) {
+      setError(`${friend.name} is now ${friendStatus}`);
 
       return;
     }

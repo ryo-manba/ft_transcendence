@@ -108,39 +108,16 @@ export class AuthService {
       this.addLoginUserId(user.id);
     }
 
-    // ここのupdateは上の処理で絶対に存在しているuser.idが入るはずなのでエラー処理不要
-    await this.prisma.user.update({
-      where: {
-        id: user.id,
-      },
-      data: {
-        status: 'ONLINE',
-      },
-    });
-
     const jwtToken = await this.generateJwt(user.id, user.name);
 
     return { accessToken: jwtToken, has2fa: user.has2FA, userId: user.id };
   }
 
-  async logout(dto: LogoutDto) {
-    try {
-      this.logger.log('Logout: ', dto);
+  logout(dto: LogoutDto) {
+    this.logger.log(`Logout: ${dto.id}`);
 
-      // remove user id from the array
-      this.removeLoginUserId(dto.id);
-
-      await this.prisma.user.update({
-        where: {
-          id: dto.id,
-        },
-        data: {
-          status: 'OFFLINE',
-        },
-      });
-    } catch (error) {
-      this.logger.error(`Failed to update status for User ID ${dto.id}`);
-    }
+    // remove user id from the array
+    this.removeLoginUserId(dto.id);
   }
 
   async generateJwt(userId: number, username: string): Promise<string> {
@@ -221,15 +198,6 @@ export class AuthService {
       this.loginUserIds.push(user.id);
     }
 
-    // ここのupdateは上の処理で絶対に存在しているuser.idが入るはずなのでエラー処理不要
-    await this.prisma.user.update({
-      where: {
-        id: user.id,
-      },
-      data: {
-        status: 'ONLINE',
-      },
-    });
     const jwtToken = await this.generateJwt(user.id, user.name);
 
     return { accessToken: jwtToken, has2fa: user.has2FA, userId: user.id };

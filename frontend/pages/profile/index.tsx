@@ -8,9 +8,9 @@ import { useRouter } from 'next/router';
 import { getAvatarImageUrl } from 'api/user/getAvatarImageUrl';
 import { BadgedAvatar } from 'components/common/BadgedAvatar';
 import { useEffect, useState } from 'react';
-import { GameRecordWithUserName } from 'types/game';
+import { GameRecordWithUserName, UserStatus } from 'types/game';
 import { getRecordsById } from 'api/records/getRecordsById';
-import { User, UserStatus } from '@prisma/client';
+import { User } from '@prisma/client';
 import { getUserById } from 'api/user/getUserById';
 import { getUserRanking } from 'api/user/getUserRanking';
 import { useSocketStore } from 'store/game/ClientSocket';
@@ -92,8 +92,21 @@ const Profile: NextPage = () => {
 
     void updateRecordsNUser(ignore);
 
+    socket.on(
+      'updateStatus',
+      (data: { userId: number; status: UserStatus }) => {
+        if (router.isReady) {
+          const userId = Number(router.query.userId);
+          if (data.userId === userId) {
+            setUserStatus(data.status);
+          }
+        }
+      },
+    );
+
     return () => {
       ignore = true;
+      socket.off('updateStatus');
     };
   }, [router, socket]);
 

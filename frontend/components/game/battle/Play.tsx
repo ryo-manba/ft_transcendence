@@ -14,7 +14,6 @@ import { useMutationPoint } from 'hooks/useMutationPoint';
 import { useQueryUser } from 'hooks/useQueryUser';
 import { Loading } from 'components/common/Loading';
 import { useGameSettingStore } from 'store/game/GameSetting';
-import { useMutationStatus } from 'hooks/useMutationStatus';
 import { useRouter } from 'next/router';
 import Debug from 'debug';
 
@@ -128,7 +127,6 @@ export const Play = ({ updateFinishedGameInfo }: Props) => {
   const [isArrowDownPressed, updateIsArrowDownPressed] = useState(false);
   const [isArrowUpPressed, updateIsArrowUpPressed] = useState(false);
   const { updatePointMutation } = useMutationPoint();
-  const { updateStatusMutation } = useMutationStatus();
   const { data: user } = useQueryUser();
   const router = useRouter();
   const FPS = 60;
@@ -315,17 +313,6 @@ export const Play = ({ updateFinishedGameInfo }: Props) => {
               },
             );
           }
-          updateStatusMutation.mutate(
-            {
-              userId: user.id,
-              status: 'ONLINE',
-            },
-            {
-              onError: () => {
-                updatePlayState(PlayState.stateNothing);
-              },
-            },
-          );
         }
         updateFinishedGameInfo(finishedGameInfo);
         updatePlayState(PlayState.stateFinished);
@@ -333,32 +320,10 @@ export const Play = ({ updateFinishedGameInfo }: Props) => {
     );
 
     socket.on('error', () => {
-      try {
-        if (user !== undefined) {
-          updateStatusMutation.mutate({
-            userId: user.id,
-            status: 'ONLINE',
-          });
-        }
-      } catch (error) {
-        debug(error);
-      }
-
       updatePlayState(PlayState.stateNothing);
     });
 
     socket.on('exception', () => {
-      try {
-        if (user !== undefined) {
-          updateStatusMutation.mutate({
-            userId: user.id,
-            status: 'ONLINE',
-          });
-        }
-      } catch (error) {
-        debug(error);
-      }
-
       // これを送らないとエラーが起きたときにバックエンドでゲームが終了しない
       socket.emit('cancelOngoingBattle');
 
@@ -379,7 +344,6 @@ export const Play = ({ updateFinishedGameInfo }: Props) => {
     updateFinishedGameInfo,
     updatePlayState,
     updatePointMutation,
-    updateStatusMutation,
   ]);
 
   useEffect(() => {

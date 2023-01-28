@@ -13,7 +13,6 @@ import { useRouter } from 'next/router';
 import { usePlayerNamesStore } from 'store/game/PlayerNames';
 import { Invitation } from 'types/game';
 import { useQueryUser } from 'hooks/useQueryUser';
-import { useMutationStatus } from 'hooks/useMutationStatus';
 import ErrorIcon from '@mui/icons-material/Error';
 import DoneOutlineIcon from '@mui/icons-material/DoneOutline';
 
@@ -28,21 +27,10 @@ export const Host = () => {
   const { socket } = useSocketStore();
   const { invitedFriendState, updateInvitedFriendState } =
     useInvitedFriendStateStore();
-  const { updateStatusMutation } = useMutationStatus();
 
   useEffect(() => {
     if (user === undefined) return;
 
-    const updateUserStatusPlaying = () => {
-      try {
-        updateStatusMutation.mutate({
-          userId: user.id,
-          status: 'PLAYING',
-        });
-      } catch (error) {
-        return;
-      }
-    };
     socket.on('friend:select', (playerNames: [string, string]) => {
       updatePlayerNames(playerNames);
       updatePlayState(PlayState.stateSelecting);
@@ -50,7 +38,6 @@ export const Host = () => {
         friendId: null,
       });
 
-      updateUserStatusPlaying();
       void router.push('/game/battle');
     });
     socket.on('friend:standBy', (playerNames: [string, string]) => {
@@ -60,7 +47,6 @@ export const Host = () => {
         friendId: null,
       });
 
-      updateUserStatusPlaying();
       void router.push('/game/battle');
     });
     socket.on('denyInvitation', () => {
@@ -80,7 +66,6 @@ export const Host = () => {
     updateInvitedFriendState,
     updatePlayState,
     updatePlayerNames,
-    updateStatusMutation,
   ]);
 
   const cancelInvitation = useCallback(() => {

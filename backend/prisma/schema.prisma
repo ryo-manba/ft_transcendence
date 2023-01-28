@@ -15,7 +15,6 @@ model User {
   hashedPassword  String?
   point           Int               @default(1000)
   avatarPath      String?
-  status          UserStatus        @default(OFFLINE)
   chatroomOwners  Chatroom[]
   chatroomAdmins  ChatroomAdmin[]
   chatroomMembers ChatroomMembers[]
@@ -30,12 +29,6 @@ model User {
   oAuthId   String? @unique
   has2FA    Boolean @default(false)
   secret2FA String  @default("")
-}
-
-enum UserStatus {
-  ONLINE
-  PLAYING
-  OFFLINE
 }
 
 model FriendRelation {

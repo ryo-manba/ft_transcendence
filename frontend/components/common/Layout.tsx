@@ -43,7 +43,7 @@ export const Layout: FC<Props> = ({ children, title = 'Next.js' }) => {
     return () => {
       ignore = true;
     };
-  }, [user, hosts, gameSocket, router.pathname, showGuestPaths]);
+  }, [user, gameSocket, router.pathname, showGuestPaths]);
 
   useEffect(() => {
     if (!showGuestPaths.includes(router.pathname)) return;

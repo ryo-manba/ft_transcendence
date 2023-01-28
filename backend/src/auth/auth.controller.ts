@@ -85,12 +85,12 @@ export class AuthController {
 
   @HttpCode(HttpStatus.OK)
   @Post('logout')
-  async logout(
+  logout(
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
     @Body() dto: LogoutDto,
-  ): Promise<Msg> {
-    await this.authService.logout(dto);
+  ): Msg {
+    this.authService.logout(dto);
 
     res.cookie('access_token', '', {
       httpOnly: true,

@@ -6,8 +6,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { UpdateNameDto } from './dto/update-name.dto';
-import { Prisma, User, UserStatus } from '@prisma/client';
-import { UpdateStatusDto } from './dto/update-status.dto';
+import { Prisma, User } from '@prisma/client';
 import { UpdatePointDto } from './dto/update-point.dto';
 import { UpdateAvatarDto } from './dto/update-avatar.dto';
 import { createReadStream, unlink } from 'node:fs';
@@ -151,35 +150,6 @@ export class UserService {
       return user;
     } catch (error) {
       console.error(error);
-      throw error;
-    }
-  }
-
-  async getStatus(id: number): Promise<UserStatus | undefined> {
-    const user = await this.findOne(id);
-    if (user === null) return undefined;
-
-    return user.status;
-  }
-
-  async updateStatus(
-    dto: UpdateStatusDto,
-  ): Promise<Omit<User, 'hashedPassword'>> {
-    try {
-      const user = await this.prisma.user.update({
-        where: {
-          id: dto.userId,
-        },
-        data: {
-          status: dto.status,
-        },
-      });
-      delete user.hashedPassword;
-
-      return user;
-    } catch (error) {
-      console.error(error);
-
       throw error;
     }
   }
