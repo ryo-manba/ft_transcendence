@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { useQueryClient, useMutation } from '@tanstack/react-query';
-import { User, UserStatus } from '@prisma/client';
+import { UserStatus } from '@prisma/client';
+import { ClientUser } from 'types/user';
 import Debug from 'debug';
 
 type Props = {
@@ -16,28 +17,19 @@ export const useMutationStatus = () => {
   const debug = Debug('user');
   const queryClient = useQueryClient();
 
-  const updateStatusMutation = useMutation<
-    Omit<User, 'hashedPassword'>,
-    Error,
-    Props
-  >(
+  const updateStatusMutation = useMutation<ClientUser, Error, Props>(
     async ({ userId, status }: Props) => {
-      const { data } = await axios.patch<Omit<User, 'hashedPassword'>>(
-        endpoint,
-        {
-          userId,
-          status,
-        },
-      );
+      const { data } = await axios.patch<ClientUser>(endpoint, {
+        userId,
+        status,
+      });
 
       return data;
     },
     {
       onSuccess: (res) => {
         // 'user'というキーでキャッシュされているデータがあれば取得
-        const cachedUserData = queryClient.getQueryData<
-          Omit<User, 'hashedPassword'>
-        >(['user']);
+        const cachedUserData = queryClient.getQueryData<ClientUser>(['user']);
 
         // キャッシュされていたデータがある場合には、そのデータを更新
         if (cachedUserData) {

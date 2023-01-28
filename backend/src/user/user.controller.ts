@@ -18,7 +18,7 @@ import { Request } from 'express';
 import { UserService } from './user.service';
 import { DeleteAvatarDto } from './dto/delete-avatar.dto';
 import { UpdateNameDto } from './dto/update-name.dto';
-import { User, UserStatus } from '@prisma/client';
+import { UserStatus } from '@prisma/client';
 import { UpdateStatusDto } from './dto/update-status.dto';
 import { UpdatePointDto } from './dto/update-point.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -26,6 +26,7 @@ import { diskStorage } from 'multer';
 import { v4 as uuidv4 } from 'uuid';
 import * as path from 'path';
 import { UpdateAvatarDto } from './dto/update-avatar.dto';
+import { ClientUser } from './types/user';
 
 // FileInterceptorにわたすオプションを設定。
 // destination: ファイルの保存先。フォルダが無い場合には、バックエンドを起動したタイミングでフォルダが生成される
@@ -49,7 +50,7 @@ export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @Get()
-  getLoginUser(@Req() req: Request): Omit<User, 'hashedPassword'> {
+  getClientUser(@Req() req: Request): ClientUser {
     // custom.d.ts で型変換してる
     return req.user;
   }
@@ -71,30 +72,24 @@ export class UserController {
   }
 
   @Patch('update-status')
-  updateStatus(
-    @Body() dto: UpdateStatusDto,
-  ): Promise<Omit<User, 'hashedPassword'>> {
+  updateStatus(@Body() dto: UpdateStatusDto): Promise<ClientUser> {
     return this.userService.updateStatus(dto);
   }
 
   @Get(':id')
   getUserById(
     @Param('id', ParseIntPipe) id: number,
-  ): Promise<Omit<User, 'hashedPassword'> | null> {
+  ): Promise<ClientUser | null> {
     return this.userService.findOne(id);
   }
 
   @Patch('update-point')
-  updatePoint(
-    @Body() dto: UpdatePointDto,
-  ): Promise<Omit<User, 'hashedPassword'>> {
+  updatePoint(@Body() dto: UpdatePointDto): Promise<ClientUser> {
     return this.userService.updatePoint(dto);
   }
 
   @Patch('update-name')
-  updateName(
-    @Body() dto: UpdateNameDto,
-  ): Promise<Omit<User, 'hashedPassword'>> {
+  updateName(@Body() dto: UpdateNameDto): Promise<ClientUser> {
     return this.userService.updateName(dto);
   }
 
@@ -108,7 +103,7 @@ export class UserController {
   uploadAvatar(
     @UploadedFile() file: Express.Multer.File,
     @Param('id', ParseIntPipe) id: number,
-  ): Promise<Omit<User, 'hashedPassword'>> {
+  ): Promise<ClientUser> {
     const dto: UpdateAvatarDto = {
       userId: id,
       avatarPath: file.filename,
@@ -127,9 +122,7 @@ export class UserController {
   }
 
   @Patch('delete-avatar')
-  deleteAvatar(
-    @Body() dto: DeleteAvatarDto,
-  ): Promise<Omit<User, 'hashedPassword'>> {
+  deleteAvatar(@Body() dto: DeleteAvatarDto): Promise<ClientUser> {
     return this.userService.deleteAvatar(dto);
   }
 }

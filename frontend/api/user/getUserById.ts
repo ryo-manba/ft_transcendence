@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { User } from '@prisma/client';
+import { ClientUser } from 'types/user';
 import Debug from 'debug';
 
 type Props = {
@@ -8,17 +8,13 @@ type Props = {
 
 const endpoint = `${process.env.NEXT_PUBLIC_API_URL as string}/user`;
 
-export const getUserById = async ({
-  userId,
-}: Props): Promise<Omit<User, 'hashedPassword'>> => {
+export const getUserById = async ({ userId }: Props): Promise<ClientUser> => {
   const debug = Debug('user');
   try {
     if (Number.isNaN(userId)) throw new Error('UserId is invalid');
 
     const endpointWithParam = endpoint + '/' + String(userId);
-    const { data } = await axios.get<Omit<User, 'hashedPassword'>>(
-      endpointWithParam,
-    );
+    const { data } = await axios.get<ClientUser>(endpointWithParam);
 
     // findUniqueの戻り値がnullの場合、dataはnullではなく''になるため
     // data === nullだとエラー判定ができないことからこのようなif文にしている

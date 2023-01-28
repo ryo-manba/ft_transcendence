@@ -3,12 +3,14 @@ import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { PrismaService } from '../../prisma/prisma.service';
+import { UserService } from '../../user/user.service';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
   constructor(
     private readonly config: ConfigService,
     private readonly prisma: PrismaService,
+    private readonly user: UserService,
   ) {
     super({
       jwtFromRequest: ExtractJwt.fromExtractors([
@@ -33,14 +35,14 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     });
   }
 
+  // PassportStrategyの抽象メソッド
   async validate(payload: { sub: number; username: string }) {
     const user = await this.prisma.user.findUnique({
       where: {
         id: payload.sub,
       },
     });
-    delete user.hashedPassword;
 
-    return user;
+    return this.user.convertToClientUser(user);
   }
 }

@@ -93,7 +93,7 @@ model User {
   status          UserStatus        @default(OFFLINE)
   has2FA          Boolean           @default(false)
   oAuthId         String?           @unique
-  secret2FA       String            @default("")
+  secret2FA       String?
   blockedByUsers  BlockRelation[]   @relation("blockedBy")
   blockingUsers   BlockRelation[]   @relation("blocking")
   Chatroom        Chatroom[]
