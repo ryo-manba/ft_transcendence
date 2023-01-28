@@ -212,7 +212,6 @@ export class GameGateway {
       this.userSocketMap.set(dto.userId, new Set([socket.id]));
     else socketIds.add(socket.id);
 
-    console.log(this.userSocketMap);
     // 招待を送ったhostの一覧を返す
     const hostIds = this.invitationList.findHosts(dto.userId);
     if (hostIds === undefined) return [];
