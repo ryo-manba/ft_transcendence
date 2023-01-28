@@ -59,7 +59,7 @@ function MyApp({
     return () => {
       window.removeEventListener('unload', handleTabClose);
     };
-  }, []);
+  }, [router, session]);
 
   return (
     <QueryClientProvider client={queryClient}>

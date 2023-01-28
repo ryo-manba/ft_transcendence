@@ -1,5 +1,5 @@
 import { Grid, Typography, Zoom } from '@mui/material';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSocketStore } from 'store/game/ClientSocket';
 import { usePlayerNamesStore } from 'store/game/PlayerNames';
 import { usePlayStateStore, PlayState } from 'store/game/PlayState';
@@ -65,7 +65,7 @@ const getGameParameters = (
     sideBarRight: convert2Int(canvasWidth * 0.95 + topLeftX),
     lineDashStyle: [20, 5],
     initialHeight: 0,
-    ballInitialX: convert2Int(canvasWidth / 2 + topLeftX),
+    ballInitialX: convert2Int(canvasWidth / 2),
     ballInitialY: 0,
     ballRadius: convert2Int(canvasWidth * 0.01),
     widthRatio: 0,
@@ -89,7 +89,7 @@ const getGameParameters = (
 };
 
 export const Play = ({ updateFinishedGameInfo }: Props) => {
-  const debug = Debug('game');
+  const debug = useMemo(() => Debug('game'), []);
 
   const getCanvasWidth = () => {
     const { innerWidth, innerHeight } = window;
@@ -273,7 +273,18 @@ export const Play = ({ updateFinishedGameInfo }: Props) => {
       document.removeEventListener('keydown', onKeyDown);
       document.removeEventListener('keyup', onKeyUp);
     };
-  }, [drawField, countDown, gameInfo, gameParameters, socket]);
+  }, [
+    drawField,
+    countDown,
+    gameInfo,
+    gameParameters,
+    socket,
+    isArrowDownPressed,
+    isArrowUpPressed,
+    user,
+    playerNames,
+    waitMillSec,
+  ]);
 
   useEffect(() => {
     socket.on('updateScores', (newScores: [number, number]) => {
@@ -287,7 +298,7 @@ export const Play = ({ updateFinishedGameInfo }: Props) => {
     return () => {
       socket.off('updateScores');
     };
-  }, [socket]);
+  }, [socket, gameSetting, updateGameSetting]);
 
   useEffect(() => {
     socket.on(
@@ -361,7 +372,15 @@ export const Play = ({ updateFinishedGameInfo }: Props) => {
       socket.off('error');
       socket.off('exception');
     };
-  }, [socket]);
+  }, [
+    socket,
+    user,
+    debug,
+    updateFinishedGameInfo,
+    updatePlayState,
+    updatePointMutation,
+    updateStatusMutation,
+  ]);
 
   useEffect(() => {
     const handleWindowResize = () => {
@@ -375,7 +394,7 @@ export const Play = ({ updateFinishedGameInfo }: Props) => {
     return () => {
       window.removeEventListener('resize', handleWindowResize);
     };
-  }, []);
+  }, [gameSetting.difficulty]);
 
   useEffect(() => {
     const cancelOngoingBattle = () => {
@@ -389,7 +408,7 @@ export const Play = ({ updateFinishedGameInfo }: Props) => {
     return () => {
       router.events.off('routeChangeStart', cancelOngoingBattle);
     };
-  });
+  }, [socket, playState, router.events]);
 
   useEffect(() => {
     socket.on('cancelOngoingBattle', () => {
@@ -399,7 +418,7 @@ export const Play = ({ updateFinishedGameInfo }: Props) => {
     return () => {
       socket.off('cancelOngoingBattle');
     };
-  }, [socket]);
+  }, [socket, updatePlayState]);
 
   useEffect(() => {
     if (countDown > 0) {
@@ -411,7 +430,7 @@ export const Play = ({ updateFinishedGameInfo }: Props) => {
         updateChangeCount(true);
       }, 1000);
     }
-  }, [countDown]);
+  }, [countDown, updatePlayState]);
 
   if (user === undefined) return <Loading fullHeight={true} />;
 

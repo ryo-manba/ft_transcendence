@@ -1,4 +1,11 @@
-import { useState, memo, useEffect, Dispatch, SetStateAction } from 'react';
+import {
+  useState,
+  memo,
+  useEffect,
+  Dispatch,
+  SetStateAction,
+  useMemo,
+} from 'react';
 import { useRouter } from 'next/router';
 import Debug from 'debug';
 import { Socket } from 'socket.io-client';
@@ -29,7 +36,7 @@ export const FriendListItem = memo(function FriendListItem({
   socket,
   setCurrentRoom,
 }: Props) {
-  const debug = Debug('friend');
+  const debug = useMemo(() => Debug('friend'), []);
   const [open, setOpen] = useState(false);
   const [friendStatus, setFriendStatus] = useState<UserStatus>('OFFLINE');
   const { data: user } = useQueryUser();
@@ -61,7 +68,7 @@ export const FriendListItem = memo(function FriendListItem({
     return () => {
       ignore = true;
     };
-  }, []);
+  }, [debug, friend.id]);
 
   const inviteGame = async (friend: Friend) => {
     // 最新のユーザ状態を取り直す

@@ -1,4 +1,11 @@
-import { memo, useState, useEffect, Dispatch, SetStateAction } from 'react';
+import {
+  memo,
+  useState,
+  useEffect,
+  Dispatch,
+  SetStateAction,
+  useMemo,
+} from 'react';
 import { Socket } from 'socket.io-client';
 import Debug from 'debug';
 import {
@@ -32,7 +39,7 @@ export const ChatroomListItem = memo(function ChatroomListItem({
   setCurrentRoom,
   setMessages,
 }: Props) {
-  const debug = Debug('chat');
+  const debug = useMemo(() => Debug('chat'), []);
   const [open, setOpen] = useState(false);
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
@@ -66,7 +73,7 @@ export const ChatroomListItem = memo(function ChatroomListItem({
       socket.off('chat:addAdmin');
       ignore = true;
     };
-  }, [user, socket]);
+  }, [room.id, socket, user]);
 
   // ルームをクリックしたときの処理
   const changeCurrentRoom = (roomId: number, roomName: string) => {

@@ -122,7 +122,7 @@ const Home: NextPage = () => {
     setOpenValidationDialog(false);
     setValidationUserId(0);
     void router.push('/');
-  }, [setOpenValidationDialog, setValidationUserId]);
+  }, [setOpenValidationDialog, setValidationUserId, router]);
 
   if (status === 'loading') {
     return <Loading fullHeight={true} />;

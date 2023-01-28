@@ -65,7 +65,7 @@ export const History = ({ userId }: Props) => {
     return () => {
       ignore = true;
     };
-  }, []);
+  }, [userId]);
 
   if (userError !== undefined || recordsError !== undefined) {
     return (

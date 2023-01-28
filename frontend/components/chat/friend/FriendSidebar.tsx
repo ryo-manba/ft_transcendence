@@ -1,4 +1,11 @@
-import { memo, useState, useEffect, Dispatch, SetStateAction } from 'react';
+import {
+  memo,
+  useState,
+  useEffect,
+  Dispatch,
+  SetStateAction,
+  useMemo,
+} from 'react';
 import { List } from '@mui/material';
 import { Socket } from 'socket.io-client';
 import Debug from 'debug';
@@ -21,18 +28,17 @@ export const FriendSidebar = memo(function FriendSidebar({
   socket,
   setCurrentRoom,
 }: Props) {
-  const debug = Debug('friend');
+  const debug = useMemo(() => Debug('friend'), []);
   const [friends, setFriends] = useState<Friend[]>([]);
   const { data: user } = useQueryUser();
-  if (user === undefined) {
-    return <Loading fullHeight />;
-  }
 
   const handleRemoveFriendById = (removeId: number) => {
     setFriends((friends) => friends.filter((friend) => friend.id !== removeId));
   };
 
   useEffect(() => {
+    if (user === undefined) return;
+
     let ignore = false;
 
     const setupFriends = async (ignore: boolean) => {
@@ -54,7 +60,11 @@ export const FriendSidebar = memo(function FriendSidebar({
       socket.off('chat:blocked');
       ignore = true;
     };
-  }, []);
+  }, [user, debug, socket]);
+
+  if (user === undefined) {
+    return <Loading fullHeight />;
+  }
 
   const heightStyle = ChatHeightStyle();
 
