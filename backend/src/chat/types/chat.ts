@@ -6,6 +6,7 @@ export type ChatUser = {
 export type ChatMessage = {
   roomId: number;
   text: string;
+  userId: number;
   userName: string;
   createdAt: Date;
 };
