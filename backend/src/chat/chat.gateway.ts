@@ -21,7 +21,7 @@ import { BanUserDto } from './dto/ban/ban-user.dto';
 import { UnbanUserDto } from './dto/ban/unban-user.dto';
 import { CreateBlockRelationDto } from './dto/block/create-block-relation.dto';
 import { DeleteBlockRelationDto } from './dto/block/delete-block-relation.dto';
-import { IsBlocked } from './dto/block/is-blocked.dto';
+import { IsBlockedDto } from './dto/block/is-blocked.dto';
 import { CreateChatroomDto } from './dto/chatroom/create-chatroom.dto';
 import { DeleteChatroomDto } from './dto/chatroom/delete-chatroom.dto';
 import { JoinChatroomDto } from './dto/chatroom/join-chatroom.dto';
@@ -150,7 +150,7 @@ export class ChatGateway {
    * @param Message
    */
   @SubscribeMessage('chat:sendMessage')
-  async onMessage(
+  async sendMessage(
     @ConnectedSocket() client: Socket,
     @MessageBody() createMessageDto: CreateMessageDto,
   ): Promise<{ error: string | undefined }> {
@@ -208,6 +208,7 @@ export class ChatGateway {
     const chatMessage: ChatMessage = {
       roomId: message.chatroomId,
       text: message.message,
+      userId: createMessageDto.userId,
       userName: createMessageDto.userName,
       createdAt: message.createdAt,
     };
@@ -389,7 +390,7 @@ export class ChatGateway {
     const excludeIds = [...excludeIdSets];
 
     const chatroomMembers =
-      await this.chatService.findChatroomMembersToChatUsers({
+      await this.chatService.findChatroomMembersAsChatUsers({
         where: {
           chatroomId: dto.chatroomId,
           userId: {
@@ -441,7 +442,7 @@ export class ChatGateway {
    * @param GetJoinableChatRoomsDto
    */
   @SubscribeMessage('chat:getJoinableRooms')
-  async onRoomJoinable(
+  async getJoinableRooms(
     @ConnectedSocket() client: Socket,
     @MessageBody() dto: GetJoinableChatRoomsDto,
   ): Promise<ClientChatroom[]> {
@@ -775,12 +776,12 @@ export class ChatGateway {
 
   /**
    * ユーザーがブロックされているかを確認する
-   * @param IsBlocked
+   * @param IsBlockedDto
    */
   @SubscribeMessage('chat:isBlockedByUserId')
   async isBlockedByUserId(
     @ConnectedSocket() client: Socket,
-    @MessageBody() dto: IsBlocked,
+    @MessageBody() dto: IsBlockedDto,
   ): Promise<boolean> {
     this.logger.log('chat:isBlockedByUserId received', dto);
 

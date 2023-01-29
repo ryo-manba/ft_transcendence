@@ -106,6 +106,7 @@ export const ChatMessageList = memo(function ChatMessageList({
       message={item.text}
       timestamp={item.createdAt}
       displayName={item.userName}
+      userId={item.userId}
     />
   );
 
