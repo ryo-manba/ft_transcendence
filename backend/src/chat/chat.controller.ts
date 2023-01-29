@@ -2,6 +2,7 @@ import { Query, Controller, Get, ParseIntPipe } from '@nestjs/common';
 import { ChatService } from './chat.service';
 import { BanService } from './ban.service';
 import { MuteService } from './mute.service';
+import { AdminService } from './admin.service';
 import { ChatroomService } from './chatroom.service';
 import type { ChatUser, ChatMessage } from './types/chat';
 
@@ -11,6 +12,7 @@ export class ChatController {
     private readonly chatService: ChatService,
     private readonly banService: BanService,
     private readonly muteService: MuteService,
+    private readonly adminService: AdminService,
     private readonly chatroomService: ChatroomService,
   ) {}
 
@@ -26,7 +28,7 @@ export class ChatController {
   async findCanSetAdminUsers(
     @Query('roomId', ParseIntPipe) roomId: number,
   ): Promise<ChatUser[]> {
-    const adminUsers = await this.chatService.findAdmins(roomId);
+    const adminUsers = await this.adminService.findAdmins(roomId);
     const bannedUsers = await this.banService.findBannedUsers(roomId);
     const mutedUsers = await this.muteService.findMutedUsers(roomId);
     const chatroomOwner = await this.chatroomService.findChatroomOwner(roomId);

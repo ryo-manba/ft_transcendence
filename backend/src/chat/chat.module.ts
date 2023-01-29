@@ -6,6 +6,7 @@ import { UserModule } from '../user/user.module';
 import { PrismaService } from '../prisma/prisma.service';
 import { BanService } from './ban.service';
 import { MuteService } from './mute.service';
+import { AdminService } from './admin.service';
 import { ChatroomService } from './chatroom.service';
 
 @Module({
@@ -17,6 +18,7 @@ import { ChatroomService } from './chatroom.service';
     PrismaService,
     BanService,
     MuteService,
+    AdminService,
     ChatroomService,
   ],
 })

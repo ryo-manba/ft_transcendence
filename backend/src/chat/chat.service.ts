@@ -1,9 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { ChatroomAdmin, Message, Prisma, BlockRelation } from '@prisma/client';
+import { Message, Prisma, BlockRelation } from '@prisma/client';
 import type { ChatUser, ChatMessage } from './types/chat';
-import { CreateAdminDto } from './dto/admin/create-admin.dto';
-import { DeleteAdminDto } from './dto/admin/delete-admin.dto';
 import { CreateBlockRelationDto } from './dto/block/create-block-relation.dto';
 import { DeleteBlockRelationDto } from './dto/block/delete-block-relation.dto';
 import { GetUnblockedUsersDto } from './dto/block/get-unblocked-users.dto';
@@ -66,62 +64,6 @@ export class ChatService {
     });
 
     return chatMessages;
-  }
-
-  /**
-   * admin一覧を返す
-   * @param chatroomId
-   */
-  async findAdmins(chatroomId: number): Promise<ChatroomAdmin[]> {
-    const admins = await this.prisma.chatroomAdmin.findMany({
-      where: {
-        chatroomId: chatroomId,
-      },
-    });
-
-    return admins;
-  }
-
-  /**
-   * チャットルームのadminを作成する
-   * @param CreateAdminDto
-   */
-  async createAdmin(dto: CreateAdminDto): Promise<ChatroomAdmin> {
-    try {
-      const admin = await this.prisma.chatroomAdmin.create({
-        data: {
-          ...dto,
-        },
-      });
-
-      return admin;
-    } catch (error) {
-      this.logger.log('createAdmin', error);
-
-      return undefined;
-    }
-  }
-
-  /**
-   * チャットルームのadminを削除する
-   * @param CreateAdminDto
-   */
-  async deleteAdmin(dto: DeleteAdminDto): Promise<ChatroomAdmin> {
-    try {
-      const deletedAdmin = await this.prisma.chatroomAdmin.delete({
-        where: {
-          chatroomId_userId: {
-            ...dto,
-          },
-        },
-      });
-
-      return deletedAdmin;
-    } catch (error) {
-      this.logger.log('deleteAdmin', error);
-
-      return undefined;
-    }
   }
 
   /**

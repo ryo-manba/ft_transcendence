@@ -13,9 +13,9 @@ import type { ChatMessage } from './types/chat';
 import { ChatService } from './chat.service';
 import { BanService } from './ban.service';
 import { MuteService } from './mute.service';
+import { AdminService } from './admin.service';
 import { ChatroomService } from './chatroom.service';
 import { CreateAdminDto } from './dto/admin/create-admin.dto';
-import { DeleteAdminDto } from './dto/admin/delete-admin.dto';
 import { IsAdminDto } from './dto/admin/is-admin.dto';
 import { IsBannedDto } from './dto/ban/is-banned.dto';
 import { BanUserDto } from './dto/ban/ban-user.dto';
@@ -55,6 +55,7 @@ export class ChatGateway {
     private readonly chatService: ChatService,
     private readonly banService: BanService,
     private readonly muteService: MuteService,
+    private readonly adminService: AdminService,
     private readonly chatroomService: ChatroomService,
   ) {}
 
@@ -363,13 +364,23 @@ export class ChatGateway {
       roomId: dto.chatroomId,
     });
 
-    // TODO: adminの判定をする
-    // adminの設定を削除する
-    const deleteAdminDto: DeleteAdminDto = {
+    const isAdminDto: IsAdminDto = {
       userId: dto.userId,
       chatroomId: dto.chatroomId,
     };
-    await this.chatService.deleteAdmin(deleteAdminDto);
+    const isAdmin = await this.adminService.isAdmin(isAdminDto);
+    if (isAdmin) {
+      const deletedAdmin = await this.adminService.delete({
+        chatroomId_userId: {
+          userId: dto.userId,
+          chatroomId: dto.chatroomId,
+        },
+      });
+
+      if (!deletedAdmin) {
+        return false;
+      }
+    }
 
     // 退出することにより入室者がいなくなる場合はチャットルームを削除する
     // BAN or MUTEのユーザーは無視する
@@ -379,6 +390,7 @@ export class ChatGateway {
     const mutedIds = mutedUsers.map((user) => user.id);
     const excludeIdSets = new Set([...bannedIds, ...mutedIds]);
     const excludeIds = [...excludeIdSets];
+
     const chatroomMembers =
       await this.chatroomService.findChatroomMembersAsChatUsers({
         where: {
@@ -392,6 +404,7 @@ export class ChatGateway {
     if (chatroomMembers.length > 0) {
       return true;
     }
+
     const deleteChatroomDto: DeleteChatroomDto = {
       id: dto.chatroomId,
       userId: dto.userId,
@@ -476,7 +489,9 @@ export class ChatGateway {
   ): Promise<boolean> {
     this.logger.log(`chat:addAdmin received -> roomId: ${dto.chatroomId}`);
 
-    const createdAdmin = await this.chatService.createAdmin(dto);
+    const createdAdmin = await this.adminService.create({
+      data: dto,
+    });
     if (!createdAdmin) {
       return false;
     }
@@ -499,15 +514,7 @@ export class ChatGateway {
   ): Promise<boolean> {
     this.logger.log(`chat:getAdmins received -> roomId: ${dto.chatroomId}`);
 
-    const res = await this.prisma.chatroomAdmin.findUnique({
-      where: {
-        chatroomId_userId: {
-          ...dto,
-        },
-      },
-    });
-
-    return !!res;
+    return await this.adminService.isAdmin(dto);
   }
 
   /**
