@@ -140,10 +140,7 @@ export const ChatMessageExchange = memo(function ChatMessageExchange({
           <ChatErrorAlert error={error} setError={setError} />
         </ChatAlertCollapse>
         <form style={{ display: 'flex', alignItems: 'center', padding: '2px' }}>
-          <ChatTextInput
-            roomName={currentRoom.name}
-            sendMessage={sendMessage}
-          />
+          <ChatTextInput roomName={roomName} sendMessage={sendMessage} />
         </form>
       </Paper>
     </>
