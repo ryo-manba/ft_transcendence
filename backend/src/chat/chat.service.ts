@@ -644,4 +644,32 @@ export class ChatService {
 
     return chatUnblockedUsers;
   }
+
+  /**
+   * DM相手のユーザー名を返す
+   * @param FindDMRecipientNameQueryDto
+   */
+  async findDMRecipientName(
+    roomId: number,
+    senderUserId: number,
+  ): Promise<string> {
+    this.logger.log(
+      `findDMRecipientName: roomId >> ${roomId}, senderUserId >> ${senderUserId}`,
+    );
+
+    const dmRoomMembers = await this.prisma.chatroomMembers.findMany({
+      where: {
+        chatroomId: roomId,
+      },
+      include: {
+        user: true,
+      },
+    });
+
+    const dmRecipient = dmRoomMembers.find(
+      (member) => member.user.id !== senderUserId,
+    );
+
+    return dmRecipient.user.name;
+  }
 }
