@@ -11,7 +11,6 @@ import { useSocketStore } from 'store/game/ClientSocket';
 import { usePlayerNamesStore } from 'store/game/PlayerNames';
 import { useRouter } from 'next/router';
 import DoneOutlineIcon from '@mui/icons-material/DoneOutline';
-import { useMutationStatus } from 'hooks/useMutationStatus';
 import { useQueryUser } from 'hooks/useQueryUser';
 import ErrorIcon from '@mui/icons-material/Error';
 
@@ -25,7 +24,6 @@ export const Wait = ({ openMatchError }: Props) => {
   const [open, setOpen] = useState(true);
   const { socket } = useSocketStore();
   const { data: user } = useQueryUser();
-  const { updateStatusMutation } = useMutationStatus();
 
   const cancelPlay = useCallback(() => {
     if (playState === PlayState.statePlaying) return;
@@ -41,28 +39,16 @@ export const Wait = ({ openMatchError }: Props) => {
   const router = useRouter();
   useEffect(() => {
     if (user === undefined) return;
-    const updateUserStatusPlaying = () => {
-      try {
-        updateStatusMutation.mutate({
-          userId: user.id,
-          status: 'PLAYING',
-        });
-      } catch (error) {
-        return;
-      }
-    };
     socket.on('random:select', (playerNames: [string, string]) => {
       updatePlayerNames(playerNames);
       updatePlayState(PlayState.stateSelecting);
 
-      updateUserStatusPlaying();
       void router.push('/game/battle');
     });
     socket.on('random:standBy', (playerNames: [string, string]) => {
       updatePlayerNames(playerNames);
       updatePlayState(PlayState.stateStandingBy);
 
-      updateUserStatusPlaying();
       void router.push('/game/battle');
     });
 
@@ -70,14 +56,7 @@ export const Wait = ({ openMatchError }: Props) => {
       socket.off('random:select');
       socket.off('random:standBy');
     };
-  }, [
-    socket,
-    user,
-    router,
-    updatePlayState,
-    updatePlayerNames,
-    updateStatusMutation,
-  ]);
+  }, [socket, user, router, updatePlayState, updatePlayerNames]);
 
   useEffect(() => {
     router.events.on('routeChangeStart', cancelPlay);

@@ -10,31 +10,13 @@ import { useQueryUser } from 'hooks/useQueryUser';
 import { useInvitedFriendStateStore } from 'store/game/InvitedFriendState';
 import { Host } from './Host';
 import { Loading } from 'components/common/Loading';
-import { useMutationStatus } from 'hooks/useMutationStatus';
 
 export const Display = () => {
   const { data: user } = useQueryUser();
   const { playState } = usePlayStateStore();
   const updatePlayState = usePlayStateStore((store) => store.updatePlayState);
   const { invitedFriendState } = useInvitedFriendStateStore();
-  const { updateStatusMutation } = useMutationStatus();
   const [openMatchError, setOpenMatchError] = useState(false);
-
-  useEffect(() => {
-    if (user === undefined) {
-      return;
-    }
-    if (user.status !== 'ONLINE') {
-      try {
-        updateStatusMutation.mutate({
-          userId: user.id,
-          status: 'ONLINE',
-        });
-      } catch (error) {
-        return;
-      }
-    }
-  }, [user, updateStatusMutation]);
 
   useEffect(() => {
     updatePlayState(PlayState.stateNothing);

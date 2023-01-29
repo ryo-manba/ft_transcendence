@@ -7,6 +7,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { BanService } from './ban.service';
 import { MuteService } from './mute.service';
 import { AdminService } from './admin.service';
+import { ChatroomService } from './chatroom.service';
 
 @Module({
   imports: [UserModule],
@@ -18,6 +19,7 @@ import { AdminService } from './admin.service';
     BanService,
     MuteService,
     AdminService,
+    ChatroomService,
   ],
 })
 export class ChatModule {}
