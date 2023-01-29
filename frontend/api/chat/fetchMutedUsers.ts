@@ -8,13 +8,13 @@ type Props = {
 
 const endpoint = `${
   process.env.NEXT_PUBLIC_API_URL as string
-}/chat/active-users`;
+}/chat/muted-users`;
 
-export const fetchActiveUsers = async ({ roomId }: Props) => {
+export const fetchMutedUsers = async ({ roomId }: Props) => {
   const debug = Debug('chat');
   try {
     const response = await axios.get<ChatUser[]>(endpoint, {
-      params: { roomId: roomId },
+      params: { roomId },
     });
 
     return response.data;
