@@ -1,6 +1,6 @@
 /* eslint-disable react/jsx-props-no-spreading */
 import type { NextPage } from 'next';
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import axios from 'axios';
 import { IconDatabase } from '@tabler/icons';
@@ -33,6 +33,7 @@ import { Loading } from 'components/common/Loading';
 import Head from 'next/head';
 import { ValidationDialog } from 'components/auth/ValidationDialog';
 import { useQueryClient } from '@tanstack/react-query';
+import { useSocketStore } from 'store/game/ClientSocket';
 
 const usernameMaxLen = 50;
 const passwordMinLen = 5;
@@ -58,6 +59,7 @@ const Home: NextPage = () => {
   const [openValidationDialog, setOpenValidationDialog] = useState(false);
   const [validationUserId, setValidationUserId] = useState(0);
   const queryClient = useQueryClient();
+  const { socket } = useSocketStore();
 
   const {
     control,
@@ -75,10 +77,14 @@ const Home: NextPage = () => {
   });
   const { status } = useSession();
 
+  useEffect(() => {
+    queryClient.removeQueries(['user']);
+    socket.disconnect();
+  }, [socket, queryClient]);
+
   const onSubmit: SubmitHandler<AuthForm> = async (formData: AuthForm) => {
     try {
       if (process.env.NEXT_PUBLIC_API_URL) {
-        queryClient.removeQueries(['user']);
         if (isRegister) {
           const urlSignup = `${process.env.NEXT_PUBLIC_API_URL}/auth/signup`;
           await axios.post(urlSignup, {
