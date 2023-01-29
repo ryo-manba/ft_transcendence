@@ -158,7 +158,7 @@ export class BanService {
     });
 
     // Unbanが呼ばれたがBanされていない場合
-    if (targetUserRelations.length < 0) {
+    if (targetUserRelations.length === 0) {
       return true;
     }
 
@@ -176,11 +176,11 @@ export class BanService {
       },
     });
 
-    if (updatedBanRelationCount.count === 0) {
-      return false;
+    if (updatedBanRelationCount?.count > 0) {
+      return true;
     }
 
-    return true;
+    return false;
   }
 
   /**

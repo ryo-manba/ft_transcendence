@@ -179,11 +179,11 @@ export class MuteService {
       },
     });
 
-    if (updatedMuteRelationCount.count === 0) {
-      return false;
+    if (updatedMuteRelationCount?.count > 0) {
+      return true;
     }
 
-    return true;
+    return false;
   }
 
   /**
