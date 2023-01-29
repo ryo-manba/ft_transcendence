@@ -161,7 +161,7 @@ export class MuteService {
     });
 
     // Unmuteが呼ばれたがMuteされていない場合
-    if (targetUserRelations.length < 0) {
+    if (targetUserRelations.length === 0) {
       return true;
     }
 
