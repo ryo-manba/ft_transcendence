@@ -56,29 +56,6 @@ export class BlockService {
     }
   }
 
-  async updateMany(params: {
-    where: Prisma.BlockRelationWhereInput;
-    data: Prisma.XOR<
-      Prisma.BlockRelationUpdateManyMutationInput,
-      Prisma.BlockRelationUncheckedUpdateManyInput
-    >;
-  }): Promise<Prisma.BatchPayload> {
-    const { where, data } = params;
-    try {
-      const updatedBlockRelationCount =
-        await this.prisma.blockRelation.updateMany({
-          where: where,
-          data: data,
-        });
-
-      return updatedBlockRelationCount;
-    } catch (error) {
-      this.logger.log('updateMany', error);
-
-      return undefined;
-    }
-  }
-
   async update(params: {
     where: Prisma.BlockRelationWhereUniqueInput;
     data: Prisma.BlockRelationUpdateInput;
