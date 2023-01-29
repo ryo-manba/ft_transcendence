@@ -21,7 +21,7 @@ import { BanUserDto } from './dto/ban/ban-user.dto';
 import { UnbanUserDto } from './dto/ban/unban-user.dto';
 import { CreateBlockRelationDto } from './dto/block/create-block-relation.dto';
 import { DeleteBlockRelationDto } from './dto/block/delete-block-relation.dto';
-import { IsBlocked } from './dto/block/is-blocked.dto';
+import { IsBlockedDto } from './dto/block/is-blocked.dto';
 import { CreateChatroomDto } from './dto/chatroom/create-chatroom.dto';
 import { DeleteChatroomDto } from './dto/chatroom/delete-chatroom.dto';
 import { JoinChatroomDto } from './dto/chatroom/join-chatroom.dto';
@@ -769,12 +769,12 @@ export class ChatGateway {
 
   /**
    * ユーザーがブロックされているかを確認する
-   * @param IsBlocked
+   * @param IsBlockedDto
    */
   @SubscribeMessage('chat:isBlockedByUserId')
   async isBlockedByUserId(
     @ConnectedSocket() client: Socket,
-    @MessageBody() dto: IsBlocked,
+    @MessageBody() dto: IsBlockedDto,
   ): Promise<boolean> {
     this.logger.log('chat:isBlockedByUserId received', dto);
 
