@@ -149,7 +149,7 @@ export class ChatGateway {
    * @param Message
    */
   @SubscribeMessage('chat:sendMessage')
-  async onMessage(
+  async sendMessage(
     @ConnectedSocket() client: Socket,
     @MessageBody() createMessageDto: CreateMessageDto,
   ): Promise<{ error: string | undefined }> {
@@ -429,7 +429,7 @@ export class ChatGateway {
    * @param GetJoinableChatRoomsDto
    */
   @SubscribeMessage('chat:getJoinableRooms')
-  async onRoomJoinable(
+  async getJoinableRooms(
     @ConnectedSocket() client: Socket,
     @MessageBody() dto: GetJoinableChatRoomsDto,
   ): Promise<ClientChatroom[]> {
