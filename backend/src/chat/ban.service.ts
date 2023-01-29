@@ -121,7 +121,7 @@ export class BanService {
     const endAt = new Date();
     endAt.setDate(startAt.getDate() + BAN_TIME_IN_DAYS);
 
-    const createBanRelationDto: Prisma.BanRelationCreateArgs = {
+    const banRelationCreateArgs: Prisma.BanRelationCreateArgs = {
       data: {
         userId: dto.userId,
         chatroomId: dto.chatroomId,
@@ -130,7 +130,7 @@ export class BanService {
       },
     };
 
-    const createdBanRelation = await this.create(createBanRelationDto);
+    const createdBanRelation = await this.create(banRelationCreateArgs);
 
     return !!createdBanRelation;
   }

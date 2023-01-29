@@ -124,7 +124,7 @@ export class MuteService {
     const endAt = new Date();
     endAt.setDate(startAt.getDate() + MUTE_TIME_IN_DAYS);
 
-    const createMuteRelationDto: Prisma.MuteRelationCreateArgs = {
+    const muteRelationCreateArgs: Prisma.MuteRelationCreateArgs = {
       data: {
         userId: dto.userId,
         chatroomId: dto.chatroomId,
@@ -133,7 +133,7 @@ export class MuteService {
       },
     };
 
-    const createdMuteRelation = await this.create(createMuteRelationDto);
+    const createdMuteRelation = await this.create(muteRelationCreateArgs);
 
     return !!createdMuteRelation;
   }
