@@ -26,9 +26,11 @@ model User {
   followings      FriendRelation[]  @relation("following")
   blockingUsers   BlockRelation[]   @relation("blocking")
   blockedByUsers  BlockRelation[]   @relation("blockedBy")
-  oAuthId         String?           @unique
-  has2FA          Boolean           @default(false)
+  oAuthId      String?        @unique
+  has2FA       Boolean        @default(false)
   secret2FA       String?
+  MuteRelation MuteRelation[]
+  BanRelation  BanRelation[]
 }
 
 enum UserStatus {
@@ -63,6 +65,30 @@ model BlockRelation {
   @@unique([blockingUserId, blockedByUserId])
 }
 
+model MuteRelation {
+  id              Int  @id @default(autoincrement())
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @default(now()) @updatedAt
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId     Int
+  chatroom   Chatroom  @relation(fields: [chatroomId], references: [id], onDelete: Cascade)
+  chatroomId Int
+  startAt    DateTime
+  endAt      DateTime
+}
+
+model BanRelation {
+  id              Int  @id @default(autoincrement())
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @default(now()) @updatedAt
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId     Int
+  chatroom   Chatroom  @relation(fields: [chatroomId], references: [id], onDelete: Cascade)
+  chatroomId Int
+  startAt    DateTime
+  endAt      DateTime
+}
+
 // オーナー -> チャットルーム作成者(管理者権限も持つ)
 // 管理者   -> あとから追加できる(複数人)
 model Chatroom {
@@ -77,6 +103,8 @@ model Chatroom {
   messages       Message[]
   admins         ChatroomAdmin[]
   members        ChatroomMembers[]
+  MuteRelation   MuteRelation[]
+  BanRelation    BanRelation[]
 }
 
 enum ChatroomType {
@@ -93,18 +121,9 @@ model ChatroomMembers {
   chatroomId Int
   user       User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId     Int
-  status     ChatroomMembersStatus @default(NORMAL)
-  startAt    DateTime? // BAN or MUTEの期間
-  endAt      DateTime?
 
   @@id([chatroomId, userId])
   @@unique([chatroomId, userId])
-}
-
-enum ChatroomMembersStatus {
-  NORMAL
-  BAN
-  MUTE
 }
 
 model Message {

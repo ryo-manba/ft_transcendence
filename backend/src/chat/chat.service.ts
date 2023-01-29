@@ -8,7 +8,6 @@ import {
   ChatroomMembers,
   Message,
   Prisma,
-  ChatroomMembersStatus,
   BlockRelation,
 } from '@prisma/client';
 import { CreateChatroomDto } from './dto/create-chatroom.dto';
@@ -18,7 +17,6 @@ import { DeleteAdminDto } from './dto/delete-admin.dto';
 import { JoinChatroomDto } from './dto/join-chatroom.dto';
 import type { ChatUser, ChatMessage } from './types/chat';
 import { updatePasswordDto } from './dto/update-password.dto';
-import { updateMemberStatusDto } from './dto/update-member-status.dto';
 import { GetMessagesDto } from './dto/get-messages.dto';
 import { DeleteChatroomDto } from './dto/delete-chatroom.dto';
 import { DeleteChatroomMemberDto } from './dto/delete-chatroom-member.dto';
@@ -222,14 +220,44 @@ export class ChatService {
     return chatMessages;
   }
 
-  async findAdmins(id: number): Promise<ChatroomAdmin[] | null> {
-    const res = await this.prisma.chatroomAdmin.findMany({
+  /**
+   * admin一覧を返す
+   * @param chatroomId
+   */
+  async findAdmins(chatroomId: number): Promise<ChatroomAdmin[]> {
+    const admins = await this.prisma.chatroomAdmin.findMany({
       where: {
-        chatroomId: id,
+        chatroomId: chatroomId,
       },
     });
 
-    return res;
+    return admins;
+  }
+
+  /**
+   * チャットルームのオーナーを返す
+   * @param chatroomId
+   */
+  async findChatroomOwner(chatroomId: number): Promise<ChatUser> {
+    const room = await this.prisma.chatroom.findUnique({
+      where: {
+        id: chatroomId,
+      },
+      include: {
+        owner: true,
+      },
+    });
+
+    if (!room) {
+      return undefined;
+    }
+
+    const owner = {
+      id: room.owner.id,
+      name: room.owner.name,
+    };
+
+    return owner;
   }
 
   /**
@@ -251,41 +279,6 @@ export class ChatService {
     const joinedRoom = joinedRoomInfo.map((room) => room.chatroom);
 
     return joinedRoom;
-  }
-
-  /**
-   * 入室しているユーザーの情報を返す
-   * - ユーザーがMUTE or BANされている場合は期間を確認する
-   * - 期間を越えている場合は、ステータスをNORMALに戻す
-   * @param ChatroomMembersWhereUniqueInput
-   */
-  async findJoinedUserInfo(
-    chatroomMembersWhereUniqueInput: Prisma.ChatroomMembersWhereUniqueInput,
-  ): Promise<ChatroomMembers | null> {
-    // チャットルームメンバーからuserIdが含まれているものを取得する
-    const userInfo = await this.prisma.chatroomMembers.findUnique({
-      where: chatroomMembersWhereUniqueInput,
-    });
-
-    // NORMAL以外の場合は期間が過ぎていないかを確認する
-    if (userInfo.status !== ChatroomMembersStatus.NORMAL) {
-      const startAt = userInfo.startAt?.getTime();
-      const endAt = userInfo.endAt?.getTime();
-      const now = Date.now();
-
-      // 期間内ではなかった場合NORMALに更新する
-      if (!(startAt <= now && now <= endAt)) {
-        const dto: updateMemberStatusDto = {
-          userId: userInfo.userId,
-          chatroomId: userInfo.chatroomId,
-          status: ChatroomMembersStatus.NORMAL,
-        };
-
-        return await this.updateMemberStatus(dto);
-      }
-    }
-
-    return userInfo;
   }
 
   /**
@@ -334,204 +327,28 @@ export class ChatService {
   }
 
   /**
-   * チャットルームに所属している かつ adminではない かつ BANもMUTEもされていないユーザ一覧を返す
-   * @param roomId
+   * 条件を満たすチャットルームメンバーをChatUserの形式で返す
+   * @param
    */
-  async findCanSetAdminUsers(roomId: number): Promise<ChatUser[]> {
-    const adminUsers = await this.findAdmins(roomId);
-
-    // idの配列にする
-    const adminUserIds = adminUsers.map((admin) => {
-      return admin.userId;
-    });
-
-    // adminではない かつ statusがNORMAL
-    const canSetAdminUsersInfo = await this.prisma.chatroomMembers.findMany({
-      where: {
-        AND: {
-          chatroomId: roomId,
-          NOT: {
-            userId: { in: adminUserIds },
-          },
-          status: ChatroomMembersStatus.NORMAL,
-        },
-      },
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-      },
-    });
-
-    const canSetAdminUsers: ChatUser[] = canSetAdminUsersInfo.map((info) => {
-      return info.user;
-    });
-
-    return canSetAdminUsers;
-  }
-
-  /**
-   * チャットルームに所属している かつ BANされているユーザ一覧を返す
-   * @param roomId
-   */
-  async findChatroomBannedUsers(roomId: number): Promise<ChatUser[]> {
-    // ルームに所属している かつ statusがBAN以外のユーザーを取得する
-    const bannedUsersInfo = await this.prisma.chatroomMembers.findMany({
-      where: {
-        AND: {
-          chatroomId: roomId,
-          status: ChatroomMembersStatus.BAN,
-        },
-      },
+  async findChatroomMembersAsChatUsers(params: {
+    where: Prisma.ChatroomMembersWhereInput;
+  }): Promise<ChatUser[]> {
+    const { where } = params;
+    const members = await this.prisma.chatroomMembers.findMany({
+      where: where,
       include: {
         user: true,
       },
     });
 
-    // idと名前の配列にする
-    const bannedUsers: ChatUser[] = bannedUsersInfo.map((info) => {
+    const chatUsers: ChatUser[] = members.map((member) => {
       return {
-        id: info.user.id,
-        name: info.user.name,
+        id: member.user.id,
+        name: member.user.name,
       };
     });
 
-    return bannedUsers;
-  }
-
-  /**
-   * チャットルームに所属している かつ BANされていない かつ adminではないユーザ一覧を返す
-   * @param roomId
-   */
-  async findNotBannedUsers(roomId: number): Promise<ChatUser[]> {
-    // ルームに所属している かつ statusがBAN以外のユーザーを取得する
-    const notBannedUsersInfo = await this.prisma.chatroomMembers.findMany({
-      where: {
-        AND: {
-          chatroomId: roomId,
-          status: {
-            not: ChatroomMembersStatus.BAN,
-          },
-        },
-      },
-      include: {
-        user: true,
-      },
-    });
-
-    // idと名前の配列にする
-    const notBannedUsers: ChatUser[] = notBannedUsersInfo.map((info) => {
-      return {
-        id: info.user.id,
-        name: info.user.name,
-      };
-    });
-
-    return notBannedUsers;
-  }
-
-  /**
-   * 下記を満たすユーザ一覧を返す
-   * - チャットルームに所属している
-   * - statusがNORMAL
-   * - adminではない
-   * - オーナーではない
-   * @param roomId
-   */
-  async findChatroomNormalUsers(roomId: number): Promise<ChatUser[]> {
-    // adminを取得する
-    const adminUsers = await this.findAdmins(roomId);
-    const adminUserIds = adminUsers.map((admin) => admin.userId);
-
-    // チャットルームのオーナーを取得する
-    const chatroom = await this.findOne({
-      id: roomId,
-    });
-    const ownerId = chatroom.ownerId;
-
-    const adminAndOwnerIds = [...adminUserIds, ownerId];
-
-    const normalUsersInfo = await this.prisma.chatroomMembers.findMany({
-      where: {
-        AND: {
-          chatroomId: roomId,
-          status: ChatroomMembersStatus.NORMAL,
-          NOT: {
-            userId: { in: adminAndOwnerIds },
-          },
-        },
-      },
-      include: {
-        user: true,
-      },
-    });
-
-    // idと名前の配列にする
-    const normalUsers: ChatUser[] = normalUsersInfo.map((info) => {
-      return {
-        id: info.user.id,
-        name: info.user.name,
-      };
-    });
-
-    return normalUsers;
-  }
-
-  /**
-   * statusがNORMALなユーザ一覧を返す
-   * @param roomId
-   */
-  async findChatroomActiveUsers(roomId: number): Promise<ChatUser[]> {
-    const activeUsersInfo = await this.prisma.chatroomMembers.findMany({
-      where: {
-        AND: {
-          chatroomId: roomId,
-          status: ChatroomMembersStatus.NORMAL,
-        },
-      },
-      include: {
-        user: true,
-      },
-    });
-
-    const activeUsers: ChatUser[] = activeUsersInfo.map((info) => {
-      return {
-        id: info.user.id,
-        name: info.user.name,
-      };
-    });
-
-    return activeUsers;
-  }
-
-  /**
-   * statusがMUTEなユーザ一覧を返す
-   * @param roomId
-   */
-  async findMutedUsers(roomId: number): Promise<ChatUser[]> {
-    const mutedUsersInfo = await this.prisma.chatroomMembers.findMany({
-      where: {
-        AND: {
-          chatroomId: roomId,
-          status: ChatroomMembersStatus.MUTE,
-        },
-      },
-      include: {
-        user: true,
-      },
-    });
-
-    const mutedUsers: ChatUser[] = mutedUsersInfo.map((info) => {
-      return {
-        id: info.user.id,
-        name: info.user.name,
-      };
-    });
-
-    return mutedUsers;
+    return chatUsers;
   }
 
   /**
@@ -615,53 +432,6 @@ export class ChatService {
     }
 
     return true;
-  }
-
-  /**
-   * チャットルームに所属するユーザーのステータスを更新する
-   * @param updateMemberStatusDto
-   */
-  async updateMemberStatus(
-    dto: updateMemberStatusDto,
-  ): Promise<ChatroomMembers> {
-    // NOTE: とりあえずどちらも期間を1週間に設定している
-    const BAN_TIME_IN_DAYS = 7;
-    const MUTE_TIME_IN_DAYS = 7;
-
-    const isNormal = dto.status === ChatroomMembersStatus.NORMAL;
-    const startAt = isNormal ? null : new Date();
-    let endAt = undefined;
-    if (!isNormal) {
-      endAt = new Date();
-      const durationOfTheDay =
-        dto.status === ChatroomMembersStatus.MUTE
-          ? MUTE_TIME_IN_DAYS
-          : BAN_TIME_IN_DAYS;
-
-      endAt.setDate(startAt.getDate() + durationOfTheDay);
-    }
-
-    try {
-      const member = await this.prisma.chatroomMembers.update({
-        data: {
-          status: dto.status,
-          startAt: startAt,
-          endAt: endAt,
-        },
-        where: {
-          chatroomId_userId: {
-            chatroomId: dto.chatroomId,
-            userId: dto.userId,
-          },
-        },
-      });
-
-      return member;
-    } catch (error) {
-      this.logger.log('updateMemberStatus', error);
-
-      return undefined;
-    }
   }
 
   /**
