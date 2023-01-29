@@ -6,7 +6,7 @@ type Props = {
   roomId: number;
 };
 
-const endpoint = `${process.env.NEXT_PUBLIC_API_URL as string}/chat/non-banned`;
+const endpoint = `${process.env.NEXT_PUBLIC_API_URL as string}/chat/not-banned`;
 
 export const fetchNotBannedUsers = async ({ roomId }: Props) => {
   const debug = Debug('chat');

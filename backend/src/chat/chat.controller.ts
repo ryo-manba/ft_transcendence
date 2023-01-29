@@ -107,7 +107,7 @@ export class ChatController {
    * Muteされていないユーザ一覧を返す
    * @param roomId
    */
-  @Get('non-muted')
+  @Get('not-muted')
   async findNotMutedUsers(
     @Query('roomId', ParseIntPipe) roomId: number,
   ): Promise<ChatUser[]> {
@@ -146,7 +146,7 @@ export class ChatController {
    * Banされていないユーザ一覧を返す
    * @param roomId
    */
-  @Get('non-banned')
+  @Get('not-banned')
   async findNotBannedUsers(
     @Query('roomId', ParseIntPipe) roomId: number,
   ): Promise<ChatUser[]> {

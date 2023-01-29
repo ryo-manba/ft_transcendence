@@ -6,7 +6,7 @@ type Props = {
   roomId: number;
 };
 
-const endpoint = `${process.env.NEXT_PUBLIC_API_URL as string}/chat/non-muted`;
+const endpoint = `${process.env.NEXT_PUBLIC_API_URL as string}/chat/not-muted`;
 
 export const fetchNotMutedUsers = async ({ roomId }: Props) => {
   const debug = Debug('chat');
