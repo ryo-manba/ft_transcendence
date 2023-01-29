@@ -59,6 +59,7 @@ export class ChatService {
       return {
         roomId: message.chatroomId,
         text: message.message,
+        userId: message.userId,
         userName: message.user.name,
         createdAt: message.createdAt,
       };

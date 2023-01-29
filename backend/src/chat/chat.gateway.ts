@@ -209,6 +209,7 @@ export class ChatGateway {
     const chatMessage: ChatMessage = {
       roomId: message.chatroomId,
       text: message.message,
+      userId: createMessageDto.userId,
       userName: createMessageDto.userName,
       createdAt: message.createdAt,
     };
