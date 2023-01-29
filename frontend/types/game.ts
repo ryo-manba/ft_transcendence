@@ -7,6 +7,14 @@ export const DifficultyLevel = {
 export type DifficultyLevel =
   typeof DifficultyLevel[keyof typeof DifficultyLevel];
 
+export const UserStatus = {
+  ONLINE: 'ONLINE',
+  PLAYING: 'PLAYING',
+  OFFLINE: 'OFFLINE',
+} as const;
+
+export type UserStatus = typeof UserStatus[keyof typeof UserStatus];
+
 export type GameSetting = {
   difficulty: DifficultyLevel;
   matchPoint: number;
@@ -65,4 +73,8 @@ export type GameParameters = {
   ballInitialY: number;
   ballRadius: number;
   widthRatio: number;
+};
+
+export type SocketAuth = {
+  userId: number;
 };

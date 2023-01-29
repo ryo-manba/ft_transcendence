@@ -18,8 +18,6 @@ import { Request } from 'express';
 import { UserService } from './user.service';
 import { DeleteAvatarDto } from './dto/delete-avatar.dto';
 import { UpdateNameDto } from './dto/update-name.dto';
-import { UserStatus } from '@prisma/client';
-import { UpdateStatusDto } from './dto/update-status.dto';
 import { UpdatePointDto } from './dto/update-point.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
@@ -55,25 +53,12 @@ export class UserController {
     return req.user;
   }
 
-  @Get('status')
-  async getStatus(
-    @Req() req: Request,
-    @Query('id', ParseIntPipe) id: number,
-  ): Promise<UserStatus | undefined> {
-    return await this.userService.getStatus(id);
-  }
-
   @Get('ranking')
   async getRanking(
     @Req() req: Request,
     @Query('id', ParseIntPipe) id: number,
   ): Promise<number> {
     return await this.userService.getRanking(id);
-  }
-
-  @Patch('update-status')
-  updateStatus(@Body() dto: UpdateStatusDto): Promise<ClientUser> {
-    return this.userService.updateStatus(dto);
   }
 
   @Get(':id')

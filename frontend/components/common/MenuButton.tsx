@@ -10,6 +10,7 @@ import { useQueryUser } from 'hooks/useQueryUser';
 import { Loading } from './Loading';
 import { logout } from 'api/auth/logout';
 import { useRouter } from 'next/router';
+import { useSocketStore } from 'store/game/ClientSocket';
 
 export const MenuButton = () => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -24,6 +25,7 @@ export const MenuButton = () => {
   const { data: session } = useSession();
   const router = useRouter();
   const { data: user } = useQueryUser();
+  const { socket } = useSocketStore();
 
   if (user === undefined) return <Loading />;
 
@@ -58,6 +60,7 @@ export const MenuButton = () => {
         </Link>
         <MenuItem
           onClick={() => {
+            socket.disconnect();
             logout(queryClient, router, session);
           }}
         >
