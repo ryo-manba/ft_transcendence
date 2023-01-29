@@ -757,7 +757,7 @@ export class ChatGateway {
 
   /*
    * ユーザーのブロックを解除する
-   * @param BlockUserDto
+   * @param UnblockUserDto
    */
   @SubscribeMessage('chat:unblockUser')
   async unblockUser(
