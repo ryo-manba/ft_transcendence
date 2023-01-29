@@ -140,13 +140,9 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
     async (ignore: boolean) => {
       if (!user) return;
 
-      const notAdminUsers = await fetchCanSetAdminUsers({
+      const canSetAdminUsers = await fetchCanSetAdminUsers({
         roomId: room.id,
       });
-
-      const canSetAdminUsers = notAdminUsers.filter(
-        (notAdminUser) => notAdminUser.id !== user.id,
-      );
 
       if (!ignore) {
         setNotAdminUsers(canSetAdminUsers);
