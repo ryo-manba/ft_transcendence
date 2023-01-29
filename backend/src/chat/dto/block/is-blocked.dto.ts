@@ -1,6 +1,6 @@
 import { IsNotEmpty, IsNumber } from 'class-validator';
 
-export class IsBlockedByUserIdDto {
+export class IsBlockedDto {
   @IsNumber()
   @IsNotEmpty()
   blockingUserId: number;

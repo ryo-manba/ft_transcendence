@@ -10,19 +10,19 @@ import {
   Prisma,
   BlockRelation,
 } from '@prisma/client';
-import { CreateChatroomDto } from './dto/create-chatroom.dto';
-import { CreateMessageDto } from './dto/create-message.dto';
-import { CreateAdminDto } from './dto/create-admin.dto';
-import { DeleteAdminDto } from './dto/delete-admin.dto';
-import { JoinChatroomDto } from './dto/join-chatroom.dto';
 import type { ChatUser, ChatMessage } from './types/chat';
-import { updatePasswordDto } from './dto/update-password.dto';
-import { GetMessagesDto } from './dto/get-messages.dto';
-import { DeleteChatroomDto } from './dto/delete-chatroom.dto';
-import { DeleteChatroomMemberDto } from './dto/delete-chatroom-member.dto';
-import { CreateBlockRelationDto } from './dto/create-block-relation.dto';
-import { DeleteBlockRelationDto } from './dto/delete-block-relation.dto';
-import { GetUnblockedUsersDto } from './dto/get-unblocked-users.dto';
+import { CreateAdminDto } from './dto/admin/create-admin.dto';
+import { DeleteAdminDto } from './dto/admin/delete-admin.dto';
+import { CreateBlockRelationDto } from './dto/block/create-block-relation.dto';
+import { DeleteBlockRelationDto } from './dto/block/delete-block-relation.dto';
+import { GetUnblockedUsersDto } from './dto/block/get-unblocked-users.dto';
+import { CreateChatroomDto } from './dto/chatroom/create-chatroom.dto';
+import { JoinChatroomDto } from './dto/chatroom/join-chatroom.dto';
+import { DeleteChatroomDto } from './dto/chatroom/delete-chatroom.dto';
+import { UpdateChatroomPasswordDto } from './dto/chatroom/update-chatroom-password.dto';
+import { DeleteChatroomMemberDto } from './dto/chatroom/delete-chatroom-member.dto';
+import { CreateMessageDto } from './dto//message/create-message.dto';
+import { GetMessagesDto } from './dto//message/get-messages.dto';
 
 // 2の12乗回の演算が必要という意味
 const saltRounds = 12;
@@ -395,9 +395,9 @@ export class ChatService {
 
   /**
    * チャットルームのパスワードを更新する
-   * @param updatePasswordDto
+   * @param UpdateChatroomPasswordDto
    */
-  async updatePassword(dto: updatePasswordDto): Promise<boolean> {
+  async updatePassword(dto: UpdateChatroomPasswordDto): Promise<boolean> {
     const targetRoom = await this.findOne({
       id: dto.chatroomId,
     });
