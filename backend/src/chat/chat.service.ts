@@ -330,7 +330,7 @@ export class ChatService {
    * 条件を満たすチャットルームメンバーをChatUserの形式で返す
    * @param
    */
-  async findChatroomMembersToChatUsers(params: {
+  async findChatroomMembersAsChatUsers(params: {
     where: Prisma.ChatroomMembersWhereInput;
   }): Promise<ChatUser[]> {
     const { where } = params;

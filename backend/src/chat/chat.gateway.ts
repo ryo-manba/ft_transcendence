@@ -377,7 +377,7 @@ export class ChatGateway {
     const excludeIdSets = new Set([...bannedIds, ...mutedIds]);
     const excludeIds = [...excludeIdSets];
     const chatroomMembers =
-      await this.chatService.findChatroomMembersToChatUsers({
+      await this.chatService.findChatroomMembersAsChatUsers({
         where: {
           chatroomId: dto.chatroomId,
           userId: {
