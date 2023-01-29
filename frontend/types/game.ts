@@ -74,3 +74,7 @@ export type GameParameters = {
   ballRadius: number;
   widthRatio: number;
 };
+
+export type SocketAuth = {
+  userId: number;
+};

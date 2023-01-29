@@ -24,6 +24,7 @@ import {
   DifficultyLevel,
   GameState,
   UserStatus,
+  SocketAuth,
 } from './types/game';
 import { GetInvitedListDto } from './dto/get-invited-list.dto';
 import { InviteFriendDto } from './dto/invite-friend.dto';
@@ -99,7 +100,9 @@ export class GameGateway {
   playingUserIds: number[] = [];
 
   getIdFromSocket(socket: Socket): number {
-    return (socket.handshake.auth as { id: number }).id;
+    const socketAuth = socket.handshake.auth as SocketAuth;
+
+    return socketAuth.userId;
   }
 
   isPlayingUserId(id: number): boolean {
