@@ -33,7 +33,7 @@ const Authenticate = () => {
     // ログイン後の処理
     const processAfterLogin = async (loginResult: LoginResult) => {
       if (!loginResult) {
-        void signOut({ callbackUrl: '/' });
+        void signOut({ callbackUrl: '/?login=false' });
       } else if (loginResult.res === LoginResultStatus.SUCCESS) {
         await router.push('/dashboard');
       } else if (
@@ -45,7 +45,7 @@ const Authenticate = () => {
         setOpenValidationDialog(true);
       } else {
         // ログイン失敗、signOutしてログインに戻る
-        void signOut({ callbackUrl: '/' });
+        void signOut({ callbackUrl: '/?login=false' });
       }
     };
 

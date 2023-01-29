@@ -82,6 +82,11 @@ const Home: NextPage = () => {
     socket.disconnect();
   }, [socket, queryClient]);
 
+  useEffect(() => {
+    const login = router.query.login;
+    if (login === 'false') setError(['Login Failure']);
+  }, [router.query.login]);
+
   const onSubmit: SubmitHandler<AuthForm> = async (formData: AuthForm) => {
     try {
       if (process.env.NEXT_PUBLIC_API_URL) {
