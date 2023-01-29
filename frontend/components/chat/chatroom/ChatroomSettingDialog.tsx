@@ -152,7 +152,7 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
         setNotAdminUsers(canSetAdminUsers);
       }
     },
-    [user, room],
+    [user, room.id],
   );
 
   const reloadCanBanUsers = useCallback(
@@ -170,7 +170,7 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
         setNotBannedUsers(canBanUsers);
       }
     },
-    [user, room],
+    [user, room.id],
   );
 
   const reloadCanUnbanUsers = useCallback(
@@ -182,7 +182,7 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
         setBannedUsers(bannedUsers);
       }
     },
-    [room],
+    [room.id],
   );
 
   const reloadCanMuteUsers = useCallback(
@@ -201,7 +201,7 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
         setNotMutedUsers(canMuteUsers);
       }
     },
-    [user, room],
+    [user, room.id],
   );
 
   const reloadCanUnmuteUsers = useCallback(
@@ -213,7 +213,7 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
         setMutedUsers(mutedUsers);
       }
     },
-    [room],
+    [room.id],
   );
 
   const reloadCanSetOwnerUsers = useCallback(
@@ -228,7 +228,7 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
         setActiveUsers(activeNotOwnerUsers);
       }
     },
-    [room],
+    [room.id, room.ownerId],
   );
 
   // 設定項目を選択した時に対応するユーザ一覧を取得する
@@ -267,7 +267,7 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
     };
   }, [
     open,
-    room,
+    room.ownerId,
     user,
     selectedRoomSetting,
     reloadCanBanUsers,
