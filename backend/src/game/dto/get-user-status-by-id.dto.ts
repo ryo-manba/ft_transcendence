@@ -1,11 +1,7 @@
 import { IsNotEmpty, IsNumber } from 'class-validator';
 
-export class DeleteAdminDto {
+export class GetUserStatusByIdDto {
   @IsNumber()
   @IsNotEmpty()
   userId: number;
-
-  @IsNumber()
-  @IsNotEmpty()
-  chatroomId: number;
 }

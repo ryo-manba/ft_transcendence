@@ -14,8 +14,9 @@ import { ChatService } from './chat.service';
 import { BanService } from './ban.service';
 import { MuteService } from './mute.service';
 import { BlockService } from './block.service';
+import { AdminService } from './admin.service';
+import { ChatroomService } from './chatroom.service';
 import { CreateAdminDto } from './dto/admin/create-admin.dto';
-import { DeleteAdminDto } from './dto/admin/delete-admin.dto';
 import { IsAdminDto } from './dto/admin/is-admin.dto';
 import { IsBannedDto } from './dto/ban/is-banned.dto';
 import { BanUserDto } from './dto/ban/ban-user.dto';
@@ -56,6 +57,8 @@ export class ChatGateway {
     private readonly banService: BanService,
     private readonly muteService: MuteService,
     private readonly blockService: BlockService,
+    private readonly adminService: AdminService,
+    private readonly chatroomService: ChatroomService,
   ) {}
 
   @WebSocketServer() server: Server;
@@ -104,7 +107,7 @@ export class ChatGateway {
     this.logger.log(`chat:createAndJoinRoom: ${dto.name}`);
 
     // チャットルームを作成する
-    const createdRoom = await this.chatService.createRoom(dto);
+    const createdRoom = await this.chatroomService.create(dto);
     if (!createdRoom) {
       return { createdRoom: undefined };
     }
@@ -137,7 +140,7 @@ export class ChatGateway {
   ) {
     this.logger.log(`chat:getJoinedRooms: ${dto.userId}`);
     // ユーザーが入室しているチャットルームを取得する
-    const rooms = await this.chatService.findJoinedRooms(dto.userId);
+    const rooms = await this.chatroomService.findJoinedRooms(dto.userId);
 
     const clientChatrooms = rooms.map((room) =>
       this.convertToClientChatroom(room),
@@ -291,7 +294,7 @@ export class ChatGateway {
   ): Promise<{ joinedRoom: ClientChatroom | undefined }> {
     this.logger.log(`chat:joinRoom received -> ${dto.userId}`);
 
-    const joinedRoom = await this.chatService.joinRoom(dto);
+    const joinedRoom = await this.chatroomService.joinRoom(dto);
     if (!joinedRoom) {
       return { joinedRoom: undefined };
     }
@@ -326,10 +329,10 @@ export class ChatGateway {
    * @param client
    * @param DeleteChatroomDto
    */
-  @SubscribeMessage('chat:deleteRoom')
+  @SubscribeMessage('chat:delete')
   async deleteRoom(@MessageBody() dto: DeleteChatroomDto): Promise<boolean> {
-    this.logger.log(`chat:deleteRoom received -> roomId: ${dto.id}`);
-    const deletedRoom = await this.chatService.deleteRoom(dto);
+    this.logger.log(`chat:delete received -> roomId: ${dto.id}`);
+    const deletedRoom = await this.chatroomService.delete(dto);
     if (!deletedRoom) {
       return false;
     }
@@ -337,7 +340,7 @@ export class ChatGateway {
     const socketRoomName = this.generateSocketChatRoomName(deletedRoom.id);
 
     const deletedClientRoom = this.convertToClientChatroom(deletedRoom);
-    this.server.to(socketRoomName).emit('chat:deleteRoom', deletedClientRoom);
+    this.server.to(socketRoomName).emit('chat:delete', deletedClientRoom);
 
     // 入室者をルームから退出させる
     this.server.socketsLeave(socketRoomName);
@@ -357,7 +360,7 @@ export class ChatGateway {
   ): Promise<boolean> {
     this.logger.log(`chat:leaveRoom received userId -> ${dto.userId}`);
 
-    const deletedMember = await this.chatService.removeChatroomMember(dto);
+    const deletedMember = await this.chatroomService.removeChatroomMember(dto);
     if (!deletedMember) {
       return false;
     }
@@ -365,13 +368,23 @@ export class ChatGateway {
       roomId: dto.chatroomId,
     });
 
-    // TODO: adminの判定をする
-    // adminの設定を削除する
-    const deleteAdminDto: DeleteAdminDto = {
+    const isAdminDto: IsAdminDto = {
       userId: dto.userId,
       chatroomId: dto.chatroomId,
     };
-    await this.chatService.deleteAdmin(deleteAdminDto);
+    const isAdmin = await this.adminService.isAdmin(isAdminDto);
+    if (isAdmin) {
+      const deletedAdmin = await this.adminService.delete({
+        chatroomId_userId: {
+          userId: dto.userId,
+          chatroomId: dto.chatroomId,
+        },
+      });
+
+      if (!deletedAdmin) {
+        return false;
+      }
+    }
 
     // 退出することにより入室者がいなくなる場合はチャットルームを削除する
     // BAN or MUTEのユーザーは無視する
@@ -381,8 +394,9 @@ export class ChatGateway {
     const mutedIds = mutedUsers.map((user) => user.id);
     const excludeIdSets = new Set([...bannedIds, ...mutedIds]);
     const excludeIds = [...excludeIdSets];
+
     const chatroomMembers =
-      await this.chatService.findChatroomMembersAsChatUsers({
+      await this.chatroomService.findChatroomMembersAsChatUsers({
         where: {
           chatroomId: dto.chatroomId,
           userId: {
@@ -394,12 +408,13 @@ export class ChatGateway {
     if (chatroomMembers.length > 0) {
       return true;
     }
+
     const deleteChatroomDto: DeleteChatroomDto = {
       id: dto.chatroomId,
       userId: dto.userId,
     };
 
-    const deletedRoom = await this.deleteRoom(deleteChatroomDto);
+    const deletedRoom = await this.chatroomService.delete(deleteChatroomDto);
     if (!deletedRoom) {
       this.logger.log('chat:leaveRoom failed to delete room');
 
@@ -443,7 +458,7 @@ export class ChatGateway {
     const hiddenChatRooms = [ChatroomType.PRIVATE, ChatroomType.DM];
 
     // public, protectedのチャットルーム一覧を取得する
-    const viewableRooms = await this.chatService.findAll({
+    const viewableRooms = await this.chatroomService.findAll({
       where: {
         NOT: {
           type: { in: hiddenChatRooms },
@@ -452,7 +467,7 @@ export class ChatGateway {
     });
 
     // userが所属しているチャットルームの一覧を取得する
-    const joinedRooms = await this.chatService.findJoinedRooms(dto.userId);
+    const joinedRooms = await this.chatroomService.findJoinedRooms(dto.userId);
 
     const roomsDiff = this.getChatroomDiff(viewableRooms, joinedRooms);
     const viewableAndNotJoinedRooms = viewableRooms.filter((item) => {
@@ -478,7 +493,9 @@ export class ChatGateway {
   ): Promise<boolean> {
     this.logger.log(`chat:addAdmin received -> roomId: ${dto.chatroomId}`);
 
-    const createdAdmin = await this.chatService.createAdmin(dto);
+    const createdAdmin = await this.adminService.create({
+      data: dto,
+    });
     if (!createdAdmin) {
       return false;
     }
@@ -501,15 +518,7 @@ export class ChatGateway {
   ): Promise<boolean> {
     this.logger.log(`chat:getAdmins received -> roomId: ${dto.chatroomId}`);
 
-    const res = await this.prisma.chatroomAdmin.findUnique({
-      where: {
-        chatroomId_userId: {
-          ...dto,
-        },
-      },
-    });
-
-    return !!res;
+    return await this.adminService.isAdmin(dto);
   }
 
   /**
@@ -525,7 +534,7 @@ export class ChatGateway {
       `chat:updatePassword received -> roomId: ${dto.chatroomId}`,
     );
 
-    return await this.chatService.updatePassword(dto);
+    return await this.chatroomService.updatePassword(dto);
   }
 
   /**
@@ -604,7 +613,7 @@ export class ChatGateway {
   ): Promise<{ chatroom: ClientChatroom | undefined }> {
     this.logger.log('chat:directMessage received');
 
-    const existingDMRoom = await this.chatService.findExistingDMRoom(
+    const existingDMRoom = await this.chatroomService.findExistingDMRoom(
       dto.senderId,
       dto.recipientId,
     );
@@ -622,9 +631,9 @@ export class ChatGateway {
       type: ChatroomType.DM,
       ownerId: dto.senderId,
     };
-    const createdRoom = await this.chatService.createRoom(createChatroomDto);
+    const createdRoom = await this.chatroomService.create(createChatroomDto);
     if (!createdRoom) {
-      this.logger.log('chat:directMessage failed to createRoom');
+      this.logger.log('chat:directMessage failed to create');
 
       return { chatroom: undefined };
     }
@@ -655,7 +664,7 @@ export class ChatGateway {
       this.logger.log(error);
 
       // どちらかの入室処理に失敗した場合は、チャットルームを削除する
-      await this.chatService.deleteRoom({
+      await this.chatroomService.delete({
         id: createdRoom.id,
         userId: dto.senderId,
       });
@@ -683,7 +692,7 @@ export class ChatGateway {
   ): Promise<boolean> {
     this.logger.log('chat:changeRoomOwner received');
 
-    const changedRoom = await this.chatService.updateRoom({
+    const changedRoom = await this.chatroomService.update({
       data: {
         owner: {
           connect: {
@@ -799,7 +808,7 @@ export class ChatGateway {
     await client.join(userRoomName);
 
     // すでに入室中のチャットルームも通知を受け取れるようにする
-    const rooms = await this.chatService.findJoinedRooms(userId);
+    const rooms = await this.chatroomService.findJoinedRooms(userId);
     rooms.map(async (room) => {
       await client.join(this.generateSocketChatRoomName(room.id));
     });

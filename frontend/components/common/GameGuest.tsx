@@ -27,7 +27,6 @@ import { usePlayerNamesStore } from 'store/game/PlayerNames';
 import { useQueryUser } from 'hooks/useQueryUser';
 import { Invitation } from 'types/game';
 import { CloseButton } from '@mantine/core';
-import { useMutationStatus } from 'hooks/useMutationStatus';
 import CloseIcon from '@mui/icons-material/Close';
 
 type Props = {
@@ -46,7 +45,6 @@ export const GameGuest = ({ hosts, setHosts }: Props) => {
   );
   const router = useRouter();
   const { data: user } = useQueryUser();
-  const { updateStatusMutation } = useMutationStatus();
 
   const handleClick = useCallback(() => {
     setOpenDialog(true);
@@ -87,22 +85,11 @@ export const GameGuest = ({ hosts, setHosts }: Props) => {
 
   useEffect(() => {
     if (user === undefined) return;
-    const updateUserStatusPlaying = () => {
-      try {
-        updateStatusMutation.mutate({
-          userId: user.id,
-          status: 'PLAYING',
-        });
-      } catch (error) {
-        return;
-      }
-    };
 
     socket.on('friend:select', (playerNames: [string, string]) => {
       updatePlayerNames(playerNames);
       updatePlayState(PlayState.stateSelecting);
 
-      updateUserStatusPlaying();
       // cancel random match
       socket.emit('playCancel');
       void router.push('/game/battle');
@@ -111,7 +98,6 @@ export const GameGuest = ({ hosts, setHosts }: Props) => {
       updatePlayerNames(playerNames);
       updatePlayState(PlayState.stateStandingBy);
 
-      updateUserStatusPlaying();
       // cancel random match
       socket.emit('playCancel');
       void router.push('/game/battle');
@@ -121,14 +107,7 @@ export const GameGuest = ({ hosts, setHosts }: Props) => {
       socket.off('friend:select');
       socket.off('friend:standBy');
     };
-  }, [
-    user,
-    socket,
-    router,
-    updatePlayState,
-    updatePlayerNames,
-    updateStatusMutation,
-  ]);
+  }, [user, socket, router, updatePlayState, updatePlayerNames]);
 
   return (
     <>

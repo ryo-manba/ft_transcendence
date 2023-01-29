@@ -10,6 +10,7 @@ import {
   Param,
   Patch,
   ParseIntPipe,
+  ForbiddenException,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { AuthService } from './auth.service';
@@ -64,22 +65,32 @@ export class AuthController {
         res: LoginResultStatus.SUCCESS,
         userId: undefined,
       };
-    } catch {
-      return {
-        res: LoginResultStatus.FAILURE,
-        userId: undefined,
-      };
+    } catch (error) {
+      if (error instanceof ForbiddenException) {
+        const errorMessage = error.message;
+
+        return {
+          res: LoginResultStatus.FAILURE,
+          userId: undefined,
+          errorMessage,
+        };
+      } else {
+        return {
+          res: LoginResultStatus.FAILURE,
+          userId: undefined,
+        };
+      }
     }
   }
 
   @HttpCode(HttpStatus.OK)
   @Post('logout')
-  async logout(
+  logout(
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
     @Body() dto: LogoutDto,
-  ): Promise<Msg> {
-    await this.authService.logout(dto);
+  ): Msg {
+    this.authService.logout(dto);
 
     res.cookie('access_token', '', {
       httpOnly: true,

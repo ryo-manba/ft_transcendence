@@ -32,6 +32,34 @@ export class AuthService {
   private logger: Logger = new Logger('AuthService');
   preAuthSecrets = new Map<number, string>();
 
+  loginUserIds: number[] = [];
+
+  isLoginUserId(id: number): boolean {
+    if (this.loginUserIds.find((loginUserId) => loginUserId === id)) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  addLoginUserId(id: number) {
+    if (!this.isLoginUserId(id)) {
+      this.logger.log(`addLoginUserId: ${id}`);
+
+      this.loginUserIds.push(id);
+    }
+  }
+
+  removeLoginUserId(id: number) {
+    if (this.isLoginUserId(id)) {
+      this.logger.log(`removeLoginUserId: ${id}`);
+
+      this.loginUserIds = this.loginUserIds.filter(
+        (loginUserId) => loginUserId !== id,
+      );
+    }
+  }
+
   async singUp(dto: AuthDto): Promise<Msg> {
     // 2の12乗回の演算が必要、という意味の12
     const hashed = await bcrypt.hash(dto.password, 12);
@@ -64,39 +92,32 @@ export class AuthService {
         name: dto.username,
       },
     });
-    if (!user) throw new ForbiddenException('username or password incorrect');
+    if (!user)
+      throw new ForbiddenException('Username or password is incorrect.');
     const isValid = await bcrypt.compare(dto.password, user.hashedPassword);
     if (!isValid)
-      throw new ForbiddenException('username or password incorrect');
+      throw new ForbiddenException('Username or password is incorrect.');
 
-    // ここのupdateは上の処理で絶対に存在しているuser.idが入るはずなのでエラー処理不要
-    await this.prisma.user.update({
-      where: {
-        id: user.id,
-      },
-      data: {
-        status: 'ONLINE',
-      },
-    });
+    // check if user id exists in the loginUserIds array
+    // if not, add user id to the array
+    if (this.loginUserIds.find((id) => id === user.id)) {
+      throw new ForbiddenException(
+        "You can't log in with multiple windows/tabs.",
+      );
+    } else {
+      this.addLoginUserId(user.id);
+    }
 
     const jwtToken = await this.generateJwt(user.id, user.name);
 
     return { accessToken: jwtToken, has2fa: user.has2FA, userId: user.id };
   }
 
-  async logout(dto: LogoutDto) {
-    try {
-      await this.prisma.user.update({
-        where: {
-          id: dto.id,
-        },
-        data: {
-          status: 'OFFLINE',
-        },
-      });
-    } catch (error) {
-      this.logger.error(`Failed to update status for User ID ${dto.id}`);
-    }
+  logout(dto: LogoutDto) {
+    this.logger.log(`Logout: ${dto.id}`);
+
+    // remove user id from the array
+    this.removeLoginUserId(dto.id);
   }
 
   async generateJwt(userId: number, username: string): Promise<string> {
@@ -167,15 +188,16 @@ export class AuthService {
       });
     }
 
-    // ここのupdateは上の処理で絶対に存在しているuser.idが入るはずなのでエラー処理不要
-    await this.prisma.user.update({
-      where: {
-        id: user.id,
-      },
-      data: {
-        status: 'ONLINE',
-      },
-    });
+    // check if user id exists in the loginUserIds array
+    // if not, add user id to the array
+    if (this.loginUserIds.find((id) => id === user.id)) {
+      throw new ForbiddenException(
+        "You can't log in with multiple windows/tabs.",
+      );
+    } else {
+      this.loginUserIds.push(user.id);
+    }
+
     const jwtToken = await this.generateJwt(user.id, user.name);
 
     return { accessToken: jwtToken, has2fa: user.has2FA, userId: user.id };
