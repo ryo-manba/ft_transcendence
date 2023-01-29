@@ -208,6 +208,7 @@ export class ChatService {
       return {
         roomId: message.chatroomId,
         text: message.message,
+        userId: message.userId,
         userName: message.user.name,
         createdAt: message.createdAt,
       };
@@ -326,7 +327,7 @@ export class ChatService {
    * 条件を満たすチャットルームメンバーをChatUserの形式で返す
    * @param
    */
-  async findChatroomMembersToChatUsers(params: {
+  async findChatroomMembersAsChatUsers(params: {
     where: Prisma.ChatroomMembersWhereInput;
   }): Promise<ChatUser[]> {
     const { where } = params;

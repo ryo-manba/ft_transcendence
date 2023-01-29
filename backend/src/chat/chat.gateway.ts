@@ -151,7 +151,7 @@ export class ChatGateway {
    * @param Message
    */
   @SubscribeMessage('chat:sendMessage')
-  async onMessage(
+  async sendMessage(
     @ConnectedSocket() client: Socket,
     @MessageBody() createMessageDto: CreateMessageDto,
   ): Promise<{ error: string | undefined }> {
@@ -211,6 +211,7 @@ export class ChatGateway {
     const chatMessage: ChatMessage = {
       roomId: message.chatroomId,
       text: message.message,
+      userId: createMessageDto.userId,
       userName: createMessageDto.userName,
       createdAt: message.createdAt,
     };
@@ -381,7 +382,7 @@ export class ChatGateway {
     const excludeIdSets = new Set([...bannedIds, ...mutedIds]);
     const excludeIds = [...excludeIdSets];
     const chatroomMembers =
-      await this.chatService.findChatroomMembersToChatUsers({
+      await this.chatService.findChatroomMembersAsChatUsers({
         where: {
           chatroomId: dto.chatroomId,
           userId: {
@@ -433,7 +434,7 @@ export class ChatGateway {
    * @param GetJoinableChatRoomsDto
    */
   @SubscribeMessage('chat:getJoinableRooms')
-  async onRoomJoinable(
+  async getJoinableRooms(
     @ConnectedSocket() client: Socket,
     @MessageBody() dto: GetJoinableChatRoomsDto,
   ): Promise<ClientChatroom[]> {
@@ -770,7 +771,7 @@ export class ChatGateway {
 
   /**
    * ユーザーがブロックされているかを確認する
-   * @param IsBlocked
+   * @param IsBlockedDto
    */
   @SubscribeMessage('chat:isBlocked')
   async isBlocked(
