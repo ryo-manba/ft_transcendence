@@ -29,7 +29,7 @@ const FRIEND_ACTIONS = {
   DM: 'Direct Message',
 } as const;
 
-type FriendActions = typeof FRIEND_ACTIONS[keyof typeof FRIEND_ACTIONS];
+type FriendActions = (typeof FRIEND_ACTIONS)[keyof typeof FRIEND_ACTIONS];
 
 export const FriendInfoDialog = memo(function FriendInfoDialog({
   friend,
