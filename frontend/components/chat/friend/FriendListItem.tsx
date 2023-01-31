@@ -22,6 +22,7 @@ import { Loading } from 'components/common/Loading';
 import { BadgedAvatar } from 'components/common/BadgedAvatar';
 import { ChatErrorAlert } from 'components/chat/alert/ChatErrorAlert';
 import { ChatAlertCollapse } from 'components/chat/alert/ChatAlertCollapse';
+import { AvatarFontSize } from 'types/utils';
 
 type Props = {
   friend: Friend;
@@ -147,6 +148,7 @@ export const FriendListItem = memo(function FriendListItem({
             status={friendStatus}
             src={getAvatarImageUrl(friend.id)}
             displayName={friend.name}
+            avatarFontSize={AvatarFontSize.SMALL}
           />
         </ListItemAvatar>
         <ListItemText

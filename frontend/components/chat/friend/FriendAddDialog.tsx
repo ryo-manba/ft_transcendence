@@ -20,6 +20,7 @@ import { Loading } from 'components/common/Loading';
 import { ChatErrorAlert } from 'components/chat/alert/ChatErrorAlert';
 import { ChatAlertCollapse } from 'components/chat/alert/ChatAlertCollapse';
 import { BadgedAvatar } from 'components/common/BadgedAvatar';
+import { AvatarFontSize } from 'types/utils';
 
 type Props = {
   open: boolean;
@@ -109,6 +110,7 @@ export const FriendAddDialog = memo(function FriendAddDialog({
                     <BadgedAvatar
                       src={getAvatarImageUrl(user.id)}
                       displayName={user.name}
+                      avatarFontSize={AvatarFontSize.SMALL}
                     />
                   </ListItemAvatar>
                   <ListItemText primary={user.name} />
