@@ -9,7 +9,6 @@ import axios from 'axios';
 import { SessionProvider } from 'next-auth/react';
 
 import type { Session } from 'next-auth';
-import { logout } from 'api/auth/logout';
 import { useRouter } from 'next/router';
 
 const queryClient = new QueryClient({
@@ -32,8 +31,10 @@ function MyApp({
 }: AppProps<{ session: Session }>) {
   axios.defaults.withCredentials = true; // Cookieのやりとりする時に必要
   const router = useRouter();
+
   useEffect(() => {
     localStorage.debug = process.env.NEXT_PUBLIC_DEBUG as string;
+
     // ロードされた時にCsrfトークンを取得するのでここで定義
     // ヘッダに自動的に付与される
     const getCsrfToken = async () => {
@@ -44,22 +45,9 @@ function MyApp({
         axios.defaults.headers.common['csrf-token'] = data.csrfToken;
       }
     };
+
     void getCsrfToken();
-
-    // ウィンドウを閉じた際に自動的にログアウトするためにEventListenerを設定
-    const handleTabClose = (event: Event) => {
-      event.preventDefault();
-      logout(queryClient, router, session);
-    };
-
-    // 'unload'のイベントはウィンドウ閉じたときのみ発火
-    // 'beforeunload'はページを更新したときにも発火
-    window.addEventListener('unload', handleTabClose);
-
-    return () => {
-      window.removeEventListener('unload', handleTabClose);
-    };
-  }, []);
+  }, [router, session]);
 
   return (
     <QueryClientProvider client={queryClient}>

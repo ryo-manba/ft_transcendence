@@ -8,7 +8,6 @@ import {
   IconButton,
   Pagination,
 } from '@mui/material';
-import { useMutationStatus } from 'hooks/useMutationStatus';
 import { useQueryUser } from 'hooks/useQueryUser';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
@@ -38,7 +37,6 @@ export const Watch = () => {
   );
   const router = useRouter();
   const { data: user } = useQueryUser();
-  const { updateStatusMutation } = useMutationStatus();
   const [page, setPage] = useState(1);
 
   useEffect(() => {
@@ -63,14 +61,6 @@ export const Watch = () => {
         if (user === undefined) {
           return;
         }
-        try {
-          updateStatusMutation.mutate({
-            userId: user.id,
-            status: 'PLAYING',
-          });
-        } catch (error) {
-          return;
-        }
         if (gameState === 'Setting') {
           updatePlayState(PlayState.stateStandingBy);
         } else {
@@ -86,7 +76,7 @@ export const Watch = () => {
       socket.off('watchListed');
       socket.off('joinGameRoom');
     };
-  }, [socket, user]);
+  }, [socket, user, router, updateGameSetting, updatePlayState]);
 
   const watchGame = (room: WatchInfo) => {
     const playerNames: [string, string] = [room.name1, room.name2];

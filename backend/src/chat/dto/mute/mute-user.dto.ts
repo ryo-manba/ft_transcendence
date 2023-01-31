@@ -1,6 +1,6 @@
 import { IsNotEmpty, IsNumber } from 'class-validator';
 
-export class CheckBanDto {
+export class MuteUserDto {
   @IsNumber()
   @IsNotEmpty()
   userId: number;

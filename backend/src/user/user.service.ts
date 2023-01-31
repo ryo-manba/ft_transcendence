@@ -6,13 +6,13 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { UpdateNameDto } from './dto/update-name.dto';
-import { Prisma, User, UserStatus } from '@prisma/client';
-import { UpdateStatusDto } from './dto/update-status.dto';
+import { Prisma, User } from '@prisma/client';
 import { UpdatePointDto } from './dto/update-point.dto';
 import { UpdateAvatarDto } from './dto/update-avatar.dto';
 import { createReadStream, unlink } from 'node:fs';
 import * as path from 'path';
 import { DeleteAvatarDto } from './dto/delete-avatar.dto';
+import { ClientUser } from './types/user';
 
 @Injectable()
 export class UserService {
@@ -20,7 +20,20 @@ export class UserService {
 
   private logger: Logger = new Logger('UserService');
 
-  async findOne(userId: number): Promise<Omit<User, 'hashedPassword'> | null> {
+  convertToClientUser(user: User): ClientUser {
+    // src/user/types/user.tsと型を合わせる
+    const clientUser = (({
+      hashedPassword, // eslint-disable-line @typescript-eslint/no-unused-vars
+      secret2FA, // eslint-disable-line @typescript-eslint/no-unused-vars
+      createdAt, // eslint-disable-line @typescript-eslint/no-unused-vars
+      updatedAt, // eslint-disable-line @typescript-eslint/no-unused-vars
+      ...rest
+    }) => rest)(user);
+
+    return clientUser;
+  }
+
+  async findOne(userId: number): Promise<ClientUser | null> {
     const user = await this.prisma.user.findUnique({
       where: {
         id: userId,
@@ -28,9 +41,9 @@ export class UserService {
     });
 
     // userがnullのときにhashedPasswordにアクセスしようとするとエラーになる
-    if (user !== null) delete user.hashedPassword;
+    if (!user) return null;
 
-    return user;
+    return this.convertToClientUser(user);
   }
 
   /**
@@ -43,19 +56,24 @@ export class UserService {
     cursor?: Prisma.UserWhereUniqueInput;
     where?: Prisma.UserWhereInput;
     orderBy?: Prisma.UserOrderByWithRelationInput;
-  }): Promise<User[]> {
+  }): Promise<ClientUser[]> {
     const { skip, take, cursor, where, orderBy } = params;
 
-    return this.prisma.user.findMany({
+    const users = await this.prisma.user.findMany({
       skip,
       take,
       cursor,
       where,
       orderBy,
     });
+    if (users.length === 0) return [];
+
+    const clientUsers = users.map((user) => this.convertToClientUser(user));
+
+    return clientUsers;
   }
 
-  async updateName(dto: UpdateNameDto): Promise<Omit<User, 'hashedPassword'>> {
+  async updateName(dto: UpdateNameDto): Promise<ClientUser> {
     try {
       const user = await this.prisma.user.update({
         where: {
@@ -65,9 +83,8 @@ export class UserService {
           name: dto.name,
         },
       });
-      delete user.hashedPassword;
 
-      return user;
+      return this.convertToClientUser(user);
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         if (error.code === 'P2002') {
@@ -78,9 +95,7 @@ export class UserService {
     }
   }
 
-  async updatePoint(
-    dto: UpdatePointDto,
-  ): Promise<Omit<User, 'hashedPassword'>> {
+  async updatePoint(dto: UpdatePointDto): Promise<ClientUser> {
     try {
       const user = await this.prisma.user.update({
         where: {
@@ -90,9 +105,8 @@ export class UserService {
           point: dto.point,
         },
       });
-      delete user.hashedPassword;
 
-      return user;
+      return this.convertToClientUser(user);
     } catch (error) {
       console.error(error);
       throw error;
@@ -113,9 +127,7 @@ export class UserService {
     return new StreamableFile(file);
   }
 
-  async deleteAvatar(
-    dto: DeleteAvatarDto,
-  ): Promise<Omit<User, 'hashedPassword'>> {
+  async deleteAvatar(dto: DeleteAvatarDto): Promise<ClientUser> {
     const filePath = path.join(
       process.cwd(),
       process.env.AVATAR_IMAGE_DIR,
@@ -134,9 +146,7 @@ export class UserService {
     return this.updateAvatar(updateDto);
   }
 
-  async updateAvatar(
-    dto: UpdateAvatarDto,
-  ): Promise<Omit<User, 'hashedPassword'>> {
+  async updateAvatar(dto: UpdateAvatarDto): Promise<ClientUser> {
     try {
       const user = await this.prisma.user.update({
         where: {
@@ -146,40 +156,10 @@ export class UserService {
           avatarPath: dto.avatarPath,
         },
       });
-      delete user.hashedPassword;
 
-      return user;
+      return this.convertToClientUser(user);
     } catch (error) {
       console.error(error);
-      throw error;
-    }
-  }
-
-  async getStatus(id: number): Promise<UserStatus | undefined> {
-    const user = await this.findOne(id);
-    if (user === null) return undefined;
-
-    return user.status;
-  }
-
-  async updateStatus(
-    dto: UpdateStatusDto,
-  ): Promise<Omit<User, 'hashedPassword'>> {
-    try {
-      const user = await this.prisma.user.update({
-        where: {
-          id: dto.userId,
-        },
-        data: {
-          status: dto.status,
-        },
-      });
-      delete user.hashedPassword;
-
-      return user;
-    } catch (error) {
-      console.error(error);
-
       throw error;
     }
   }

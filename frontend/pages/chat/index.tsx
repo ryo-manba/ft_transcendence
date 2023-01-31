@@ -1,5 +1,5 @@
 import { NextPage } from 'next';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { io, Socket } from 'socket.io-client';
 import Grid from '@mui/material/Unstable_Grid2';
 import { Message, CurrentRoom } from 'types/chat';
@@ -16,7 +16,7 @@ import { ChatAlertCollapse } from 'components/chat/alert/ChatAlertCollapse';
 import Debug from 'debug';
 
 const Chat: NextPage = () => {
-  const debug = Debug('chat');
+  const debug = useMemo(() => Debug('chat'), []);
   const [socket, setSocket] = useState<Socket>();
   const [messages, setMessages] = useState<Message[]>([]);
   const [currentRoom, setCurrentRoom] = useState<CurrentRoom | undefined>(
@@ -59,7 +59,7 @@ const Chat: NextPage = () => {
       socket.off('chat:banned');
       socket.off('exception');
     };
-  }, [user, socket]);
+  }, [user, socket, debug]);
 
   if (socket === undefined || user === undefined) {
     return <Loading fullHeight />;

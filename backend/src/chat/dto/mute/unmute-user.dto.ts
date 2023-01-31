@@ -1,7 +1,11 @@
 import { IsNotEmpty, IsNumber } from 'class-validator';
 
-export class OnRoomJoinableDto {
+export class UnmuteUserDto {
   @IsNumber()
   @IsNotEmpty()
   userId: number;
+
+  @IsNumber()
+  @IsNotEmpty()
+  chatroomId: number;
 }

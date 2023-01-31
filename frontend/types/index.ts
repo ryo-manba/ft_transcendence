@@ -10,8 +10,9 @@ export type AxiosErrorResponse = {
 };
 
 export type LoginResult = {
-  res: string;
+  res: LoginResultStatus;
   userId: number | undefined;
+  errorMessage?: string;
 };
 
 export const LoginResultStatus = {
@@ -19,3 +20,6 @@ export const LoginResultStatus = {
   NEED2FA: 'need2fa',
   FAILURE: 'failure',
 } as const;
+
+export type LoginResultStatus =
+  typeof LoginResultStatus[keyof typeof LoginResultStatus];

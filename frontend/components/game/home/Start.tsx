@@ -23,7 +23,7 @@ export const Start = ({ setOpenMatchError }: Props) => {
     socket.emit('playStart', { userId: user.id }, (res: boolean) => {
       if (!res) setOpenMatchError(true);
     });
-  }, []);
+  }, [socket, setOpenMatchError, updatePlayState, user.id]);
 
   return (
     <>

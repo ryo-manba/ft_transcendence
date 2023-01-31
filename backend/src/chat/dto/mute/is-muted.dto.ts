@@ -1,11 +1,11 @@
 import { IsNotEmpty, IsNumber } from 'class-validator';
 
-export class IsBlockedByUserIdDto {
+export class IsMutedDto {
   @IsNumber()
   @IsNotEmpty()
-  blockingUserId: number;
+  userId: number;
 
   @IsNumber()
   @IsNotEmpty()
-  blockedByUserId: number;
+  chatroomId: number;
 }

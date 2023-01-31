@@ -16,9 +16,11 @@ model Chatroom {
   ownerId         Int
   hashedPassword  String?
   User            User              @relation(fields: [ownerId], references: [id])
+  BanRelation     BanRelation[]
   ChatroomAdmin   ChatroomAdmin[]
   ChatroomMembers ChatroomMembers[]
   Message         Message[]
+  MuteRelation    MuteRelation[]
 }
 
 model ChatroomAdmin {
@@ -34,15 +36,12 @@ model ChatroomAdmin {
 }
 
 model ChatroomMembers {
-  createdAt  DateTime              @default(now())
-  updatedAt  DateTime              @default(now())
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @default(now())
   chatroomId Int
   userId     Int
-  status     ChatroomMembersStatus @default(NORMAL)
-  endAt      DateTime?
-  startAt    DateTime?
-  Chatroom   Chatroom              @relation(fields: [chatroomId], references: [id], onDelete: Cascade)
-  User       User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  Chatroom   Chatroom @relation(fields: [chatroomId], references: [id], onDelete: Cascade)
+  User       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@id([chatroomId, userId])
   @@unique([chatroomId, userId])
@@ -90,10 +89,10 @@ model User {
   hashedPassword  String?
   point           Int               @default(1000)
   avatarPath      String?
-  status          UserStatus        @default(OFFLINE)
   has2FA          Boolean           @default(false)
   oAuthId         String?           @unique
-  secret2FA       String            @default("")
+  secret2FA       String?
+  BanRelation     BanRelation[]
   blockedByUsers  BlockRelation[]   @relation("blockedBy")
   blockingUsers   BlockRelation[]   @relation("blocking")
   Chatroom        Chatroom[]
@@ -104,6 +103,7 @@ model User {
   loseGameRecord  GameRecord[]      @relation("Loser")
   winGameRecord   GameRecord[]      @relation("Winner")
   Message         Message[]
+  MuteRelation    MuteRelation[]
 }
 
 model BlockRelation {
@@ -118,21 +118,33 @@ model BlockRelation {
   @@unique([blockingUserId, blockedByUserId])
 }
 
+model BanRelation {
+  id         Int      @id @default(autoincrement())
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @default(now())
+  userId     Int
+  chatroomId Int
+  startAt    DateTime
+  endAt      DateTime
+  Chatroom   Chatroom @relation(fields: [chatroomId], references: [id], onDelete: Cascade)
+  User       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model MuteRelation {
+  id         Int      @id @default(autoincrement())
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @default(now())
+  userId     Int
+  chatroomId Int
+  startAt    DateTime
+  endAt      DateTime
+  Chatroom   Chatroom @relation(fields: [chatroomId], references: [id], onDelete: Cascade)
+  User       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
 enum ChatroomType {
   PUBLIC
   PRIVATE
   PROTECTED
   DM
-}
-
-enum UserStatus {
-  ONLINE
-  PLAYING
-  OFFLINE
-}
-
-enum ChatroomMembersStatus {
-  NORMAL
-  BAN
-  MUTE
 }

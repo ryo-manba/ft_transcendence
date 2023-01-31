@@ -1,6 +1,6 @@
 import { IsNotEmpty, IsNumber } from 'class-validator';
 
-export class DeleteBlockRelationDto {
+export class BlockUserDto {
   @IsNumber()
   @IsNotEmpty()
   blockingUserId: number;

@@ -1,4 +1,11 @@
-import { memo, useState, useEffect, Dispatch, SetStateAction } from 'react';
+import {
+  memo,
+  useState,
+  useEffect,
+  Dispatch,
+  SetStateAction,
+  useMemo,
+} from 'react';
 import { Socket } from 'socket.io-client';
 import Debug from 'debug';
 import {
@@ -10,7 +17,7 @@ import {
 } from '@mui/material';
 import SettingsIcon from '@mui/icons-material/Settings';
 import ChatIcon from '@mui/icons-material/Chat';
-import { ChatroomMembersStatus, ChatroomType } from '@prisma/client';
+import { ChatroomType } from '@prisma/client';
 import { Chatroom, Message, JoinChatroomInfo, CurrentRoom } from 'types/chat';
 import { useQueryUser } from 'hooks/useQueryUser';
 import { Loading } from 'components/common/Loading';
@@ -32,7 +39,7 @@ export const ChatroomListItem = memo(function ChatroomListItem({
   setCurrentRoom,
   setMessages,
 }: Props) {
-  const debug = Debug('chat');
+  const debug = useMemo(() => Debug('chat'), []);
   const [open, setOpen] = useState(false);
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
@@ -66,7 +73,7 @@ export const ChatroomListItem = memo(function ChatroomListItem({
       socket.off('chat:addAdmin');
       ignore = true;
     };
-  }, [user, socket]);
+  }, [room.id, socket, user]);
 
   // ルームをクリックしたときの処理
   const changeCurrentRoom = (roomId: number, roomName: string) => {
@@ -181,17 +188,16 @@ export const ChatroomListItem = memo(function ChatroomListItem({
 
   const banUser = (userId: number) => {
     const banUserInfo = {
-      chatroomId: room.id,
       userId: userId,
-      status: ChatroomMembersStatus.BAN,
+      chatroomId: room.id,
     };
-
-    socket.emit('chat:banUser', banUserInfo, (res: boolean) => {
-      if (res) {
-        setSuccess('User has been banned successfully.');
-      } else {
+    socket.emit('chat:banUser', banUserInfo, (isSuccess: boolean) => {
+      if (!isSuccess) {
         setError('Failed to ban user.');
+
+        return;
       }
+      setSuccess('User has been banned successfully.');
     });
   };
 
@@ -199,31 +205,33 @@ export const ChatroomListItem = memo(function ChatroomListItem({
     const unbanUserInfo = {
       chatroomId: room.id,
       userId: userId,
-      status: ChatroomMembersStatus.NORMAL,
     };
 
     socket.emit('chat:unbanUser', unbanUserInfo, (res: boolean) => {
-      if (res) {
-        setSuccess('User has been unbanned successfully.');
-      } else {
+      if (!res) {
         setError('Failed to unban user.');
+
+        return;
       }
+
+      setSuccess('User has been unbanned successfully.');
     });
   };
 
   const muteUser = (userId: number) => {
     const muteUserInfo = {
-      chatroomId: room.id,
       userId: userId,
-      status: ChatroomMembersStatus.MUTE,
+      chatroomId: room.id,
     };
 
-    socket.emit('chat:muteUser', muteUserInfo, (res: boolean) => {
-      if (res) {
-        setSuccess('User has been muted successfully.');
-      } else {
+    socket.emit('chat:muteUser', muteUserInfo, (isSuccess: boolean) => {
+      if (!isSuccess) {
         setError('Failed to mute user.');
+
+        return;
       }
+
+      setSuccess('User has been muted successfully.');
     });
   };
 
@@ -231,15 +239,16 @@ export const ChatroomListItem = memo(function ChatroomListItem({
     const unmuteUserInfo = {
       chatroomId: room.id,
       userId: userId,
-      status: ChatroomMembersStatus.NORMAL,
     };
 
-    socket.emit('chat:unmuteUser', unmuteUserInfo, (res: boolean) => {
-      if (res) {
-        setSuccess('User has been unmuted successfully.');
-      } else {
+    socket.emit('chat:unmuteUser', unmuteUserInfo, (isSuccess: boolean) => {
+      if (!isSuccess) {
         setError('Failed to unmute user.');
+
+        return;
       }
+
+      setSuccess('User has been unmuted successfully.');
     });
   };
 

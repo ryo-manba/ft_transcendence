@@ -21,21 +21,21 @@ export const FriendAddButton = memo(function FriendAddButton({
     return <Loading />;
   }
 
-  const setupUnfollowingUsers = async () => {
+  const setupUnfollowingUsers = useCallback(async () => {
     const res = await fetchUnfollowingUsers({ userId: user.id });
 
     setUnFollowingUsers(res);
-  };
+  }, [setUnFollowingUsers, user]);
 
   const handleOpen = useCallback(() => {
     // ボタンをクリックすると、まだフレンド追加していないUser情報を取得する
     void setupUnfollowingUsers();
     setDialogOpen(true);
-  }, [dialogOpen]);
+  }, [setupUnfollowingUsers]);
 
   const handleClose = useCallback(() => {
     setDialogOpen(false);
-  }, [dialogOpen]);
+  }, []);
 
   const addFriends = (friend: Friend) => {
     setFriends((prev) => [...prev, friend]);

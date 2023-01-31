@@ -1,4 +1,11 @@
-import { memo, useState, useEffect, Dispatch, SetStateAction } from 'react';
+import {
+  memo,
+  useState,
+  useEffect,
+  Dispatch,
+  SetStateAction,
+  useMemo,
+} from 'react';
 import { Socket } from 'socket.io-client';
 import { List } from '@mui/material';
 import { ChatroomListItem } from 'components/chat/chatroom/ChatroomListItem';
@@ -21,7 +28,7 @@ export const ChatroomSidebar = memo(function ChatroomSidebar({
   setCurrentRoom,
   setMessages,
 }: Props) {
-  const debug = Debug('chat');
+  const debug = useMemo(() => Debug('chat'), []);
   const { data: user } = useQueryUser();
   const [rooms, setRooms] = useState<Chatroom[]>([]);
 
@@ -88,7 +95,7 @@ export const ChatroomSidebar = memo(function ChatroomSidebar({
       socket.off('chat:joinRoomFromOtherUser');
       socket.off('chat:changeRoomOwner');
     };
-  }, []);
+  }, [user, debug, setCurrentRoom, setMessages, socket]);
 
   const addRooms = (room: Chatroom) => {
     setRooms((prev) => [...prev, room]);

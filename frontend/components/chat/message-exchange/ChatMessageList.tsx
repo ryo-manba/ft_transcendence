@@ -68,25 +68,24 @@ export const ChatMessageList = memo(function ChatMessageList({
     return () => {
       ignore = true;
     };
-  }, [currentRoomId]);
+  }, [currentRoomId, setMessages, socket]);
 
-  const loadingMessages = async (
-    roomId: number,
-    pageSize: number,
-    skip: number,
-  ) => {
-    const chatMessages = await fetchMessages({
-      roomId: roomId,
-      skip: skip,
-      pageSize: pageSize,
-    });
+  const loadingMessages = useCallback(
+    async (roomId: number, pageSize: number, skip: number) => {
+      const chatMessages = await fetchMessages({
+        roomId: roomId,
+        skip: skip,
+        pageSize: pageSize,
+      });
 
-    if (chatMessages.length === 0) {
-      return;
-    }
-    setMessages((prev) => [...chatMessages, ...prev]);
-    setSkipPage((prev) => prev + 1);
-  };
+      if (chatMessages.length === 0) {
+        return;
+      }
+      setMessages((prev) => [...chatMessages, ...prev]);
+      setSkipPage((prev) => prev + 1);
+    },
+    [setMessages, setSkipPage],
+  );
 
   const prependMessages = useCallback(() => {
     // fetchする数を統一しないと、skipするデータ数が異なってしまう
@@ -99,7 +98,7 @@ export const ChatMessageList = memo(function ChatMessageList({
     }, 500);
 
     return false;
-  }, [firstItemIndex, messages, setMessages]);
+  }, [firstItemIndex, currentRoomId, loadingMessages, skipPage]);
 
   const itemContent = (index: number, item: Message) => (
     <MessageLeft
@@ -107,6 +106,7 @@ export const ChatMessageList = memo(function ChatMessageList({
       message={item.text}
       timestamp={item.createdAt}
       displayName={item.userName}
+      userId={item.userId}
     />
   );
 

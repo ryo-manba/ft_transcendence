@@ -1,4 +1,11 @@
-import { memo, useState, useEffect, Dispatch, SetStateAction } from 'react';
+import {
+  memo,
+  useState,
+  useEffect,
+  Dispatch,
+  SetStateAction,
+  useMemo,
+} from 'react';
 import Debug from 'debug';
 import { Socket } from 'socket.io-client';
 import { Paper } from '@mui/material';
@@ -26,7 +33,7 @@ export const ChatMessageExchange = memo(function ChatMessageExchange({
   messages,
   setMessages,
 }: Props) {
-  const debug = Debug('chat');
+  const debug = useMemo(() => Debug('chat'), []);
   const [error, setError] = useState('');
   const { data: user } = useQueryUser();
 
@@ -46,7 +53,7 @@ export const ChatMessageExchange = memo(function ChatMessageExchange({
     return () => {
       socket.off('chat:receiveMessage');
     };
-  }, [user, currentRoom]);
+  }, [user, currentRoom, debug, setMessages, socket]);
 
   if (user === undefined) {
     return <Loading fullHeight />;

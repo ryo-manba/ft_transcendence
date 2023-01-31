@@ -19,7 +19,7 @@ type Props = {
   friend: Friend;
   open: boolean;
   onClose: () => void;
-  inviteGame: (friend: Friend) => Promise<void>;
+  inviteGame: (friend: Friend) => void;
   directMessage: (friend: Friend) => void;
 };
 
@@ -45,7 +45,7 @@ export const FriendInfoDialog = memo(function FriendInfoDialog({
 
   const initDialog = useCallback(() => {
     setActionType('Profile');
-  }, [actionType]);
+  }, []);
 
   const handleChangeType = (event: SelectChangeEvent) => {
     setActionType(event.target.value as FriendActions);
@@ -69,7 +69,7 @@ export const FriendInfoDialog = memo(function FriendInfoDialog({
           }
           break;
         case 'Invite Game':
-          await inviteGame(friend);
+          inviteGame(friend);
           break;
         case 'Direct Message':
           directMessage(friend);

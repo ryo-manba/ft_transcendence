@@ -1,11 +1,11 @@
 import { IsNotEmpty, IsNumber } from 'class-validator';
 
-export class DeleteAdminDto {
+export class UnblockUserDto {
   @IsNumber()
   @IsNotEmpty()
-  userId: number;
+  blockingUserId: number;
 
   @IsNumber()
   @IsNotEmpty()
-  chatroomId: number;
+  blockedByUserId: number;
 }

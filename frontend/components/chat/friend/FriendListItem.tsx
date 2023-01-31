@@ -1,16 +1,21 @@
-import { useState, memo, useEffect, Dispatch, SetStateAction } from 'react';
+import {
+  useState,
+  memo,
+  useEffect,
+  Dispatch,
+  SetStateAction,
+  useMemo,
+} from 'react';
 import { useRouter } from 'next/router';
 import Debug from 'debug';
 import { Socket } from 'socket.io-client';
 import { ListItem, ListItemText, ListItemAvatar } from '@mui/material';
-import { UserStatus } from '@prisma/client';
 import { Friend } from 'types/friend';
-import { Invitation } from 'types/game';
+import { Invitation, UserStatus } from 'types/game';
 import { CurrentRoom, Chatroom } from 'types/chat';
 import { useSocketStore } from 'store/game/ClientSocket';
 import { useInvitedFriendStateStore } from 'store/game/InvitedFriendState';
 import { getAvatarImageUrl } from 'api/user/getAvatarImageUrl';
-import { getUserStatusById } from 'api/user/getUserStatusById';
 import { useQueryUser } from 'hooks/useQueryUser';
 import { FriendInfoDialog } from 'components/chat/friend/FriendInfoDialog';
 import { Loading } from 'components/common/Loading';
@@ -29,9 +34,11 @@ export const FriendListItem = memo(function FriendListItem({
   socket,
   setCurrentRoom,
 }: Props) {
-  const debug = Debug('friend');
+  const debug = useMemo(() => Debug('friend'), []);
   const [open, setOpen] = useState(false);
-  const [friendStatus, setFriendStatus] = useState<UserStatus>('OFFLINE');
+  const [friendStatus, setFriendStatus] = useState<UserStatus>(
+    UserStatus.OFFLINE,
+  );
   const { data: user } = useQueryUser();
   const [error, setError] = useState('');
   const { socket: gameSocket } = useSocketStore();
@@ -47,30 +54,34 @@ export const FriendListItem = memo(function FriendListItem({
   useEffect(() => {
     let ignore = false;
 
-    const updateStatus = async (ignore: boolean) => {
-      const fetchedStatus = await getUserStatusById({ userId: friend.id });
-      if (!ignore) {
-        setFriendStatus(fetchedStatus);
-      }
-    };
+    gameSocket.emit(
+      'getUserStatusById',
+      { userId: friend.id },
+      (res: UserStatus) => {
+        if (!ignore) {
+          setFriendStatus(res);
+        }
+      },
+    );
 
-    updateStatus(ignore).catch((err) => {
-      debug(err);
-    });
+    gameSocket.on(
+      'updateStatus',
+      (data: { userId: number; status: UserStatus }) => {
+        if (data.userId === friend.id) {
+          setFriendStatus(data.status);
+        }
+      },
+    );
 
     return () => {
       ignore = true;
+      gameSocket.off('updateStatus');
     };
-  }, []);
+  }, [debug, friend.id, gameSocket]);
 
-  const inviteGame = async (friend: Friend) => {
-    // 最新のユーザ状態を取り直す
-    const status = await getUserStatusById({ userId: friend.id });
-    if (status !== friendStatus) {
-      setFriendStatus(status);
-    }
-    if (status !== UserStatus.ONLINE) {
-      setError(`${friend.name} is now ${status}`);
+  const inviteGame = (friend: Friend) => {
+    if (friendStatus !== UserStatus.ONLINE) {
+      setError(`${friend.name} is now ${friendStatus}`);
 
       return;
     }

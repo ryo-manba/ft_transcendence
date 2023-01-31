@@ -2,9 +2,10 @@ import { GameGuest } from 'components/common/GameGuest';
 import { useQueryUser } from 'hooks/useQueryUser';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
-import { FC, ReactNode, useEffect, useState } from 'react';
+import { FC, ReactNode, useEffect, useMemo, useState } from 'react';
 import { useSocketStore } from 'store/game/ClientSocket';
 import { Friend } from 'types/friend';
+import { SocketAuth } from 'types/game';
 import { Loading } from './Loading';
 
 type Props = {
@@ -18,23 +19,24 @@ export const Layout: FC<Props> = ({ children, title = 'Next.js' }) => {
   const { socket: gameSocket } = useSocketStore();
   const [hosts, setHosts] = useState<Friend[]>([]);
   const { data: user, isSuccess } = useQueryUser();
-  const showGuestPaths = ['/game/home', '/dashboard'];
+  const showGuestPaths = useMemo(() => ['/game/home', '/dashboard'], []);
 
   useEffect(() => {
     let ignore = false;
     if (user === undefined) return;
 
     if (gameSocket.disconnected) {
-      gameSocket.auth = { id: user.id };
+      const socketAuth = { userId: user.id } as SocketAuth;
+      gameSocket.auth = socketAuth;
       gameSocket.connect();
     }
     if (showGuestPaths.includes(router.pathname)) {
       gameSocket.emit(
-        'getInvitedLlist',
+        'getInvitedList',
         { userId: user.id },
         (newHosts: Friend[]) => {
           if (!ignore) {
-            setHosts([...hosts, ...newHosts]);
+            setHosts(newHosts);
           }
         },
       );
@@ -43,7 +45,7 @@ export const Layout: FC<Props> = ({ children, title = 'Next.js' }) => {
     return () => {
       ignore = true;
     };
-  }, [user]);
+  }, [user, gameSocket, router.pathname, showGuestPaths]);
 
   useEffect(() => {
     if (!showGuestPaths.includes(router.pathname)) return;
@@ -59,7 +61,7 @@ export const Layout: FC<Props> = ({ children, title = 'Next.js' }) => {
       gameSocket.off('inviteFriend');
       gameSocket.off('cancelInvitation');
     };
-  });
+  }, [hosts, gameSocket, router.pathname, showGuestPaths]);
 
   if (router.pathname !== '/' && !isSuccess) {
     return <Loading fullHeight />;
