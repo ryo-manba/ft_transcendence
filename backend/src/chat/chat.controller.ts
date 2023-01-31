@@ -2,6 +2,7 @@ import { Query, Controller, Get, ParseIntPipe } from '@nestjs/common';
 import { ChatService } from './chat.service';
 import { BanService } from './ban.service';
 import { MuteService } from './mute.service';
+import { BlockService } from './block.service';
 import { AdminService } from './admin.service';
 import { ChatroomService } from './chatroom.service';
 import type { ChatUser, ChatMessage } from './types/chat';
@@ -12,6 +13,7 @@ export class ChatController {
     private readonly chatService: ChatService,
     private readonly banService: BanService,
     private readonly muteService: MuteService,
+    private readonly blockService: BlockService,
     private readonly adminService: AdminService,
     private readonly chatroomService: ChatroomService,
   ) {}
@@ -204,7 +206,7 @@ export class ChatController {
   async findUnblockedChatUsers(
     @Query('userId', ParseIntPipe) userId: number,
   ): Promise<ChatUser[]> {
-    const unblockedUsers = this.chatService.findUnblockedUsers({
+    const unblockedUsers = this.blockService.findUnblockedUsers({
       blockedByUserId: userId,
     });
 
@@ -219,7 +221,7 @@ export class ChatController {
   async findBlockedChatUsers(
     @Query('userId', ParseIntPipe) userId: number,
   ): Promise<ChatUser[]> {
-    const blockedUsers = await this.chatService.findBlockedUsers({
+    const blockedUsers = await this.blockService.findBlockedUsers({
       blockedByUserId: userId,
     });
 
