@@ -1,9 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Prisma, MuteRelation } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
-import { MuteUserDto } from './dto/mute-user.dto';
-import { UnmuteUserDto } from './dto/unmute-user.dto';
-import { IsMutedDto } from './dto/is-muted.dto';
+import { MuteUserDto } from './dto/mute/mute-user.dto';
+import { UnmuteUserDto } from './dto/mute/unmute-user.dto';
+import { IsMutedDto } from './dto/mute/is-muted.dto';
 import type { ChatUser } from './types/chat';
 
 @Injectable()

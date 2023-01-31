@@ -15,7 +15,6 @@ model User {
   hashedPassword  String?
   point           Int               @default(1000)
   avatarPath      String?
-  status          UserStatus        @default(OFFLINE)
   chatroomOwners  Chatroom[]
   chatroomAdmins  ChatroomAdmin[]
   chatroomMembers ChatroomMembers[]
@@ -31,12 +30,6 @@ model User {
   secret2FA       String?
   MuteRelation MuteRelation[]
   BanRelation  BanRelation[]
-}
-
-enum UserStatus {
-  ONLINE
-  PLAYING
-  OFFLINE
 }
 
 model FriendRelation {

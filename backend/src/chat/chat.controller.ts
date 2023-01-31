@@ -2,6 +2,9 @@ import { Query, Controller, Get, ParseIntPipe } from '@nestjs/common';
 import { ChatService } from './chat.service';
 import { BanService } from './ban.service';
 import { MuteService } from './mute.service';
+import { BlockService } from './block.service';
+import { AdminService } from './admin.service';
+import { ChatroomService } from './chatroom.service';
 import type { ChatUser, ChatMessage } from './types/chat';
 
 @Controller('chat')
@@ -10,6 +13,9 @@ export class ChatController {
     private readonly chatService: ChatService,
     private readonly banService: BanService,
     private readonly muteService: MuteService,
+    private readonly blockService: BlockService,
+    private readonly adminService: AdminService,
+    private readonly chatroomService: ChatroomService,
   ) {}
 
   /**
@@ -24,10 +30,10 @@ export class ChatController {
   async findCanSetAdminUsers(
     @Query('roomId', ParseIntPipe) roomId: number,
   ): Promise<ChatUser[]> {
-    const adminUsers = await this.chatService.findAdmins(roomId);
+    const adminUsers = await this.adminService.findAdmins(roomId);
     const bannedUsers = await this.banService.findBannedUsers(roomId);
     const mutedUsers = await this.muteService.findMutedUsers(roomId);
-    const chatroomOwner = await this.chatService.findChatroomOwner(roomId);
+    const chatroomOwner = await this.chatroomService.findChatroomOwner(roomId);
 
     const adminIds = adminUsers.map((admin) => admin.userId);
     const bannedIds = bannedUsers.map((user) => user.id);
@@ -44,7 +50,7 @@ export class ChatController {
 
     // すべてを満たさないUser一覧を取得する
     const canSetAdminUsers =
-      await this.chatService.findChatroomMembersAsChatUsers({
+      await this.chatroomService.findChatroomMembersAsChatUsers({
         where: {
           chatroomId: roomId,
           userId: {
@@ -69,7 +75,7 @@ export class ChatController {
   ): Promise<ChatUser[]> {
     const bannedUsers = await this.banService.findBannedUsers(roomId);
     const mutedUsers = await this.muteService.findMutedUsers(roomId);
-    const chatroomOwner = await this.chatService.findChatroomOwner(roomId);
+    const chatroomOwner = await this.chatroomService.findChatroomOwner(roomId);
 
     const bannedIds = bannedUsers.map((user) => user.id);
     const mutedIds = mutedUsers.map((user) => user.id);
@@ -80,7 +86,7 @@ export class ChatController {
 
     // すべてを満たさないUser一覧を取得する
     const canSetOwnerUsers =
-      await this.chatService.findChatroomMembersAsChatUsers({
+      await this.chatroomService.findChatroomMembersAsChatUsers({
         where: {
           chatroomId: roomId,
           userId: {
@@ -111,13 +117,12 @@ export class ChatController {
   async findNotMutedUsers(
     @Query('roomId', ParseIntPipe) roomId: number,
   ): Promise<ChatUser[]> {
-    const chatroomUsers = await this.chatService.findChatroomMembersAsChatUsers(
-      {
+    const chatroomUsers =
+      await this.chatroomService.findChatroomMembersAsChatUsers({
         where: {
           chatroomId: roomId,
         },
-      },
-    );
+      });
     const mutedUsers = await this.muteService.findMutedUsers(roomId);
     if (mutedUsers.length === 0) {
       return chatroomUsers;
@@ -150,13 +155,12 @@ export class ChatController {
   async findNotBannedUsers(
     @Query('roomId', ParseIntPipe) roomId: number,
   ): Promise<ChatUser[]> {
-    const chatroomUsers = await this.chatService.findChatroomMembersAsChatUsers(
-      {
+    const chatroomUsers =
+      await this.chatroomService.findChatroomMembersAsChatUsers({
         where: {
           chatroomId: roomId,
         },
-      },
-    );
+      });
 
     const bannedUsers = await this.banService.findBannedUsers(roomId);
     if (bannedUsers.length === 0) {
@@ -202,7 +206,7 @@ export class ChatController {
   async findUnblockedChatUsers(
     @Query('userId', ParseIntPipe) userId: number,
   ): Promise<ChatUser[]> {
-    const unblockedUsers = this.chatService.findUnblockedUsers({
+    const unblockedUsers = this.blockService.findUnblockedUsers({
       blockedByUserId: userId,
     });
 
@@ -217,7 +221,7 @@ export class ChatController {
   async findBlockedChatUsers(
     @Query('userId', ParseIntPipe) userId: number,
   ): Promise<ChatUser[]> {
-    const blockedUsers = await this.chatService.findBlockedUsers({
+    const blockedUsers = await this.blockService.findBlockedUsers({
       blockedByUserId: userId,
     });
 
@@ -234,7 +238,7 @@ export class ChatController {
     @Query('roomId', ParseIntPipe) roomId: number,
     @Query('senderUserId', ParseIntPipe) senderUserId: number,
   ): Promise<string> {
-    const recipientName = await this.chatService.findDMRecipientName(
+    const recipientName = await this.chatroomService.findDMRecipientName(
       roomId,
       senderUserId,
     );

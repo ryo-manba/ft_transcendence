@@ -9,34 +9,36 @@ import { Chatroom, ChatroomType } from '@prisma/client';
 import { Server, Socket } from 'socket.io';
 import { Logger, UsePipes, ValidationPipe } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import type { ChatMessage } from './types/chat';
 import { ChatService } from './chat.service';
 import { BanService } from './ban.service';
 import { MuteService } from './mute.service';
-import { CreateChatroomDto } from './dto/create-chatroom.dto';
-import { DeleteChatroomDto } from './dto/delete-chatroom.dto';
-import { JoinChatroomDto } from './dto/join-chatroom.dto';
-import { CreateMessageDto } from './dto/create-message.dto';
-import { CreateAdminDto } from './dto/create-admin.dto';
-import { DeleteAdminDto } from './dto/delete-admin.dto';
-import { updatePasswordDto } from './dto/update-password.dto';
-import { CreateDirectMessageDto } from './dto/create-direct-message.dto';
-import { IsBannedDto } from './dto/is-banned.dto';
-import { DeleteChatroomMemberDto } from './dto/delete-chatroom-member.dto';
-import { UpdateChatroomOwnerDto } from './dto/update-chatroom-owner.dto';
-import { CreateBlockRelationDto } from './dto/create-block-relation.dto';
-import { DeleteBlockRelationDto } from './dto/delete-block-relation.dto';
-import { IsBlockedByUserIdDto } from './dto/is-blocked-by-user-id.dto';
-import { OnGetRoomsDto } from './dto/on-get-rooms.dto';
-import { LeaveSocketDto } from './dto/leave-socket.dto';
-import { OnRoomJoinableDto } from './dto/on-room-joinable.dto';
-import { IsAdminDto } from './dto/is-admin.dto';
-import { GetMessagesCountDto } from './dto/get-messages-count.dto';
-import { SocketJoinRoomDto } from './dto/socket-join-room.dto';
-import { MuteUserDto } from './dto/mute-user.dto';
-import { UnmuteUserDto } from './dto/unmute-user.dto';
-import { BanUserDto } from './dto/ban-user.dto';
-import { UnbanUserDto } from './dto/unban-user.dto';
-import type { ChatMessage } from './types/chat';
+import { BlockService } from './block.service';
+import { AdminService } from './admin.service';
+import { ChatroomService } from './chatroom.service';
+import { CreateAdminDto } from './dto/admin/create-admin.dto';
+import { IsAdminDto } from './dto/admin/is-admin.dto';
+import { IsBannedDto } from './dto/ban/is-banned.dto';
+import { BanUserDto } from './dto/ban/ban-user.dto';
+import { UnbanUserDto } from './dto/ban/unban-user.dto';
+import { BlockUserDto } from './dto/block/block-user.dto';
+import { UnblockUserDto } from './dto/block/unblock-user.dto';
+import { IsBlockedDto } from './dto/block/is-blocked.dto';
+import { CreateChatroomDto } from './dto/chatroom/create-chatroom.dto';
+import { DeleteChatroomDto } from './dto/chatroom/delete-chatroom.dto';
+import { JoinChatroomDto } from './dto/chatroom/join-chatroom.dto';
+import { DeleteChatroomMemberDto } from './dto/chatroom/delete-chatroom-member.dto';
+import { UpdateChatroomOwnerDto } from './dto/chatroom/update-chatroom-owner.dto';
+import { GetJoinedChatroomsDto } from './dto/chatroom/get-joined-chatrooms.dto';
+import { GetJoinableChatRoomsDto } from './dto/chatroom/get-joinable-chatrooms.dto';
+import { UpdateChatroomPasswordDto } from './dto/chatroom/update-chatroom-password.dto';
+import { CreateMessageDto } from './dto/message/create-message.dto';
+import { CreateDirectMessageDto } from './dto/message/create-direct-message.dto';
+import { GetMessagesCountDto } from './dto/message/get-messages-count.dto';
+import { MuteUserDto } from './dto/mute/mute-user.dto';
+import { UnmuteUserDto } from './dto/mute/unmute-user.dto';
+import { LeaveSocketDto } from './dto/socket/leave-socket.dto';
+import { SocketJoinRoomDto } from './dto/socket/socket-join-room.dto';
 
 type ExcludeProperties = 'hashedPassword' | 'createdAt' | 'updatedAt';
 type ClientChatroom = Omit<Chatroom, ExcludeProperties>;
@@ -54,6 +56,9 @@ export class ChatGateway {
     private readonly chatService: ChatService,
     private readonly banService: BanService,
     private readonly muteService: MuteService,
+    private readonly blockService: BlockService,
+    private readonly adminService: AdminService,
+    private readonly chatroomService: ChatroomService,
   ) {}
 
   @WebSocketServer() server: Server;
@@ -102,7 +107,7 @@ export class ChatGateway {
     this.logger.log(`chat:createAndJoinRoom: ${dto.name}`);
 
     // チャットルームを作成する
-    const createdRoom = await this.chatService.createRoom(dto);
+    const createdRoom = await this.chatroomService.create(dto);
     if (!createdRoom) {
       return { createdRoom: undefined };
     }
@@ -126,16 +131,16 @@ export class ChatGateway {
 
   /**
    * 入室しているチャットルーム一覧を返す
-   * @param OnGetRoomsDto
+   * @param GetJoinedChatroomsDto
    */
   @SubscribeMessage('chat:getJoinedRooms')
-  async onGetRooms(
+  async getJoinedRooms(
     @ConnectedSocket() client: Socket,
-    @MessageBody() dto: OnGetRoomsDto,
+    @MessageBody() dto: GetJoinedChatroomsDto,
   ) {
     this.logger.log(`chat:getJoinedRooms: ${dto.userId}`);
     // ユーザーが入室しているチャットルームを取得する
-    const rooms = await this.chatService.findJoinedRooms(dto.userId);
+    const rooms = await this.chatroomService.findJoinedRooms(dto.userId);
 
     const clientChatrooms = rooms.map((room) =>
       this.convertToClientChatroom(room),
@@ -149,7 +154,7 @@ export class ChatGateway {
    * @param Message
    */
   @SubscribeMessage('chat:sendMessage')
-  async onMessage(
+  async sendMessage(
     @ConnectedSocket() client: Socket,
     @MessageBody() createMessageDto: CreateMessageDto,
   ): Promise<{ error: string | undefined }> {
@@ -182,20 +187,22 @@ export class ChatGateway {
     // DMの場合はBlockしている or されていないことを確認する
     if (chatroom.type === ChatroomType.DM) {
       const membersId = chatroom.members.map((member) => member.userId);
-      const where = [
-        { blockingUserId: membersId[0], blockedByUserId: membersId[1] },
-        { blockingUserId: membersId[1], blockedByUserId: membersId[0] },
-      ];
-      const blockRelations = await this.prisma.blockRelation.findMany({
-        where: {
-          OR: [...where],
+      const isBlockedDtos: IsBlockedDto[] = [
+        {
+          blockingUserId: membersId[0],
+          blockedByUserId: membersId[1],
         },
-      });
-      if (blockRelations.length > 0) {
-        if (blockRelations[0].blockedByUserId === createMessageDto.userId) {
-          return { error: 'You blocked this user.' };
-        } else {
-          return { error: 'This user blocked you.' };
+        {
+          blockingUserId: membersId[1],
+          blockedByUserId: membersId[0],
+        },
+      ];
+      for (const dto of isBlockedDtos) {
+        const isBlocked = await this.blockService.isBlocked(dto);
+        if (isBlocked) {
+          return dto.blockedByUserId === createMessageDto.userId
+            ? { error: 'You blocked this user.' }
+            : { error: 'This user blocked you.' };
         }
       }
     }
@@ -207,6 +214,7 @@ export class ChatGateway {
     const chatMessage: ChatMessage = {
       roomId: message.chatroomId,
       text: message.message,
+      userId: createMessageDto.userId,
       userName: createMessageDto.userName,
       createdAt: message.createdAt,
     };
@@ -286,7 +294,7 @@ export class ChatGateway {
   ): Promise<{ joinedRoom: ClientChatroom | undefined }> {
     this.logger.log(`chat:joinRoom received -> ${dto.userId}`);
 
-    const joinedRoom = await this.chatService.joinRoom(dto);
+    const joinedRoom = await this.chatroomService.joinRoom(dto);
     if (!joinedRoom) {
       return { joinedRoom: undefined };
     }
@@ -321,10 +329,10 @@ export class ChatGateway {
    * @param client
    * @param DeleteChatroomDto
    */
-  @SubscribeMessage('chat:deleteRoom')
+  @SubscribeMessage('chat:delete')
   async deleteRoom(@MessageBody() dto: DeleteChatroomDto): Promise<boolean> {
-    this.logger.log(`chat:deleteRoom received -> roomId: ${dto.id}`);
-    const deletedRoom = await this.chatService.deleteRoom(dto);
+    this.logger.log(`chat:delete received -> roomId: ${dto.id}`);
+    const deletedRoom = await this.chatroomService.delete(dto);
     if (!deletedRoom) {
       return false;
     }
@@ -332,7 +340,7 @@ export class ChatGateway {
     const socketRoomName = this.generateSocketChatRoomName(deletedRoom.id);
 
     const deletedClientRoom = this.convertToClientChatroom(deletedRoom);
-    this.server.to(socketRoomName).emit('chat:deleteRoom', deletedClientRoom);
+    this.server.to(socketRoomName).emit('chat:delete', deletedClientRoom);
 
     // 入室者をルームから退出させる
     this.server.socketsLeave(socketRoomName);
@@ -346,13 +354,13 @@ export class ChatGateway {
    * @param DeleteChatroomMemberDto
    */
   @SubscribeMessage('chat:leaveRoom')
-  async onRoomLeave(
+  async leaveRoom(
     @ConnectedSocket() client: Socket,
     @MessageBody() dto: DeleteChatroomMemberDto,
   ): Promise<boolean> {
     this.logger.log(`chat:leaveRoom received userId -> ${dto.userId}`);
 
-    const deletedMember = await this.chatService.removeChatroomMember(dto);
+    const deletedMember = await this.chatroomService.removeChatroomMember(dto);
     if (!deletedMember) {
       return false;
     }
@@ -360,13 +368,23 @@ export class ChatGateway {
       roomId: dto.chatroomId,
     });
 
-    // TODO: adminの判定をする
-    // adminの設定を削除する
-    const deleteAdminDto: DeleteAdminDto = {
+    const isAdminDto: IsAdminDto = {
       userId: dto.userId,
       chatroomId: dto.chatroomId,
     };
-    await this.chatService.deleteAdmin(deleteAdminDto);
+    const isAdmin = await this.adminService.isAdmin(isAdminDto);
+    if (isAdmin) {
+      const deletedAdmin = await this.adminService.delete({
+        chatroomId_userId: {
+          userId: dto.userId,
+          chatroomId: dto.chatroomId,
+        },
+      });
+
+      if (!deletedAdmin) {
+        return false;
+      }
+    }
 
     // 退出することにより入室者がいなくなる場合はチャットルームを削除する
     // BAN or MUTEのユーザーは無視する
@@ -376,8 +394,9 @@ export class ChatGateway {
     const mutedIds = mutedUsers.map((user) => user.id);
     const excludeIdSets = new Set([...bannedIds, ...mutedIds]);
     const excludeIds = [...excludeIdSets];
+
     const chatroomMembers =
-      await this.chatService.findChatroomMembersAsChatUsers({
+      await this.chatroomService.findChatroomMembersAsChatUsers({
         where: {
           chatroomId: dto.chatroomId,
           userId: {
@@ -389,12 +408,13 @@ export class ChatGateway {
     if (chatroomMembers.length > 0) {
       return true;
     }
+
     const deleteChatroomDto: DeleteChatroomDto = {
       id: dto.chatroomId,
       userId: dto.userId,
     };
 
-    const deletedRoom = await this.deleteRoom(deleteChatroomDto);
+    const deletedRoom = await this.chatroomService.delete(deleteChatroomDto);
     if (!deletedRoom) {
       this.logger.log('chat:leaveRoom failed to delete room');
 
@@ -426,19 +446,19 @@ export class ChatGateway {
 
   /**
    * 入室可能な部屋の一覧を返す
-   * @param OnRoomJoinableDto
+   * @param GetJoinableChatRoomsDto
    */
   @SubscribeMessage('chat:getJoinableRooms')
-  async onRoomJoinable(
+  async getJoinableRooms(
     @ConnectedSocket() client: Socket,
-    @MessageBody() dto: OnRoomJoinableDto,
+    @MessageBody() dto: GetJoinableChatRoomsDto,
   ): Promise<ClientChatroom[]> {
     this.logger.log(`chat:getJoinableRooms received -> roomId: ${dto.userId}`);
 
     const hiddenChatRooms = [ChatroomType.PRIVATE, ChatroomType.DM];
 
     // public, protectedのチャットルーム一覧を取得する
-    const viewableRooms = await this.chatService.findAll({
+    const viewableRooms = await this.chatroomService.findAll({
       where: {
         NOT: {
           type: { in: hiddenChatRooms },
@@ -447,7 +467,7 @@ export class ChatGateway {
     });
 
     // userが所属しているチャットルームの一覧を取得する
-    const joinedRooms = await this.chatService.findJoinedRooms(dto.userId);
+    const joinedRooms = await this.chatroomService.findJoinedRooms(dto.userId);
 
     const roomsDiff = this.getChatroomDiff(viewableRooms, joinedRooms);
     const viewableAndNotJoinedRooms = viewableRooms.filter((item) => {
@@ -473,7 +493,9 @@ export class ChatGateway {
   ): Promise<boolean> {
     this.logger.log(`chat:addAdmin received -> roomId: ${dto.chatroomId}`);
 
-    const createdAdmin = await this.chatService.createAdmin(dto);
+    const createdAdmin = await this.adminService.create({
+      data: dto,
+    });
     if (!createdAdmin) {
       return false;
     }
@@ -496,31 +518,23 @@ export class ChatGateway {
   ): Promise<boolean> {
     this.logger.log(`chat:getAdmins received -> roomId: ${dto.chatroomId}`);
 
-    const res = await this.prisma.chatroomAdmin.findUnique({
-      where: {
-        chatroomId_userId: {
-          ...dto,
-        },
-      },
-    });
-
-    return !!res;
+    return await this.adminService.isAdmin(dto);
   }
 
   /**
    * チャットルームのパスワードを更新する
-   * @param updatePasswordDto
+   * @param UpdateChatroomPasswordDto
    */
   @SubscribeMessage('chat:updatePassword')
   async updatePassword(
     @ConnectedSocket() client: Socket,
-    @MessageBody() dto: updatePasswordDto,
+    @MessageBody() dto: UpdateChatroomPasswordDto,
   ): Promise<boolean> {
     this.logger.log(
       `chat:updatePassword received -> roomId: ${dto.chatroomId}`,
     );
 
-    return await this.chatService.updatePassword(dto);
+    return await this.chatroomService.updatePassword(dto);
   }
 
   /**
@@ -599,7 +613,7 @@ export class ChatGateway {
   ): Promise<{ chatroom: ClientChatroom | undefined }> {
     this.logger.log('chat:directMessage received');
 
-    const existingDMRoom = await this.chatService.findExistingDMRoom(
+    const existingDMRoom = await this.chatroomService.findExistingDMRoom(
       dto.senderId,
       dto.recipientId,
     );
@@ -617,9 +631,9 @@ export class ChatGateway {
       type: ChatroomType.DM,
       ownerId: dto.senderId,
     };
-    const createdRoom = await this.chatService.createRoom(createChatroomDto);
+    const createdRoom = await this.chatroomService.create(createChatroomDto);
     if (!createdRoom) {
-      this.logger.log('chat:directMessage failed to createRoom');
+      this.logger.log('chat:directMessage failed to create');
 
       return { chatroom: undefined };
     }
@@ -650,7 +664,7 @@ export class ChatGateway {
       this.logger.log(error);
 
       // どちらかの入室処理に失敗した場合は、チャットルームを削除する
-      await this.chatService.deleteRoom({
+      await this.chatroomService.delete({
         id: createdRoom.id,
         userId: dto.senderId,
       });
@@ -678,7 +692,7 @@ export class ChatGateway {
   ): Promise<boolean> {
     this.logger.log('chat:changeRoomOwner received');
 
-    const changedRoom = await this.chatService.updateRoom({
+    const changedRoom = await this.chatroomService.update({
       data: {
         owner: {
           connect: {
@@ -729,64 +743,53 @@ export class ChatGateway {
 
   /*
    * ユーザーをブロックする
-   * @param CreateBlockRelationDto
+   * @param BlockUserDto
    */
   @SubscribeMessage('chat:blockUser')
   async blockUser(
     @ConnectedSocket() client: Socket,
-    @MessageBody() dto: CreateBlockRelationDto,
+    @MessageBody() dto: BlockUserDto,
   ): Promise<boolean> {
     this.logger.log('chat:blockUser received', dto);
 
-    const res = await this.chatService.blockUser(dto);
-
-    if (res) {
-      // ブロックされたユーザーのフレンド一覧から
+    const isSuccess = await this.blockService.blockUser(dto);
+    if (isSuccess) {
+      // ブロックされたユーザーのフレンド一覧から、
       // ブロックしたユーザーの表示を消すために通知を送る
       this.server
         .to(this.generateSocketUserRoomName(dto.blockingUserId))
         .emit('chat:blocked', dto.blockedByUserId);
     }
 
-    return !!res;
+    return isSuccess;
   }
 
   /*
    * ユーザーのブロックを解除する
-   * @param CreateBlockRelationDto
+   * @param UnblockUserDto
    */
   @SubscribeMessage('chat:unblockUser')
   async unblockUser(
     @ConnectedSocket() client: Socket,
-    @MessageBody() dto: DeleteBlockRelationDto,
+    @MessageBody() dto: UnblockUserDto,
   ): Promise<boolean> {
     this.logger.log('chat:unblockUser received', dto);
 
-    const res = await this.chatService.unblockUser(dto);
-
-    return !!res;
+    return await this.blockService.unblockUser(dto);
   }
 
   /**
    * ユーザーがブロックされているかを確認する
-   * @param IsBlockedByUserIdDto
+   * @param IsBlockedDto
    */
-  @SubscribeMessage('chat:isBlockedByUserId')
-  async isBlockedByUserId(
+  @SubscribeMessage('chat:isBlocked')
+  async isBlocked(
     @ConnectedSocket() client: Socket,
-    @MessageBody() dto: IsBlockedByUserIdDto,
+    @MessageBody() dto: IsBlockedDto,
   ): Promise<boolean> {
-    this.logger.log('chat:isBlockedByUserId received', dto);
+    this.logger.log('chat:isBlocked received', dto);
 
-    const res = await this.prisma.blockRelation.findUnique({
-      where: {
-        blockingUserId_blockedByUserId: {
-          ...dto,
-        },
-      },
-    });
-
-    return !!res;
+    return this.blockService.isBlocked(dto);
   }
 
   /**
@@ -805,7 +808,7 @@ export class ChatGateway {
     await client.join(userRoomName);
 
     // すでに入室中のチャットルームも通知を受け取れるようにする
-    const rooms = await this.chatService.findJoinedRooms(userId);
+    const rooms = await this.chatroomService.findJoinedRooms(userId);
     rooms.map(async (room) => {
       await client.join(this.generateSocketChatRoomName(room.id));
     });

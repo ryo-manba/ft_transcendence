@@ -7,6 +7,7 @@ export interface Csrf {
 export interface LoginResult {
   res: string;
   userId: number | undefined;
+  errorMessage?: string;
 }
 
 // service-controller間の型

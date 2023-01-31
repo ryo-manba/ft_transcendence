@@ -1,6 +1,6 @@
 import { IsNotEmpty, IsString, IsNumber } from 'class-validator';
 
-export class updatePasswordDto {
+export class UpdateChatroomPasswordDto {
   @IsNumber()
   @IsNotEmpty()
   chatroomId: number;
