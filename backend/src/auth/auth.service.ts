@@ -190,6 +190,7 @@ export class AuthService {
 
     // check if user id exists in the loginUserIds array
     // if not, add user id to the array
+    console.log(this.loginUserIds);
     if (this.loginUserIds.find((id) => id === user.id)) {
       throw new ForbiddenException(
         "You can't log in with multiple windows/tabs.",

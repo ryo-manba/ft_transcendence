@@ -7,6 +7,9 @@ import { UserInfo } from 'types/auth';
 import { ValidationDialog } from 'components/auth/ValidationDialog';
 import { Loading } from 'components/common/Loading';
 import Debug from 'debug';
+import { Alert, AlertTitle, Collapse, Typography } from '@mui/material';
+import { useSocketStore } from 'store/game/ClientSocket';
+import { SocketAuth } from 'types/game';
 
 const Authenticate = () => {
   const debug = useMemo(() => Debug('authenticate'), []);
@@ -14,13 +17,24 @@ const Authenticate = () => {
   const { data: session, status } = useSession();
   const [openValidationDialog, setOpenValidationDialog] = useState(false);
   const [validationUserId, setValidationUserId] = useState(0);
+  const [error, setError] = useState('');
+  const { socket } = useSocketStore();
 
   useEffect(() => {
     if (session === null || process.env.NEXT_PUBLIC_API_URL === undefined) {
       return;
     }
-
+    let timeId: NodeJS.Timeout | undefined = undefined;
     const urlOauth = `${process.env.NEXT_PUBLIC_API_URL}/auth/oauth-login`;
+
+    const redirectToLogin = (message: string): NodeJS.Timeout => {
+      setError(message);
+      const timeId = setTimeout(() => {
+        void signOut({ callbackUrl: '/' });
+      }, 3000);
+
+      return timeId;
+    };
 
     // OAuthで取得した情報より、どこからの認証か判断する。
     const isGoogleOAuth = (email: string | null | undefined) => {
@@ -33,7 +47,7 @@ const Authenticate = () => {
     // ログイン後の処理
     const processAfterLogin = async (loginResult: LoginResult) => {
       if (!loginResult) {
-        void signOut({ callbackUrl: '/?login=false' });
+        timeId = redirectToLogin('Login Failure');
       } else if (loginResult.res === LoginResultStatus.SUCCESS) {
         await router.push('/dashboard');
       } else if (
@@ -43,9 +57,17 @@ const Authenticate = () => {
         // 2FAコード入力ダイアログを表示
         setValidationUserId(loginResult.userId);
         setOpenValidationDialog(true);
+
+        // 2FA中にログインページにリダイレクトした場合にstatusをoffにする。
+        const socketAuth = { userId: loginResult.userId } as SocketAuth;
+        socket.auth = socketAuth;
+        socket.connect();
       } else {
+        const errorMessage = loginResult.errorMessage
+          ? loginResult.errorMessage
+          : 'Login Failure';
         // ログイン失敗、signOutしてログインに戻る
-        void signOut({ callbackUrl: '/?login=false' });
+        timeId = redirectToLogin(errorMessage);
       }
     };
 
@@ -86,22 +108,26 @@ const Authenticate = () => {
           await fortyTwoLogin();
         } else {
           // どちらでもないOAuth認証は未対応
-          void signOut({ callbackUrl: '/' });
+          timeId = redirectToLogin('Login Failure');
         }
       } catch {
         // ログイン時のAxios例外の場合
-        void signOut({ callbackUrl: '/' });
+        timeId = redirectToLogin('Login Failure');
       }
     };
 
     debug(status);
     if (status === 'authenticated') {
       // 認証後、1回だけ呼び出される
-      void loginAfterOAuth();
+      if (!socket.connected) void loginAfterOAuth();
     } else if (status === 'unauthenticated') {
       void router.push('/');
     }
-  }, [status, session, debug, router]);
+
+    return () => {
+      if (timeId !== undefined) clearTimeout(timeId);
+    };
+  }, [status, session, debug, router, socket]);
 
   // ValidateのDialogに失敗したらよばれる
   const handleClose = useCallback(() => {
@@ -117,11 +143,22 @@ const Authenticate = () => {
   }
 
   return (
-    <ValidationDialog
-      open={openValidationDialog}
-      userId={validationUserId}
-      onClose={handleClose}
-    />
+    <>
+      <Collapse in={error !== ''}>
+        <Alert severity="error" sx={{ mb: 2 }}>
+          <AlertTitle>Authorization Error</AlertTitle>
+          <Typography variant="body2">
+            {error} -{' '}
+            <strong>It will automatically redirect to login page</strong>
+          </Typography>
+        </Alert>
+      </Collapse>
+      <ValidationDialog
+        open={openValidationDialog}
+        userId={validationUserId}
+        onClose={handleClose}
+      />
+    </>
   );
 };
 
