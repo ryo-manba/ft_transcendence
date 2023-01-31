@@ -120,8 +120,8 @@ export const ChatroomListItem = memo(function ChatroomListItem({
         id: room.id,
         userId: user.id,
       };
-      socket.emit('chat:deleteRoom', deleteRoomInfo, (res: boolean) => {
-        if (!res) {
+      socket.emit('chat:deleteRoom', deleteRoomInfo, (isDeleted: boolean) => {
+        if (!isDeleted) {
           setError('Failed to delete room.');
         }
       });
@@ -136,11 +136,19 @@ export const ChatroomListItem = memo(function ChatroomListItem({
       type: room.type,
     };
 
-    socket.emit('chat:joinRoomFromOtherUser', joinRoomInfo, (res: boolean) => {
-      if (!res) {
-        setError('Failed to add friend.');
-      }
-    });
+    socket.emit(
+      'chat:joinRoomFromOtherUser',
+      joinRoomInfo,
+      (isSuccess: boolean) => {
+        if (!isSuccess) {
+          setError('Failed to add friend.');
+
+          return;
+        }
+
+        setSuccess('Friend has been added successfully.');
+      },
+    );
   };
 
   const addAdmin = (userId: number) => {
@@ -155,10 +163,13 @@ export const ChatroomListItem = memo(function ChatroomListItem({
       chatroomId: room.id,
     };
 
-    socket.emit('chat:addAdmin', addAdminInfo, (res: boolean) => {
-      if (!res) {
+    socket.emit('chat:addAdmin', addAdminInfo, (isSuccess: boolean) => {
+      if (!isSuccess) {
         setError('Failed to add admin.');
+
+        return;
       }
+      setSuccess('Admin has been added successfully.');
     });
   };
 
@@ -177,13 +188,18 @@ export const ChatroomListItem = memo(function ChatroomListItem({
       oldPassword: oldPassword,
       newPassword: newPassword,
     };
-    socket.emit('chat:updatePassword', changePasswordInfo, (res: boolean) => {
-      if (res) {
+    socket.emit(
+      'chat:updatePassword',
+      changePasswordInfo,
+      (isSuccess: boolean) => {
+        if (!isSuccess) {
+          setError('Failed to change password.');
+
+          return;
+        }
         setSuccess('Password has been changed successfully.');
-      } else {
-        setError('Failed to change password.');
-      }
-    });
+      },
+    );
   };
 
   const banUser = (userId: number) => {
@@ -207,8 +223,8 @@ export const ChatroomListItem = memo(function ChatroomListItem({
       userId: userId,
     };
 
-    socket.emit('chat:unbanUser', unbanUserInfo, (res: boolean) => {
-      if (!res) {
+    socket.emit('chat:unbanUser', unbanUserInfo, (isSuccess: boolean) => {
+      if (!isSuccess) {
         setError('Failed to unban user.');
 
         return;
