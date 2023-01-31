@@ -8,15 +8,17 @@ import { useRouter } from 'next/router';
 import { getAvatarImageUrl } from 'api/user/getAvatarImageUrl';
 import { BadgedAvatar } from 'components/common/BadgedAvatar';
 import { useEffect, useState } from 'react';
-import { GameRecordWithUserName } from 'types/game';
+import { GameRecordWithUserName, UserStatus } from 'types/game';
 import { getRecordsById } from 'api/records/getRecordsById';
 import { ClientUser } from 'types/user';
 import { getUserById } from 'api/user/getUserById';
 import { getUserRanking } from 'api/user/getUserRanking';
 import { AvatarFontSize } from 'types/utils';
+import { useSocketStore } from 'store/game/ClientSocket';
 
 const Profile: NextPage = () => {
   const router = useRouter();
+  const { socket } = useSocketStore();
   const [user, setUser] = useState<ClientUser | undefined>(undefined);
   const [userError, setUserError] = useState<Error | undefined>(undefined);
   const [records, setRecords] = useState<GameRecordWithUserName[] | undefined>(
@@ -26,6 +28,7 @@ const Profile: NextPage = () => {
     undefined,
   );
   const [ranking, setRanking] = useState<number | undefined>(undefined);
+  const [userStatus, setUserStatus] = useState<UserStatus>(UserStatus.OFFLINE);
 
   useEffect(() => {
     let ignore = false;
@@ -77,15 +80,34 @@ const Profile: NextPage = () => {
               setUserError(err as Error);
             }
           });
+
+        socket.emit('getUserStatusById', { userId }, (res: UserStatus) => {
+          if (!ignore) {
+            setUserStatus(res);
+          }
+        });
       }
     };
 
     void updateRecordsNUser(ignore);
 
+    socket.on(
+      'updateStatus',
+      (data: { userId: number; status: UserStatus }) => {
+        if (router.isReady) {
+          const userId = Number(router.query.userId);
+          if (data.userId === userId) {
+            setUserStatus(data.status);
+          }
+        }
+      },
+    );
+
     return () => {
       ignore = true;
+      socket.off('updateStatus');
     };
-  }, [router]);
+  }, [router, socket]);
 
   if (userError !== undefined || recordsError !== undefined) {
     if (!router.isReady) {
@@ -132,7 +154,7 @@ const Profile: NextPage = () => {
       >
         <Grid item>
           <BadgedAvatar
-            status={user.status}
+            status={userStatus}
             width={150}
             height={150}
             src={avatarImageUrl}

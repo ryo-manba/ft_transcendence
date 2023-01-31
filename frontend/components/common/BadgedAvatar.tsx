@@ -1,5 +1,5 @@
 import { Avatar, Badge } from '@mui/material';
-import { UserStatus } from '@prisma/client';
+import { UserStatus } from 'types/game';
 import { ClientUser } from 'types/user';
 import { useQueryClient } from '@tanstack/react-query';
 import Debug from 'debug';
@@ -24,9 +24,9 @@ const badgeStyle = {
 
 const getBadgeColor = (status: UserStatus) => {
   switch (status) {
-    case 'ONLINE':
+    case UserStatus.ONLINE:
       return 'success';
-    case 'PLAYING':
+    case UserStatus.PLAYING:
       return 'error';
     default:
       return 'default';
@@ -90,7 +90,7 @@ export const BadgedAvatar = ({
       anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
       badgeContent=""
       color={getBadgeColor(status)}
-      sx={status === 'OFFLINE' ? badgeStyle : undefined}
+      sx={status === UserStatus.OFFLINE ? badgeStyle : undefined}
       title={status}
     >
       <Avatar

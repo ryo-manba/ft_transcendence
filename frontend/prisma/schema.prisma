@@ -89,7 +89,6 @@ model User {
   hashedPassword  String?
   point           Int               @default(1000)
   avatarPath      String?
-  status          UserStatus        @default(OFFLINE)
   has2FA          Boolean           @default(false)
   oAuthId         String?           @unique
   secret2FA       String?
@@ -148,10 +147,4 @@ enum ChatroomType {
   PRIVATE
   PROTECTED
   DM
-}
-
-enum UserStatus {
-  ONLINE
-  PLAYING
-  OFFLINE
 }
