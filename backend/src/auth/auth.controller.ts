@@ -130,7 +130,6 @@ export class AuthController {
         userId: undefined,
       };
     } catch (error) {
-      console.log(error);
       if (error instanceof ForbiddenException) {
         return {
           res: LoginResultStatus.FAILURE,

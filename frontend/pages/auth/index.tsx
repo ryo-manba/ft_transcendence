@@ -18,22 +18,23 @@ const Authenticate = () => {
   const [openValidationDialog, setOpenValidationDialog] = useState(false);
   const [validationUserId, setValidationUserId] = useState(0);
   const [error, setError] = useState('');
+  const [timeId, setTimeId] = useState<NodeJS.Timeout | undefined>(undefined);
   const { socket } = useSocketStore();
 
   useEffect(() => {
     if (session === null || process.env.NEXT_PUBLIC_API_URL === undefined) {
       return;
     }
-    let timeId: NodeJS.Timeout | undefined = undefined;
+
     const urlOauth = `${process.env.NEXT_PUBLIC_API_URL}/auth/oauth-login`;
 
-    const redirectToLogin = (message: string): NodeJS.Timeout => {
+    const redirectToLogin = (message: string) => {
       setError(message);
-      const timeId = setTimeout(() => {
+      const id = setTimeout(() => {
         void signOut({ callbackUrl: '/' });
       }, 3000);
 
-      return timeId;
+      setTimeId(id);
     };
 
     // OAuthで取得した情報より、どこからの認証か判断する。
@@ -47,7 +48,7 @@ const Authenticate = () => {
     // ログイン後の処理
     const processAfterLogin = async (loginResult: LoginResult) => {
       if (!loginResult) {
-        timeId = redirectToLogin('Login Failure');
+        redirectToLogin('Login Failure');
       } else if (loginResult.res === LoginResultStatus.SUCCESS) {
         await router.push('/dashboard');
       } else if (
@@ -67,7 +68,7 @@ const Authenticate = () => {
           ? loginResult.errorMessage
           : 'Login Failure';
         // ログイン失敗、signOutしてログインに戻る
-        timeId = redirectToLogin(errorMessage);
+        redirectToLogin(errorMessage);
       }
     };
 
@@ -108,26 +109,36 @@ const Authenticate = () => {
           await fortyTwoLogin();
         } else {
           // どちらでもないOAuth認証は未対応
-          timeId = redirectToLogin('Login Failure');
+          redirectToLogin('Login Failure');
         }
       } catch {
         // ログイン時のAxios例外の場合
-        timeId = redirectToLogin('Login Failure');
+        redirectToLogin('Login Failure');
       }
     };
 
     debug(status);
     if (status === 'authenticated') {
       // 認証後、1回だけ呼び出される
-      if (!socket.connected) void loginAfterOAuth();
+      if (socket.disconnected) void loginAfterOAuth();
     } else if (status === 'unauthenticated') {
       void router.push('/');
     }
 
     return () => {
-      if (timeId !== undefined) clearTimeout(timeId);
+      clearTimeout(timeId);
     };
+    // timeId
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status, session, debug, router, socket]);
+
+  // 連続でOAuth認証をしていると不安定になるときがある。
+  useEffect(() => {
+    if (error !== '' && openValidationDialog) {
+      setError('');
+      clearTimeout(timeId);
+    }
+  }, [error, openValidationDialog, timeId]);
 
   // ValidateのDialogに失敗したらよばれる
   const handleClose = useCallback(() => {
