@@ -28,7 +28,7 @@ const Authenticate = () => {
 
     const urlOauth = `${process.env.NEXT_PUBLIC_API_URL}/auth/oauth-login`;
 
-    const redirectToLogin = (message: string) => {
+    const redirectToLoginPageOnError = (message: string) => {
       setError(message);
       const id = setTimeout(() => {
         void signOut({ callbackUrl: '/' });
@@ -48,7 +48,7 @@ const Authenticate = () => {
     // ログイン後の処理
     const processAfterLogin = async (loginResult: LoginResult) => {
       if (!loginResult) {
-        redirectToLogin('Login Failure');
+        redirectToLoginPageOnError('Login Failure');
       } else if (loginResult.res === LoginResultStatus.SUCCESS) {
         await router.push('/dashboard');
       } else if (
@@ -68,7 +68,7 @@ const Authenticate = () => {
           ? loginResult.errorMessage
           : 'Login Failure';
         // ログイン失敗、signOutしてログインに戻る
-        redirectToLogin(errorMessage);
+        redirectToLoginPageOnError(errorMessage);
       }
     };
 
@@ -109,11 +109,11 @@ const Authenticate = () => {
           await fortyTwoLogin();
         } else {
           // どちらでもないOAuth認証は未対応
-          redirectToLogin('Login Failure');
+          redirectToLoginPageOnError('Login Failure');
         }
       } catch {
         // ログイン時のAxios例外の場合
-        redirectToLogin('Login Failure');
+        redirectToLoginPageOnError('Login Failure');
       }
     };
 
@@ -132,7 +132,7 @@ const Authenticate = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status, session, debug, router, socket]);
 
-  // 連続でOAuth認証をしていると不安定になるときがある。
+  // 連続でOAuth=>2FAをすると不安定になるときがある。
   useEffect(() => {
     if (error !== '' && openValidationDialog) {
       setError('');
