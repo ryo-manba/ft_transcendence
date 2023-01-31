@@ -13,6 +13,7 @@ import { getRecordsById } from 'api/records/getRecordsById';
 import { ClientUser } from 'types/user';
 import { getUserById } from 'api/user/getUserById';
 import { getUserRanking } from 'api/user/getUserRanking';
+import { AvatarFontSize } from 'types/utils';
 
 const Profile: NextPage = () => {
   const router = useRouter();
@@ -135,6 +136,8 @@ const Profile: NextPage = () => {
             width={150}
             height={150}
             src={avatarImageUrl}
+            displayName={user.name}
+            avatarFontSize={AvatarFontSize.LARGE}
           />
         </Grid>
         <Grid item>

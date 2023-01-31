@@ -142,6 +142,7 @@ export const FriendListItem = memo(function FriendListItem({
           <BadgedAvatar
             status={friendStatus}
             src={getAvatarImageUrl(friend.id)}
+            displayName={friend.name}
           />
         </ListItemAvatar>
         <ListItemText

@@ -19,3 +19,11 @@ export const LoginResultStatus = {
   NEED2FA: 'need2fa',
   FAILURE: 'failure',
 } as const;
+
+export const AvatarFontSize = {
+  SMALL: '1.5rem',
+  MEDIUM: '3rem',
+  LARGE: '5rem',
+} as const;
+
+export type AvatarFontSize = typeof AvatarFontSize[keyof typeof AvatarFontSize];

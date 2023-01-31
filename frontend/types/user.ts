@@ -6,8 +6,8 @@ export type ClientUser = {
   id: number;
   name: string;
   point: number;
-  avatarPath: string;
+  avatarPath?: string;
   status: UserStatus;
   has2FA: boolean;
-  oAuthId: string;
+  oAuthId?: string;
 };

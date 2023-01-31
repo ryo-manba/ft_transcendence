@@ -1,6 +1,5 @@
 import { memo, useState } from 'react';
 import {
-  Avatar,
   Box,
   Button,
   List,
@@ -20,6 +19,7 @@ import { getAvatarImageUrl } from 'api/user/getAvatarImageUrl';
 import { Loading } from 'components/common/Loading';
 import { ChatErrorAlert } from 'components/chat/alert/ChatErrorAlert';
 import { ChatAlertCollapse } from 'components/chat/alert/ChatAlertCollapse';
+import { BadgedAvatar } from 'components/common/BadgedAvatar';
 
 type Props = {
   open: boolean;
@@ -106,7 +106,10 @@ export const FriendAddDialog = memo(function FriendAddDialog({
                   button
                 >
                   <ListItemAvatar>
-                    <Avatar src={getAvatarImageUrl(user.id)} />
+                    <BadgedAvatar
+                      src={getAvatarImageUrl(user.id)}
+                      displayName={user.name}
+                    />
                   </ListItemAvatar>
                   <ListItemText primary={user.name} />
                 </ListItem>

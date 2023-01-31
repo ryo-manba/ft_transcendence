@@ -1,4 +1,4 @@
-import { Typography, Grid, Avatar, Alert, AlertTitle } from '@mui/material';
+import { Typography, Grid, Alert, AlertTitle } from '@mui/material';
 import { useQueryUser } from 'hooks/useQueryUser';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import PaidIcon from '@mui/icons-material/Paid';
@@ -10,6 +10,8 @@ import { GameRecordWithUserName } from 'types/game';
 import { getRecordsById } from 'api/records/getRecordsById';
 import { getUserRanking } from 'api/user/getUserRanking';
 import { getAvatarImageUrl } from 'api/user/getAvatarImageUrl';
+import { BadgedAvatar } from 'components/common/BadgedAvatar';
+import { AvatarFontSize } from 'types/utils';
 
 export const Profile = () => {
   const { data: user } = useQueryUser();
@@ -98,9 +100,12 @@ export const Profile = () => {
           wrap="nowrap"
         >
           <Grid item>
-            <Avatar
+            <BadgedAvatar
               src={avatarImageUrl} // Avatar can show a default avatar image when the provided path is invalid
-              sx={{ width: 90, height: 90 }}
+              width={90}
+              height={90}
+              displayName={user.name}
+              avatarFontSize={AvatarFontSize.MEDIUM}
             />
           </Grid>
           <Grid item sx={{ width: '75%' }}>

@@ -14,6 +14,7 @@ import { createReadStream, unlink } from 'node:fs';
 import * as path from 'path';
 import { DeleteAvatarDto } from './dto/delete-avatar.dto';
 import { ClientUser } from './types/user';
+import * as fs from 'fs';
 
 @Injectable()
 export class UserService {
@@ -115,17 +116,38 @@ export class UserService {
   }
 
   async getAvatarImage(id: number): Promise<StreamableFile | undefined> {
+    this.logger.log(`getAvatarImage: ${id}`);
+
     const user = await this.findOne(id);
-    if (user === null || user.avatarPath === null) return undefined;
+
+    if (user === null || user.avatarPath === null) {
+      return undefined;
+    }
     const filePath = path.join(
       process.cwd(),
       process.env.AVATAR_IMAGE_DIR,
       user.avatarPath,
     );
-    const file = createReadStream(filePath);
 
-    // StreamableFileを使うと、バックエンドのローカルにある画像をフロントエンドに送れる
-    return new StreamableFile(file);
+    // check if the file path exists
+    if (fs.existsSync(filePath)) {
+      const file = createReadStream(filePath);
+
+      return new StreamableFile(file);
+    } else {
+      this.logger.log('Error: getAvatarImage: avatarPath is invalid.');
+
+      // ここに入ってくるケースはavatarPathは存在しているのにパスが不正な場合なので
+      // avatarPathを削除
+      const updateAvatarDto: UpdateAvatarDto = {
+        userId: id,
+        avatarPath: null,
+      };
+
+      await this.updateAvatar(updateAvatarDto);
+
+      return undefined;
+    }
   }
 
   async deleteAvatar(dto: DeleteAvatarDto): Promise<ClientUser> {
@@ -134,10 +156,14 @@ export class UserService {
       process.env.AVATAR_IMAGE_DIR,
       dto.avatarPath,
     );
-    unlink(filePath, (err) => {
-      if (err) throw err;
-      console.log(`${filePath} was deleted`);
-    });
+
+    // delete the file only if the file path is valid
+    if (fs.existsSync(filePath)) {
+      unlink(filePath, (err) => {
+        if (err) throw err;
+        console.log(`${filePath} was deleted`);
+      });
+    }
 
     const updateDto: UpdateAvatarDto = {
       userId: dto.userId,
