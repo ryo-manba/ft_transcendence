@@ -15,15 +15,17 @@ export const Start = ({ setOpenMatchError }: Props) => {
   const updatePlayState = usePlayStateStore((store) => store.updatePlayState);
   const { data: user } = useQueryUser();
 
-  if (user === undefined) return <Loading />;
-
   const start = useCallback(() => {
+    if (!user) return;
+
     setOpenMatchError(false);
     updatePlayState(PlayState.stateWaiting);
     socket.emit('playStart', { userId: user.id }, (res: boolean) => {
       if (!res) setOpenMatchError(true);
     });
-  }, [socket, setOpenMatchError, updatePlayState, user.id]);
+  }, [socket, setOpenMatchError, updatePlayState, user]);
+
+  if (user === undefined) return <Loading />;
 
   return (
     <>

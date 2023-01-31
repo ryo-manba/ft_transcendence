@@ -32,6 +32,7 @@ export const ChatMessageList = memo(function ChatMessageList({
   const INITIAL_ITEM_COUNT = 20;
 
   const [skipPage, setSkipPage] = useState(0);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const virtuosoRef = useRef<any>(null);
 
   // メッセージが500件あったらfirstItemIndexは500

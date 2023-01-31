@@ -54,9 +54,6 @@ export const ChatroomJoinDialog = memo(function ChatroomJoinDialog({
   const [error, setError] = useState('');
 
   const { data: user } = useQueryUser();
-  if (user === undefined) {
-    return <Loading />;
-  }
 
   const schema = z.object({
     password: z.string().refine(
@@ -81,6 +78,10 @@ export const ChatroomJoinDialog = memo(function ChatroomJoinDialog({
       password: '',
     },
   });
+
+  if (user === undefined) {
+    return <Loading />;
+  }
 
   const handleClose = () => {
     setSelectedRoom(null);

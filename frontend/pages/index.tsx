@@ -2,7 +2,7 @@
 import type { NextPage } from 'next';
 import { useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/router';
-import axios from 'axios';
+import axios, { isAxiosError } from 'axios';
 import { IconDatabase } from '@tabler/icons';
 import Image from 'next/image';
 import GppGoodIcon from '@mui/icons-material/GppGood';
@@ -119,7 +119,7 @@ const Home: NextPage = () => {
         }
       }
     } catch (e) {
-      if (axios.isAxiosError(e) && e.response && e.response.data) {
+      if (isAxiosError(e) && e.response && e.response.data) {
         reset();
         const messages = (e.response.data as AxiosErrorResponse).message;
         if (Array.isArray(messages)) {
@@ -273,6 +273,7 @@ const Home: NextPage = () => {
                   }}
                   width={50}
                   height={50}
+                  alt="42 Logo"
                 />
               </Button>
             </Grid>
@@ -287,6 +288,7 @@ const Home: NextPage = () => {
                   }}
                   width={50}
                   height={50}
+                  alt="Google Logo"
                 />
               </Button>
             </Grid>

@@ -17,11 +17,10 @@ export const FriendAddButton = memo(function FriendAddButton({
   const [dialogOpen, setDialogOpen] = useState(false);
   const [unfollowingUsers, setUnFollowingUsers] = useState<Friend[]>([]);
   const { data: user } = useQueryUser();
-  if (user === undefined) {
-    return <Loading />;
-  }
 
   const setupUnfollowingUsers = useCallback(async () => {
+    if (!user) return;
+
     const res = await fetchUnfollowingUsers({ userId: user.id });
 
     setUnFollowingUsers(res);
@@ -40,6 +39,10 @@ export const FriendAddButton = memo(function FriendAddButton({
   const addFriends = (friend: Friend) => {
     setFriends((prev) => [...prev, friend]);
   };
+
+  if (user === undefined) {
+    return <Loading />;
+  }
 
   return (
     <>

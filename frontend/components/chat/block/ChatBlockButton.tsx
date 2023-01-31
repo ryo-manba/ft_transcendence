@@ -17,9 +17,6 @@ export const ChatBlockButton = memo(function ChatBlockButton({
 }: Props) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const { data: user } = useQueryUser();
-  if (user === undefined) {
-    return <Loading />;
-  }
 
   const handleOpen = useCallback(() => {
     setDialogOpen(true);
@@ -28,6 +25,10 @@ export const ChatBlockButton = memo(function ChatBlockButton({
   const handleClose = useCallback(() => {
     setDialogOpen(false);
   }, []);
+
+  if (user === undefined) {
+    return <Loading />;
+  }
 
   return (
     <>

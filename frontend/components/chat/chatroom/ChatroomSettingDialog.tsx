@@ -275,10 +275,6 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
     reloadFriends,
   ]);
 
-  if (user === undefined) {
-    return <Loading />;
-  }
-
   const {
     control,
     formState: { errors },
@@ -294,6 +290,10 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
       checkPassword: '',
     },
   });
+
+  if (user === undefined) {
+    return <Loading />;
+  }
 
   const initDialog = () => {
     setSelectedUserId('');
