@@ -58,10 +58,6 @@ export const BadgedAvatar = ({
 
     setIsLoadingError(true);
 
-    // setStringAvatarStyle(StringAvatarStyle(displayName, true));
-
-    // debug('stringAvatarStyle: %o', stringAvatarStyle);
-
     /**
      * この関数が呼ばれるタイミングは、getAvatarImageUrlの返り値のパスをAvatar
      * コンポーネントのsrcに設定した結果、何らかのエラーが発生した状態
