@@ -1,5 +1,4 @@
 import {
-  Avatar,
   Grid,
   Button,
   Stack,
@@ -26,10 +25,11 @@ import { ChangeEventHandler, useEffect, useState } from 'react';
 import { useMutationAvatar } from 'hooks/useMutationAvatar';
 import { Loading } from 'components/common/Loading';
 import { AxiosError } from 'axios';
-import { AxiosErrorResponse } from 'types';
+import { AvatarFontSize, AxiosErrorResponse } from 'types/utils';
 import { getAvatarImageUrl } from 'api/user/getAvatarImageUrl';
 import { useRouter } from 'next/router';
 import { useMutationHas2FA } from 'hooks/useMutationHas2FA';
+import { BadgedAvatar } from 'components/common/BadgedAvatar';
 
 const usernameMaxLen = 50;
 
@@ -50,9 +50,7 @@ const Setting: NextPage = () => {
     OpenSnackState.NONE,
   );
   const [openConfirm, setOpenConfirm] = useState(false);
-  const [avatarImageUrl, setAvatarImageUrl] = useState<string | undefined>(
-    undefined,
-  );
+  const [avatarImageUrl, setAvatarImageUrl] = useState<string>('');
   const {
     control,
     register,
@@ -108,7 +106,12 @@ const Setting: NextPage = () => {
 
   const onChangeAvatar: ChangeEventHandler<HTMLInputElement> = (event) => {
     if (event.target.files === null) return;
-    if (user.avatarPath !== null) {
+    /**
+     * avatarPathを設定していない初期状態の場合はnull
+     * avatarPathが不正な場合にフロントエンドでキャッシュのavatarPathを削除した場合には
+     * undefined
+     */
+    if (user.avatarPath !== null && user.avatarPath !== undefined) {
       deleteAvatarMutation.mutate(
         {
           userId: user.id,
@@ -153,7 +156,7 @@ const Setting: NextPage = () => {
         },
         {
           onSuccess: () => {
-            setAvatarImageUrl(undefined);
+            setAvatarImageUrl('');
             setOpenSnack(OpenSnackState.SUCCESS);
             setSuccess('Successfully deleted avatar');
           },
@@ -217,7 +220,13 @@ const Setting: NextPage = () => {
           spacing={5}
         >
           <Grid item>
-            <Avatar sx={{ width: 150, height: 150 }} src={avatarImageUrl} />
+            <BadgedAvatar
+              width={150}
+              height={150}
+              src={avatarImageUrl}
+              displayName={user.name}
+              avatarFontSize={AvatarFontSize.LARGE}
+            />
           </Grid>
           <Grid item>
             <Stack spacing={2} direction="column">
