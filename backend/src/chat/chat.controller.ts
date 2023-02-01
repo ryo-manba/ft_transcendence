@@ -227,4 +227,22 @@ export class ChatController {
 
     return blockedUsers;
   }
+
+  /**
+   * @return DMの相手のユーザー名を返す
+   * @param roomId
+   * @param senderUserId (自分のユーザー名)
+   */
+  @Get('dm-recipient-name')
+  async findDMRecipientName(
+    @Query('roomId', ParseIntPipe) roomId: number,
+    @Query('senderUserId', ParseIntPipe) senderUserId: number,
+  ): Promise<string> {
+    const recipientName = await this.chatroomService.findDMRecipientName(
+      roomId,
+      senderUserId,
+    );
+
+    return recipientName;
+  }
 }

@@ -122,6 +122,7 @@ export const FriendListItem = memo(function FriendListItem({
         const newCurrentRoom: CurrentRoom = {
           id: res.chatroom.id,
           name: res.chatroom.name,
+          type: res.chatroom.type,
         };
         setCurrentRoom(newCurrentRoom);
       },

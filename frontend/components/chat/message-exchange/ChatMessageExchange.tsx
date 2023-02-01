@@ -9,7 +9,7 @@ import {
 import Debug from 'debug';
 import { Socket } from 'socket.io-client';
 import { Paper } from '@mui/material';
-import { Message, CurrentRoom } from 'types/chat';
+import { Message, CurrentRoom, ChatroomType } from 'types/chat';
 import { useQueryUser } from 'hooks/useQueryUser';
 import { Loading } from 'components/common/Loading';
 import { ChatTextInput } from 'components/chat/message-exchange/ChatTextInput';
@@ -17,6 +17,7 @@ import { ChatMessageList } from 'components/chat/message-exchange/ChatMessageLis
 import { ChatHeightStyle } from 'components/chat/utils/ChatHeightStyle';
 import { ChatErrorAlert } from 'components/chat/alert/ChatErrorAlert';
 import { ChatAlertCollapse } from 'components/chat/alert/ChatAlertCollapse';
+import { fetchDMRecipientName } from 'api/chat/fetchDMRecipientName';
 
 type Props = {
   socket: Socket;
@@ -36,8 +37,10 @@ export const ChatMessageExchange = memo(function ChatMessageExchange({
   const debug = useMemo(() => Debug('chat'), []);
   const [error, setError] = useState('');
   const { data: user } = useQueryUser();
+  const [roomName, setRoomName] = useState('');
 
   useEffect(() => {
+    let ignore = false;
     if (!user) return;
 
     // 他ユーザーからのメッセージを受け取る
@@ -50,8 +53,27 @@ export const ChatMessageExchange = memo(function ChatMessageExchange({
       }
     });
 
+    const updateRoomName = async (room: CurrentRoom, userId: number) => {
+      if (room.type === ChatroomType.DM) {
+        const nameOfDMRecipient = await fetchDMRecipientName({
+          roomId: room.id,
+          senderUserId: userId,
+        });
+        if (!ignore) {
+          setRoomName(nameOfDMRecipient);
+        }
+      } else {
+        if (!ignore) {
+          setRoomName(room.name);
+        }
+      }
+    };
+
+    void updateRoomName(currentRoom, user.id);
+
     return () => {
       socket.off('chat:receiveMessage');
+      ignore = true;
     };
   }, [user, currentRoom, debug, setMessages, socket]);
 
@@ -106,7 +128,7 @@ export const ChatMessageExchange = memo(function ChatMessageExchange({
             flexGrow: 1,
           }}
         >
-          <h3 className="my-2 ml-1 underline">#{currentRoom.name}</h3>
+          <h3 className="my-2 ml-1 underline">#{roomName}</h3>
           <ChatMessageList
             currentRoomId={currentRoom.id}
             messages={messages}
@@ -118,10 +140,7 @@ export const ChatMessageExchange = memo(function ChatMessageExchange({
           <ChatErrorAlert error={error} setError={setError} />
         </ChatAlertCollapse>
         <form style={{ display: 'flex', alignItems: 'center', padding: '2px' }}>
-          <ChatTextInput
-            roomName={currentRoom.name}
-            sendMessage={sendMessage}
-          />
+          <ChatTextInput roomName={roomName} sendMessage={sendMessage} />
         </form>
       </Paper>
     </>
