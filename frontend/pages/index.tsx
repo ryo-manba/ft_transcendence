@@ -126,11 +126,13 @@ const Home: NextPage = () => {
           setError(messages);
         } else {
           if (messages == 'invalid csrf token') {
-            setError(['Internal Error. Please reload the page.']);
+            setError(['Internal error. Please reload the page.']);
           } else {
             setError([messages]);
           }
         }
+      } else {
+        setError(['Internal error. Please reload the page.']);
       }
     }
   };
