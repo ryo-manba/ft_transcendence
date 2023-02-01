@@ -10,7 +10,7 @@ type PropsForUpdate = {
 
 type PropsForDeletion = {
   userId: number;
-  avatarPath: string;
+  avatarPath?: string;
 };
 
 const endpointForDeletion = `${

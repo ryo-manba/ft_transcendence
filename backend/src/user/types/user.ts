@@ -7,4 +7,5 @@ type ExcludeProperties =
   | 'secret2FA'
   | 'createdAt'
   | 'updatedAt';
+
 export type ClientUser = Omit<User, ExcludeProperties>;

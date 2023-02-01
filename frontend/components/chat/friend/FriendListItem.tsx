@@ -22,6 +22,7 @@ import { Loading } from 'components/common/Loading';
 import { BadgedAvatar } from 'components/common/BadgedAvatar';
 import { ChatErrorAlert } from 'components/chat/alert/ChatErrorAlert';
 import { ChatAlertCollapse } from 'components/chat/alert/ChatAlertCollapse';
+import { AvatarFontSize } from 'types/utils';
 
 type Props = {
   friend: Friend;
@@ -122,6 +123,7 @@ export const FriendListItem = memo(function FriendListItem({
         const newCurrentRoom: CurrentRoom = {
           id: res.chatroom.id,
           name: res.chatroom.name,
+          type: res.chatroom.type,
         };
         setCurrentRoom(newCurrentRoom);
       },
@@ -146,6 +148,8 @@ export const FriendListItem = memo(function FriendListItem({
           <BadgedAvatar
             status={friendStatus}
             src={getAvatarImageUrl(friend.id)}
+            displayName={friend.name}
+            avatarFontSize={AvatarFontSize.SMALL}
           />
         </ListItemAvatar>
         <ListItemText

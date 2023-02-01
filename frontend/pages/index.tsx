@@ -12,7 +12,7 @@ import {
   AxiosErrorResponse,
   LoginResult,
   LoginResultStatus,
-} from '../types';
+} from '../types/utils';
 import {
   Grid,
   IconButton,

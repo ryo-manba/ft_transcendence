@@ -8,6 +8,7 @@ export type Chatroom = {
 export type CurrentRoom = {
   id: number;
   name: string;
+  type: ChatroomType;
 };
 
 export type CreateChatroomInfo = {

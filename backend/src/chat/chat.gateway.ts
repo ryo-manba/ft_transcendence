@@ -13,6 +13,7 @@ import type { ChatMessage } from './types/chat';
 import { ChatService } from './chat.service';
 import { BanService } from './ban.service';
 import { MuteService } from './mute.service';
+import { BlockService } from './block.service';
 import { AdminService } from './admin.service';
 import { ChatroomService } from './chatroom.service';
 import { CreateAdminDto } from './dto/admin/create-admin.dto';
@@ -20,8 +21,8 @@ import { IsAdminDto } from './dto/admin/is-admin.dto';
 import { IsBannedDto } from './dto/ban/is-banned.dto';
 import { BanUserDto } from './dto/ban/ban-user.dto';
 import { UnbanUserDto } from './dto/ban/unban-user.dto';
-import { CreateBlockRelationDto } from './dto/block/create-block-relation.dto';
-import { DeleteBlockRelationDto } from './dto/block/delete-block-relation.dto';
+import { BlockUserDto } from './dto/block/block-user.dto';
+import { UnblockUserDto } from './dto/block/unblock-user.dto';
 import { IsBlockedDto } from './dto/block/is-blocked.dto';
 import { CreateChatroomDto } from './dto/chatroom/create-chatroom.dto';
 import { DeleteChatroomDto } from './dto/chatroom/delete-chatroom.dto';
@@ -55,6 +56,7 @@ export class ChatGateway {
     private readonly chatService: ChatService,
     private readonly banService: BanService,
     private readonly muteService: MuteService,
+    private readonly blockService: BlockService,
     private readonly adminService: AdminService,
     private readonly chatroomService: ChatroomService,
   ) {}
@@ -185,20 +187,22 @@ export class ChatGateway {
     // DMの場合はBlockしている or されていないことを確認する
     if (chatroom.type === ChatroomType.DM) {
       const membersId = chatroom.members.map((member) => member.userId);
-      const where = [
-        { blockingUserId: membersId[0], blockedByUserId: membersId[1] },
-        { blockingUserId: membersId[1], blockedByUserId: membersId[0] },
-      ];
-      const blockRelations = await this.prisma.blockRelation.findMany({
-        where: {
-          OR: [...where],
+      const isBlockedDtos: IsBlockedDto[] = [
+        {
+          blockingUserId: membersId[0],
+          blockedByUserId: membersId[1],
         },
-      });
-      if (blockRelations.length > 0) {
-        if (blockRelations[0].blockedByUserId === createMessageDto.userId) {
-          return { error: 'You blocked this user.' };
-        } else {
-          return { error: 'This user blocked you.' };
+        {
+          blockingUserId: membersId[1],
+          blockedByUserId: membersId[0],
+        },
+      ];
+      for (const dto of isBlockedDtos) {
+        const isBlocked = await this.blockService.isBlocked(dto);
+        if (isBlocked) {
+          return dto.blockedByUserId === createMessageDto.userId
+            ? { error: 'You blocked this user.' }
+            : { error: 'This user blocked you.' };
         }
       }
     }
@@ -325,7 +329,7 @@ export class ChatGateway {
    * @param client
    * @param DeleteChatroomDto
    */
-  @SubscribeMessage('chat:delete')
+  @SubscribeMessage('chat:deleteRoom')
   async deleteRoom(@MessageBody() dto: DeleteChatroomDto): Promise<boolean> {
     this.logger.log(`chat:delete received -> roomId: ${dto.id}`);
     const deletedRoom = await this.chatroomService.delete(dto);
@@ -336,7 +340,7 @@ export class ChatGateway {
     const socketRoomName = this.generateSocketChatRoomName(deletedRoom.id);
 
     const deletedClientRoom = this.convertToClientChatroom(deletedRoom);
-    this.server.to(socketRoomName).emit('chat:delete', deletedClientRoom);
+    this.server.to(socketRoomName).emit('chat:deleteRoom', deletedClientRoom);
 
     // 入室者をルームから退出させる
     this.server.socketsLeave(socketRoomName);
@@ -739,64 +743,53 @@ export class ChatGateway {
 
   /*
    * ユーザーをブロックする
-   * @param CreateBlockRelationDto
+   * @param BlockUserDto
    */
   @SubscribeMessage('chat:blockUser')
   async blockUser(
     @ConnectedSocket() client: Socket,
-    @MessageBody() dto: CreateBlockRelationDto,
+    @MessageBody() dto: BlockUserDto,
   ): Promise<boolean> {
     this.logger.log('chat:blockUser received', dto);
 
-    const res = await this.chatService.blockUser(dto);
-
-    if (res) {
-      // ブロックされたユーザーのフレンド一覧から
+    const isSuccess = await this.blockService.blockUser(dto);
+    if (isSuccess) {
+      // ブロックされたユーザーのフレンド一覧から、
       // ブロックしたユーザーの表示を消すために通知を送る
       this.server
         .to(this.generateSocketUserRoomName(dto.blockingUserId))
         .emit('chat:blocked', dto.blockedByUserId);
     }
 
-    return !!res;
+    return isSuccess;
   }
 
   /*
    * ユーザーのブロックを解除する
-   * @param CreateBlockRelationDto
+   * @param UnblockUserDto
    */
   @SubscribeMessage('chat:unblockUser')
   async unblockUser(
     @ConnectedSocket() client: Socket,
-    @MessageBody() dto: DeleteBlockRelationDto,
+    @MessageBody() dto: UnblockUserDto,
   ): Promise<boolean> {
     this.logger.log('chat:unblockUser received', dto);
 
-    const res = await this.chatService.unblockUser(dto);
-
-    return !!res;
+    return await this.blockService.unblockUser(dto);
   }
 
   /**
    * ユーザーがブロックされているかを確認する
    * @param IsBlockedDto
    */
-  @SubscribeMessage('chat:isBlockedByUserId')
-  async isBlockedByUserId(
+  @SubscribeMessage('chat:isBlocked')
+  async isBlocked(
     @ConnectedSocket() client: Socket,
     @MessageBody() dto: IsBlockedDto,
   ): Promise<boolean> {
-    this.logger.log('chat:isBlockedByUserId received', dto);
+    this.logger.log('chat:isBlocked received', dto);
 
-    const res = await this.prisma.blockRelation.findUnique({
-      where: {
-        blockingUserId_blockedByUserId: {
-          ...dto,
-        },
-      },
-    });
-
-    return !!res;
+    return this.blockService.isBlocked(dto);
   }
 
   /**

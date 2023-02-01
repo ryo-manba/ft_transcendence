@@ -25,6 +25,7 @@ import { ChatroomSettingDialog } from 'components/chat/chatroom/ChatroomSettingD
 import { ChatErrorAlert } from 'components/chat/alert/ChatErrorAlert';
 import { ChatSuccessAlert } from 'components/chat/alert/ChatSuccessAlert';
 import { ChatAlertCollapse } from 'components/chat/alert/ChatAlertCollapse';
+import { fetchDMRecipientName } from 'api/chat/fetchDMRecipientName';
 
 type Props = {
   room: Chatroom;
@@ -45,6 +46,7 @@ export const ChatroomListItem = memo(function ChatroomListItem({
   const [error, setError] = useState('');
   const { data: user } = useQueryUser();
   const [isAdmin, setIsAdmin] = useState(false);
+  const [roomName, setRoomName] = useState('');
 
   if (user === undefined) {
     return <Loading />;
@@ -69,14 +71,36 @@ export const ChatroomListItem = memo(function ChatroomListItem({
       },
     );
 
+    const updateRoomName = async (room: Chatroom, userId: number) => {
+      if (room.type === ChatroomType.DM) {
+        const nameOfDMRecipient = await fetchDMRecipientName({
+          roomId: room.id,
+          senderUserId: userId,
+        });
+        if (!ignore) {
+          setRoomName(nameOfDMRecipient);
+        }
+      } else {
+        if (!ignore) {
+          setRoomName(room.name);
+        }
+      }
+    };
+
+    void updateRoomName(room, user.id);
+
     return () => {
       socket.off('chat:addAdmin');
       ignore = true;
     };
-  }, [room.id, socket, user]);
+  }, [room, socket, user]);
 
   // ルームをクリックしたときの処理
-  const changeCurrentRoom = (roomId: number, roomName: string) => {
+  const changeCurrentRoom = (
+    roomId: number,
+    roomName: string,
+    roomType: ChatroomType,
+  ) => {
     debug('changeCurrentRoom: %d', roomId);
 
     const checkBanInfo = {
@@ -95,6 +119,7 @@ export const ChatroomListItem = memo(function ChatroomListItem({
         const newCurrentRoom = {
           id: roomId,
           name: roomName,
+          type: roomType,
         };
         debug('chat:changeCurrentRoom ', newCurrentRoom);
         setCurrentRoom(newCurrentRoom);
@@ -120,8 +145,8 @@ export const ChatroomListItem = memo(function ChatroomListItem({
         id: room.id,
         userId: user.id,
       };
-      socket.emit('chat:deleteRoom', deleteRoomInfo, (res: boolean) => {
-        if (!res) {
+      socket.emit('chat:deleteRoom', deleteRoomInfo, (isDeleted: boolean) => {
+        if (!isDeleted) {
           setError('Failed to delete room.');
         }
       });
@@ -136,11 +161,19 @@ export const ChatroomListItem = memo(function ChatroomListItem({
       type: room.type,
     };
 
-    socket.emit('chat:joinRoomFromOtherUser', joinRoomInfo, (res: boolean) => {
-      if (!res) {
-        setError('Failed to add friend.');
-      }
-    });
+    socket.emit(
+      'chat:joinRoomFromOtherUser',
+      joinRoomInfo,
+      (isSuccess: boolean) => {
+        if (!isSuccess) {
+          setError('Failed to add friend.');
+
+          return;
+        }
+
+        setSuccess('Friend has been added successfully.');
+      },
+    );
   };
 
   const addAdmin = (userId: number) => {
@@ -155,10 +188,13 @@ export const ChatroomListItem = memo(function ChatroomListItem({
       chatroomId: room.id,
     };
 
-    socket.emit('chat:addAdmin', addAdminInfo, (res: boolean) => {
-      if (!res) {
+    socket.emit('chat:addAdmin', addAdminInfo, (isSuccess: boolean) => {
+      if (!isSuccess) {
         setError('Failed to add admin.');
+
+        return;
       }
+      setSuccess('Admin has been added successfully.');
     });
   };
 
@@ -177,13 +213,18 @@ export const ChatroomListItem = memo(function ChatroomListItem({
       oldPassword: oldPassword,
       newPassword: newPassword,
     };
-    socket.emit('chat:updatePassword', changePasswordInfo, (res: boolean) => {
-      if (res) {
+    socket.emit(
+      'chat:updatePassword',
+      changePasswordInfo,
+      (isSuccess: boolean) => {
+        if (!isSuccess) {
+          setError('Failed to change password.');
+
+          return;
+        }
         setSuccess('Password has been changed successfully.');
-      } else {
-        setError('Failed to change password.');
-      }
-    });
+      },
+    );
   };
 
   const banUser = (userId: number) => {
@@ -207,8 +248,8 @@ export const ChatroomListItem = memo(function ChatroomListItem({
       userId: userId,
     };
 
-    socket.emit('chat:unbanUser', unbanUserInfo, (res: boolean) => {
-      if (!res) {
+    socket.emit('chat:unbanUser', unbanUserInfo, (isSuccess: boolean) => {
+      if (!isSuccess) {
         setError('Failed to unban user.');
 
         return;
@@ -309,7 +350,7 @@ export const ChatroomListItem = memo(function ChatroomListItem({
         divider
         button
         onClick={() => {
-          changeCurrentRoom(room.id, room.name);
+          changeCurrentRoom(room.id, room.name, room.type);
         }}
       >
         <ListItemAvatar>
@@ -337,7 +378,7 @@ export const ChatroomListItem = memo(function ChatroomListItem({
           unmuteUser={unmuteUser}
         />
         <ListItemText
-          primary={room.name}
+          primary={roomName}
           style={{
             overflow: 'hidden',
           }}
