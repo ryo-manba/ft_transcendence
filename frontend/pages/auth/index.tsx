@@ -7,9 +7,10 @@ import { UserInfo } from 'types/auth';
 import { ValidationDialog } from 'components/auth/ValidationDialog';
 import { Loading } from 'components/common/Loading';
 import Debug from 'debug';
-import { Alert, AlertTitle, Collapse, Typography } from '@mui/material';
 import { useSocketStore } from 'store/game/ClientSocket';
 import { SocketAuth } from 'types/game';
+import { AuthAlertCollapse } from 'components/auth/alert/AuthAlertCollapse';
+import { AuthAlert } from 'components/auth/alert/AuthAlert';
 
 const Authenticate = () => {
   const debug = useMemo(() => Debug('authenticate'), []);
@@ -18,7 +19,6 @@ const Authenticate = () => {
   const [openValidationDialog, setOpenValidationDialog] = useState(false);
   const [validationUserId, setValidationUserId] = useState(0);
   const [error, setError] = useState('');
-  const [timeId, setTimeId] = useState<NodeJS.Timeout | undefined>(undefined);
   const { socket } = useSocketStore();
 
   useEffect(() => {
@@ -27,15 +27,6 @@ const Authenticate = () => {
     }
 
     const urlOauth = `${process.env.NEXT_PUBLIC_API_URL}/auth/oauth-login`;
-
-    const redirectToLoginPageOnError = (message: string) => {
-      setError(message);
-      const id = setTimeout(() => {
-        void signOut({ callbackUrl: '/' });
-      }, 3000);
-
-      setTimeId(id);
-    };
 
     // OAuthで取得した情報より、どこからの認証か判断する。
     const isGoogleOAuth = (email: string | null | undefined) => {
@@ -48,7 +39,7 @@ const Authenticate = () => {
     // ログイン後の処理
     const processAfterLogin = async (loginResult: LoginResult) => {
       if (!loginResult) {
-        redirectToLoginPageOnError('Login Failure');
+        setError('Login Failure');
       } else if (loginResult.res === LoginResultStatus.SUCCESS) {
         await router.push('/dashboard');
       } else if (
@@ -68,7 +59,7 @@ const Authenticate = () => {
           ? loginResult.errorMessage
           : 'Login Failure';
         // ログイン失敗、signOutしてログインに戻る
-        redirectToLoginPageOnError(errorMessage);
+        setError(errorMessage);
       }
     };
 
@@ -109,11 +100,11 @@ const Authenticate = () => {
           await fortyTwoLogin();
         } else {
           // どちらでもないOAuth認証は未対応
-          redirectToLoginPageOnError('Login Failure');
+          setError('Login Failure');
         }
       } catch {
         // ログイン時のAxios例外の場合
-        redirectToLoginPageOnError('Login Failure');
+        setError('Login Failure');
       }
     };
 
@@ -124,21 +115,7 @@ const Authenticate = () => {
     } else if (status === 'unauthenticated') {
       void router.push('/');
     }
-
-    return () => {
-      clearTimeout(timeId);
-    };
-    // timeId
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status, session, debug, router, socket]);
-
-  // 連続でOAuth=>2FAをすると不安定になるときがある。
-  useEffect(() => {
-    if (error !== '' && openValidationDialog) {
-      setError('');
-      clearTimeout(timeId);
-    }
-  }, [error, openValidationDialog, timeId]);
 
   // ValidateのDialogに失敗したらよばれる
   const handleClose = useCallback(() => {
@@ -153,17 +130,18 @@ const Authenticate = () => {
     return <Loading fullHeight={true} />;
   }
 
+  const readyRedirect = error !== '' && !openValidationDialog;
+
   return (
     <>
-      <Collapse in={error !== ''}>
-        <Alert severity="error" sx={{ mb: 2 }}>
-          <AlertTitle>Authorization Error</AlertTitle>
-          <Typography variant="body2">
-            {error} -{' '}
-            <strong>It will automatically redirect to login page</strong>
-          </Typography>
-        </Alert>
-      </Collapse>
+      <AuthAlertCollapse show={readyRedirect}>
+        <AuthAlert
+          message={error}
+          setMessage={setError}
+          severity="error"
+          readyRedirect={readyRedirect}
+        />
+      </AuthAlertCollapse>
       <ValidationDialog
         open={openValidationDialog}
         userId={validationUserId}
