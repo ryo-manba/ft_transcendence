@@ -329,7 +329,7 @@ export class ChatGateway {
    * @param client
    * @param DeleteChatroomDto
    */
-  @SubscribeMessage('chat:delete')
+  @SubscribeMessage('chat:deleteRoom')
   async deleteRoom(@MessageBody() dto: DeleteChatroomDto): Promise<boolean> {
     this.logger.log(`chat:delete received -> roomId: ${dto.id}`);
     const deletedRoom = await this.chatroomService.delete(dto);
@@ -340,7 +340,7 @@ export class ChatGateway {
     const socketRoomName = this.generateSocketChatRoomName(deletedRoom.id);
 
     const deletedClientRoom = this.convertToClientChatroom(deletedRoom);
-    this.server.to(socketRoomName).emit('chat:delete', deletedClientRoom);
+    this.server.to(socketRoomName).emit('chat:deleteRoom', deletedClientRoom);
 
     // 入室者をルームから退出させる
     this.server.socketsLeave(socketRoomName);
