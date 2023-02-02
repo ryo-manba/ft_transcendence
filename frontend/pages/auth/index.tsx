@@ -1,12 +1,16 @@
 import axios from 'axios';
 import { useRouter } from 'next/router';
-import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { useSession, signOut } from 'next-auth/react';
 import { LoginResult, LoginResultStatus } from 'types/utils';
 import { UserInfo } from 'types/auth';
 import { ValidationDialog } from 'components/auth/ValidationDialog';
 import { Loading } from 'components/common/Loading';
 import Debug from 'debug';
+import { useSocketStore } from 'store/game/ClientSocket';
+import { SocketAuth } from 'types/game';
+import { AuthAlertCollapse } from 'components/auth/alert/AuthAlertCollapse';
+import { AuthAlert } from 'components/auth/alert/AuthAlert';
 
 const Authenticate = () => {
   const debug = useMemo(() => Debug('authenticate'), []);
@@ -14,6 +18,9 @@ const Authenticate = () => {
   const { data: session, status } = useSession();
   const [openValidationDialog, setOpenValidationDialog] = useState(false);
   const [validationUserId, setValidationUserId] = useState(0);
+  const [error, setError] = useState('');
+  const { socket } = useSocketStore();
+  const tryingLogin = useRef(false);
 
   useEffect(() => {
     if (session === null || process.env.NEXT_PUBLIC_API_URL === undefined) {
@@ -33,7 +40,7 @@ const Authenticate = () => {
     // ログイン後の処理
     const processAfterLogin = async (loginResult: LoginResult) => {
       if (!loginResult) {
-        void signOut({ callbackUrl: '/' });
+        setError('Login Failure');
       } else if (loginResult.res === LoginResultStatus.SUCCESS) {
         await router.push('/dashboard');
       } else if (
@@ -43,9 +50,17 @@ const Authenticate = () => {
         // 2FAコード入力ダイアログを表示
         setValidationUserId(loginResult.userId);
         setOpenValidationDialog(true);
+
+        // 2FA中にログインページにリダイレクトした場合にstatusをoffにする。
+        const socketAuth = { userId: loginResult.userId } as SocketAuth;
+        socket.auth = socketAuth;
+        socket.connect();
       } else {
+        const errorMessage = loginResult.errorMessage
+          ? loginResult.errorMessage
+          : 'Login Failure';
         // ログイン失敗、signOutしてログインに戻る
-        void signOut({ callbackUrl: '/' });
+        setError(errorMessage);
       }
     };
 
@@ -79,29 +94,33 @@ const Authenticate = () => {
     };
 
     const loginAfterOAuth = async () => {
-      try {
-        if (isGoogleOAuth(session.user.email)) {
-          await googleLogin();
-        } else if (isFortyTwoOAuth(session.user.email)) {
-          await fortyTwoLogin();
-        } else {
-          // どちらでもないOAuth認証は未対応
-          void signOut({ callbackUrl: '/' });
+      if (!tryingLogin.current) {
+        tryingLogin.current = true;
+        try {
+          if (isGoogleOAuth(session.user.email)) {
+            await googleLogin();
+          } else if (isFortyTwoOAuth(session.user.email)) {
+            await fortyTwoLogin();
+          } else {
+            // どちらでもないOAuth認証は未対応
+            setError('Login Failure');
+          }
+        } catch {
+          // ログイン時のAxios例外の場合
+          setError('Login Failure');
         }
-      } catch {
-        // ログイン時のAxios例外の場合
-        void signOut({ callbackUrl: '/' });
+        tryingLogin.current = false;
       }
     };
 
     debug(status);
     if (status === 'authenticated') {
       // 認証後、1回だけ呼び出される
-      void loginAfterOAuth();
+      if (socket.disconnected) void loginAfterOAuth();
     } else if (status === 'unauthenticated') {
       void router.push('/');
     }
-  }, [status, session, debug, router]);
+  }, [status, session, debug, router, socket]);
 
   // ValidateのDialogに失敗したらよばれる
   const handleClose = useCallback(() => {
@@ -116,12 +135,24 @@ const Authenticate = () => {
     return <Loading fullHeight={true} />;
   }
 
+  const readyRedirect = error !== '' && !openValidationDialog;
+
   return (
-    <ValidationDialog
-      open={openValidationDialog}
-      userId={validationUserId}
-      onClose={handleClose}
-    />
+    <>
+      <AuthAlertCollapse show={readyRedirect}>
+        <AuthAlert
+          message={error}
+          setMessage={setError}
+          severity="error"
+          readyRedirect={readyRedirect}
+        />
+      </AuthAlertCollapse>
+      <ValidationDialog
+        open={openValidationDialog}
+        userId={validationUserId}
+        onClose={handleClose}
+      />
+    </>
   );
 };
 
