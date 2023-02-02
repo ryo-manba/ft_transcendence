@@ -120,13 +120,15 @@ export const FriendAddDialog = memo(function FriendAddDialog({
           </List>
         </Box>
       </DialogContent>
-      {selectedUser && (
-        <p className="text-center">Selected: {selectedUser.name}</p>
-      )}
       <ChatAlertCollapse show={error !== ''}>
         <ChatErrorAlert error={error} setError={setError} />
       </ChatAlertCollapse>
       <DialogActions>
+        {selectedUser && (
+          <p className="flex-auto ml-3 overflow-hidden text-ellipsis underline">
+            Selected: {selectedUser.name}
+          </p>
+        )}
         <Button onClick={handleClose}>Cancel</Button>
         <Button
           onClick={handleSubmit}
