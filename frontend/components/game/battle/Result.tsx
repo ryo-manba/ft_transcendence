@@ -16,6 +16,7 @@ export const Result = ({ finishedGameInfo }: Props) => {
       justifyContent="center"
       alignItems="center"
       direction="column"
+      wrap="nowrap"
       sx={{
         position: 'absolute',
         top: '40%',
@@ -117,7 +118,6 @@ export const Result = ({ finishedGameInfo }: Props) => {
           </Grid>
         </Grid>
       )}
-      <br />
       <Grid item>
         <Link href="/game/home">
           <Button variant="contained">Back to Home</Button>
