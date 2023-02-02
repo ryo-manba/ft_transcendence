@@ -17,11 +17,11 @@ import { Chatroom, ChatroomSetting, ChatUser, ChatroomType } from 'types/chat';
 import { Friend } from 'types/friend';
 import { useQueryUser } from 'hooks/useQueryUser';
 import { fetchMutedUsers } from 'api/chat/fetchMutedUsers';
-import { fetchNotMutedUsers } from 'api/chat/fetchNotMutedUsers';
+import { fetchCanMuteUsers } from 'api/chat/fetchCanMuteUsers';
 import { fetchBannedUsers } from 'api/chat/fetchBannedUsers';
 import { fetchJoinableFriends } from 'api/friend/fetchJoinableFriends';
 import { fetchCanSetAdminUsers } from 'api/chat/fetchCanSetAdminUsers';
-import { fetchNotBannedUsers } from 'api/chat/fetchNotBannedUsers';
+import { fetchCanBanUsers } from 'api/chat/fetchCanBanUsers';
 import { fetchCanSetOwnerUsers } from 'api/chat/fetchCanSetOwnerUsers';
 import { Loading } from 'components/common/Loading';
 import { ChatroomSettingDetailDialog } from 'components/chat/chatroom/ChatroomSettingDetailDialog';
@@ -155,13 +155,9 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
     async (ignore: boolean) => {
       if (!user) return;
 
-      const notBannedUsers = await fetchNotBannedUsers({
+      const canBanUsers = await fetchCanBanUsers({
         roomId: room.id,
       });
-      const canBanUsers = notBannedUsers.filter(
-        (notBannedUser) => notBannedUser.id !== user.id,
-      );
-
       if (!ignore) {
         setNotBannedUsers(canBanUsers);
       }
@@ -185,13 +181,9 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
     async (ignore: boolean) => {
       if (!user) return;
 
-      const notMutedUsers = await fetchNotMutedUsers({
+      const canMuteUsers = await fetchCanMuteUsers({
         roomId: room.id,
       });
-
-      const canMuteUsers = notMutedUsers.filter(
-        (notMutedUser) => notMutedUser.id !== user.id,
-      );
 
       if (!ignore) {
         setNotMutedUsers(canMuteUsers);

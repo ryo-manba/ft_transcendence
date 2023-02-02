@@ -6,9 +6,9 @@ type Props = {
   roomId: number;
 };
 
-const endpoint = `${process.env.NEXT_PUBLIC_API_URL as string}/chat/not-banned`;
+const endpoint = `${process.env.NEXT_PUBLIC_API_URL as string}/chat/can-ban`;
 
-export const fetchNotBannedUsers = async ({ roomId }: Props) => {
+export const fetchCanBanUsers = async ({ roomId }: Props) => {
   const debug = Debug('chat');
   try {
     const response = await axios.get<ChatUser[]>(endpoint, {
