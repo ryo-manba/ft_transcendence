@@ -71,8 +71,6 @@ export const BadgedAvatar = ({
 
     // avatarPathがnull出ない場合にはパスを削除
     if (cachedUserData && cachedUserData.avatarPath) {
-      debug(`RemoveCachedAvatarPath: ${cachedUserData.avatarPath}`);
-
       cachedUserData.avatarPath = undefined;
 
       // avatarPathを削除したユーザーデータにキャッシュを更新
