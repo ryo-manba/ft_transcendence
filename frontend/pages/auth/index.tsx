@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { useRouter } from 'next/router';
-import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { useSession, signOut } from 'next-auth/react';
 import { LoginResult, LoginResultStatus } from 'types';
 import { UserInfo } from 'types/auth';
@@ -20,6 +20,7 @@ const Authenticate = () => {
   const [validationUserId, setValidationUserId] = useState(0);
   const [error, setError] = useState('');
   const { socket } = useSocketStore();
+  const tryingLogin = useRef(false);
 
   useEffect(() => {
     if (session === null || process.env.NEXT_PUBLIC_API_URL === undefined) {
@@ -93,18 +94,22 @@ const Authenticate = () => {
     };
 
     const loginAfterOAuth = async () => {
-      try {
-        if (isGoogleOAuth(session.user.email)) {
-          await googleLogin();
-        } else if (isFortyTwoOAuth(session.user.email)) {
-          await fortyTwoLogin();
-        } else {
-          // どちらでもないOAuth認証は未対応
+      if (!tryingLogin.current) {
+        tryingLogin.current = true;
+        try {
+          if (isGoogleOAuth(session.user.email)) {
+            await googleLogin();
+          } else if (isFortyTwoOAuth(session.user.email)) {
+            await fortyTwoLogin();
+          } else {
+            // どちらでもないOAuth認証は未対応
+            setError('Login Failure');
+          }
+        } catch {
+          // ログイン時のAxios例外の場合
           setError('Login Failure');
         }
-      } catch {
-        // ログイン時のAxios例外の場合
-        setError('Login Failure');
+        tryingLogin.current = false;
       }
     };
 
