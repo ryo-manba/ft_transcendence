@@ -9,13 +9,13 @@ import Debug from 'debug';
  * そのパスが不正な場合 (例えば、バックエンドに保存されているファイルが削除された場合)なので
  * キャッシュのavatarPathをundefinedに上書きする
  */
-export const removeCachedAvatarPath = () => {
+export const RemoveCachedAvatarPath = () => {
   const debug = Debug('user');
   const queryClient = useQueryClient();
 
   const cachedUserData = queryClient.getQueryData<ClientUser>(['user']);
   if (cachedUserData && cachedUserData.avatarPath) {
-    debug(`removeCachedAvatarPath: ${cachedUserData.avatarPath}`);
+    debug(`RemoveCachedAvatarPath: ${cachedUserData.avatarPath}`);
     cachedUserData.avatarPath = undefined;
     queryClient.setQueryData(['user'], cachedUserData);
   }
