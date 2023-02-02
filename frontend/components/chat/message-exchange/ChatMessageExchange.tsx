@@ -119,16 +119,10 @@ export const ChatMessageExchange = memo(function ChatMessageExchange({
           flexDirection: 'column',
         }}
       >
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            overflow: 'auto',
-            marginBottom: '15px',
-            flexGrow: 1,
-          }}
-        >
-          <h3 className="my-2 ml-1 underline">#{roomName}</h3>
+        <div className="mb-4 flex grow-[1] flex-col">
+          <h3 className="my-2 ml-1 overflow-hidden text-ellipsis whitespace-nowrap underline">
+            #{currentRoom.name}
+          </h3>
           <ChatMessageList
             currentRoomId={currentRoom.id}
             messages={messages}

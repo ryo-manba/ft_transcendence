@@ -81,7 +81,8 @@ const Chat: NextPage = () => {
         style={heightStyle}
       >
         <Grid
-          xs={2}
+          xs={3}
+          md={2}
           style={{
             borderRight: '1px solid',
             borderBottom: '1px solid',
@@ -94,7 +95,8 @@ const Chat: NextPage = () => {
           />
         </Grid>
         <Grid
-          xs={8}
+          xs={6}
+          md={8}
           style={{
             borderRight: '1px solid',
             borderBottom: '1px solid',
@@ -110,7 +112,8 @@ const Chat: NextPage = () => {
           )}
         </Grid>
         <Grid
-          xs={2}
+          xs={3}
+          md={2}
           style={{
             borderBottom: '1px solid',
           }}

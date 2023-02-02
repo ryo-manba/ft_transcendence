@@ -44,7 +44,7 @@ export const MessageLeft = ({
           displayName={displayName}
           avatarFontSize={AvatarFontSize.SMALL}
         />
-        <div>
+        <div style={{ overflow: 'hidden', width: '100%' }}>
           <div
             style={{
               marginLeft: '20px',
@@ -54,7 +54,12 @@ export const MessageLeft = ({
           >
             {`${displayName} ${displayTimestamp}`}
           </div>
-          <div>
+          <div
+            style={{
+              overflowWrap: 'break-word',
+              wordWrap: 'break-word',
+            }}
+          >
             <p
               style={{
                 marginLeft: '20px',
