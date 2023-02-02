@@ -6,7 +6,7 @@ export const GameState = {
   PLAYING: 'Playing',
 } as const;
 
-export type GameState = typeof GameState[keyof typeof GameState];
+export type GameState = (typeof GameState)[keyof typeof GameState];
 
 export const DifficultyLevel = {
   EASY: 'Easy',
@@ -15,7 +15,7 @@ export const DifficultyLevel = {
 } as const;
 
 export type DifficultyLevel =
-  typeof DifficultyLevel[keyof typeof DifficultyLevel];
+  (typeof DifficultyLevel)[keyof typeof DifficultyLevel];
 
 export const UserStatus = {
   ONLINE: 'ONLINE',
@@ -23,7 +23,7 @@ export const UserStatus = {
   OFFLINE: 'OFFLINE',
 } as const;
 
-export type UserStatus = typeof UserStatus[keyof typeof UserStatus];
+export type UserStatus = (typeof UserStatus)[keyof typeof UserStatus];
 
 export type Player = {
   name: string;
