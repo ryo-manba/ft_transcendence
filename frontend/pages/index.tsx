@@ -3,7 +3,7 @@ import type { NextPage } from 'next';
 import { useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import axios, { isAxiosError } from 'axios';
-import { IconDatabase } from '@tabler/icons';
+import LockOpenIcon from '@mui/icons-material/LockOpen';
 import Image from 'next/image';
 import GppGoodIcon from '@mui/icons-material/GppGood';
 import { useForm, SubmitHandler, Controller } from 'react-hook-form';
@@ -248,7 +248,7 @@ const Home: NextPage = () => {
                 <Button
                   variant="contained"
                   type="submit"
-                  startIcon={<IconDatabase />}
+                  startIcon={<LockOpenIcon />}
                   onClick={() => {
                     setError([]);
                   }}
