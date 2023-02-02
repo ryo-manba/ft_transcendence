@@ -214,6 +214,11 @@ export const ChatroomJoinDialog = memo(function ChatroomJoinDialog({
         </Box>
       </DialogContent>
       <DialogActions>
+        {selectedRoom && (
+          <p className="flex-auto ml-3 overflow-hidden text-ellipsis underline">
+            Selected: {selectedRoom.name}
+          </p>
+        )}
         <Button onClick={handleClose} variant="outlined">
           Cancel
         </Button>
