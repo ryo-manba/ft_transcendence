@@ -1,4 +1,4 @@
-import create from 'zustand';
+import { create } from 'zustand';
 
 export const PlayState = {
   stateNothing: 0,
@@ -10,7 +10,7 @@ export const PlayState = {
   stateCanceled: 6,
 } as const;
 
-export type PlayState = typeof PlayState[keyof typeof PlayState];
+export type PlayState = (typeof PlayState)[keyof typeof PlayState];
 
 type State = {
   playState: PlayState;

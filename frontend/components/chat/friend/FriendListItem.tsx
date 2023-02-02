@@ -48,10 +48,6 @@ export const FriendListItem = memo(function FriendListItem({
   );
   const router = useRouter();
 
-  if (user === undefined) {
-    return <Loading />;
-  }
-
   useEffect(() => {
     let ignore = false;
 
@@ -79,6 +75,10 @@ export const FriendListItem = memo(function FriendListItem({
       gameSocket.off('updateStatus');
     };
   }, [debug, friend.id, gameSocket]);
+
+  if (user === undefined) {
+    return <Loading />;
+  }
 
   const inviteGame = (friend: Friend) => {
     if (friendStatus !== UserStatus.ONLINE) {

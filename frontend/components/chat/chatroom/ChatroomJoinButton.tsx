@@ -22,11 +22,9 @@ export const ChatroomJoinButton = memo(function ChatroomJoinButton({
   const [joinableRooms, setJoinableRooms] = useState<Chatroom[]>([]);
   const { data: user } = useQueryUser();
 
-  if (user === undefined) {
-    return <Loading />;
-  }
-
   const getJoinableRooms = useCallback(() => {
+    if (!user) return;
+
     socket.emit(
       'chat:getJoinableRooms',
       { userId: user.id },
@@ -35,7 +33,7 @@ export const ChatroomJoinButton = memo(function ChatroomJoinButton({
         setJoinableRooms(rooms);
       },
     );
-  }, [debug, socket, user.id]);
+  }, [debug, socket, user]);
 
   const handleOpen = useCallback(() => {
     // チャットルームを探すボタンを押下したら公開されているチャットルーム一覧を取得する
@@ -46,6 +44,10 @@ export const ChatroomJoinButton = memo(function ChatroomJoinButton({
   const handleClose = useCallback(() => {
     setOpen(false);
   }, []);
+
+  if (user === undefined) {
+    return <Loading />;
+  }
 
   return (
     <>

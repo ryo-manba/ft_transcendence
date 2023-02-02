@@ -1,5 +1,5 @@
 import { io, Socket } from 'socket.io-client';
-import create from 'zustand';
+import { create } from 'zustand';
 
 type State = {
   socket: Socket;

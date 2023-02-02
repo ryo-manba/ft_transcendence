@@ -1,5 +1,5 @@
 import { GameSetting } from 'types/game';
-import create from 'zustand';
+import { create } from 'zustand';
 
 type State = {
   gameSetting: GameSetting;

@@ -57,10 +57,6 @@ export const ChatroomCreateButton = memo(function ChatroomCreateButton({
   const [error, setError] = useState('');
   const { data: user } = useQueryUser();
 
-  if (user === undefined) {
-    return <Loading />;
-  }
-
   const schema = z.object({
     roomName: z.string().refine(
       (value: string) =>
@@ -109,6 +105,10 @@ export const ChatroomCreateButton = memo(function ChatroomCreateButton({
     reset();
     clearErrors();
   }, [clearErrors, reset]);
+
+  if (user === undefined) {
+    return <Loading />;
+  }
 
   const createChatroom = (roomInfo: CreateChatroomInfo) => {
     socket.emit(

@@ -2,8 +2,8 @@
 import type { NextPage } from 'next';
 import { useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/router';
-import axios from 'axios';
-import { IconDatabase } from '@tabler/icons';
+import axios, { isAxiosError } from 'axios';
+import LockOpenIcon from '@mui/icons-material/LockOpen';
 import Image from 'next/image';
 import GppGoodIcon from '@mui/icons-material/GppGood';
 import { useForm, SubmitHandler, Controller } from 'react-hook-form';
@@ -119,7 +119,7 @@ const Home: NextPage = () => {
         }
       }
     } catch (e) {
-      if (axios.isAxiosError(e) && e.response && e.response.data) {
+      if (isAxiosError(e) && e.response && e.response.data) {
         reset();
         const messages = (e.response.data as AxiosErrorResponse).message;
         if (Array.isArray(messages)) {
@@ -254,7 +254,7 @@ const Home: NextPage = () => {
                 <Button
                   variant="contained"
                   type="submit"
-                  startIcon={<IconDatabase />}
+                  startIcon={<LockOpenIcon />}
                   onClick={() => {
                     setError([]);
                   }}
@@ -279,6 +279,7 @@ const Home: NextPage = () => {
                   }}
                   width={50}
                   height={50}
+                  alt="42 Logo"
                 />
               </Button>
             </Grid>
@@ -293,6 +294,7 @@ const Home: NextPage = () => {
                   }}
                   width={50}
                   height={50}
+                  alt="Google Logo"
                 />
               </Button>
             </Grid>

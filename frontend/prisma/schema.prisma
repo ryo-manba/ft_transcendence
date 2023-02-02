@@ -15,8 +15,8 @@ model Chatroom {
   type            ChatroomType      @default(PUBLIC)
   ownerId         Int
   hashedPassword  String?
-  User            User              @relation(fields: [ownerId], references: [id])
   BanRelation     BanRelation[]
+  User            User              @relation(fields: [ownerId], references: [id])
   ChatroomAdmin   ChatroomAdmin[]
   ChatroomMembers ChatroomMembers[]
   Message         Message[]

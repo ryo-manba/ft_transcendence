@@ -48,10 +48,6 @@ export const ChatroomListItem = memo(function ChatroomListItem({
   const [isAdmin, setIsAdmin] = useState(false);
   const [roomName, setRoomName] = useState('');
 
-  if (user === undefined) {
-    return <Loading />;
-  }
-
   useEffect(() => {
     let ignore = false;
     if (user === undefined) return;
@@ -94,6 +90,10 @@ export const ChatroomListItem = memo(function ChatroomListItem({
       ignore = true;
     };
   }, [room, socket, user]);
+
+  if (user === undefined) {
+    return <Loading />;
+  }
 
   // ルームをクリックしたときの処理
   const changeCurrentRoom = (
