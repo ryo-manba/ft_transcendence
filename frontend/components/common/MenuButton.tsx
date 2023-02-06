@@ -1,5 +1,4 @@
 import { IconButton } from '@mui/material';
-import MenuIcon from '@mui/icons-material/Menu';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import { useState } from 'react';
@@ -11,6 +10,9 @@ import { Loading } from './Loading';
 import { logout } from 'api/auth/logout';
 import { useRouter } from 'next/router';
 import { useSocketStore } from 'store/game/ClientSocket';
+import { BadgedAvatar } from 'components/common/BadgedAvatar';
+import { getAvatarImageUrl } from 'api/user/getAvatarImageUrl';
+import { AvatarFontSize } from 'types/utils';
 
 export const MenuButton = () => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -38,7 +40,11 @@ export const MenuButton = () => {
         aria-expanded={open ? 'true' : undefined}
         onClick={handleClick}
       >
-        <MenuIcon />
+        <BadgedAvatar
+          src={getAvatarImageUrl(user.id)}
+          displayName={user.name}
+          avatarFontSize={AvatarFontSize.SMALL}
+        />
       </IconButton>
       <Menu
         id="basic-menu"
