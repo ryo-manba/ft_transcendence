@@ -249,8 +249,8 @@ export class ChatroomService {
   }
 
   /**
-   * チャットルームのパスワードをする
-   * @param UpdateChatroomPasswordDto
+   * チャットルームのパスワードを削除する
+   * @param DeleteChatroomPasswordDto
    */
   async deletePassword(dto: DeleteChatroomPasswordDto): Promise<Chatroom> {
     const targetRoom = await this.findOne({

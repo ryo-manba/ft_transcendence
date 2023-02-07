@@ -47,8 +47,8 @@ export const ChatroomSetting = {
   LEAVE_ROOM: 'Leave Room',
   ADD_FRIEND: 'Add Friend', // private room
   CHANGE_PASSWORD: 'Change Password', // protected room
-  ADD_PASSWORD: 'Add Password',
-  DELETE_PASSWORD: 'Delete Password',
+  DELETE_PASSWORD: 'Delete Password', // protected room
+  ADD_PASSWORD: 'Add Password', // public room
   SET_ADMIN: 'Set Admin',
   MUTE_USER: 'Mute User',
   UNMUTE_USER: 'Unmute User',

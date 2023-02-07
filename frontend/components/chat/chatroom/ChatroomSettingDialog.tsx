@@ -42,8 +42,8 @@ type Props = {
     newPassword: string,
     checkPassword: string,
   ) => void;
-  addPassword: (newPassword: string) => void;
   deletePassword: (oldPassword: string) => void;
+  addPassword: (newPassword: string) => void;
   banUser: (userId: number) => void;
   unbanUser: (userId: number) => void;
   muteUser: (userId: number) => void;
@@ -338,11 +338,11 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
       case ChatroomSetting.CHANGE_PASSWORD:
         changePassword(oldPassword, newPassword, checkPassword);
         break;
-      case ChatroomSetting.ADD_PASSWORD:
-        addPassword(newPassword);
-        break;
       case ChatroomSetting.DELETE_PASSWORD:
         deletePassword(oldPassword);
+        break;
+      case ChatroomSetting.ADD_PASSWORD:
+        addPassword(newPassword);
         break;
       case ChatroomSetting.MUTE_USER:
         muteUser(Number(selectedUserId));
@@ -465,17 +465,6 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
             </DialogContent>
           </>
         )}
-        {selectedRoomSetting === ChatroomSetting.ADD_PASSWORD && (
-          <DialogContent>
-            <ChatPasswordForm
-              control={control}
-              inputName="newPassword"
-              labelName="New Password"
-              error={errors.newPassword}
-              helperText={passwordHelper}
-            />
-          </DialogContent>
-        )}
         {selectedRoomSetting === ChatroomSetting.DELETE_PASSWORD && (
           <DialogContent>
             <ChatPasswordForm
@@ -483,6 +472,17 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
               inputName="oldPassword"
               labelName="Old Password"
               error={errors.oldPassword}
+              helperText={passwordHelper}
+            />
+          </DialogContent>
+        )}
+        {selectedRoomSetting === ChatroomSetting.ADD_PASSWORD && (
+          <DialogContent>
+            <ChatPasswordForm
+              control={control}
+              inputName="newPassword"
+              labelName="New Password"
+              error={errors.newPassword}
               helperText={passwordHelper}
             />
           </DialogContent>

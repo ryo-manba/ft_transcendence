@@ -227,21 +227,6 @@ export const ChatroomListItem = memo(function ChatroomListItem({
     );
   };
 
-  const addPassword = (newPassword: string) => {
-    const adddPasswordInfo = {
-      chatroomId: room.id,
-      newPassword: newPassword,
-    };
-    socket.emit('chat:addPassword', adddPasswordInfo, (isSuccess: boolean) => {
-      if (!isSuccess) {
-        setError('Failed to add password.');
-
-        return;
-      }
-      setSuccess('Password has been added successfully.');
-    });
-  };
-
   const deletePassword = (oldPassword: string) => {
     const deletePassword = {
       chatroomId: room.id,
@@ -254,6 +239,21 @@ export const ChatroomListItem = memo(function ChatroomListItem({
         return;
       }
       setSuccess('Password has been deleted successfully.');
+    });
+  };
+
+  const addPassword = (newPassword: string) => {
+    const adddPasswordInfo = {
+      chatroomId: room.id,
+      newPassword: newPassword,
+    };
+    socket.emit('chat:addPassword', adddPasswordInfo, (isSuccess: boolean) => {
+      if (!isSuccess) {
+        setError('Failed to add password.');
+
+        return;
+      }
+      setSuccess('Password has been added successfully.');
     });
   };
 
@@ -402,8 +402,8 @@ export const ChatroomListItem = memo(function ChatroomListItem({
           addFriend={addFriend}
           addAdmin={addAdmin}
           changePassword={changePassword}
-          addPassword={addPassword}
           deletePassword={deletePassword}
+          addPassword={addPassword}
           banUser={banUser}
           unbanUser={unbanUser}
           muteUser={muteUser}

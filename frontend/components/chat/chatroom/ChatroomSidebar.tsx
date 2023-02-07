@@ -86,17 +86,6 @@ export const ChatroomSidebar = memo(function ChatroomSidebar({
       );
     });
 
-    // パスワードが追加されたときにchange passwordを可能にする
-    socket.on('chat:addPassword', (protectedRoom: Chatroom) => {
-      debug('addPassword', protectedRoom);
-
-      setRooms((prevRooms) =>
-        prevRooms.map((room) => {
-          return room.id === protectedRoom.id ? protectedRoom : room;
-        }),
-      );
-    });
-
     // パスワードが消去されたときにadd passwordを可能にする
     socket.on('chat:deletePassword', (publicRoom: Chatroom) => {
       debug('deletePassword', publicRoom);
@@ -104,6 +93,17 @@ export const ChatroomSidebar = memo(function ChatroomSidebar({
       setRooms((prevRooms) =>
         prevRooms.map((room) => {
           return room.id === publicRoom.id ? publicRoom : room;
+        }),
+      );
+    });
+
+    // パスワードが追加されたときにchange passwordを可能にする
+    socket.on('chat:addPassword', (protectedRoom: Chatroom) => {
+      debug('addPassword', protectedRoom);
+
+      setRooms((prevRooms) =>
+        prevRooms.map((room) => {
+          return room.id === protectedRoom.id ? protectedRoom : room;
         }),
       );
     });
@@ -116,8 +116,8 @@ export const ChatroomSidebar = memo(function ChatroomSidebar({
       socket.off('chat:updateSideBarRooms');
       socket.off('chat:joinRoomFromOtherUser');
       socket.off('chat:changeRoomOwner');
-      socket.off('chat:addPassword');
       socket.off('chat:deletePassword');
+      socket.off('chat:addPassword');
     };
   }, [user, debug, setCurrentRoom, setMessages, socket]);
 

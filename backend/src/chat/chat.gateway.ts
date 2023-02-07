@@ -540,8 +540,29 @@ export class ChatGateway {
   }
 
   /**
+   * protectedチャットルームのパスワードを削除する
+   * @param DeleteChatroomPasswordDto
+   */
+  @SubscribeMessage('chat:deletePassword')
+  async deletePassword(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() dto: DeleteChatroomPasswordDto,
+  ): Promise<boolean> {
+    const publicRoom = await this.chatroomService.deletePassword(dto);
+    if (!publicRoom) return false;
+
+    const socketRoomName = this.generateSocketChatRoomName(publicRoom.id);
+    const deletedClientRoom = this.convertToClientChatroom(publicRoom);
+    this.server
+      .to(socketRoomName)
+      .emit('chat:deletePassword', deletedClientRoom);
+
+    return true;
+  }
+
+  /**
    * publicチャットルームのパスワードを追加する
-   * @param UpdateChatroomPasswordDto
+   * @param AddChatroomPasswordDto
    */
   @SubscribeMessage('chat:addPassword')
   async addPassword(
@@ -565,27 +586,6 @@ export class ChatGateway {
     const socketRoomName = this.generateSocketChatRoomName(updateRoom.id);
     const deletedClientRoom = this.convertToClientChatroom(updateRoom);
     this.server.to(socketRoomName).emit('chat:addPassword', deletedClientRoom);
-
-    return true;
-  }
-
-  /**
-   * protectedチャットルームのパスワードを削除する
-   * @param UpdateChatroomPasswordDto
-   */
-  @SubscribeMessage('chat:deletePassword')
-  async deletePassword(
-    @ConnectedSocket() client: Socket,
-    @MessageBody() dto: DeleteChatroomPasswordDto,
-  ): Promise<boolean> {
-    const publicRoom = await this.chatroomService.deletePassword(dto);
-    if (!publicRoom) return false;
-
-    const socketRoomName = this.generateSocketChatRoomName(publicRoom.id);
-    const deletedClientRoom = this.convertToClientChatroom(publicRoom);
-    this.server
-      .to(socketRoomName)
-      .emit('chat:deletePassword', deletedClientRoom);
 
     return true;
   }
