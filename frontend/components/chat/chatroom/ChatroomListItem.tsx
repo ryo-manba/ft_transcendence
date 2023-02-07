@@ -227,6 +227,21 @@ export const ChatroomListItem = memo(function ChatroomListItem({
     );
   };
 
+  const addPassword = (newPassword: string) => {
+    const adddPasswordInfo = {
+      chatroomId: room.id,
+      newPassword: newPassword,
+    };
+    socket.emit('chat:addPassword', adddPasswordInfo, (isSuccess: boolean) => {
+      if (!isSuccess) {
+        setError('Failed to add password.');
+
+        return;
+      }
+      setSuccess('Password has been added successfully.');
+    });
+  };
+
   const banUser = (userId: number) => {
     const banUserInfo = {
       userId: userId,
@@ -372,6 +387,7 @@ export const ChatroomListItem = memo(function ChatroomListItem({
           addFriend={addFriend}
           addAdmin={addAdmin}
           changePassword={changePassword}
+          addPassword={addPassword}
           banUser={banUser}
           unbanUser={unbanUser}
           muteUser={muteUser}

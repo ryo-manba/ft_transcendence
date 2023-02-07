@@ -39,6 +39,7 @@ import { MuteUserDto } from './dto/mute/mute-user.dto';
 import { UnmuteUserDto } from './dto/mute/unmute-user.dto';
 import { LeaveSocketDto } from './dto/socket/leave-socket.dto';
 import { SocketJoinRoomDto } from './dto/socket/socket-join-room.dto';
+import { AddChatroomPasswordDto } from './dto/chatroom/add-chatroom-password';
 
 type ExcludeProperties = 'hashedPassword' | 'createdAt' | 'updatedAt';
 type ClientChatroom = Omit<Chatroom, ExcludeProperties>;
@@ -535,6 +536,36 @@ export class ChatGateway {
     );
 
     return await this.chatroomService.updatePassword(dto);
+  }
+
+  /**
+   * publicチャットルームのパスワードを追加する
+   * @param UpdateChatroomPasswordDto
+   */
+  @SubscribeMessage('chat:addPassword')
+  async addPassword(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() dto: AddChatroomPasswordDto,
+  ): Promise<boolean> {
+    this.logger.log(`chat:addPassword received -> roomId: ${dto.chatroomId}`);
+
+    const hashed = await this.chatroomService.encryptPassword(dto.newPassword);
+    const updateRoom = await this.chatroomService.update({
+      data: {
+        type: ChatroomType.PROTECTED,
+        hashedPassword: hashed,
+      },
+      where: {
+        id: dto.chatroomId,
+      },
+    });
+    if (!updateRoom) return false;
+
+    const socketRoomName = this.generateSocketChatRoomName(updateRoom.id);
+    const deletedClientRoom = this.convertToClientChatroom(updateRoom);
+    this.server.to(socketRoomName).emit('chat:addPassword', deletedClientRoom);
+
+    return true;
   }
 
   /**
