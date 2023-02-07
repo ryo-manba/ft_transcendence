@@ -45,7 +45,7 @@ export const ChatMessageExchange = memo(function ChatMessageExchange({
     let ignore = false;
     if (!user) return;
 
-    const setupBlockedUsers = async (userId: number) => {
+    const setupBlockedUserIds = async (userId: number) => {
       const blockedUsers = await fetchBlockedUsers({
         userId: userId,
       });
@@ -55,7 +55,7 @@ export const ChatMessageExchange = memo(function ChatMessageExchange({
       }
     };
 
-    void setupBlockedUsers(user.id);
+    void setupBlockedUserIds(user.id);
 
     return () => {
       ignore = true;
@@ -155,10 +155,11 @@ export const ChatMessageExchange = memo(function ChatMessageExchange({
             #{currentRoom.name}
           </h3>
           <ChatMessageList
-            currentRoomId={currentRoom.id}
-            messages={messages}
-            setMessages={setMessages}
             socket={socket}
+            messages={messages}
+            currentRoomId={currentRoom.id}
+            setMessages={setMessages}
+            setBlockedUserIds={setBlockedUserIds}
           />
         </div>
         <ChatAlertCollapse show={error !== ''}>

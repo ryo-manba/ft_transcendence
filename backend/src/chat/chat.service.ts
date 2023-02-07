@@ -42,6 +42,7 @@ export class ChatService {
       blockedByUserId: dto.userId,
     });
     const blockedUserIds = blockedUsers.map((user) => user.id);
+    this.logger.log('findChatMessages: blockedUserIds', blockedUserIds);
 
     const messages = await this.prisma.message.findMany({
       where: {
@@ -71,6 +72,8 @@ export class ChatService {
         createdAt: message.createdAt,
       };
     });
+
+    this.logger.log('chatMessages:', chatMessages);
 
     return chatMessages;
   }
