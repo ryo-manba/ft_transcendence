@@ -47,12 +47,13 @@ export const ChatroomSetting = {
   LEAVE_ROOM: 'Leave Room',
   ADD_FRIEND: 'Add Friend', // private room
   CHANGE_PASSWORD: 'Change Password', // protected room
+  ADD_PASSWORD: 'Add Password',
+  DELETE_PASSWORD: 'Delete Password',
   SET_ADMIN: 'Set Admin',
   MUTE_USER: 'Mute User',
   UNMUTE_USER: 'Unmute User',
   BAN_USER: 'Ban User',
   UNBAN_USER: 'Unban User',
-  ADD_PASSWORD: 'Add Password',
 } as const;
 
 export type ChatroomSetting =

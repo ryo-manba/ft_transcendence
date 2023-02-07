@@ -242,6 +242,21 @@ export const ChatroomListItem = memo(function ChatroomListItem({
     });
   };
 
+  const deletePassword = (oldPassword: string) => {
+    const deletePassword = {
+      chatroomId: room.id,
+      oldPassword: oldPassword,
+    };
+    socket.emit('chat:deletePassword', deletePassword, (isSuccess: boolean) => {
+      if (!isSuccess) {
+        setError('Failed to delete password.');
+
+        return;
+      }
+      setSuccess('Password has been deleted successfully.');
+    });
+  };
+
   const banUser = (userId: number) => {
     const banUserInfo = {
       userId: userId,
@@ -388,6 +403,7 @@ export const ChatroomListItem = memo(function ChatroomListItem({
           addAdmin={addAdmin}
           changePassword={changePassword}
           addPassword={addPassword}
+          deletePassword={deletePassword}
           banUser={banUser}
           unbanUser={unbanUser}
           muteUser={muteUser}

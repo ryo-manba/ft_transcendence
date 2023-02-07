@@ -114,6 +114,12 @@ export const ChatroomSettingItems = memo(function ChatroomSettingItems({
           {ChatroomSetting.ADD_PASSWORD}
         </MenuItem>
       )}
+      {/* PROTECTEDのルームのみ選択可能 */}
+      {isOwner && roomType === ChatroomType.PROTECTED && (
+        <MenuItem value={ChatroomSetting.DELETE_PASSWORD}>
+          {ChatroomSetting.DELETE_PASSWORD}
+        </MenuItem>
+      )}
       {/* 非公開のルームのみフレンド追加ボタンが選択可能 */}
       {isOwner && roomType === ChatroomType.PRIVATE && (
         <MenuItem value={ChatroomSetting.ADD_FRIEND}>

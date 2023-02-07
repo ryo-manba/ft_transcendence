@@ -97,6 +97,17 @@ export const ChatroomSidebar = memo(function ChatroomSidebar({
       );
     });
 
+    // パスワードが消去されたときにadd passwordを可能にする
+    socket.on('chat:deletePassword', (publicRoom: Chatroom) => {
+      debug('deletePassword', publicRoom);
+
+      setRooms((prevRooms) =>
+        prevRooms.map((room) => {
+          return room.id === publicRoom.id ? publicRoom : room;
+        }),
+      );
+    });
+
     // setupが終わったら入室中のチャットルーム一覧を取得する
     socket.emit('chat:getJoinedRooms', { userId: user.id });
 
@@ -106,6 +117,7 @@ export const ChatroomSidebar = memo(function ChatroomSidebar({
       socket.off('chat:joinRoomFromOtherUser');
       socket.off('chat:changeRoomOwner');
       socket.off('chat:addPassword');
+      socket.off('chat:deletePassword');
     };
   }, [user, debug, setCurrentRoom, setMessages, socket]);
 
