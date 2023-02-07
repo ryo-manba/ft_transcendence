@@ -271,7 +271,7 @@ export class ChatroomService {
 
     const publicRoom = await this.update({
       data: {
-        hashedPassword: undefined,
+        hashedPassword: null,
         type: ChatroomType.PUBLIC,
       },
       where: {
