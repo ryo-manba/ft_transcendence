@@ -7,11 +7,13 @@ import {
   Dispatch,
   SetStateAction,
 } from 'react';
+import { Socket } from 'socket.io-client';
+import { Virtuoso } from 'react-virtuoso';
 import { MessageLeft } from 'components/chat/message-exchange/ChatMessage';
 import { Message } from 'types/chat';
-import { Virtuoso } from 'react-virtuoso';
 import { fetchMessages } from 'api/chat/fetchMessages';
-import { Socket } from 'socket.io-client';
+import { Loading } from 'components/common/Loading';
+import { useQueryUser } from 'hooks/useQueryUser';
 
 type Props = {
   currentRoomId: number;
@@ -38,8 +40,11 @@ export const ChatMessageList = memo(function ChatMessageList({
   // メッセージが500件あったらfirstItemIndexは500
   // そこから古い順に向かって読み込んでいく
   const [firstItemIndex, setFirstItemIndex] = useState(0);
+  const { data: user } = useQueryUser();
 
   useEffect(() => {
+    if (!user) return;
+
     let ignore = false;
     // メッセージの合計数が逆順スクロールに必要になる
     socket.emit(
@@ -55,6 +60,7 @@ export const ChatMessageList = memo(function ChatMessageList({
     const setupMessages = async () => {
       const chatMessages = await fetchMessages({
         roomId: currentRoomId,
+        userId: user.id,
         skip: 0,
         pageSize: INITIAL_ITEM_COUNT,
       });
@@ -69,12 +75,15 @@ export const ChatMessageList = memo(function ChatMessageList({
     return () => {
       ignore = true;
     };
-  }, [currentRoomId, setMessages, socket]);
+  }, [currentRoomId, user, setMessages, socket]);
 
   const loadingMessages = useCallback(
     async (roomId: number, pageSize: number, skip: number) => {
+      if (!user) return;
+
       const chatMessages = await fetchMessages({
         roomId: roomId,
+        userId: user.id,
         skip: skip,
         pageSize: pageSize,
       });
@@ -85,7 +94,7 @@ export const ChatMessageList = memo(function ChatMessageList({
       setMessages((prev) => [...chatMessages, ...prev]);
       setSkipPage((prev) => prev + 1);
     },
-    [setMessages, setSkipPage],
+    [user, setMessages, setSkipPage],
   );
 
   const prependMessages = useCallback(() => {
@@ -110,6 +119,10 @@ export const ChatMessageList = memo(function ChatMessageList({
       userId={item.userId}
     />
   );
+
+  if (user === undefined) {
+    return <Loading fullHeight />;
+  }
 
   return (
     <Virtuoso

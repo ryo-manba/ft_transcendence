@@ -9,6 +9,10 @@ export class GetMessagesDto {
 
   @IsNumber()
   @IsNotEmpty()
+  userId: number;
+
+  @IsNumber()
+  @IsNotEmpty()
   skip: number;
 
   @IsNumber()

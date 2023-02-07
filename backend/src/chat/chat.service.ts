@@ -4,10 +4,14 @@ import { Message } from '@prisma/client';
 import type { ChatMessage } from './types/chat';
 import { CreateMessageDto } from './dto/message/create-message.dto';
 import { GetMessagesDto } from './dto//message/get-messages.dto';
+import { BlockService } from './block.service';
 
 @Injectable()
 export class ChatService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly blockService: BlockService,
+  ) {}
 
   private logger: Logger = new Logger('ChatService');
 
@@ -34,9 +38,17 @@ export class ChatService {
    * @param GetMessagesDto
    */
   async findChatMessages(dto: GetMessagesDto): Promise<ChatMessage[]> {
+    const blockedUsers = await this.blockService.findBlockedUsers({
+      blockedByUserId: dto.userId,
+    });
+    const blockedUserIds = blockedUsers.map((user) => user.id);
+
     const messages = await this.prisma.message.findMany({
       where: {
         chatroomId: dto.chatroomId,
+        userId: {
+          notIn: blockedUserIds,
+        },
       },
       skip: dto.pageSize * dto.skip,
       take: dto.pageSize,
