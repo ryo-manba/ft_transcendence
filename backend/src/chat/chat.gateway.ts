@@ -584,8 +584,8 @@ export class ChatGateway {
     if (!updateRoom) return false;
 
     const socketRoomName = this.generateSocketChatRoomName(updateRoom.id);
-    const deletedClientRoom = this.convertToClientChatroom(updateRoom);
-    this.server.to(socketRoomName).emit('chat:addPassword', deletedClientRoom);
+    const addedClientRoom = this.convertToClientChatroom(updateRoom);
+    this.server.to(socketRoomName).emit('chat:addPassword', addedClientRoom);
 
     return true;
   }
