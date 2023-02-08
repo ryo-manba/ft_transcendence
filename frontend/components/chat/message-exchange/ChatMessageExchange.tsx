@@ -18,6 +18,7 @@ import { ChatHeightStyle } from 'components/chat/utils/ChatHeightStyle';
 import { ChatErrorAlert } from 'components/chat/alert/ChatErrorAlert';
 import { ChatAlertCollapse } from 'components/chat/alert/ChatAlertCollapse';
 import { fetchDMRecipientName } from 'api/chat/fetchDMRecipientName';
+import { fetchBlockedUsers } from 'api/chat/fetchBlockedUsers';
 
 type Props = {
   socket: Socket;
@@ -36,6 +37,7 @@ export const ChatMessageExchange = memo(function ChatMessageExchange({
 }: Props) {
   const debug = useMemo(() => Debug('chat'), []);
   const [error, setError] = useState('');
+  const [blockedUserIds, setBlockedUserIds] = useState<number[]>([]);
   const { data: user } = useQueryUser();
   const [roomName, setRoomName] = useState('');
 
@@ -43,15 +45,45 @@ export const ChatMessageExchange = memo(function ChatMessageExchange({
     let ignore = false;
     if (!user) return;
 
-    // 他ユーザーからのメッセージを受け取る
+    const setupBlockedUserIds = async (userId: number) => {
+      const blockedUsers = await fetchBlockedUsers({
+        userId: userId,
+      });
+      const ids = blockedUsers.map((user) => user.id);
+      if (!ignore) {
+        setBlockedUserIds(ids);
+      }
+    };
+
+    void setupBlockedUserIds(user.id);
+
+    return () => {
+      ignore = true;
+    };
+  }, [user]);
+
+  useEffect(() => {
+    if (!user) return;
+    if (!currentRoom) return;
+
     socket.on('chat:receiveMessage', (message: Message) => {
       debug('chat:receiveMessage ', message, currentRoom);
 
-      // 現在画面に表示しているルームのメッセージだった場合にのみ追加する
-      if (message.roomId === currentRoom?.id) {
+      const isBlocked = blockedUserIds.includes(message.userId);
+      const isCurrentRoomMessage = message.roomId === currentRoom.id;
+      if (isCurrentRoomMessage && !isBlocked) {
         setMessages((prev) => [...prev, message]);
       }
     });
+
+    return () => {
+      socket.off('chat:receiveMessage');
+    };
+  }, [user, blockedUserIds, socket, debug, setMessages, currentRoom]);
+
+  useEffect(() => {
+    let ignore = false;
+    if (!user) return;
 
     const updateRoomName = async (room: CurrentRoom, userId: number) => {
       if (room.type === ChatroomType.DM) {
@@ -72,7 +104,6 @@ export const ChatMessageExchange = memo(function ChatMessageExchange({
     void updateRoomName(currentRoom, user.id);
 
     return () => {
-      socket.off('chat:receiveMessage');
       ignore = true;
     };
   }, [user, currentRoom, debug, setMessages, socket]);
@@ -124,10 +155,11 @@ export const ChatMessageExchange = memo(function ChatMessageExchange({
             #{currentRoom.name}
           </h3>
           <ChatMessageList
-            currentRoomId={currentRoom.id}
-            messages={messages}
-            setMessages={setMessages}
             socket={socket}
+            messages={messages}
+            currentRoomId={currentRoom.id}
+            setMessages={setMessages}
+            setBlockedUserIds={setBlockedUserIds}
           />
         </div>
         <ChatAlertCollapse show={error !== ''}>
