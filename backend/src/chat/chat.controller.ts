@@ -199,11 +199,13 @@ export class ChatController {
   @Get('messages')
   async findChatMessages(
     @Query('roomId', ParseIntPipe) roomId: number,
+    @Query('userId', ParseIntPipe) userId: number,
     @Query('skip', ParseIntPipe) skip: number,
     @Query('pageSize', ParseIntPipe) pageSize: number,
   ): Promise<ChatMessage[]> {
     const chatMessages = await this.chatService.findChatMessages({
       chatroomId: roomId,
+      userId: userId,
       skip: skip,
       pageSize: pageSize,
     });

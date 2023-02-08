@@ -7,27 +7,31 @@ import {
   Dispatch,
   SetStateAction,
 } from 'react';
+import { Socket } from 'socket.io-client';
+import { Virtuoso } from 'react-virtuoso';
 import { MessageLeft } from 'components/chat/message-exchange/ChatMessage';
 import { Message } from 'types/chat';
-import { Virtuoso } from 'react-virtuoso';
 import { fetchMessages } from 'api/chat/fetchMessages';
-import { Socket } from 'socket.io-client';
+import { Loading } from 'components/common/Loading';
+import { useQueryUser } from 'hooks/useQueryUser';
 
 type Props = {
-  currentRoomId: number;
-  messages: Message[];
-  setMessages: Dispatch<SetStateAction<Message[]>>;
   socket: Socket;
+  messages: Message[];
+  currentRoomId: number;
+  setMessages: Dispatch<SetStateAction<Message[]>>;
+  setBlockedUserIds: Dispatch<SetStateAction<number[]>>;
 };
 
 /**
  * DOCS: https://virtuoso.dev/prepend-items/
  */
 export const ChatMessageList = memo(function ChatMessageList({
-  currentRoomId,
-  messages,
-  setMessages,
   socket,
+  messages,
+  currentRoomId,
+  setMessages,
+  setBlockedUserIds,
 }: Props) {
   const INITIAL_ITEM_COUNT = 20;
 
@@ -38,8 +42,47 @@ export const ChatMessageList = memo(function ChatMessageList({
   // メッセージが500件あったらfirstItemIndexは500
   // そこから古い順に向かって読み込んでいく
   const [firstItemIndex, setFirstItemIndex] = useState(0);
+  const { data: user } = useQueryUser();
+
+  const initMessages = useCallback(
+    async (ignore: boolean) => {
+      if (!user) return;
+
+      const chatMessages = await fetchMessages({
+        roomId: currentRoomId,
+        userId: user.id,
+        skip: 0,
+        pageSize: INITIAL_ITEM_COUNT,
+      });
+      if (!ignore) {
+        setMessages(chatMessages);
+        setSkipPage(1);
+      }
+    },
+    [user, currentRoomId, setMessages],
+  );
 
   useEffect(() => {
+    const ignore = false;
+    socket.on('chat:blockUser', (userId: number) => {
+      void initMessages(ignore);
+      setBlockedUserIds((prev) => [...prev, userId]);
+    });
+
+    socket.on('chat:unblockUser', (userId: number) => {
+      void initMessages(ignore);
+      setBlockedUserIds((prev) => prev.filter((id) => id !== userId));
+    });
+
+    return () => {
+      socket.off('chat:blockUser');
+      socket.off('chat:unblockUser');
+    };
+  }, [socket, initMessages, setBlockedUserIds]);
+
+  useEffect(() => {
+    if (!user) return;
+
     let ignore = false;
     // メッセージの合計数が逆順スクロールに必要になる
     socket.emit(
@@ -52,29 +95,20 @@ export const ChatMessageList = memo(function ChatMessageList({
       },
     );
 
-    const setupMessages = async () => {
-      const chatMessages = await fetchMessages({
-        roomId: currentRoomId,
-        skip: 0,
-        pageSize: INITIAL_ITEM_COUNT,
-      });
-      if (!ignore) {
-        setMessages(chatMessages);
-      }
-    };
-    void setupMessages();
-
-    setSkipPage(1);
+    void initMessages(ignore);
 
     return () => {
       ignore = true;
     };
-  }, [currentRoomId, setMessages, socket]);
+  }, [initMessages, currentRoomId, user, setMessages, socket]);
 
   const loadingMessages = useCallback(
     async (roomId: number, pageSize: number, skip: number) => {
+      if (!user) return;
+
       const chatMessages = await fetchMessages({
         roomId: roomId,
+        userId: user.id,
         skip: skip,
         pageSize: pageSize,
       });
@@ -85,7 +119,7 @@ export const ChatMessageList = memo(function ChatMessageList({
       setMessages((prev) => [...chatMessages, ...prev]);
       setSkipPage((prev) => prev + 1);
     },
-    [setMessages, setSkipPage],
+    [user, setMessages, setSkipPage],
   );
 
   const prependMessages = useCallback(() => {
@@ -97,8 +131,6 @@ export const ChatMessageList = memo(function ChatMessageList({
       setFirstItemIndex(nextFirstItemIndex);
       void loadingMessages(currentRoomId, messagesToPrepend, skipPage);
     }, 500);
-
-    return false;
   }, [firstItemIndex, currentRoomId, loadingMessages, skipPage]);
 
   const itemContent = (index: number, item: Message) => (
@@ -110,6 +142,10 @@ export const ChatMessageList = memo(function ChatMessageList({
       userId={item.userId}
     />
   );
+
+  if (user === undefined) {
+    return <Loading fullHeight />;
+  }
 
   return (
     <Virtuoso

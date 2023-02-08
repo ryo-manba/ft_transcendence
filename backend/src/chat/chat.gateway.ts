@@ -759,6 +759,9 @@ export class ChatGateway {
       this.server
         .to(this.generateSocketUserRoomName(dto.blockingUserId))
         .emit('chat:blocked', dto.blockedByUserId);
+
+      // ブロックしたユーザーのメッセージを非表示にするため通知する
+      client.emit('chat:blockUser', dto.blockingUserId);
     }
 
     return isSuccess;
@@ -775,7 +778,13 @@ export class ChatGateway {
   ): Promise<boolean> {
     this.logger.log('chat:unblockUser received', dto);
 
-    return await this.blockService.unblockUser(dto);
+    const isSuccess = await this.blockService.unblockUser(dto);
+    if (isSuccess) {
+      // ブロックを解除したユーザーのメッセージを非示するため通知する
+      client.emit('chat:unblockUser', dto.blockingUserId);
+    }
+
+    return isSuccess;
   }
 
   /**
