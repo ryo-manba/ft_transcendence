@@ -179,7 +179,7 @@ export class ChatroomService {
       return undefined;
     }
 
-    if (dto.type === ChatroomType.PROTECTED) {
+    if (chatroom.type === ChatroomType.PROTECTED) {
       // Protectedの場合はパスワードが正しいことを確認する
       const isValid = await bcrypt.compare(
         dto.password,
