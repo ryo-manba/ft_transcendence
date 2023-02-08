@@ -118,16 +118,13 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
       () => ({ message: errorInputPassword }),
     ),
   });
-  // TODO: 余裕あったら以下を使えるようにする
-  // チェック用と新規のパスワードと同じこと
-  // .superRefine(({ newPassword, checkPassword }, ctx) => {
-  //   if (newPassword !== checkPassword) {
-  //     ctx.addIssue({
-  //       code: 'custom',
-  //       message: 'The passwords did not match',
-  //     });
-  //   }
-  // });
+
+  const expectYourself = useCallback(
+    (ChatUsers: ChatUser[]) => {
+      return ChatUsers.filter((u) => u.id !== user?.id);
+    },
+    [user],
+  );
 
   const reloadFriends = useCallback(
     async (userId: number, ignore: boolean) => {
@@ -151,10 +148,10 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
       });
 
       if (!ignore) {
-        setNotAdminUsers(canSetAdminUsers);
+        setNotAdminUsers(expectYourself(canSetAdminUsers));
       }
     },
-    [user, room.id],
+    [user, room.id, expectYourself],
   );
 
   const reloadCanBanUsers = useCallback(
@@ -165,10 +162,10 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
         roomId: room.id,
       });
       if (!ignore) {
-        setNotBannedUsers(canBanUsers);
+        setNotBannedUsers(expectYourself(canBanUsers));
       }
     },
-    [user, room.id],
+    [user, room.id, expectYourself],
   );
 
   const reloadCanUnbanUsers = useCallback(
@@ -177,10 +174,10 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
         roomId: room.id,
       });
       if (!ignore) {
-        setBannedUsers(bannedUsers);
+        setBannedUsers(expectYourself(bannedUsers));
       }
     },
-    [room.id],
+    [room.id, expectYourself],
   );
 
   const reloadCanMuteUsers = useCallback(
@@ -192,10 +189,10 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
       });
 
       if (!ignore) {
-        setNotMutedUsers(canMuteUsers);
+        setNotMutedUsers(expectYourself(canMuteUsers));
       }
     },
-    [user, room.id],
+    [user, room.id, expectYourself],
   );
 
   const reloadCanUnmuteUsers = useCallback(
@@ -204,25 +201,22 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
         roomId: room.id,
       });
       if (!ignore) {
-        setMutedUsers(mutedUsers);
+        setMutedUsers(expectYourself(mutedUsers));
       }
     },
-    [room.id],
+    [room.id, expectYourself],
   );
 
   const reloadCanSetOwnerUsers = useCallback(
     async (ignore: boolean) => {
-      const activeUsers = await fetchCanSetOwnerUsers({
+      const canSetOwnerUsers = await fetchCanSetOwnerUsers({
         roomId: room.id,
       });
-      const activeNotOwnerUsers = activeUsers.filter(
-        (user) => user.id !== room.ownerId,
-      );
       if (!ignore) {
-        setActiveUsers(activeNotOwnerUsers);
+        setActiveUsers(expectYourself(canSetOwnerUsers));
       }
     },
-    [room.id, room.ownerId],
+    [room.id, expectYourself],
   );
 
   // 設定項目を選択した時に対応するユーザ一覧を取得する
