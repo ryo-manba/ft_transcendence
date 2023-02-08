@@ -65,13 +65,11 @@ export const ChatMessageList = memo(function ChatMessageList({
   useEffect(() => {
     const ignore = false;
     socket.on('chat:blockUser', (userId: number) => {
-      console.log('chat:blockUser received messageList', userId);
       void initMessages(ignore);
       setBlockedUserIds((prev) => [...prev, userId]);
     });
 
     socket.on('chat:unblockUser', (userId: number) => {
-      console.log('chat:unblockUser received messageList', userId);
       void initMessages(ignore);
       setBlockedUserIds((prev) => prev.filter((id) => id !== userId));
     });
