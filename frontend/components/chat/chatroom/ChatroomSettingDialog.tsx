@@ -42,6 +42,8 @@ type Props = {
     newPassword: string,
     checkPassword: string,
   ) => void;
+  deletePassword: (oldPassword: string) => void;
+  addPassword: (newPassword: string) => void;
   banUser: (userId: number) => void;
   unbanUser: (userId: number) => void;
   muteUser: (userId: number) => void;
@@ -64,6 +66,8 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
   addFriend,
   addAdmin,
   changePassword,
+  deletePassword,
+  addPassword,
   banUser,
   unbanUser,
   muteUser,
@@ -95,13 +99,15 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
   const schema = z.object({
     oldPassword: z.string().refine(
       (value: string) =>
-        selectedRoomSetting !== ChatroomSetting.CHANGE_PASSWORD ||
+        (selectedRoomSetting !== ChatroomSetting.CHANGE_PASSWORD &&
+          selectedRoomSetting !== ChatroomSetting.DELETE_PASSWORD) ||
         value.length >= 5,
       () => ({ message: errorInputPassword }),
     ),
     newPassword: z.string().refine(
       (value: string) =>
-        selectedRoomSetting !== ChatroomSetting.CHANGE_PASSWORD ||
+        (selectedRoomSetting !== ChatroomSetting.CHANGE_PASSWORD &&
+          selectedRoomSetting !== ChatroomSetting.ADD_PASSWORD) ||
         value.length >= 5,
       () => ({ message: errorInputPassword }),
     ),
@@ -332,6 +338,12 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
       case ChatroomSetting.CHANGE_PASSWORD:
         changePassword(oldPassword, newPassword, checkPassword);
         break;
+      case ChatroomSetting.DELETE_PASSWORD:
+        deletePassword(oldPassword);
+        break;
+      case ChatroomSetting.ADD_PASSWORD:
+        addPassword(newPassword);
+        break;
       case ChatroomSetting.MUTE_USER:
         muteUser(Number(selectedUserId));
         break;
@@ -452,6 +464,28 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
               />
             </DialogContent>
           </>
+        )}
+        {selectedRoomSetting === ChatroomSetting.DELETE_PASSWORD && (
+          <DialogContent>
+            <ChatPasswordForm
+              control={control}
+              inputName="oldPassword"
+              labelName="Old Password"
+              error={errors.oldPassword}
+              helperText={passwordHelper}
+            />
+          </DialogContent>
+        )}
+        {selectedRoomSetting === ChatroomSetting.ADD_PASSWORD && (
+          <DialogContent>
+            <ChatPasswordForm
+              control={control}
+              inputName="newPassword"
+              labelName="New Password"
+              error={errors.newPassword}
+              helperText={passwordHelper}
+            />
+          </DialogContent>
         )}
         {selectedRoomSetting === ChatroomSetting.BAN_USER && (
           <ChatroomSettingDetailDialog

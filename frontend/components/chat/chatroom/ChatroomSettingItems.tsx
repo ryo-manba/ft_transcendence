@@ -40,6 +40,7 @@ const DMSettingItems = memo(function DMSettingItems({
  * - チャットルームを削除する： Owner, DMの場合はNormalも可能
  * - チャットルームを退出する： 全てのユーザーが実行可能
  * - adminを設定する：Owner
+ * - Passwordを変更、削除、追加する：Owner
  * - friendを入室させる：PrivateかつOwnerのみ
  * - ミュートする：Owner, Admin（DMでは表示しない）
  * - BANする：Owner, Admin（DMでは表示しない）
@@ -105,6 +106,18 @@ export const ChatroomSettingItems = memo(function ChatroomSettingItems({
       {isOwner && roomType === ChatroomType.PROTECTED && (
         <MenuItem value={ChatroomSetting.CHANGE_PASSWORD}>
           {ChatroomSetting.CHANGE_PASSWORD}
+        </MenuItem>
+      )}
+      {/* パスワードで保護されたルームのみ選択可能 */}
+      {isOwner && roomType === ChatroomType.PROTECTED && (
+        <MenuItem value={ChatroomSetting.DELETE_PASSWORD}>
+          {ChatroomSetting.DELETE_PASSWORD}
+        </MenuItem>
+      )}
+      {/* 公開されたルームのみ選択可能 */}
+      {isOwner && roomType === ChatroomType.PUBLIC && (
+        <MenuItem value={ChatroomSetting.ADD_PASSWORD}>
+          {ChatroomSetting.ADD_PASSWORD}
         </MenuItem>
       )}
       {/* 非公開のルームのみフレンド追加ボタンが選択可能 */}

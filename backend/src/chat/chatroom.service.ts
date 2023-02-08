@@ -13,6 +13,7 @@ import { JoinChatroomDto } from './dto/chatroom/join-chatroom.dto';
 import { DeleteChatroomDto } from './dto/chatroom/delete-chatroom.dto';
 import { UpdateChatroomPasswordDto } from './dto/chatroom/update-chatroom-password.dto';
 import { DeleteChatroomMemberDto } from './dto/chatroom/delete-chatroom-member.dto';
+import { DeleteChatroomPasswordDto } from './dto/chatroom/delete-chatroom-password.dto';
 
 @Injectable()
 export class ChatroomService {
@@ -178,7 +179,7 @@ export class ChatroomService {
       return undefined;
     }
 
-    if (dto.type === ChatroomType.PROTECTED) {
+    if (chatroom.type === ChatroomType.PROTECTED) {
       // Protectedの場合はパスワードが正しいことを確認する
       const isValid = await bcrypt.compare(
         dto.password,
@@ -245,6 +246,40 @@ export class ChatroomService {
     }
 
     return true;
+  }
+
+  /**
+   * チャットルームのパスワードを削除する
+   * @param DeleteChatroomPasswordDto
+   */
+  async deletePassword(dto: DeleteChatroomPasswordDto): Promise<Chatroom> {
+    const targetRoom = await this.findOne({
+      id: dto.chatroomId,
+    });
+    if (!targetRoom) {
+      return undefined;
+    }
+
+    // Oldパスワードが正しいことを確認する
+    const isValid = await bcrypt.compare(
+      dto.oldPassword,
+      targetRoom.hashedPassword,
+    );
+    if (!isValid) {
+      return undefined;
+    }
+
+    const publicRoom = await this.update({
+      data: {
+        hashedPassword: null,
+        type: ChatroomType.PUBLIC,
+      },
+      where: {
+        id: dto.chatroomId,
+      },
+    });
+
+    return publicRoom;
   }
 
   /**

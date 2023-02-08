@@ -40,13 +40,15 @@ export const ChatroomType = {
   DM: 'DM',
 } as const;
 
-export type ChatroomType = typeof ChatroomType[keyof typeof ChatroomType];
+export type ChatroomType = (typeof ChatroomType)[keyof typeof ChatroomType];
 
 export const ChatroomSetting = {
   DELETE_ROOM: 'Delete Room',
   LEAVE_ROOM: 'Leave Room',
   ADD_FRIEND: 'Add Friend', // private room
   CHANGE_PASSWORD: 'Change Password', // protected room
+  DELETE_PASSWORD: 'Delete Password', // protected room
+  ADD_PASSWORD: 'Add Password', // public room
   SET_ADMIN: 'Set Admin',
   MUTE_USER: 'Mute User',
   UNMUTE_USER: 'Unmute User',
@@ -55,7 +57,7 @@ export const ChatroomSetting = {
 } as const;
 
 export type ChatroomSetting =
-  typeof ChatroomSetting[keyof typeof ChatroomSetting];
+  (typeof ChatroomSetting)[keyof typeof ChatroomSetting];
 
 export type ChatUser = {
   id: number;
@@ -68,4 +70,4 @@ export const ChatBlockSetting = {
 } as const;
 
 export type ChatBlockSetting =
-  typeof ChatBlockSetting[keyof typeof ChatBlockSetting];
+  (typeof ChatBlockSetting)[keyof typeof ChatBlockSetting];
