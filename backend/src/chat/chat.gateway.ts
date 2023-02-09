@@ -504,7 +504,7 @@ export class ChatGateway {
 
     this.server
       .to(this.generateSocketUserRoomName(createdAdmin.userId))
-      .emit('chat:addAdmin');
+      .emit('chat:addAdmin', createdAdmin.chatroomId);
 
     return true;
   }
@@ -591,6 +591,28 @@ export class ChatGateway {
   }
 
   /**
+   * admin権限を剥奪する
+   */
+  async revokeAdmin(userId: number, chatroomId: number): Promise<boolean> {
+    const deletedAdmin = await this.adminService.delete({
+      chatroomId_userId: {
+        userId: userId,
+        chatroomId: chatroomId,
+      },
+    });
+    if (!deletedAdmin) {
+      this.logger.log('failed to revokeAdmin');
+
+      return false;
+    }
+    this.server
+      .to(this.generateSocketUserRoomName(userId))
+      .emit('chat:revokeAdmin', chatroomId);
+
+    return true;
+  }
+
+  /**
    * ユーザーをBANする
    * @param BanUserDto
    */
@@ -601,14 +623,24 @@ export class ChatGateway {
   ): Promise<boolean> {
     this.logger.log(`chat:banUser received -> roomId: ${dto.chatroomId}`);
     const isBanned = await this.banService.banUser(dto);
-
-    if (isBanned) {
-      this.server
-        .to(this.generateSocketUserRoomName(dto.userId))
-        .emit('chat:banned');
+    if (!isBanned) {
+      return false;
     }
 
-    return isBanned;
+    const isAdminDto: IsAdminDto = {
+      userId: dto.userId,
+      chatroomId: dto.chatroomId,
+    };
+    const isAdmin = await this.adminService.isAdmin(isAdminDto);
+    if (!isAdmin) {
+      return true;
+    }
+    this.server
+      .to(this.generateSocketUserRoomName(dto.userId))
+      .emit('chat:banned', dto.chatroomId);
+    const isSuccess = this.revokeAdmin(dto.userId, dto.chatroomId);
+
+    return isSuccess;
   }
 
   /**
@@ -636,7 +668,21 @@ export class ChatGateway {
   ): Promise<boolean> {
     this.logger.log(`chat:muteUser received -> roomId: ${dto.chatroomId}`);
 
-    return await this.muteService.muteUser(dto);
+    const isMuted = await this.muteService.muteUser(dto);
+    if (!isMuted) {
+      return false;
+    }
+    const isAdminDto: IsAdminDto = {
+      chatroomId: dto.chatroomId,
+      userId: dto.userId,
+    };
+    const isAdmin = await this.adminService.isAdmin(isAdminDto);
+    if (!isAdmin) {
+      return true;
+    }
+    const isSuccess = this.revokeAdmin(dto.userId, dto.chatroomId);
+
+    return isSuccess;
   }
 
   /**

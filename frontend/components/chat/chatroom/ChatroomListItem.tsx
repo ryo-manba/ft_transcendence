@@ -49,23 +49,8 @@ export const ChatroomListItem = memo(function ChatroomListItem({
   const [roomName, setRoomName] = useState('');
 
   useEffect(() => {
+    if (!user) return;
     let ignore = false;
-    if (user === undefined) return;
-
-    socket.on('chat:addAdmin', () => {
-      setIsAdmin(true);
-    });
-
-    // adminかどうかを判定する
-    socket.emit(
-      'chat:isAdmin',
-      { chatroomId: room.id, userId: user.id },
-      (res: boolean) => {
-        if (!ignore) {
-          setIsAdmin(res);
-        }
-      },
-    );
 
     const updateRoomName = async (room: Chatroom, userId: number) => {
       if (room.type === ChatroomType.DM) {
@@ -82,14 +67,51 @@ export const ChatroomListItem = memo(function ChatroomListItem({
         }
       }
     };
-
     void updateRoomName(room, user.id);
 
     return () => {
-      socket.off('chat:addAdmin');
       ignore = true;
     };
-  }, [room, socket, user]);
+  }, [user, room]);
+
+  useEffect(() => {
+    if (!user) return;
+
+    socket.on('chat:addAdmin', (chatroomId: number) => {
+      console.log('chat:addAdmin', chatroomId, room.id);
+      if (room.id !== chatroomId) {
+        return;
+      }
+      setIsAdmin(true);
+    });
+    socket.on('chat:revokeAdmin', (chatroomId: number) => {
+      console.log('chat:revokeAdmin', chatroomId, room.id);
+      if (room.id !== chatroomId) {
+        return;
+      }
+
+      setIsAdmin(false);
+      // admin権限を失った場合にダイアログを閉じることで、不正な選択ができないようにする
+      setOpen(false);
+    });
+
+    return () => {
+      socket.off('chat:addAdmin');
+      socket.off('chat:revokeAdmin');
+    };
+  }, [socket, user, room.id]);
+
+  useEffect(() => {
+    if (!user) return;
+
+    socket.emit(
+      'chat:isAdmin',
+      { chatroomId: room.id, userId: user.id },
+      (res: boolean) => {
+        setIsAdmin(res);
+      },
+    );
+  }, [user, room, socket]);
 
   if (user === undefined) {
     return <Loading />;

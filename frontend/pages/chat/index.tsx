@@ -43,11 +43,6 @@ const Chat: NextPage = () => {
       socket.emit('chat:initSocket', user.id);
     });
 
-    socket.on('chat:banned', () => {
-      setError('You are banned.');
-      setCurrentRoom(undefined);
-    });
-
     // バックエンドのvalidation errorをチャッチ
     socket.on('exception', (data: { status: string; message: string }) => {
       debug('receive exception: %o', data);
@@ -56,10 +51,25 @@ const Chat: NextPage = () => {
 
     return () => {
       socket.off('chat:handleConnection');
-      socket.off('chat:banned');
       socket.off('exception');
     };
   }, [user, socket, debug]);
+
+  useEffect(() => {
+    if (!socket) return;
+
+    socket.on('chat:banned', (chatroomId: number) => {
+      if (chatroomId !== currentRoom?.id) {
+        return;
+      }
+      setError('You are banned.');
+      setCurrentRoom(undefined);
+    });
+
+    return () => {
+      socket.off('chat:banned');
+    };
+  }, [socket, currentRoom?.id]);
 
   if (socket === undefined || user === undefined) {
     return <Loading fullHeight />;

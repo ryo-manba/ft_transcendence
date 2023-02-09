@@ -119,6 +119,13 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
     ),
   });
 
+  useEffect(() => {
+    // ダイアログが閉じられたらその都度、初期値に戻す
+    if (!open) {
+      setSelectedRoomSetting(initRoomSettingState);
+    }
+  }, [open, initRoomSettingState]);
+
   const expectYourself = useCallback(
     (ChatUsers: ChatUser[]) => {
       return ChatUsers.filter((u) => u.id !== user?.id);
