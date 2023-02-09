@@ -11,7 +11,7 @@ import Debug from 'debug';
 import { Socket } from 'socket.io-client';
 import { ListItem, ListItemText, ListItemAvatar } from '@mui/material';
 import { Friend } from 'types/friend';
-import { Invitation, UserStatus } from 'types/game';
+import { GameSetting, GameState, Invitation, UserStatus } from 'types/game';
 import { CurrentRoom, Chatroom } from 'types/chat';
 import { useSocketStore } from 'store/game/ClientSocket';
 import { useInvitedFriendStateStore } from 'store/game/InvitedFriendState';
@@ -23,11 +23,21 @@ import { BadgedAvatar } from 'components/common/BadgedAvatar';
 import { ChatErrorAlert } from 'components/chat/alert/ChatErrorAlert';
 import { ChatAlertCollapse } from 'components/chat/alert/ChatAlertCollapse';
 import { AvatarFontSize } from 'types/utils';
+import { usePlayerNamesStore } from 'store/game/PlayerNames';
+import { PlayState, usePlayStateStore } from 'store/game/PlayState';
+import { useGameSettingStore } from 'store/game/GameSetting';
 
 type Props = {
   friend: Friend;
   socket: Socket;
   setCurrentRoom: Dispatch<SetStateAction<CurrentRoom | undefined>>;
+};
+
+type FriendGameInfo = {
+  player1Name: string;
+  player2Name: string;
+  gameState: GameState;
+  gameSetting: GameSetting;
 };
 
 export const FriendListItem = memo(function FriendListItem({
@@ -47,6 +57,13 @@ export const FriendListItem = memo(function FriendListItem({
     (store) => store.updateInvitedFriendState,
   );
   const router = useRouter();
+  const updatePlayerNames = usePlayerNamesStore(
+    (store) => store.updatePlayerNames,
+  );
+  const updatePlayState = usePlayStateStore((store) => store.updatePlayState);
+  const updateGameSetting = useGameSettingStore(
+    (store) => store.updateGameSetting,
+  );
 
   useEffect(() => {
     let ignore = false;
@@ -100,6 +117,40 @@ export const FriendListItem = memo(function FriendListItem({
         setError('You already started to play/prepare game');
       }
     });
+  };
+
+  const watchGame = (friend: Friend) => {
+    if (friendStatus !== UserStatus.PLAYING) {
+      setError(`${friend.name} is NOT playing a game now.`);
+
+      return;
+    }
+
+    gameSocket.emit(
+      'watchFriendGame',
+      { friendId: friend.id },
+      (res: { friendGameInfo: FriendGameInfo | undefined }) => {
+        debug(res.friendGameInfo);
+
+        if (res.friendGameInfo === undefined) {
+          setError(`${friend.name} is NOT playing a game now.`);
+
+          return;
+        }
+        const playerNames: [string, string] = [
+          res.friendGameInfo.player1Name,
+          res.friendGameInfo.player2Name,
+        ];
+        updatePlayerNames(playerNames);
+        if (res.friendGameInfo.gameState === GameState.SETTING) {
+          updatePlayState(PlayState.stateStandingBy);
+        } else {
+          updatePlayState(PlayState.statePlaying);
+          updateGameSetting(res.friendGameInfo.gameSetting);
+        }
+        void router.push('/game/battle');
+      },
+    );
   };
 
   const directMessage = (friend: Friend) => {
@@ -161,9 +212,11 @@ export const FriendListItem = memo(function FriendListItem({
       </ListItem>
       <FriendInfoDialog
         friend={friend}
+        friendStatus={friendStatus}
         onClose={handleClose}
         open={open}
         inviteGame={inviteGame}
+        watchGame={watchGame}
         directMessage={directMessage}
       />
     </>

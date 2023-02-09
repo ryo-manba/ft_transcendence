@@ -15,15 +15,7 @@ import { useSocketStore } from 'store/game/ClientSocket';
 import { useGameSettingStore } from 'store/game/GameSetting';
 import { usePlayerNamesStore } from 'store/game/PlayerNames';
 import { PlayState, usePlayStateStore } from 'store/game/PlayState';
-import { GameSetting } from 'types/game';
-
-type WatchInfo = {
-  roomName: string;
-  name1: string;
-  name2: string;
-};
-
-type GameState = 'Setting' | 'Playing';
+import { GameSetting, WatchInfo, GameState } from 'types/game';
 
 export const Watch = () => {
   const { socket } = useSocketStore();
@@ -61,7 +53,7 @@ export const Watch = () => {
         if (user === undefined) {
           return;
         }
-        if (gameState === 'Setting') {
+        if (gameState === GameState.SETTING) {
           updatePlayState(PlayState.stateStandingBy);
         } else {
           updatePlayState(PlayState.statePlaying);
