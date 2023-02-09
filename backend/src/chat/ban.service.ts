@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Prisma, BanRelation } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { ChatroomService } from './chatroom.service';
 import { BanUserDto } from './dto/ban/ban-user.dto';
 import { UnbanUserDto } from './dto/ban/unban-user.dto';
 import { IsBannedDto } from './dto/ban/is-banned.dto';
@@ -8,7 +9,10 @@ import type { ChatUser } from './types/chat';
 
 @Injectable()
 export class BanService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly chatroomService: ChatroomService,
+  ) {}
 
   private logger: Logger = new Logger('BanService');
 
@@ -115,6 +119,12 @@ export class BanService {
    */
   async banUser(dto: BanUserDto): Promise<boolean> {
     this.logger.log('banUser', dto.userId);
+
+    // チャットルームのオーナーのことはBanできない
+    const owner = await this.chatroomService.findChatroomOwner(dto.chatroomId);
+    if (dto.userId === owner.id) {
+      return false;
+    }
 
     const BAN_TIME_IN_DAYS = 7;
     const startAt = new Date();
