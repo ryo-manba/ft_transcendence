@@ -78,14 +78,13 @@ export const ChatroomListItem = memo(function ChatroomListItem({
     if (!user) return;
 
     socket.on('chat:addAdmin', (chatroomId: number) => {
-      console.log('chat:addAdmin', chatroomId, room.id);
       if (room.id !== chatroomId) {
         return;
       }
       setIsAdmin(true);
     });
+
     socket.on('chat:revokeAdmin', (chatroomId: number) => {
-      console.log('chat:revokeAdmin', chatroomId, room.id);
       if (room.id !== chatroomId) {
         return;
       }
