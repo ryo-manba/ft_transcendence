@@ -126,7 +126,7 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
     }
   }, [open, initRoomSettingState]);
 
-  const expectYourself = useCallback(
+  const excludeYourself = useCallback(
     (ChatUsers: ChatUser[]) => {
       return ChatUsers.filter((u) => u.id !== user?.id);
     },
@@ -155,10 +155,10 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
       });
 
       if (!ignore) {
-        setNotAdminUsers(expectYourself(canSetAdminUsers));
+        setNotAdminUsers(excludeYourself(canSetAdminUsers));
       }
     },
-    [user, room.id, expectYourself],
+    [user, room.id, excludeYourself],
   );
 
   const reloadCanBanUsers = useCallback(
@@ -169,10 +169,10 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
         roomId: room.id,
       });
       if (!ignore) {
-        setNotBannedUsers(expectYourself(canBanUsers));
+        setNotBannedUsers(excludeYourself(canBanUsers));
       }
     },
-    [user, room.id, expectYourself],
+    [user, room.id, excludeYourself],
   );
 
   const reloadCanUnbanUsers = useCallback(
@@ -181,10 +181,10 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
         roomId: room.id,
       });
       if (!ignore) {
-        setBannedUsers(expectYourself(bannedUsers));
+        setBannedUsers(excludeYourself(bannedUsers));
       }
     },
-    [room.id, expectYourself],
+    [room.id, excludeYourself],
   );
 
   const reloadCanMuteUsers = useCallback(
@@ -196,10 +196,10 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
       });
 
       if (!ignore) {
-        setNotMutedUsers(expectYourself(canMuteUsers));
+        setNotMutedUsers(excludeYourself(canMuteUsers));
       }
     },
-    [user, room.id, expectYourself],
+    [user, room.id, excludeYourself],
   );
 
   const reloadCanUnmuteUsers = useCallback(
@@ -208,10 +208,10 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
         roomId: room.id,
       });
       if (!ignore) {
-        setMutedUsers(expectYourself(mutedUsers));
+        setMutedUsers(excludeYourself(mutedUsers));
       }
     },
-    [room.id, expectYourself],
+    [room.id, excludeYourself],
   );
 
   const reloadCanSetOwnerUsers = useCallback(
@@ -220,10 +220,10 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
         roomId: room.id,
       });
       if (!ignore) {
-        setActiveUsers(expectYourself(canSetOwnerUsers));
+        setActiveUsers(excludeYourself(canSetOwnerUsers));
       }
     },
-    [room.id, expectYourself],
+    [room.id, excludeYourself],
   );
 
   // 設定項目を選択した時に対応するユーザ一覧を取得する
