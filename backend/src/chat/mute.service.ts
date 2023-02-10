@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Prisma, MuteRelation } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { ChatroomService } from './chatroom.service';
 import { MuteUserDto } from './dto/mute/mute-user.dto';
 import { UnmuteUserDto } from './dto/mute/unmute-user.dto';
 import { IsMutedDto } from './dto/mute/is-muted.dto';
@@ -8,7 +9,10 @@ import type { ChatUser } from './types/chat';
 
 @Injectable()
 export class MuteService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly chatroomService: ChatroomService,
+  ) {}
 
   private logger: Logger = new Logger('MuteService');
 
@@ -118,6 +122,12 @@ export class MuteService {
    */
   async muteUser(dto: MuteUserDto): Promise<boolean> {
     this.logger.log('muteUser', dto.userId);
+
+    // チャットルームのオーナーのことはMuteできない
+    const owner = await this.chatroomService.findChatroomOwner(dto.chatroomId);
+    if (dto.userId === owner.id) {
+      return false;
+    }
 
     const MUTE_TIME_IN_DAYS = 7;
     const startAt = new Date();

@@ -113,22 +113,19 @@ export class ChatController {
    * Muteできるユーザ一覧を返す
    * - Muteされていない
    * - Ownerではない
-   * - Adminではない
    * @param roomId
    */
   @Get('can-mute')
-  async findNotMutedUsers(
+  async findCanMuteUsers(
     @Query('roomId', ParseIntPipe) roomId: number,
   ): Promise<ChatUser[]> {
-    const adminUsers = await this.adminService.findAdmins(roomId);
     const mutedUsers = await this.muteService.findMutedUsers(roomId);
     const chatroomOwner = await this.chatroomService.findChatroomOwner(roomId);
 
-    const adminIds = adminUsers.map((admin) => admin.userId);
     const mutedIds = mutedUsers.map((user) => user.id);
     const ownerId = chatroomOwner.id;
 
-    const excludeIdSets = new Set([...adminIds, ...mutedIds, ownerId]);
+    const excludeIdSets = new Set([...mutedIds, ownerId]);
     const excludeIds = [...excludeIdSets];
 
     // すべてを満たさないUser一覧を取得する
@@ -160,22 +157,19 @@ export class ChatController {
    * Banされていないユーザ一覧を返す
    * - Banされていない
    * - Ownerではない
-   * - Adminではない
    * @param roomId
    */
   @Get('can-ban')
-  async findNotBannedUsers(
+  async findCanBanUsers(
     @Query('roomId', ParseIntPipe) roomId: number,
   ): Promise<ChatUser[]> {
-    const adminUsers = await this.adminService.findAdmins(roomId);
     const bannedUsers = await this.banService.findBannedUsers(roomId);
     const chatroomOwner = await this.chatroomService.findChatroomOwner(roomId);
 
-    const adminIds = adminUsers.map((admin) => admin.userId);
     const bannedIds = bannedUsers.map((user) => user.id);
     const ownerId = chatroomOwner.id;
 
-    const excludeIdSets = new Set([...adminIds, ...bannedIds, ownerId]);
+    const excludeIdSets = new Set([...bannedIds, ownerId]);
     const excludeIds = [...excludeIdSets];
 
     // すべてを満たさないUser一覧を取得する
