@@ -886,6 +886,39 @@ export class ChatGateway {
     return isSuccess;
   }
 
+  /*
+   * Kick out a user from a chatroom
+   * @param DeleteChatroomMemberDto
+   */
+  @SubscribeMessage('chat:kickUser')
+  async kickUser(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() dto: DeleteChatroomMemberDto,
+  ): Promise<boolean> {
+    this.logger.log('chat:kickUser received', dto);
+
+    // 不整合を防ぐために、kickされるユーザーがオーナーでないかどうか確認
+    const chatroomOwner = await this.chatroomService.findChatroomOwner(
+      dto.chatroomId,
+    );
+
+    if (dto.userId === chatroomOwner.id) {
+      return false;
+    }
+
+    const deletedMember = await this.chatroomService.removeChatroomMember(dto);
+
+    const isSuccess = !!deletedMember;
+
+    if (isSuccess) {
+      this.server
+        .to(this.generateSocketUserRoomName(deletedMember.userId))
+        .emit('chat:kicked', dto.chatroomId);
+    }
+
+    return isSuccess;
+  }
+
   /**
    * ユーザーがブロックされているかを確認する
    * @param IsBlockedDto

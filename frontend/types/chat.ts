@@ -54,6 +54,7 @@ export const ChatroomSetting = {
   UNMUTE_USER: 'Unmute User',
   BAN_USER: 'Ban User',
   UNBAN_USER: 'Unban User',
+  KICK_USER: 'Kick User',
 } as const;
 
 export type ChatroomSetting =

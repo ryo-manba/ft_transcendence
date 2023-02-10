@@ -21,12 +21,14 @@ type Props = {
   socket: Socket;
   setCurrentRoom: Dispatch<SetStateAction<CurrentRoom | undefined>>;
   setMessages: Dispatch<SetStateAction<Message[]>>;
+  setError: Dispatch<SetStateAction<string>>;
 };
 
 export const ChatroomSidebar = memo(function ChatroomSidebar({
   socket,
   setCurrentRoom,
   setMessages,
+  setError,
 }: Props) {
   const debug = useMemo(() => Debug('chat'), []);
   const { data: user } = useQueryUser();
@@ -108,6 +110,17 @@ export const ChatroomSidebar = memo(function ChatroomSidebar({
       );
     });
 
+    // Kickされた場合にルームを削除する
+    socket.on('chat:kicked', (chatroomId: number) => {
+      debug('kicked from', chatroomId);
+
+      setError(`You are kicked`);
+      setRooms((prevRooms) =>
+        prevRooms.filter((room) => room.id !== chatroomId),
+      );
+      setCurrentRoom(undefined);
+    });
+
     // setupが終わったら入室中のチャットルーム一覧を取得する
     socket.emit('chat:getJoinedRooms', { userId: user.id });
 
@@ -118,8 +131,9 @@ export const ChatroomSidebar = memo(function ChatroomSidebar({
       socket.off('chat:changeRoomOwner');
       socket.off('chat:deletePassword');
       socket.off('chat:addPassword');
+      socket.off('chat:kicked');
     };
-  }, [user, debug, setCurrentRoom, setMessages, socket]);
+  }, [user, debug, setCurrentRoom, setMessages, socket, setError]);
 
   const addRooms = (room: Chatroom) => {
     setRooms((prev) => [...prev, room]);

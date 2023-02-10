@@ -44,6 +44,7 @@ const DMSettingItems = memo(function DMSettingItems({
  * - friendを入室させる：PrivateかつOwnerのみ
  * - ミュートする：Owner, Admin（DMでは表示しない）
  * - BANする：Owner, Admin（DMでは表示しない）
+ * - Kickする：Owner, Admin (DMでは表示しない)
  */
 export const ChatroomSettingItems = memo(function ChatroomSettingItems({
   isAdmin,
@@ -124,6 +125,11 @@ export const ChatroomSettingItems = memo(function ChatroomSettingItems({
       {isOwner && roomType === ChatroomType.PRIVATE && (
         <MenuItem value={ChatroomSetting.ADD_FRIEND}>
           {ChatroomSetting.ADD_FRIEND}
+        </MenuItem>
+      )}
+      {(isAdmin || isOwner) && (
+        <MenuItem value={ChatroomSetting.KICK_USER}>
+          {ChatroomSetting.KICK_USER}
         </MenuItem>
       )}
     </Select>

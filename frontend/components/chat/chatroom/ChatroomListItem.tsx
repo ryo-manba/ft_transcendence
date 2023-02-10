@@ -377,6 +377,21 @@ export const ChatroomListItem = memo(function ChatroomListItem({
     });
   };
 
+  const kickUser = (userId: number) => {
+    const kickUsersInfo = {
+      userId: userId,
+      chatroomId: room.id,
+    };
+
+    socket.emit('chat:kickUser', kickUsersInfo, (isSuccess: boolean) => {
+      if (!isSuccess) {
+        setError('Failed to kick user.');
+      } else {
+        setSuccess('User has been kicked out from the chatroom successfully.');
+      }
+    });
+  };
+
   return (
     <>
       <ChatAlertCollapse show={error !== ''}>
@@ -429,6 +444,7 @@ export const ChatroomListItem = memo(function ChatroomListItem({
           unbanUser={unbanUser}
           muteUser={muteUser}
           unmuteUser={unmuteUser}
+          kickUser={kickUser}
         />
         <ListItemText
           primary={roomName}

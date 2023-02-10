@@ -258,4 +258,37 @@ export class ChatController {
 
     return recipientName;
   }
+
+  /**
+   * @return list of users who can be kicked
+   * @param roomId
+   * @param userId
+   *
+   * Owners can kick everyone including admins
+   * Admins can kick everyone except owners
+   */
+  @Get('can-kick')
+  async findCanKickUsers(
+    @Query('roomId', ParseIntPipe) roomId: number,
+    @Query('userId', ParseIntPipe) userId: number,
+  ): Promise<ChatUser[]> {
+    const chatroomOwner = await this.chatroomService.findChatroomOwner(roomId);
+
+    const ownerId = chatroomOwner.id;
+
+    const excludeIdSet = new Set([ownerId, userId]);
+    const excludeIds = [...excludeIdSet];
+
+    const canKickUsers =
+      await this.chatroomService.findChatroomMembersAsChatUsers({
+        where: {
+          chatroomId: roomId,
+          userId: {
+            notIn: excludeIds,
+          },
+        },
+      });
+
+    return canKickUsers;
+  }
 }

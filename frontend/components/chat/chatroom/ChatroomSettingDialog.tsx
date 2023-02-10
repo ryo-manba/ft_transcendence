@@ -27,6 +27,7 @@ import { Loading } from 'components/common/Loading';
 import { ChatroomSettingDetailDialog } from 'components/chat/chatroom/ChatroomSettingDetailDialog';
 import { ChatroomSettingItems } from 'components/chat/chatroom/ChatroomSettingItems';
 import { ChatPasswordForm } from 'components/chat/utils/ChatPasswordForm';
+import { fetchCanKickUsers } from 'api/chat/fetchCanKickUsers';
 
 type Props = {
   room: Chatroom;
@@ -48,6 +49,7 @@ type Props = {
   unbanUser: (userId: number) => void;
   muteUser: (userId: number) => void;
   unmuteUser: (userId: number) => void;
+  kickUser: (userId: number) => void;
 };
 
 type PasswordForm = {
@@ -72,6 +74,7 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
   unbanUser,
   muteUser,
   unmuteUser,
+  kickUser,
 }: Props) {
   const { data: user } = useQueryUser();
 
@@ -94,6 +97,7 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
   const [mutedUsers, setMutedUsers] = useState<ChatUser[]>([]);
   const [friends, setFriends] = useState<Friend[]>([]);
   const [activeUsers, setActiveUsers] = useState<ChatUser[]>([]);
+  const [canKickUsers, setCanKickUsers] = useState<ChatUser[]>([]);
 
   const errorInputPassword = 'Passwords must be at least 5 characters';
   const schema = z.object({
@@ -226,6 +230,23 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
     [room.id, excludeYourself],
   );
 
+  const reloadCanKickUsers = useCallback(
+    async (ignore: boolean) => {
+      if (!user) {
+        return;
+      }
+
+      const canKickUsers = await fetchCanKickUsers({
+        roomId: room.id,
+        userId: user.id,
+      });
+      if (!ignore) {
+        setCanKickUsers(canKickUsers);
+      }
+    },
+    [user, room.id],
+  );
+
   // 設定項目を選択した時に対応するユーザ一覧を取得する
   useEffect(() => {
     let ignore = false;
@@ -254,6 +275,9 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
           void reloadCanSetOwnerUsers(ignore);
         }
         break;
+      case ChatroomSetting.KICK_USER:
+        void reloadCanKickUsers(ignore);
+        break;
       default:
     }
 
@@ -272,6 +296,7 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
     reloadCanUnbanUsers,
     reloadCanUnmuteUsers,
     reloadFriends,
+    reloadCanKickUsers,
   ]);
 
   const {
@@ -357,6 +382,9 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
       case ChatroomSetting.UNBAN_USER:
         unbanUser(Number(selectedUserId));
         break;
+      case ChatroomSetting.KICK_USER:
+        kickUser(Number(selectedUserId));
+        break;
     }
     handleClose();
   };
@@ -387,6 +415,8 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
       case ChatroomSetting.BAN_USER:
         return !isSelectTarget();
       case ChatroomSetting.UNBAN_USER:
+        return !isSelectTarget();
+      case ChatroomSetting.KICK_USER:
         return !isSelectTarget();
     }
   };
@@ -515,6 +545,14 @@ export const ChatroomSettingDialog = memo(function ChatroomSettingDialog({
         {selectedRoomSetting === ChatroomSetting.UNMUTE_USER && (
           <ChatroomSettingDetailDialog
             users={mutedUsers}
+            labelTitle="User"
+            selectedValue={selectedUserId}
+            onChange={handleChangeUserId}
+          />
+        )}
+        {selectedRoomSetting === ChatroomSetting.KICK_USER && (
+          <ChatroomSettingDetailDialog
+            users={canKickUsers}
             labelTitle="User"
             selectedValue={selectedUserId}
             onChange={handleChangeUserId}

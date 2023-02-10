@@ -102,6 +102,7 @@ const Chat: NextPage = () => {
             socket={socket}
             setCurrentRoom={setCurrentRoom}
             setMessages={setMessages}
+            setError={setError}
           />
         </Grid>
         <Grid
