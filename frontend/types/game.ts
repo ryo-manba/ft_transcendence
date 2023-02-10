@@ -5,7 +5,7 @@ export const DifficultyLevel = {
 } as const;
 
 export type DifficultyLevel =
-  typeof DifficultyLevel[keyof typeof DifficultyLevel];
+  (typeof DifficultyLevel)[keyof typeof DifficultyLevel];
 
 export const UserStatus = {
   ONLINE: 'ONLINE',
@@ -13,7 +13,7 @@ export const UserStatus = {
   OFFLINE: 'OFFLINE',
 } as const;
 
-export type UserStatus = typeof UserStatus[keyof typeof UserStatus];
+export type UserStatus = (typeof UserStatus)[keyof typeof UserStatus];
 
 export type GameSetting = {
   difficulty: DifficultyLevel;
@@ -78,3 +78,16 @@ export type GameParameters = {
 export type SocketAuth = {
   userId: number;
 };
+
+export type WatchInfo = {
+  roomName: string;
+  name1: string;
+  name2: string;
+};
+
+export const GameState = {
+  SETTING: 'Setting',
+  PLAYING: 'Playing',
+} as const;
+
+export type GameState = (typeof GameState)[keyof typeof GameState];

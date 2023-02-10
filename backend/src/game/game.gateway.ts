@@ -25,6 +25,7 @@ import {
   GameState,
   UserStatus,
   SocketAuth,
+  FriendGameInfo,
 } from './types/game';
 import { GetInvitedListDto } from './dto/get-invited-list.dto';
 import { InviteFriendDto } from './dto/invite-friend.dto';
@@ -36,6 +37,7 @@ import { WatchGameDto } from './dto/watch-game.dto';
 import { PlayGameDto } from './dto/play-game.dto';
 import { UpdatePlayerPosDto } from './dto/update-player-pos.dto';
 import { GetUserStatusByIdDto } from './dto/get-user-status-by-id.dto';
+import { WatchFriendGameDto } from './dto/watch-friend-game.dto';
 
 const DENOMINATOR_FOR_EASY = 6; // barLength will be 100
 const DENOMINATOR_FOR_NORMAL = 12; // barLength will be 50
@@ -529,6 +531,38 @@ export class GameGateway {
 
     const id = this.getIdFromSocket(socket);
     this.addPlayingUserId(id);
+  }
+
+  @SubscribeMessage('watchFriendGame')
+  async watchFriendGame(
+    @ConnectedSocket() socket: Socket,
+    @MessageBody() dto: WatchFriendGameDto,
+  ): Promise<{ friendGameInfo: FriendGameInfo | undefined }> {
+    const room = this.gameRooms.find(
+      (r) => r.player1.id === dto.friendId || r.player2.id === dto.friendId,
+    );
+    if (!room) {
+      this.logger.log(`Error: ${dto.friendId} is not in game rooms.`);
+
+      return { friendGameInfo: undefined };
+    }
+    room.supporters.push(socket);
+    this.logger.log(`${socket.id} joined to room ${room.roomName}`);
+    await socket.join(room.roomName);
+    const gameSetting =
+      room.gameState === GameState.SETTING ? null : room.gameSetting;
+
+    const id = this.getIdFromSocket(socket);
+    this.addPlayingUserId(id);
+
+    const friendGameInfo: FriendGameInfo = {
+      player1Name: room.player1.name,
+      player2Name: room.player2.name,
+      gameState: room.gameState,
+      gameSetting: gameSetting,
+    };
+
+    return { friendGameInfo: friendGameInfo };
   }
 
   @SubscribeMessage('cancelOngoingBattle')

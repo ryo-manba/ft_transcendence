@@ -14,18 +14,22 @@ import {
 } from '@mui/material';
 import { blue } from '@mui/material/colors';
 import { Friend } from 'types/friend';
+import { UserStatus } from 'types/game';
 
 type Props = {
   friend: Friend;
+  friendStatus: UserStatus;
   open: boolean;
   onClose: () => void;
   inviteGame: (friend: Friend) => void;
+  watchGame: (friend: Friend) => void;
   directMessage: (friend: Friend) => void;
 };
 
 const FRIEND_ACTIONS = {
   PROFILE: 'Profile',
   INVITE_GAME: 'Invite Game',
+  WATCH_GAME: 'Watch Game',
   DM: 'Direct Message',
 } as const;
 
@@ -33,9 +37,11 @@ type FriendActions = (typeof FRIEND_ACTIONS)[keyof typeof FRIEND_ACTIONS];
 
 export const FriendInfoDialog = memo(function FriendInfoDialog({
   friend,
+  friendStatus,
   open,
   onClose,
   inviteGame,
+  watchGame,
   directMessage,
 }: Props) {
   const [actionType, setActionType] = useState<FriendActions>(
@@ -71,6 +77,9 @@ export const FriendInfoDialog = memo(function FriendInfoDialog({
         case 'Invite Game':
           inviteGame(friend);
           break;
+        case 'Watch Game':
+          watchGame(friend);
+          break;
         case 'Direct Message':
           directMessage(friend);
           break;
@@ -96,7 +105,11 @@ export const FriendInfoDialog = memo(function FriendInfoDialog({
             onChange={handleChangeType}
           >
             <MenuItem value="Profile">Profile</MenuItem>
-            <MenuItem value="Invite Game">Invite Game</MenuItem>
+            {friendStatus !== UserStatus.PLAYING ? (
+              <MenuItem value="Invite Game">Invite Game</MenuItem>
+            ) : (
+              <MenuItem value="Watch Game">Watch Game</MenuItem>
+            )}
             <MenuItem value="Direct Message">Direct Message</MenuItem>
           </Select>
         </FormControl>

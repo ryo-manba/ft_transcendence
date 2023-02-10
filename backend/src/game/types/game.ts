@@ -97,3 +97,10 @@ export type Invitation = {
 export type SocketAuth = {
   userId: number;
 };
+
+export type FriendGameInfo = {
+  player1Name: string;
+  player2Name: string;
+  gameState: GameState;
+  gameSetting: GameSetting;
+};
