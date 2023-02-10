@@ -21,12 +21,14 @@ type Props = {
   socket: Socket;
   setCurrentRoom: Dispatch<SetStateAction<CurrentRoom | undefined>>;
   setMessages: Dispatch<SetStateAction<Message[]>>;
+  setError: Dispatch<SetStateAction<string>>;
 };
 
 export const ChatroomSidebar = memo(function ChatroomSidebar({
   socket,
   setCurrentRoom,
   setMessages,
+  setError,
 }: Props) {
   const debug = useMemo(() => Debug('chat'), []);
   const { data: user } = useQueryUser();
@@ -112,6 +114,7 @@ export const ChatroomSidebar = memo(function ChatroomSidebar({
     socket.on('chat:kicked', (chatroomId: number) => {
       debug('kicked from', chatroomId);
 
+      setError(`You are kicked`);
       setRooms((prevRooms) =>
         prevRooms.filter((room) => room.id !== chatroomId),
       );
@@ -130,7 +133,7 @@ export const ChatroomSidebar = memo(function ChatroomSidebar({
       socket.off('chat:addPassword');
       socket.off('chat:kicked');
     };
-  }, [user, debug, setCurrentRoom, setMessages, socket]);
+  }, [user, debug, setCurrentRoom, setMessages, socket, setError]);
 
   const addRooms = (room: Chatroom) => {
     setRooms((prev) => [...prev, room]);
