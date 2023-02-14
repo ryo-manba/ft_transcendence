@@ -152,7 +152,7 @@ export const ChatMessageExchange = memo(function ChatMessageExchange({
       >
         <div className="mb-4 flex grow-[1] flex-col">
           <h3 className="my-2 ml-1 overflow-hidden text-ellipsis whitespace-nowrap underline">
-            #{currentRoom.name}
+            #{roomName}
           </h3>
           <ChatMessageList
             socket={socket}
