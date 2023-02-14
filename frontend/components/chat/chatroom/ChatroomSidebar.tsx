@@ -19,6 +19,7 @@ import Debug from 'debug';
 
 type Props = {
   socket: Socket;
+  currentRoom: CurrentRoom | undefined;
   setCurrentRoom: Dispatch<SetStateAction<CurrentRoom | undefined>>;
   setMessages: Dispatch<SetStateAction<Message[]>>;
   setError: Dispatch<SetStateAction<string>>;
@@ -26,6 +27,7 @@ type Props = {
 
 export const ChatroomSidebar = memo(function ChatroomSidebar({
   socket,
+  currentRoom,
   setCurrentRoom,
   setMessages,
   setError,
@@ -114,11 +116,14 @@ export const ChatroomSidebar = memo(function ChatroomSidebar({
     socket.on('chat:kicked', (chatroomId: number) => {
       debug('kicked from', chatroomId);
 
-      setError(`You are kicked`);
+      if (chatroomId === currentRoom?.id) {
+        setError(`You are kicked`);
+        setCurrentRoom(undefined);
+      }
+
       setRooms((prevRooms) =>
         prevRooms.filter((room) => room.id !== chatroomId),
       );
-      setCurrentRoom(undefined);
     });
 
     // setupが終わったら入室中のチャットルーム一覧を取得する
@@ -133,7 +138,15 @@ export const ChatroomSidebar = memo(function ChatroomSidebar({
       socket.off('chat:addPassword');
       socket.off('chat:kicked');
     };
-  }, [user, debug, setCurrentRoom, setMessages, socket, setError]);
+  }, [
+    user,
+    debug,
+    setCurrentRoom,
+    setMessages,
+    socket,
+    setError,
+    currentRoom?.id,
+  ]);
 
   const addRooms = (room: Chatroom) => {
     setRooms((prev) => [...prev, room]);

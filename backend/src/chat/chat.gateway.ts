@@ -631,16 +631,19 @@ export class ChatGateway {
       userId: dto.userId,
       chatroomId: dto.chatroomId,
     };
-    const isAdmin = await this.adminService.isAdmin(isAdminDto);
-    if (!isAdmin) {
-      return true;
-    }
+
     this.server
       .to(this.generateSocketUserRoomName(dto.userId))
       .emit('chat:banned', dto.chatroomId);
-    const isSuccess = this.revokeAdmin(dto.userId, dto.chatroomId);
 
-    return isSuccess;
+    const isAdmin = await this.adminService.isAdmin(isAdminDto);
+    if (!isAdmin) {
+      return true;
+    } else {
+      const isSuccess = this.revokeAdmin(dto.userId, dto.chatroomId);
+
+      return isSuccess;
+    }
   }
 
   /**

@@ -100,6 +100,7 @@ const Chat: NextPage = () => {
         >
           <ChatroomSidebar
             socket={socket}
+            currentRoom={currentRoom}
             setCurrentRoom={setCurrentRoom}
             setMessages={setMessages}
             setError={setError}
