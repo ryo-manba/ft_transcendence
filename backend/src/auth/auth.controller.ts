@@ -36,8 +36,20 @@ export class AuthController {
   }
 
   @Post('signup')
-  signUp(@Body() dto: AuthDto): Promise<Msg> {
-    return this.authService.singUp(dto);
+  async signUp(@Body() dto: AuthDto): Promise<Msg> {
+    try {
+      return await this.authService.singUp(dto);
+    } catch (error) {
+      if (error instanceof ForbiddenException) {
+        return {
+          message: error.message,
+        };
+      }
+
+      return {
+        message: undefined,
+      };
+    }
   }
 
   @HttpCode(HttpStatus.OK)

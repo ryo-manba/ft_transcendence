@@ -34,6 +34,7 @@ import Head from 'next/head';
 import { ValidationDialog } from 'components/auth/ValidationDialog';
 import { useQueryClient } from '@tanstack/react-query';
 import { useSocketStore } from 'store/game/ClientSocket';
+import { Msg } from 'types/friend';
 
 const usernameMaxLen = 50;
 const passwordMinLen = 5;
@@ -87,10 +88,16 @@ const Home: NextPage = () => {
       if (process.env.NEXT_PUBLIC_API_URL) {
         if (isRegister) {
           const urlSignup = `${process.env.NEXT_PUBLIC_API_URL}/auth/signup`;
-          await axios.post(urlSignup, {
+          const { data } = await axios.post<Msg>(urlSignup, {
             password: formData.password,
             username: formData.username,
           });
+          if (data.message !== 'ok') {
+            if (data.message !== undefined) setError([data.message]);
+            else setError(['Internal error. Please reload the page.']);
+
+            return;
+          }
         }
         const { data } = await axios.post<LoginResult>(
           `${process.env.NEXT_PUBLIC_API_URL}/auth/login`,
