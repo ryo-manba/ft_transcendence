@@ -4,7 +4,7 @@ This is a real-time multiplayer online game where multiple players can compete i
 
 https://user-images.githubusercontent.com/64348608/218266302-9158260a-9d8b-4713-9cce-5fdb6700310e.mp4
 
-![Screenshot： Chatting with a friend](https://github.com/ryo-manba/ft_transcendence/blob/main/docs/chat_screenshot.png)
+![Screenshot： Chatting with a friend](docs/chat_screenshot.png)
 
 
 ## Technologies Used
